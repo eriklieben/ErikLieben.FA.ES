@@ -1,0 +1,12 @@
+{
+  "baseBranches": ["main"],
+  "packageRules": [
+    {
+      "description": "Latest .NET for main branch",
+      "matchBaseBranches": ["main"],
+      "extends": [
+        "github>eriklieben/renovate//dotnet9.json"
+      ]
+    }
+  ]
+}
