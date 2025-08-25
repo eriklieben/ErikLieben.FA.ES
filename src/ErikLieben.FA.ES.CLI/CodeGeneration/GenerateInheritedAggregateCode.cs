@@ -33,7 +33,13 @@ public class GenerateInheritedAggregateCode
                     continue;
                 }
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [green]{aggregate.IdentifierName}[/]");
-                var path = solutionPath + aggregate.FileLocations.FirstOrDefault()?.Replace(".cs", ".Generated.cs") ??
+                var rel = (aggregate.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
+                var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    : rel + ".Generated.cs";
+                var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
+                    .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+                var path = System.IO.Path.Combine(solutionPath, normalized) ??
                            throw new InvalidOperationException();
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
 
@@ -138,13 +144,13 @@ public class GenerateInheritedAggregateCode
             propertyCode.AppendLine(text);
         }
 
-        
+
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");
         }
         code.AppendLine("");
-        
+
         code.AppendLine($$"""
                           
                           namespace {{aggregate.Namespace}};
@@ -261,6 +267,7 @@ public class GenerateInheritedAggregateCode
                           }
                           """);
 
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
         await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
     }
 

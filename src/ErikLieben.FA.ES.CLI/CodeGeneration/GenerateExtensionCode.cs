@@ -35,7 +35,13 @@ public partial class GenerateExtensionCode
                 continue;
             }
 
-            var path = solutionPath + currentFile.Replace(".csproj", "Extensions.Generated.cs");
+            var rel = (currentFile ?? string.Empty).Replace('\\', '/');
+            var relGen = rel.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
+                ? rel.Substring(0, rel.Length - ".csproj".Length) + "Extensions.Generated.cs"
+                : rel + "Extensions.Generated.cs";
+            var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
+                .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            var path = System.IO.Path.Combine(solutionPath, normalized);
             AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
 
             try
@@ -145,6 +151,7 @@ public partial class GenerateExtensionCode
                      {{jsonSerializerCode}}
                      """;
 
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
         await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
     }
 

@@ -84,10 +84,12 @@ namespace ErikLieben.FA.ES { public interface IEventStream {} }
 namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){} } }
 namespace App.Domain { public class Direct(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) { } }
 ";
+            var baseRoot = Path.GetTempPath();
+            var root = Path.Combine(baseRoot, "Repo", "App");
             var (symbol, semanticModel, compilation) = GetClassSymbol(
                 code,
-                filePath: "C\\Repo\\App\\Domain\\Direct.cs");
-            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, "C\\Repo\\App\\");
+                filePath: Path.Combine(root, "Domain", "Direct.cs"));
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root + Path.DirectorySeparatorChar);
             var list = new List<InheritedAggregateDefinition>();
 
             // Act
@@ -117,11 +119,13 @@ namespace App.Domain {
 }
 namespace ErikLieben.FA.ES { public interface IEventStream { Task Session(System.Func<ILeasedSession, Task> f); } }
 ";
+            var baseRoot2 = Path.GetTempPath();
+            var root2 = Path.Combine(baseRoot2, "Repo", "App");
             var (symbol, semanticModel, compilation) = GetClassSymbol(
                 code,
-                filePath: "C\\Repo\\App\\Domain\\Order.cs");
+                filePath: Path.Combine(root2, "Domain", "Order.cs"));
 
-            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, "C\\Repo\\App\\");
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root2 + Path.DirectorySeparatorChar);
             var list = new List<InheritedAggregateDefinition>();
 
             // Act
@@ -166,10 +170,12 @@ namespace App.Domain { public class Base(ErikLieben.FA.ES.IEventStream s) : Erik
   public class Child(ErikLieben.FA.ES.IEventStream s) : Base(s) { public string Name { get; private set; } }
 }
 ";
+            var baseRoot3 = Path.GetTempPath();
+            var root3 = Path.Combine(baseRoot3, "Repo", "App");
             var (symbol, semanticModel, compilation) = GetClassSymbol(
                 code,
-                filePath: "C\\Repo\\App\\Domain\\Child.cs");
-            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, "C\\Repo\\App\\");
+                filePath: Path.Combine(root3, "Domain", "Child.cs"));
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root3 + Path.DirectorySeparatorChar);
             var list = new List<InheritedAggregateDefinition>();
 
             // Act

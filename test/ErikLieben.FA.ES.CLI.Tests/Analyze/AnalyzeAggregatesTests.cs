@@ -124,8 +124,9 @@ public class AnalyzeAggregatesTests
                 namespace App.Domain;
                 public class NotAnAggregate { }
                 """,
-                filePath: @"C:\\Repo\\App\\Domain\\NotAnAggregate.cs");
-            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, @"C\\Repo\\App\\");
+                filePath: Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "NotAnAggregate.cs"));
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, root + Path.DirectorySeparatorChar);
             var aggregates = new List<AggregateDefinition>();
 
             // Act
@@ -171,8 +172,9 @@ namespace App.Domain {
             var (classSymbol, classDeclaration, semanticModel, compilation) = GetFromCode(
                 code,
                 testAssembly: "AppAssembly",
-                filePath: @"C:\\Repo\\App\\Domain\\Account.cs");
-            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, @"C:\\Repo\\App\\");
+                filePath: Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Account.cs"));
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, root + Path.DirectorySeparatorChar);
             var aggregates = new List<AggregateDefinition>();
 
             // Act
@@ -229,8 +231,9 @@ namespace App.Domain { public partial class A(ErikLieben.FA.ES.IEventStream s) :
             var (classSymbol, classDeclaration, semanticModel, compilation) = GetFromCode(
                 code,
                 testAssembly: "AppAssembly",
-                filePath: @"C:\\Repo\\App\\Domain\\A.cs");
-            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, @"C:\\Repo\\App\\");
+                filePath: Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "A.cs"));
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, root + Path.DirectorySeparatorChar);
             var aggregates = new List<AggregateDefinition>();
 
             // Act

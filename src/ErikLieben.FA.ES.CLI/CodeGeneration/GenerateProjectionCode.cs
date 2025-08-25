@@ -36,7 +36,13 @@ public class GenerateProjectionCode
                     continue;
                 }
 
-                var path = solutionPath + projection.FileLocations.FirstOrDefault()?.Replace(".cs", ".Generated.cs");
+                var rel = (projection.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
+                var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    : rel + ".Generated.cs";
+                var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
+                    .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+                var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
                 await GenerateProjection(projection, path, config);
             }
@@ -455,6 +461,7 @@ public class GenerateProjectionCode
         {
             Directory.CreateDirectory(directory);
         }
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
         await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
 
 

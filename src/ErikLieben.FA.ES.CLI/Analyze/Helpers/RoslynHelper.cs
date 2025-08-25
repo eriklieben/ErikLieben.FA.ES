@@ -472,14 +472,17 @@ internal class RoslynHelper(
             if (location.IsInSource)
             {
                 var filePath = SafeGetFullPath(location.SourceTree?.FilePath ?? string.Empty);
+                string rel;
                 if (rootIsRooted)
                 {
-                    filePaths.Add(Path.GetRelativePath(rootPathFull, filePath));
+                    rel = Path.GetRelativePath(rootPathFull, filePath);
                 }
                 else
                 {
-                    filePaths.Add(GetRelativeBySubstring(filePath, solutionRootPath));
+                    rel = GetRelativeBySubstring(filePath, solutionRootPath);
                 }
+                // Always return Windows-style separators for test stability across OS
+                filePaths.Add(rel.Replace('/', '\\'));
             }
 
             if (!location.IsInMetadata)
@@ -494,14 +497,17 @@ internal class RoslynHelper(
             }
 
             var fullMetadataPath = SafeGetFullPath(metadataName);
+            string relMeta;
             if (rootIsRooted)
             {
-                filePaths.Add(Path.GetRelativePath(rootPathFull, fullMetadataPath));
+                relMeta = Path.GetRelativePath(rootPathFull, fullMetadataPath);
             }
             else
             {
-                filePaths.Add(GetRelativeBySubstring(fullMetadataPath, solutionRootPath));
+                relMeta = GetRelativeBySubstring(fullMetadataPath, solutionRootPath);
             }
+            // Always return Windows-style separators for test stability across OS
+            filePaths.Add(relMeta.Replace('/', '\\'));
         }
 
         return filePaths;

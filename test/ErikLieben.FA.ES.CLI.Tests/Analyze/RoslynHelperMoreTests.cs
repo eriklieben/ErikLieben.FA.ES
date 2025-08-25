@@ -40,7 +40,9 @@ public class RoslynHelperMoreTests
         var (comp, model, tree) = Compile(code);
         var record = tree.GetRoot().DescendantNodes().OfType<RecordDeclarationSyntax>().First();
         var symbol = model.GetDeclaredSymbol(record)!;
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         var name = RoslynHelper.GetEventName(symbol);
         Assert.Equal("My.Custom", name);
@@ -53,7 +55,9 @@ public class RoslynHelperMoreTests
         var (comp, model, tree) = Compile(code);
         var record = tree.GetRoot().DescendantNodes().OfType<RecordDeclarationSyntax>().First();
         var symbol = model.GetDeclaredSymbol(record)!;
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         var name = RoslynHelper.GetEventName(symbol);
         Assert.Equal("User.Created", name);
@@ -63,10 +67,13 @@ public class RoslynHelperMoreTests
     public void IsProcessableAggregate_should_be_true_for_public_non_generated_non_framework()
     {
         var code = @"using ErikLieben.FA.ES.Processors;namespace A{ public class A1(ErikLieben.FA.ES.IEventStream s):Aggregate(s){} }";
-        var (comp, model, tree) = Compile(code, assemblyName: "AppAsm", path: "c:\\repo\\A\\A1.cs");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var path = System.IO.Path.Combine(root, "A", "A1.cs");
+        var (comp, model, tree) = Compile(code, assemblyName: "AppAsm", path: path);
         var cls = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
         var symbol = (INamedTypeSymbol)model.GetDeclaredSymbol(cls)!;
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         // method is internal to helper; emulate by combining checks using exposed API
         // We at least cover branch via calling IsInheritedAggregate(false) and InheritsFromAggregate(true)
@@ -78,10 +85,13 @@ public class RoslynHelperMoreTests
     public void IsInheritedAggregate_should_be_true_when_class_inherits_from_application_aggregate()
     {
         var code = @"using ErikLieben.FA.ES.Processors; namespace D{ public class BaseAg(ErikLieben.FA.ES.IEventStream s):Aggregate(s){} public class Child(ErikLieben.FA.ES.IEventStream s): BaseAg(s){} }";
-        var (comp, model, tree) = Compile(code, assemblyName: "AppAsm", path: "c:\\repo\\D\\Child.cs");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var path = System.IO.Path.Combine(root, "D", "Child.cs");
+        var (comp, model, tree) = Compile(code, assemblyName: "AppAsm", path: path);
         var child = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c=>c.Identifier.Text=="Child");
         var childSymbol = (INamedTypeSymbol)model.GetDeclaredSymbol(child)!;
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         Assert.True(sut.IsInheritedAggregate(childSymbol));
     }
@@ -95,7 +105,9 @@ public class RoslynHelperMoreTests
         var uSymbol = (INamedTypeSymbol)model.GetDeclaredSymbol(clsU)!;
         var prop = uSymbol.GetMembers().OfType<IPropertySymbol>().First();
         var named = (INamedTypeSymbol)prop.Type;
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         var args = RoslynHelper.GetGenericArguments(named);
         Assert.Equal(2, args.Count);
@@ -109,9 +121,12 @@ public class RoslynHelperMoreTests
     public void GetStreamContextUsagesInCommand_overload_should_detect_append_from_method_declaration_syntax()
     {
         var code = @"using ErikLieben.FA.ES;using ErikLieben.FA.ES.Processors;namespace T{ public record Evt(); public class Agg(IEventStream s):Aggregate(s){ public System.Threading.Tasks.Task Do(){ return Stream.Session(ctx=>ctx.Append(new Evt())); } } }";
-        var (comp, model, tree) = Compile(code, assemblyName: "TAsm", path: "c:\\repo\\T\\Agg.cs");
+        var baseRoot = System.IO.Path.GetTempPath();
+        var root = System.IO.Path.Combine(baseRoot, "repo");
+        var path = System.IO.Path.Combine(root, "T", "Agg.cs");
+        var (comp, model, tree) = Compile(code, assemblyName: "TAsm", path: path);
         var methodDecl = tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First(m=>m.Identifier.Text=="Do");
-        var sut = new RoslynHelper(model, "c:\\repo\\");
+        var sut = new RoslynHelper(model, root + System.IO.Path.DirectorySeparatorChar);
 
         var defs = sut.GetStreamContextUsagesInCommand(methodDecl);
         var ev = Assert.Single(defs);

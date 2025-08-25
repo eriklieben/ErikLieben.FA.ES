@@ -561,15 +561,18 @@ public class RoslynHelperTests
         {
             // Arrange
             var symbol = Substitute.For<ISymbol>();
+            var baseRoot = System.IO.Path.GetTempPath();
+            var root = System.IO.Path.Combine(baseRoot, "Repository", "App");
+            var file = System.IO.Path.Combine(root, "File", "C.cs");
             var syntaxTree = SyntaxFactory.ParseSyntaxTree("class C { }",
                 new CSharpParseOptions(),
-                @"c:\\Repository\\App\\File\\C.cs");
+                file);
             var textSpan = TextSpan.FromBounds(0, 1);
             symbol.Locations.Returns(new Location[]
             {
                 Location.Create(syntaxTree, textSpan),
             }.ToImmutableArray());
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var result = sut.IsInSolutionRootFolder(symbol);
@@ -583,15 +586,19 @@ public class RoslynHelperTests
         {
             // Arrange
             var symbol = Substitute.For<ISymbol>();
+            var baseRoot = System.IO.Path.GetTempPath();
+            var root = System.IO.Path.Combine(baseRoot, "Repository", "App");
+            var otherRoot = System.IO.Path.Combine(baseRoot, "Repository", "App2");
+            var file = System.IO.Path.Combine(otherRoot, "File", "C.cs");
             var syntaxTree = SyntaxFactory.ParseSyntaxTree("class C { }",
                 new CSharpParseOptions(),
-                @"c:\\Repository\\App2\\File\\C.cs");
+                file);
             var textSpan = TextSpan.FromBounds(0, 1);
             symbol.Locations.Returns(new Location[]
             {
                 Location.Create(syntaxTree, textSpan),
             }.ToImmutableArray());
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var result = sut.IsInSolutionRootFolder(symbol);
@@ -608,15 +615,18 @@ public class RoslynHelperTests
         {
             // Arrange
             var symbol = Substitute.For<ISymbol>();
+            var baseRoot = System.IO.Path.GetTempPath();
+            var root = System.IO.Path.Combine(baseRoot, "Repository", "App");
+            var file = System.IO.Path.Combine(root, "File", "C.cs");
             var syntaxTree = SyntaxFactory.ParseSyntaxTree("class C { }",
                 new CSharpParseOptions(),
-                @"c:\\Repository\\App\\File\\C.cs");
+                file);
             var textSpan = TextSpan.FromBounds(0, 1);
             symbol.Locations.Returns(new Location[]
             {
                 Location.Create(syntaxTree, textSpan),
             }.ToImmutableArray());
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var result = sut.GetFilePaths(symbol);
@@ -632,15 +642,19 @@ public class RoslynHelperTests
         {
             // Arrange
             var symbol = Substitute.For<ISymbol>();
+            var baseRoot = System.IO.Path.GetTempPath();
+            var root = System.IO.Path.Combine(baseRoot, "Repository", "App");
+            var otherRoot = System.IO.Path.Combine(baseRoot, "Repository", "App2");
+            var file = System.IO.Path.Combine(otherRoot, "File", "C.cs");
             var syntaxTree = SyntaxFactory.ParseSyntaxTree("class C { }",
                 new CSharpParseOptions(),
-                @"c:\\Repository\\App2\\File\\C.cs");
+                file);
             var textSpan = TextSpan.FromBounds(0, 1);
             symbol.Locations.Returns(new Location[]
             {
                 Location.Create(syntaxTree, textSpan),
             }.ToImmutableArray());
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var result = sut.GetFilePaths(symbol);
@@ -669,7 +683,7 @@ public class RoslynHelperTests
                 references: new[] { metadataReference });
             var symbol = compilation.GetTypeByMetadataName("System.DateTime");
             Assert.NotNull(symbol);
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Repository", "App") + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var filePath = sut.GetFilePaths(symbol!);
@@ -686,7 +700,7 @@ public class RoslynHelperTests
             // Arrange
             var symbol = Substitute.For<ISymbol>();
             symbol.Locations.Returns(ImmutableArray<Location>.Empty);
-            var sut = new RoslynHelper(null!, @"c:\\Repository\\App\\");
+            var sut = new RoslynHelper(null!, System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Repository", "App") + System.IO.Path.DirectorySeparatorChar);
 
             // Act
             var result = sut.GetFilePaths(symbol);

@@ -79,7 +79,9 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
 
         // Save the analysed data
-        var analyzePath = Path.Combine(Path.GetDirectoryName(settings.Path), "eriklieben.fa.es.analyzed-data.json");
+        var analyzeDir = Path.Combine(Path.GetDirectoryName(settings.Path), ".elfa\\");
+        Directory.CreateDirectory(analyzeDir);
+        var analyzePath = Path.Combine(analyzeDir, "eriklieben.fa.es.analyzed-data.json");
         bool existingFile = false;
         bool sameFile = false;
         var newJsonDef = JsonSerializer.Serialize(def, new JsonSerializerOptions()

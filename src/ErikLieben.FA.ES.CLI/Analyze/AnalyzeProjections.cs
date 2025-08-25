@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.CLI.Analyze.Helpers;
+﻿using System.IO;
+using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Spectre.Console;
@@ -78,7 +79,9 @@ public class AnalyzeProjections
         {
             Name = classSymbol?.Name ?? string.Empty,
             Namespace = RoslynHelper.GetFullNamespace(classSymbol!),
-            FileLocations = classSymbol!.DeclaringSyntaxReferences.Select(r => r.SyntaxTree.FilePath.Replace(solutionRootPath, string.Empty)).ToList(),
+            FileLocations = classSymbol!.DeclaringSyntaxReferences
+                .Select(r => Path.GetRelativePath(solutionRootPath, r.SyntaxTree.FilePath))
+                .ToList(),
             ExternalCheckpoint = HasExternalCheckpoint(classSymbol)
         };
         projections.Add(projection);
