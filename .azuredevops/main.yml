@@ -1,0 +1,47 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  BuildConfiguration: 'Release'
+  UseSemanticRelease: 'true'
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: ErikLieben.FA/build-templates
+    - repository: self
+      type: github
+      name: eriklieben/ErikLieben.FA.ES
+      endpoint: github.com_eriklieben
+
+extends:
+    template: NuGet/main_template.yaml@templates
+    parameters:
+      repositoryName: 'eriklieben/ErikLieben.FA.ES'
+      solutionPath: 'ErikLieben.FA.ES.sln'
+      sonarCloudProjectKey: 'eriklieben_ErikLieben.FA.ES'
+      buildConfiguration: '$(BuildConfiguration)'
+      useSemanticRelease: true
+      packageProjects:
+        - displayName: 'core_library'
+          path: 'src/ErikLieben.FA.ES/ErikLieben.FA.ES.csproj'
+        - displayName: 'analyzers_library'
+          path: 'src/ErikLieben.FA.ES.Analyzers/ErikLieben.FA.ES.Analyzers.csproj'
+        - displayName: 'azure_functions_worker_extensions'        
+          path: 'src/ErikLieben.FA.ES.Azure.Functions.Worker.Extensions/ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.csproj'
+        - displayName: 'azure_storage_provider_library'
+          path: 'src/ErikLieben.FA.ES.AzureStorage/ErikLieben.FA.ES.AzureStorage.csproj'
+        - displayName: 'cli'
+          path: 'src/ErikLieben.FA.ES.CLI/ErikLieben.FA.ES.CLI.csproj'
+        - displayName: 'testing_library'
+          path: 'src/ErikLieben.FA.ES.Testing/ErikLieben.FA.ES.Testing.csproj'
+        - displayName: 'azure_webjobs_isolated_extensions_library'
+          path: 'src/ErikLieben.FA.ES.WebJobs.Isolated.Extensions/ErikLieben.FA.ES.WebJobs.Isolated.Extensions.csproj'

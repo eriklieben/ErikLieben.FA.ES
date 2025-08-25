@@ -1,0 +1,87 @@
+# Ignore build output
+bin/
+obj/
+
+# Ignore user-specific Rider/IDE settings
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+
+# VS Code settings
+.vscode/
+.vscode/*
+.vs/
+.vs/*
+
+# Specific JetBrains Rider settings
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/modules.xml
+.idea/*.iml
+.idea/.idea
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs and debug
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled dlls, pdbs, and exe files
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.obj
+*.lib
+*.log
+*.vspscc
+*.vssscc
+
+# Debugging
+.vscode/settings.json
+*.ncrunch*
+.ncrunchsolution*
+
+# Rider specific additional files
+.idea_modules/
+
+# Publish output
+publish/
+
+# Dotnet tool artifacts
+.global.json
+.nuget/packages/
+.nuget/package.map
+
+# Rider-specific
+.idea/
+.idea_modules/
+*.tmp
+.idea/.*/#key=>*
+
+# Ignore .NET Core default
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET specific exclusions
+*.azurewebsites.net
+*.aspnetcache/*
+*.aspnetcache/
+*.aspnetcache/
