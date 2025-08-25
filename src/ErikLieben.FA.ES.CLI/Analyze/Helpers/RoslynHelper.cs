@@ -464,12 +464,22 @@ internal class RoslynHelper(
         var locations = symbol.Locations;
         foreach (var location in locations)
         {
-            var rootPath = Path.GetFullPath(solutionRootPath);
+            // Try to get a reasonable root path. If solutionRootPath isn't rooted on this OS (e.g., Windows-style on Linux),
+            // we will fall back to substring-based relative paths below.
+            var rootPathFull = SafeGetFullPath(solutionRootPath);
+            var rootIsRooted = Path.IsPathRooted(rootPathFull);
 
             if (location.IsInSource)
             {
-                var filePath = Path.GetFullPath(location.SourceTree.FilePath);
-                filePaths.Add(Path.GetRelativePath(rootPath, filePath));
+                var filePath = SafeGetFullPath(location.SourceTree?.FilePath ?? string.Empty);
+                if (rootIsRooted)
+                {
+                    filePaths.Add(Path.GetRelativePath(rootPathFull, filePath));
+                }
+                else
+                {
+                    filePaths.Add(GetRelativeBySubstring(filePath, solutionRootPath));
+                }
             }
 
             if (!location.IsInMetadata)
@@ -483,11 +493,61 @@ internal class RoslynHelper(
                 continue;
             }
 
-            var fullMetadataPath = Path.GetFullPath(metadataName);
-            filePaths.Add(Path.GetRelativePath(rootPath, fullMetadataPath));
+            var fullMetadataPath = SafeGetFullPath(metadataName);
+            if (rootIsRooted)
+            {
+                filePaths.Add(Path.GetRelativePath(rootPathFull, fullMetadataPath));
+            }
+            else
+            {
+                filePaths.Add(GetRelativeBySubstring(fullMetadataPath, solutionRootPath));
+            }
         }
 
         return filePaths;
+    }
+
+    private static string SafeGetFullPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return string.Empty;
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch
+        {
+            // If the path is not valid for this platform, return the original normalized to current separator
+            return NormalizeSeparators(path);
+        }
+    }
+
+    private static string NormalizeSeparators(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return path;
+        var sep = Path.DirectorySeparatorChar;
+        return path.Replace('\\', sep).Replace('/', sep);
+    }
+
+    private static string GetRelativeBySubstring(string filePath, string rootCandidate)
+    {
+        var fp = NormalizeSeparators(filePath);
+        var root1 = NormalizeSeparators(rootCandidate);
+        var root2 = NormalizeSeparators(rootCandidate.Replace("\\", "/"));
+        var root3 = NormalizeSeparators(rootCandidate.Replace("/", "\\"));
+
+        foreach (var root in new[] { root1, root2, root3 })
+        {
+            if (string.IsNullOrWhiteSpace(root)) continue;
+            var idx = fp.IndexOf(root, StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                var rel = fp[(idx + root.Length)..];
+                return rel.TrimStart(Path.DirectorySeparatorChar);
+            }
+        }
+
+        // As a last resort, return the file name relative part (best effort)
+        return Path.GetFileName(fp);
     }
 
     internal static List<GenericArgument> GetGenericArguments(INamedTypeSymbol symbol)

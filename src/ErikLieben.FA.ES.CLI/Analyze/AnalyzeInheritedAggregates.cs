@@ -91,7 +91,7 @@ public class AnalyzeInheritedAggregates
             ObjectName = RoslynHelper.GetObjectName(parentType!),
             Namespace = RoslynHelper.GetFullNamespace(typeSymbol),
             FileLocations = typeSymbol.DeclaringSyntaxReferences
-                .Select(r => r.SyntaxTree.FilePath?.Replace(solutionRootPath, string.Empty) ?? string.Empty)
+                .Select(r => NormalizeRelativeFile(r.SyntaxTree.FilePath))
                 .ToList(),
             // Default to string, we will later on replace this with the detected type
             IdentifierType = "String",
@@ -104,6 +104,36 @@ public class AnalyzeInheritedAggregates
         aggregates.Add(aggregate);
 
         return aggregate;
+    }
+
+    private string NormalizeRelativeFile(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath)) return string.Empty;
+        var fp = NormalizeSeparators(filePath);
+        var root1 = NormalizeSeparators(solutionRootPath);
+        var root2 = NormalizeSeparators(solutionRootPath.Replace("\\", "/"));
+        var root3 = NormalizeSeparators(solutionRootPath.Replace("/", "\\"));
+
+        foreach (var root in new[] { root1, root2, root3 })
+        {
+            if (string.IsNullOrWhiteSpace(root)) continue;
+            var idx = fp.IndexOf(root, StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                var rel = fp[(idx + root.Length)..];
+                return rel.TrimStart(Path.DirectorySeparatorChar, '/','\\');
+            }
+        }
+
+        // Fallback: return normalized file path
+        return fp;
+    }
+
+    private static string NormalizeSeparators(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return path;
+        var sep = Path.DirectorySeparatorChar;
+        return path.Replace('\\', sep).Replace('/', sep);
     }
 
 
