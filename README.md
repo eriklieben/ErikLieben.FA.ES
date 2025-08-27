@@ -40,10 +40,10 @@ ErikLieben.FA.ES is an event sourcing toolkit/framework designed to be:
 
 ## Install
 
-Install the CLI tool:
+Install the CLI tool (locally):
 ```bash
 dotnet new tool-manifest
-dotnet tool install --global ErikLieben.FA.ES.CLI
+dotnet tool install ErikLieben.FA.ES.CLI --local
 ```
 
 Add the NuGet package to your domain class library:
