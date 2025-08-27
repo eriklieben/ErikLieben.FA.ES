@@ -10,13 +10,22 @@ module.exports = {
       {
         preset: 'conventionalcommits',
         releaseRules: [
+          // Only these types trigger releases
           {breaking: true, release: 'major'},
-          {type: 'docs', scope:'README', release: 'patch'},
-          {type: 'perf', release: 'patch'},
-          {type: 'fix', release: 'patch'},
-          {type: 'deps', release: 'patch'},
-          {type: "chore", release: false },
           {type: 'feat', release: 'minor'},
+          {type: 'fix', release: 'patch'},
+          // Manual release trigger - use when you want to release accumulated changes
+          {type: 'release', release: 'patch'},
+          // Block all other types (including deps from Renovate)
+          {type: 'deps', release: false},
+          {type: 'chore', release: false},
+          {type: 'docs', release: false},
+          {type: 'perf', release: false},
+          {type: 'style', release: false},
+          {type: 'test', release: false},
+          {type: 'refactor', release: false},
+          {type: 'ci', release: false},
+          {type: 'build', release: false}
         ],
         parserOpts: {
           noteKeywords: [
@@ -70,7 +79,18 @@ module.exports = {
             scope: 'deps',
             section: '⬆️ Dependency updates',
             hidden: false
-          }
+          },
+          {
+            type: 'chore',
+            scope: 'test-deps',
+            section: '🧪 Test dependency updates',
+            hidden: true  // Hide test dependencies from release notes
+          },
+          {
+            type: 'release',
+            section: '🚀 Release',
+            hidden: false
+          },
         ]
       },
       parserOpts: {
