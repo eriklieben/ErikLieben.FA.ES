@@ -5,11 +5,11 @@ These rules describe how to write tests in this repository. They are intentional
 - Test framework: xUnit
 - Mocking: NSubstitute (when needed)
 - Target framework: net9.0 (match the project under test)
-- Project name for Results library tests: ErikLieben.FA.Results.Tests
+- Project name for Results library tests: ErikLieben.FA.ES
 
 ## File and type naming
 - Place tests for a type in a separate file named `{TypeName}Tests.cs` (e.g., `ResultTests.cs`).
-- Namespace should mirror the project, e.g., `namespace ErikLieben.FA.Results.Tests;`.
+- Namespace should mirror the project, e.g., `namespace ErikLieben.FA.ES;`.
 - Use one top-level public test class per SUT type: `public class {TypeName}Tests { ... }`.
 - When testing a specific method on the SUT, create an inner class with the method name inside the outer test class.
   - Example: `public class ResultTests { public class Map { /* tests for Result<T>.Map */ } }`.
@@ -47,7 +47,7 @@ using System;
 using ErikLieben.FA.Results;
 using Xunit;
 
-namespace ErikLieben.FA.Results.Tests;
+namespace ErikLieben.FA.ES;
 
 public class ResultTests
 {
@@ -91,7 +91,7 @@ using System;
 using ErikLieben.FA.Results;
 using Xunit;
 
-namespace ErikLieben.FA.Results.Tests;
+namespace ErikLieben.FA.ES;
 
 public class ResultOfTTests
 {
