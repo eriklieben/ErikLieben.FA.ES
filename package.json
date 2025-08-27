@@ -13,5 +13,5 @@
     "conventional-changelog-conventionalcommits": "9.1.0",
     "semantic-release": "24.2.7"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

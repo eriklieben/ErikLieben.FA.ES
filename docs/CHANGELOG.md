@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.0.0...v1.0.1) (2025-08-27)
+
+### 🐛 Bug fixes
+
+* add analyzer for Aggregate-derived class should be partial ([ef2bc24](https://github.com/eriklieben/ErikLieben.FA.ES/commit/ef2bc242c8be0a78dc6b353ef3fbb98418b2ed43))
+
 ## 1.0.0 (2025-08-25)
 
 ### ✨ New features
