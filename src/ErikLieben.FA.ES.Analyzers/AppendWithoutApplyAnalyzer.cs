@@ -152,26 +152,29 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
     {
         foreach (var ancestor in node.Ancestors())
         {
-            if (ancestor is InvocationExpressionSyntax inv)
-            {
-                if (inv.Expression is MemberAccessExpressionSyntax mae)
-                {
-                    if (mae.Name is IdentifierNameSyntax name && name.Identifier.ValueText == "Session")
-                    {
-                        var sessionSymbolInfo = model.GetSymbolInfo(inv);
-                        if (sessionSymbolInfo.Symbol is IMethodSymbol sessionMethod)
-                        {
-                            if (sessionMethod.ContainingType?.ToDisplayString() == IEventStreamFullName)
-                                return true;
-                            if (sessionMethod.ContainingType != null && sessionMethod.ContainingType.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName))
-                                return true;
-                        }
-                    }
-                }
-            }
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
+
+            if (ancestor is not InvocationExpressionSyntax inv)
+                continue;
+
+            if (GetInvocationName(inv) != "Session")
+                continue;
+
+            var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+            if (IsEventStreamSession(symbol))
+                return true;
         }
         return false;
+    }
+
+    private static bool IsEventStreamSession(IMethodSymbol? method)
+    {
+        var type = method?.ContainingType;
+        if (type == null)
+            return false;
+        if (type.ToDisplayString() == IEventStreamFullName)
+            return true;
+        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 }

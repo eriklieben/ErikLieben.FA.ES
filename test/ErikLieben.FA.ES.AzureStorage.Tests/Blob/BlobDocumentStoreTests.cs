@@ -683,7 +683,6 @@ public class BlobDocumentStoreTests
             var objectId = "test-object-id";
             var objectName = "test-object-name";
             var etag = new ETag("test-etag");
-            var hash = "test-hash";
 
             objectDocument.ObjectId.Returns(objectId);
             objectDocument.ObjectName.Returns(objectName);
@@ -818,7 +817,6 @@ public class BlobDocumentStoreTests
                 AutoCreateContainer = true
             };
             var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
-            var testData = "test data";
 
             // Act - Since ComputeSha256Hash is private static, we test it indirectly
             // The method is used internally and its correctness is validated through integration tests

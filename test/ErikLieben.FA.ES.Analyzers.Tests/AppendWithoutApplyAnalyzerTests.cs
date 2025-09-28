@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -132,3 +133,5 @@ namespace Test
         }.RunAsync();
     }
 }
+
+#pragma warning restore 0618

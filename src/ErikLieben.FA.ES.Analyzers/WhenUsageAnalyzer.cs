@@ -116,44 +116,50 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
         // and whose containing type implements ErikLieben.FA.ES.IEventStream
         foreach (var ancestor in whenInvocation.Ancestors())
         {
-            if (ancestor is InvocationExpressionSyntax inv)
-            {
-                if (inv.Expression is MemberAccessExpressionSyntax mae)
-                {
-                    if (mae.Name is IdentifierNameSyntax name && name.Identifier.ValueText == "Session")
-                    {
-                        var sessionSymbolInfo = model.GetSymbolInfo(inv);
-                        if (sessionSymbolInfo.Symbol is IMethodSymbol sessionMethod)
-                        {
-                            // Direct on interface type
-                            if (sessionMethod.ContainingType?.ToDisplayString() == IEventStreamFullName)
-                                return true;
-
-                            // Implementations of IEventStream
-                            if (sessionMethod.ContainingType != null && sessionMethod.ContainingType.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName))
-                                return true;
-                        }
-                    }
-                }
-            }
-            // stop at method boundary to avoid walking unrelated scopes
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
+
+            if (ancestor is not InvocationExpressionSyntax inv)
+                continue;
+
+            if (GetMemberName(inv) != "Session")
+                continue;
+
+            var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+            if (IsEventStreamSession(symbol))
+                return true;
         }
         return false;
+    }
+
+    private static string? GetMemberName(InvocationExpressionSyntax invocation)
+    {
+        return invocation.Expression switch
+        {
+            IdentifierNameSyntax id => id.Identifier.ValueText,
+            MemberAccessExpressionSyntax { Name: IdentifierNameSyntax name } => name.Identifier.ValueText,
+            _ => null
+        };
+    }
+
+    private static bool IsEventStreamSession(IMethodSymbol? method)
+    {
+        var type = method?.ContainingType;
+        if (type == null)
+            return false;
+        if (type.ToDisplayString() == IEventStreamFullName)
+            return true;
+        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 
     private static bool IsChainedWithData(InvocationExpressionSyntax whenInvocation)
     {
         // Two ways .Data() can appear relative to When(...):
         // 1) Chained after When: When(...).Data()
-        if (whenInvocation.Parent is MemberAccessExpressionSyntax mae && mae.Name is IdentifierNameSyntax chainedName)
+        if (whenInvocation.Parent is MemberAccessExpressionSyntax { Name: IdentifierNameSyntax { Identifier.ValueText: "Data" } } mae
+            && mae.Parent is InvocationExpressionSyntax)
         {
-            if (string.Equals(chainedName.Identifier.ValueText, "Data", System.StringComparison.Ordinal)
-                && mae.Parent is InvocationExpressionSyntax)
-            {
-                return true;
-            }
+            return true;
         }
 
         // 2) Inside When argument(s): When(context.Append(...).Data())

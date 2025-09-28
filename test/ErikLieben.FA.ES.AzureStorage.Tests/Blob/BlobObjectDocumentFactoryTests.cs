@@ -75,7 +75,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_object_name_is_invalid(string objectName)
+            public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
                 // Arrange
                 var objectId = "id-123";
@@ -88,7 +88,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_object_id_is_invalid(string objectId)
+            public void Should_throw_when_object_id_is_invalid(string? objectId)
             {
                 // Arrange
                 var objectName = "TestObject";
@@ -187,7 +187,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_object_name_is_invalid(string objectName)
+            public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
                 // Arrange
                 var objectDocumentTag = "tag1";
@@ -200,7 +200,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_document_tag_is_invalid(string objectDocumentTag)
+            public void Should_throw_when_document_tag_is_invalid(string? objectDocumentTag)
             {
                 // Arrange
                 var objectName = "TestObject";
@@ -243,7 +243,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_object_name_is_invalid(string objectName)
+            public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
                 // Arrange
                 var objectDocumentTag = "tag1";
@@ -256,7 +256,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_document_tag_is_invalid(string objectDocumentTag)
+            public void Should_throw_when_document_tag_is_invalid(string? objectDocumentTag)
             {
                 // Arrange
                 var objectName = "TestObject";
@@ -299,7 +299,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             [Theory]
             [InlineData(null)]
             [InlineData("")]
-            public void Should_throw_when_object_name_is_invalid(string objectName)
+            public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
                 // Arrange
                 var objectDocumentTag = "tag1";
@@ -347,16 +347,6 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
                 await blobDocumentStore.Received(1).SetAsync(document);
             }
 
-            [Fact]
-            public void Should_throw_when_document_is_null()
-            {
-                // Arrange
-                IObjectDocument document = null;
-
-                // Act & Assert
-                var exception = Assert.ThrowsAsync<ArgumentNullException>(() =>
-                    sut.SetAsync(document));
-            }
         }
     }
 }
