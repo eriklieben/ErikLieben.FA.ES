@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-ext-0001.md
 /// </remarks>
-[Serializable]
 public class BlobDataStoreProcessingException : EsException
 {
     private const string Code = "ELFAES-EXT-0001";
@@ -32,11 +30,6 @@ public class BlobDataStoreProcessingException : EsException
     }
 
     public BlobDataStoreProcessingException(string message, Exception innerException) : base(Code, message, innerException)
-    {
-    }
-
-    protected BlobDataStoreProcessingException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

@@ -1,12 +1,10 @@
 using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
 /// <summary>
 /// Base exception for the ErikLieben.FA.ES library that carries a mandatory error code.
 /// </summary>
-[Serializable]
 public abstract class EsException : Exception
 {
     /// <summary>
@@ -30,21 +28,5 @@ public abstract class EsException : Exception
         : base($"[{errorCode}] {message}", innerException)
     {
         ErrorCode = errorCode;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="EsException"/> class with serialized data.
-    /// </summary>
-    protected EsException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        ErrorCode = info.GetString(nameof(ErrorCode))!;
-    }
-
-    /// <inheritdoc />
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        base.GetObjectData(info, context);
-        info.AddValue(nameof(ErrorCode), ErrorCode);
     }
 }

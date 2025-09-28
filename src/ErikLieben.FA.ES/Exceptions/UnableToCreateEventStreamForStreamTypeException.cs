@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0003.md
 /// </remarks>
-[Serializable]
 public class UnableToCreateEventStreamForStreamTypeException : EsException
 {
     private const string Code = "ELFAES-CFG-0003";
@@ -42,20 +40,5 @@ public class UnableToCreateEventStreamForStreamTypeException : EsException
     {
         StreamType = streamType;
         FallbackStreamType = fallbackStreamType;
-    }
-
-    protected UnableToCreateEventStreamForStreamTypeException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        StreamType = info.GetString(nameof(StreamType))!;
-        FallbackStreamType = info.GetString(nameof(FallbackStreamType))!;
-    }
-
-    /// <inheritdoc />
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        base.GetObjectData(info, context);
-        info.AddValue(nameof(StreamType), StreamType);
-        info.AddValue(nameof(FallbackStreamType), FallbackStreamType);
     }
 }

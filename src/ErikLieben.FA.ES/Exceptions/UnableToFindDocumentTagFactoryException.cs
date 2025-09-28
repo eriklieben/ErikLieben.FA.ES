@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0005.md
 /// </remarks>
-[Serializable]
 public class UnableToFindDocumentTagFactoryException : EsException
 {
     private const string Code = "ELFAES-CFG-0005";
@@ -34,11 +32,6 @@ public class UnableToFindDocumentTagFactoryException : EsException
 
     public UnableToFindDocumentTagFactoryException(string message, Exception innerException)
         : base(Code, message, innerException)
-    {
-    }
-
-    protected UnableToFindDocumentTagFactoryException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

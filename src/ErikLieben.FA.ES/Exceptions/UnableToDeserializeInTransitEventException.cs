@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -21,7 +20,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-val-0001.md
 /// </remarks>
-[Serializable]
 public class UnableToDeserializeInTransitEventException : EsException
 {
     private const string Code = "ELFAES-VAL-0001";
@@ -38,11 +36,6 @@ public class UnableToDeserializeInTransitEventException : EsException
 
     public UnableToDeserializeInTransitEventException(string message, Exception innerException)
         : base(Code, message, innerException)
-    {
-    }
-
-    protected UnableToDeserializeInTransitEventException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

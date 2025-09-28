@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
@@ -23,7 +22,6 @@ namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0006.md
 /// </remarks>
-[Serializable]
 public class DocumentConfigurationException : EsException
 {
     private const string Code = "ELFAES-CFG-0006";
@@ -33,11 +31,6 @@ public class DocumentConfigurationException : EsException
     }
 
     public DocumentConfigurationException(string message, Exception innerException) : base(Code, message, innerException)
-    {
-    }
-
-    protected DocumentConfigurationException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 

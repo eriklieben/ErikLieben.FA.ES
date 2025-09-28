@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-file-0002.md
 /// </remarks>
-[Serializable]
 public class BlobDocumentStoreContainerNotFoundException : EsException
 {
     private const string Code = "ELFAES-FILE-0002";
@@ -34,11 +32,6 @@ public class BlobDocumentStoreContainerNotFoundException : EsException
 
     public BlobDocumentStoreContainerNotFoundException(string message, Exception innerException)
         : base(Code, message, innerException)
-    {
-    }
-
-    protected BlobDocumentStoreContainerNotFoundException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

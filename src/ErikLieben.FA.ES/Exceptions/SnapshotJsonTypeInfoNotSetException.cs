@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -21,7 +20,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0002.md
 /// </remarks>
-[Serializable]
 public class SnapshotJsonTypeInfoNotSetException : EsException
 {
     private const string Code = "ELFAES-CFG-0002";
@@ -38,11 +36,6 @@ public class SnapshotJsonTypeInfoNotSetException : EsException
 
     public SnapshotJsonTypeInfoNotSetException(string message, Exception innerException)
         : base(Code, message, innerException)
-    {
-    }
-
-    protected SnapshotJsonTypeInfoNotSetException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

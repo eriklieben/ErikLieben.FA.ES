@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -21,7 +20,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-val-0004.md
 /// </remarks>
-[Serializable]
 public class VersionTokenStreamMismatchException : EsException
 {
     private const string Code = "ELFAES-VAL-0004";
@@ -41,20 +39,5 @@ public class VersionTokenStreamMismatchException : EsException
     {
         LeftObjectIdentifier = leftObjectIdentifier;
         RightObjectIdentifier = rightObjectIdentifier;
-    }
-
-    protected VersionTokenStreamMismatchException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        LeftObjectIdentifier = info.GetString(nameof(LeftObjectIdentifier))!;
-        RightObjectIdentifier = info.GetString(nameof(RightObjectIdentifier))!;
-    }
-
-    /// <inheritdoc />
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        base.GetObjectData(info, context);
-        info.AddValue(nameof(LeftObjectIdentifier), LeftObjectIdentifier);
-        info.AddValue(nameof(RightObjectIdentifier), RightObjectIdentifier);
     }
 }

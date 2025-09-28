@@ -33,15 +33,4 @@ public class ConstraintExceptionTests
         // Assert
         Assert.IsAssignableFrom<Exception>(sut);
     }
-
-    [Fact]
-    public void Should_have_serializable_attribute()
-    {
-        // Arrange & Act
-        var type = typeof(ConstraintException);
-
-        // Assert
-        var serializableAttribute = type.GetCustomAttributes(typeof(SerializableAttribute), false);
-        Assert.NotEmpty(serializableAttribute);
-    }
 }

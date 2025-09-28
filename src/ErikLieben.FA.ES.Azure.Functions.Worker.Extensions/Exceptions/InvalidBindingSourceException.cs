@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Exceptions;
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-val-0002.md
 /// </remarks>
-[Serializable]
 internal class InvalidBindingSourceException : EsException
 {
     private const string Code = "ELFAES-VAL-0002";
@@ -45,11 +43,6 @@ internal class InvalidBindingSourceException : EsException
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public InvalidBindingSourceException(string actualSource, string expectedSource, Exception innerException)
         : base(Code, $"Unexpected binding source '{actualSource}'. Only '{expectedSource}' is supported.", innerException)
-    {
-    }
-
-    protected InvalidBindingSourceException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
     {
     }
 }

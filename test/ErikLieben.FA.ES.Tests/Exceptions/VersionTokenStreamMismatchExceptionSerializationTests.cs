@@ -1,6 +1,3 @@
-using System;
-using System.Reflection;
-using System.Runtime.Serialization;
 using ErikLieben.FA.ES.Exceptions;
 using Xunit;
 
@@ -8,48 +5,25 @@ namespace ErikLieben.FA.ES.Tests.Exceptions;
 
 public class VersionTokenStreamMismatchExceptionSerializationTests
 {
-    public class Serialization
+    public class Constructor
     {
         [Fact]
-        public void Should_roundtrip_properties_via_serialization_constructor()
+        public void Should_preserve_properties_and_message()
         {
             // Arrange
-            var left = "ObjectA__id";
-            var right = "ObjectB__id";
-            var original = new VersionTokenStreamMismatchException(left, right);
-            var info = new SerializationInfo(typeof(VersionTokenStreamMismatchException), new FormatterConverter());
-            var context = new StreamingContext(StreamingContextStates.All);
+            var left = "L";
+            var right = "R";
 
             // Act
-            original.GetObjectData(info, context);
-            var sut = (VersionTokenStreamMismatchException)Activator.CreateInstance(
-                typeof(VersionTokenStreamMismatchException),
-                BindingFlags.Instance | BindingFlags.NonPublic,
-                binder: null,
-                args: new object[] { info, context },
-                culture: null)!;
+            var sut1 = new VersionTokenStreamMismatchException(left, right);
+            var sut2 = new VersionTokenStreamMismatchException(left, right, new Exception("inner"));
 
             // Assert
-            Assert.Equal(left, sut.LeftObjectIdentifier);
-            Assert.Equal(right, sut.RightObjectIdentifier);
-            Assert.Equal("ELFAES-VAL-0004", info.GetString(nameof(EsException.ErrorCode)));
-            Assert.Equal($"[ELFAES-VAL-0004] Version token stream mismatch: '{left}' vs '{right}'.", sut.Message);
-        }
-
-        [Fact]
-        public void Should_include_properties_in_serialization_info_via_GetObjectData()
-        {
-            // Arrange
-            var sut = new VersionTokenStreamMismatchException("L", "R");
-            var info = new SerializationInfo(typeof(VersionTokenStreamMismatchException), new FormatterConverter());
-
-            // Act
-            sut.GetObjectData(info, new StreamingContext(StreamingContextStates.All));
-
-            // Assert
-            Assert.Equal("ELFAES-VAL-0004", info.GetString(nameof(EsException.ErrorCode)));
-            Assert.Equal("L", info.GetString(nameof(VersionTokenStreamMismatchException.LeftObjectIdentifier)));
-            Assert.Equal("R", info.GetString(nameof(VersionTokenStreamMismatchException.RightObjectIdentifier)));
+            Assert.Equal(left, sut1.LeftObjectIdentifier);
+            Assert.Equal(right, sut1.RightObjectIdentifier);
+            Assert.Contains(left, sut1.Message);
+            Assert.Contains(right, sut1.Message);
+            Assert.NotNull(sut2.InnerException);
         }
     }
 }

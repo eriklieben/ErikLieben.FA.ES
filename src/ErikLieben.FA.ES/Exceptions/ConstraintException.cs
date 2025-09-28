@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace ErikLieben.FA.ES.Exceptions;
 
@@ -22,7 +21,6 @@ namespace ErikLieben.FA.ES.Exceptions;
 ///
 /// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-biz-0001.md
 /// </remarks>
-[Serializable]
 public class ConstraintException : EsException
 {
     private const string Code = "ELFAES-BIZ-0001";
@@ -33,18 +31,5 @@ public class ConstraintException : EsException
         : base(Code, message)
     {
         Constraint = constraint;
-    }
-
-    protected ConstraintException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-        Constraint = (Constraint)info.GetValue(nameof(Constraint), typeof(Constraint))!;
-    }
-
-    /// <inheritdoc />
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        base.GetObjectData(info, context);
-        info.AddValue(nameof(Constraint), Constraint, typeof(Constraint));
     }
 }
