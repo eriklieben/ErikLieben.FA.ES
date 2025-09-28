@@ -7,9 +7,20 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace ErikLieben.FA.ES.Analyzers;
 
+/// <summary>
+/// Roslyn analyzer that warns when the When(...) API is used inside a stream session in an Aggregate and suggests using Fold(...) instead.
+/// </summary>
+/// <remarks>
+/// Within an Aggregate's Stream.Session(...), composing operations with When(...) is discouraged in favor of Fold(...),
+/// which makes state application explicit and consistent. This analyzer detects When invocations in that context and
+/// emits a warning with guidance to switch to Fold. The analyzer ignores usages outside Aggregates and outside a stream session.
+/// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class WhenUsageAnalyzer : DiagnosticAnalyzer
 {
+    /// <summary>
+    /// Gets the diagnostic identifier used by this analyzer.
+    /// </summary>
     public const string DiagnosticId = "FAES0001";
 
     private static readonly LocalizableString Title = "Use Fold over When";
@@ -24,8 +35,15 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
     private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
     private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
 
+    /// <summary>
+    /// Gets the diagnostics descriptors produced by this analyzer.
+    /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+    /// <summary>
+    /// Registers analysis actions to detect discouraged When(...) usage inside Aggregate stream sessions.
+    /// </summary>
+    /// <param name="context">The analysis context used to register actions.</param>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,9 +6,20 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace ErikLieben.FA.ES.Analyzers;
 
+/// <summary>
+/// Roslyn analyzer that warns when an event is appended within a stream session but not applied to the aggregate's active state.
+/// </summary>
+/// <remarks>
+/// In an Aggregate's <c>Stream.Session(...)</c> block, calling <c>Append(...)</c> should be wrapped by a call that applies the
+/// change to the active state (for example, <c>Fold(context.Append(...))</c> or <c>When(context.Append(...))</c>). This analyzer
+/// detects bare <c>Append</c> invocations in that context and reports a warning to encourage correct usage.
+/// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
 {
+    /// <summary>
+    /// Gets the diagnostic identifier used by this analyzer.
+    /// </summary>
     public const string DiagnosticId = "FAES0002";
 
     private static readonly LocalizableString Title = "Appended event is not applied to active state";
@@ -24,8 +34,15 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
     private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
     private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
 
+    /// <summary>
+    /// Gets the diagnostics supported by this analyzer.
+    /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+    /// <summary>
+    /// Registers actions that analyze invocation expressions to detect incorrect Append usage inside stream sessions.
+    /// </summary>
+    /// <param name="context">The analysis context used to register actions.</param>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -46,13 +63,13 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
         }
         else if (invocation.Expression is MemberAccessExpressionSyntax member)
         {
-            invokedName = member.Name as SimpleNameSyntax;
+            invokedName = member.Name;
         }
 
         if (invokedName == null)
             return;
 
-        if (!string.Equals(invokedName.Identifier.ValueText, "Append", System.StringComparison.Ordinal))
+        if (!string.Equals(invokedName.Identifier.ValueText, "Append", StringComparison.Ordinal))
             return;
 
         // Ensure it's a method invocation

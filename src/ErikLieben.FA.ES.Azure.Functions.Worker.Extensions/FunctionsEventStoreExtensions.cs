@@ -7,8 +7,17 @@ using Microsoft.Extensions.Options;
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions;
 
+/// <summary>
+/// Provides extension methods to configure the Event Store dependencies for Azure Functions Worker.
+/// </summary>
 public static class FunctionsEventStoreExtensions
 {
+    /// <summary>
+    /// Registers Event Store services and default settings for dependency injection.
+    /// </summary>
+    /// <param name="services">The service collection to add registrations to.</param>
+    /// <param name="settings">The default event stream type settings used to resolve factories.</param>
+    /// <returns>The <see cref="IServiceCollection"/> instance to support fluent configuration.</returns>
     public static IServiceCollection ConfigureEventStore(this IServiceCollection services, EventStreamDefaultTypeSettings settings)
     {
         services.AddSingleton(settings);
@@ -18,10 +27,16 @@ public static class FunctionsEventStoreExtensions
         services.RegisterKeyedDictionary<string, IDocumentTagDocumentFactory>();
         services.AddSingleton<IEventStreamFactory, EventStreamFactory>();
         services.RegisterKeyedDictionary<string, IEventStreamFactory>();
-        
+
         return services;
     }
 
+    /// <summary>
+    /// Registers a keyed dictionary mapping service keys to resolved services of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the service key.</typeparam>
+    /// <typeparam name="T">The service type to resolve.</typeparam>
+    /// <param name="serviceCollection">The service collection to read existing keyed registrations from.</param>
     private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection)
     {
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.

@@ -4,6 +4,9 @@ using ErikLieben.FA.ES.VersionTokenParts;
 
 namespace ErikLieben.FA.ES.JsonConverters;
 
+/// <summary>
+/// Provides JSON serialization and deserialization for <see cref="ObjectIdentifier"/> using the custom format "oid[<value>]<schemaVersion>".
+/// </summary>
 public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
 {
     private const string Prefix = "oid[";
@@ -97,7 +100,7 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
 // {
 //     private const string Prefix = "oid[";
 //     private const char SuffixStart = ']';
-//     
+//
 //     public override ObjectIdentifier Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 //     {
 //         var objectIdentifierString = reader.GetString();
@@ -115,7 +118,7 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
 //
 //         var value = objectIdentifierString.Substring(Prefix.Length, suffixStartIndex - Prefix.Length);
 //         var schemaVersion = objectIdentifierString.Substring(suffixStartIndex + 1); // Extract version part after ']'
-//         
+//
 //         if (string.IsNullOrEmpty(schemaVersion))
 //         {
 //             throw new JsonException($"Schema version missing in objectIdentifier: {objectIdentifierString}");

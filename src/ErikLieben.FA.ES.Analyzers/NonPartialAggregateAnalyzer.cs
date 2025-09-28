@@ -6,9 +6,19 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace ErikLieben.FA.ES.Analyzers;
 
+/// <summary>
+/// Roslyn analyzer that warns when a class inherits from Aggregate but is not declared partial, which is required for CLI code generation support.
+/// </summary>
+/// <remarks>
+/// Classes deriving from ErikLieben.FA.ES.Processors.Aggregate should be declared <c>partial</c> so that tooling can augment them.
+/// This analyzer reports a warning for non-partial Aggregate-derived classes to encourage correct setup.
+/// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class NonPartialAggregateAnalyzer : DiagnosticAnalyzer
 {
+    /// <summary>
+    /// Gets the diagnostic identifier used by this analyzer.
+    /// </summary>
     public const string DiagnosticId = "FAES0003";
 
     private static readonly LocalizableString Title = "Aggregate-derived class should be partial";
@@ -22,8 +32,15 @@ public class NonPartialAggregateAnalyzer : DiagnosticAnalyzer
 
     private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
 
+    /// <summary>
+    /// Gets the diagnostics descriptors produced by this analyzer.
+    /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+    /// <summary>
+    /// Registers analysis actions to detect Aggregate-derived classes that are not declared as partial.
+    /// </summary>
+    /// <param name="context">The analysis context used to register actions.</param>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);

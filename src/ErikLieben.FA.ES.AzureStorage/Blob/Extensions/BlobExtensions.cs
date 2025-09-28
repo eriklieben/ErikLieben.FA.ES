@@ -8,8 +8,19 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
 
+/// <summary>
+/// Provides extension methods for <see cref="BlobClient"/> to serialize/deserialize JSON entities and handle uploads with metadata/tags.
+/// </summary>
 public static class BlobExtensions
 {
+    /// <summary>
+    /// Downloads the blob content and deserializes it to a typed document using the specified source-generated JSON type info.
+    /// </summary>
+    /// <typeparam name="Document">The target document type.</typeparam>
+    /// <param name="blobClient">The blob client that points to the JSON document.</param>
+    /// <param name="jsonTypeInfo">The source-generated JSON type information for <typeparamref name="Document"/>.</param>
+    /// <param name="requestOptions">Optional conditional headers for the request; may be null.</param>
+    /// <returns>A tuple containing the deserialized document (or null when not found) and a SHA-256 hash of the JSON.</returns>
     public static async Task<(Document?, string?)> AsEntityAsync<Document>(
         this BlobClient blobClient,
         JsonTypeInfo<Document> jsonTypeInfo,
@@ -29,6 +40,13 @@ public static class BlobExtensions
         }
     }
 
+    /// <summary>
+    /// Downloads the blob content and deserializes it to an object using the specified source-generated JSON type info.
+    /// </summary>
+    /// <param name="blobClient">The blob client that points to the JSON document.</param>
+    /// <param name="jsonTypeInfo">The source-generated JSON type information that describes the runtime type.</param>
+    /// <param name="requestOptions">Optional conditional headers for the request; may be null.</param>
+    /// <returns>The deserialized object instance, or null when the blob does not exist.</returns>
     public static async Task<object?> AsEntityAsync(
         this BlobClient blobClient,
         JsonTypeInfo jsonTypeInfo,
@@ -47,6 +65,12 @@ public static class BlobExtensions
         }
     }
 
+    /// <summary>
+    /// Downloads the blob content as a UTF-8 string.
+    /// </summary>
+    /// <param name="blobJson">The blob client that points to the JSON document.</param>
+    /// <param name="requestOptions">Optional conditional headers for the request; may be null.</param>
+    /// <returns>The blob content as a string, or null when the blob does not exist.</returns>
     public static async Task<string?> AsString(
         this BlobClient blobJson,
         BlobRequestConditions? requestOptions = null)
@@ -65,6 +89,16 @@ public static class BlobExtensions
         }
     }
 
+    /// <summary>
+    /// Serializes an object using the given type info and uploads it to the blob with optional conditions, metadata and tags.
+    /// </summary>
+    /// <param name="blobJson">The blob client pointing to the destination blob.</param>
+    /// <param name="object">The object instance to serialize and upload.</param>
+    /// <param name="jsonTypeInfo">The source-generated JSON type info used for serialization.</param>
+    /// <param name="requestOptions">Optional request conditions for optimistic concurrency; may be null.</param>
+    /// <param name="metadata">Optional blob metadata dictionary; may be null.</param>
+    /// <param name="tags">Optional blob tags dictionary; may be null.</param>
+    /// <returns>The ETag value returned by the upload operation.</returns>
     public static async Task<string> Save(
         this BlobClient blobJson,
         object @object,
@@ -89,6 +123,17 @@ public static class BlobExtensions
         return info.Value.ETag.ToString();
     }
 
+    /// <summary>
+    /// Serializes an entity using the given type info, uploads it, and returns the resulting ETag and content hash.
+    /// </summary>
+    /// <typeparam name="Document">The entity type.</typeparam>
+    /// <param name="blobClient">The blob client pointing to the destination blob.</param>
+    /// <param name="entity">The entity instance to serialize and upload.</param>
+    /// <param name="jsonTypeInfo">The source-generated JSON type info used for serialization.</param>
+    /// <param name="requestOptions">Optional request conditions for optimistic concurrency; may be null.</param>
+    /// <param name="metadata">Optional blob metadata dictionary; may be null.</param>
+    /// <param name="tags">Optional blob tags dictionary; may be null.</param>
+    /// <returns>A tuple with the ETag and the SHA-256 hash of the serialized content.</returns>
     public static async Task<(string, string)> SaveEntityAsync<Document>(
         this BlobClient blobClient,
         Document entity,
@@ -116,6 +161,11 @@ public static class BlobExtensions
         return (info.Value.ETag.ToString(), hash);
     }
 
+    /// <summary>
+    /// Computes the hexadecimal SHA-256 hash for the specified text using UTF-8 encoding.
+    /// </summary>
+    /// <param name="rawData">The input text to hash.</param>
+    /// <returns>The lowercase hexadecimal SHA-256 string.</returns>
     private static string ComputeSha256Hash(string rawData)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));

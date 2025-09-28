@@ -12,12 +12,21 @@ using BlobDataStoreDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.Bl
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
+/// <summary>
+/// Provides an Azure Blob Storage-backed implementation of <see cref="IDataStore"/> for reading and appending event streams.
+/// </summary>
 public class BlobDataStore : IDataStore
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AzureStorage");
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlobDataStore"/> class.
+    /// </summary>
+    /// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
+    /// <param name="autoCreateContainer">A value indicating whether the target blob container is created automatically when missing.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="clientFactory"/> is null.</exception>
     public BlobDataStore(IAzureClientFactory<BlobServiceClient> clientFactory, bool autoCreateContainer)
     {
         ArgumentNullException.ThrowIfNull(clientFactory);
@@ -26,6 +35,15 @@ public class BlobDataStore : IDataStore
         this.autoCreateContainer = autoCreateContainer;
     }
 
+    /// <summary>
+    /// Reads events for the specified document from Azure Blob Storage.
+    /// </summary>
+    /// <param name="document">The document whose event stream is read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
+    /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
+    /// <exception cref="BlobDocumentStoreContainerNotFoundException">Thrown when the configured container does not exist.</exception>
     public async Task<IEnumerable<IEvent>?> ReadAsync(
         IObjectDocument document,
         int startVersion = 0,
@@ -68,6 +86,15 @@ public class BlobDataStore : IDataStore
                     .ToList();
     }
 
+    /// <summary>
+    /// Appends the specified events to the event stream of the given document in Azure Blob Storage.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="events">The events to append in order; must contain at least one event.</param>
+    /// <returns>A task that represents the asynchronous append operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="document"/> or its stream identifier is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when no events are provided.</exception>
+    /// <exception cref="BlobDataStoreProcessingException">Thrown when optimistic concurrency or persistence operations fail.</exception>
     public async Task AppendAsync(IObjectDocument document, params IEvent[] events)
     {
         using var activity = ActivitySource.StartActivity("BlobDataStore.AppendAsync");
