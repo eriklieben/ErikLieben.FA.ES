@@ -40,7 +40,6 @@
     <Folder Include="Attributes\" />
     <Folder Include="Documents\" />
     <Folder Include="EventStream\" />
-    <Folder Include="Exceptions\" />
     <Folder Include="JsonConverters\" />
     <Folder Include="Processors\" />
     <Folder Include="Projections\" />
