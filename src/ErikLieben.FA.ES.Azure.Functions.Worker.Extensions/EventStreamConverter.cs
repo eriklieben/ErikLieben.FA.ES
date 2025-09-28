@@ -97,7 +97,7 @@ internal class EventStreamConverter : IInputConverter
         var factory = aggregrateFactory.GetFactory(targetType);
         if (factory == null)
         {
-            throw new Exception("Configuration error, factory for target type cannot be setup");
+            throw new InvalidOperationException("Configuration error: factory for the requested target type is not configured or cannot be resolved.");
         }
         var document = data.CreateEmptyObjectWhenNonExistent ?
             await objectDocumentFactory.GetOrCreateAsync(factory.GetObjectName(), data.ObjectId, data.ObjectType) :

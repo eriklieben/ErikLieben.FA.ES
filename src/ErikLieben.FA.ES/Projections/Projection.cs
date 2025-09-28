@@ -92,9 +92,13 @@ public abstract class Projection : IProjectionBase
     public async Task UpdateToVersion(VersionToken token, IExecutionContext? context = null)
     {
 
-        if (DocumentFactory == null || EventStreamFactory == null)
+        if (DocumentFactory == null)
         {
-            throw new Exception("documentFactory or eventStreamFactory is null");
+            throw new ArgumentNullException(nameof(DocumentFactory));
+        }
+        if (EventStreamFactory == null)
+        {
+            throw new ArgumentNullException(nameof(EventStreamFactory));
         }
 
         if (IsNewer(token) || token.TryUpdateToLatestVersion)
@@ -123,9 +127,13 @@ public abstract class Projection : IProjectionBase
     public async Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
         where T: class
     {
-        if (DocumentFactory == null || EventStreamFactory == null)
+        if (DocumentFactory == null)
         {
-            throw new Exception("documentFactory or eventStreamFactory is null");
+            throw new ArgumentNullException(nameof(DocumentFactory));
+        }
+        if (EventStreamFactory == null)
+        {
+            throw new ArgumentNullException(nameof(EventStreamFactory));
         }
 
         if (IsNewer(token) || token.TryUpdateToLatestVersion)
@@ -146,7 +154,7 @@ public abstract class Projection : IProjectionBase
             {
                 if (context != null && @event == context.Event)
                 {
-                    throw new Exception("parent event is same as current event, are you running into a loop?");
+                    throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
                 }
 
                 await Fold(@event, document, data, context);

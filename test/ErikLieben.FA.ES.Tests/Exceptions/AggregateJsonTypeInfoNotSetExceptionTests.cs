@@ -12,7 +12,7 @@ public class AggregateJsonTypeInfoNotSetExceptionTests
         var sut = new AggregateJsonTypeInfoNotSetException();
 
         // Assert
-        Assert.Equal("Aggregate JsonInfo type should be set to deserialize the aggregate type", sut.Message);
+        Assert.Equal("[ELFAES-CFG-0001] Aggregate JsonInfo type should be set to deserialize the aggregate type", sut.Message);
     }
 
     [Fact]

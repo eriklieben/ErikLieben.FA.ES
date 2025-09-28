@@ -33,7 +33,7 @@ public class BlobDataStore : IDataStore
         int? chunk = null)
     {
         using var activity = ActivitySource.StartActivity("BlobDataStore.ReadAsync");
-        
+
         string? documentPath = null;
         if (document.Active.ChunkingEnabled())
         {
@@ -44,8 +44,8 @@ public class BlobDataStore : IDataStore
             documentPath = $"{document.Active.StreamIdentifier}.json";
         }
         var blob = CreateBlobClient(document, documentPath);
-        
-        
+
+
 
         BlobDataStoreDocument? dataDocument = null;
         try
@@ -122,7 +122,7 @@ public class BlobDataStore : IDataStore
 
         if (doc.LastObjectDocumentHash != "*" && doc.LastObjectDocumentHash != blobDoc.PrevHash)
         {
-            throw new Exception("Something bad is going on");
+            throw new BlobDataStoreProcessingException($"Optimistic concurrency check failed: document hash mismatch for '{document.ObjectName.ToLowerInvariant()}/{documentPath}'.");
         }
         doc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
 
@@ -131,7 +131,7 @@ public class BlobDataStore : IDataStore
             BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
             new BlobRequestConditions { IfMatch = etag });
     }
-    
+
     private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);

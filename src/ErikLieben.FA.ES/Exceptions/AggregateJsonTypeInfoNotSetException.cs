@@ -1,10 +1,48 @@
-﻿namespace ErikLieben.FA.ES.Exceptions;
+﻿using System;
+using System.Runtime.Serialization;
 
-public class AggregateJsonTypeInfoNotSetException : Exception
+namespace ErikLieben.FA.ES.Exceptions;
+
+/// <summary>
+/// Exception thrown when the JSON TypeInfo for the aggregate type has not been configured.
+/// Error Code: ELFAES-CFG-0001
+/// </summary>
+/// <remarks>
+/// This exception is thrown in the following scenarios:
+/// - Attempting to deserialize an aggregate without providing the required JsonTypeInfo.
+///
+/// Common causes:
+/// - Missing configuration of JsonSerializerContext for aggregate types.
+/// - Incorrect DI setup that omits JsonTypeInfo registration.
+///
+/// Recommended actions:
+/// - Ensure the aggregate JsonTypeInfo is registered in the JsonSerializerContext.
+/// - Verify your configuration/DI registration for serialization setup.
+///
+/// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0001.md
+/// </remarks>
+[Serializable]
+public class AggregateJsonTypeInfoNotSetException : EsException
 {
+    private const string Code = "ELFAES-CFG-0001";
+
     public AggregateJsonTypeInfoNotSetException()
-        : base("Aggregate JsonInfo type should be set to deserialize the aggregate type")
+        : base(Code, "Aggregate JsonInfo type should be set to deserialize the aggregate type")
     {
-        
+    }
+
+    public AggregateJsonTypeInfoNotSetException(string message)
+        : base(Code, message)
+    {
+    }
+
+    public AggregateJsonTypeInfoNotSetException(string message, Exception innerException)
+        : base(Code, message, innerException)
+    {
+    }
+
+    protected AggregateJsonTypeInfoNotSetException(SerializationInfo info, StreamingContext context)
+        : base(info, context)
+    {
     }
 }

@@ -27,7 +27,7 @@ public class VersionTokenComparer : IVersionTokenComparer
 
         if (xIdentifier.ObjectIdentifier != yIdentifier.ObjectIdentifier)
         {
-            throw new Exception("it seems you are compare different streams");
+            throw new Exceptions.VersionTokenStreamMismatchException(xIdentifier.ObjectIdentifier.Value, yIdentifier.ObjectIdentifier.Value);
         }
 
         return string.Compare(xIdentifier.VersionIdentifier.Value, yIdentifier.VersionIdentifier.Value, StringComparison.OrdinalIgnoreCase);

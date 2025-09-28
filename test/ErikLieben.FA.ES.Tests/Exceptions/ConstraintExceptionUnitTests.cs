@@ -16,7 +16,7 @@ public class ConstraintExceptionTests
         var sut = new ConstraintException(message, constraint);
 
         // Assert
-        Assert.Equal(message, sut.Message);
+        Assert.Equal("[ELFAES-BIZ-0001] " + message, sut.Message);
         Assert.Equal(constraint, sut.Constraint);
     }
 

@@ -16,7 +16,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 var sut = new BlobDataStoreProcessingException(errorMessage);
 
                 // Assert
-                Assert.Equal(errorMessage, sut.Message);
+                Assert.Equal("[ELFAES-EXT-0001] " + errorMessage, sut.Message);
             }
 
             [Fact]
@@ -54,7 +54,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 Exception sut = new BlobDataStoreProcessingException(errorMessage);
 
                 // Assert
-                Assert.Equal(errorMessage, sut.Message);
+                Assert.Equal("[ELFAES-EXT-0001] " + errorMessage, sut.Message);
             }
         }
     }

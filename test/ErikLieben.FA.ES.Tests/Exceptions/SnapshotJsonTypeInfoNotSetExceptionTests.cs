@@ -12,7 +12,7 @@ public class SnapshotJsonTypeInfoNotSetExceptionTests
         var sut = new SnapshotJsonTypeInfoNotSetException();
 
         // Assert
-        Assert.Equal("Snapshot JsonInfo type should be set to deserialize the snapshot type", sut.Message);
+        Assert.Equal("[ELFAES-CFG-0002] Snapshot JsonInfo type should be set to deserialize the snapshot type", sut.Message);
     }
 
     [Fact]

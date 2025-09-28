@@ -17,7 +17,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 var sut = new BlobDocumentNotFoundException(message, innerException);
 
                 // Assert
-                Assert.Equal(message, sut.Message);
+                Assert.Equal("[ELFAES-FILE-0001] " + message, sut.Message);
             }
 
             [Fact]
