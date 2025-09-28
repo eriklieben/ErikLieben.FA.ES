@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System.Diagnostics.CodeAnalysis;
+using ErikLieben.FA.ES.Documents;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
@@ -13,6 +14,7 @@ public interface IBlobDocumentStore
     /// <param name="name">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to create.</param>
     /// <returns>The created or existing <see cref="IObjectDocument"/> instance.</returns>
+    [return: MaybeNull]
     Task<IObjectDocument> CreateAsync(
         string name,
         string objectId);

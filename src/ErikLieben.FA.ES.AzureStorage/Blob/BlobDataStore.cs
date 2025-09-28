@@ -71,7 +71,7 @@ public class BlobDataStore : IDataStore
             dataDocument = (await blob.AsEntityAsync(BlobDataStoreDocumentContext.Default.BlobDataStoreDocument)).Item1;
             if (dataDocument == null)
             {
-                return null!;
+                return null;
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")

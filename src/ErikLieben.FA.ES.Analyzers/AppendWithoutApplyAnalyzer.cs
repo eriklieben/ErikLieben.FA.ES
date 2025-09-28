@@ -23,7 +23,7 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
     public const string DiagnosticId = "FAES0002";
 
     private static readonly LocalizableString Title = "Appended event is not applied to active state";
-    private static readonly LocalizableString MessageFormat = "Event is appended but not applied to the active state. Wrap with Fold(context.Append(...))";
+    private static readonly LocalizableString MessageFormat = "Event is appended but not applied to the active state. Wrap with Fold(context.Append(...)).";
     private static readonly LocalizableString Description = "Within a Stream.Session in an Aggregate, appending an event should be applied to the aggregate's active state using Fold(context.Append(...)).";
     private const string Category = "Usage";
 

@@ -3,7 +3,6 @@ using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.Options;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 

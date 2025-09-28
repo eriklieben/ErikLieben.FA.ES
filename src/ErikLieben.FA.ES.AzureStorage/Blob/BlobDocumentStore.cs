@@ -57,7 +57,8 @@ public BlobDocumentStore(
 /// <param name="objectId">The identifier of the object to create.</param>
 /// <returns>The created or existing object document loaded from storage.</returns>
 /// <exception cref="BlobDocumentStoreContainerNotFoundException">Thrown when the configured document container does not exist.</exception>
-public async Task<IObjectDocument> CreateAsync(
+[return: System.Diagnostics.CodeAnalysis.MaybeNull]
+    public async Task<IObjectDocument> CreateAsync(
         string name,
         string objectId)
     {
@@ -124,7 +125,7 @@ public async Task<IObjectDocument> CreateAsync(
         }
         var newDoc = ToBlobEventStreamDocument(doc);
 
-        newDoc.SetHash(ComputeSha256Hash(json),ComputeSha256Hash(json));
+        newDoc.SetHash(ComputeSha256Hash(json), ComputeSha256Hash(json));
         return newDoc;
     }
 
@@ -208,7 +209,7 @@ public async Task<IObjectDocument> GetAsync(
         {
             return await GetAsync(objectName, objectId);
         }
-        return null!;
+        return null;
     }
 
 
