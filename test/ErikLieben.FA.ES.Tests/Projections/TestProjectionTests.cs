@@ -345,8 +345,8 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var token = new VersionToken(objectIdentifier, versionIdentifier);
 
                 // Act & Assert
-                var exception = await Assert.ThrowsAsync<Exception>(() => sut.UpdateToVersion(token));
-                Assert.Equal("documentFactory or eventStreamFactory is null", exception.Message);
+                var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => sut.UpdateToVersion(token));
+                Assert.Equal("DocumentFactory", exception.ParamName);
             }
 
             [Fact]
@@ -523,9 +523,9 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var data = new TestData();
 
                 // Act & Assert
-                var exception = await Assert.ThrowsAsync<Exception>(() =>
+                var exception = await Assert.ThrowsAsync<ArgumentNullException>(() =>
                     sut.UpdateToVersion<TestData>(token, null, data));
-                Assert.Equal("documentFactory or eventStreamFactory is null", exception.Message);
+                Assert.Equal("DocumentFactory", exception.ParamName);
             }
 
             [Fact]
@@ -563,9 +563,9 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 context.Event.Returns(@event); // Same event in context and in stream
 
                 // Act & Assert
-                var exception = await Assert.ThrowsAsync<Exception>(() =>
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                     sut.UpdateToVersion<TestData>(token, context, null));
-                Assert.Equal("parent event is same as current event, are you running into a loop?", exception.Message);
+                Assert.Equal("Parent event is the same as the current event; a processing loop may be occurring.", exception.Message);
             }
 
             [Fact]

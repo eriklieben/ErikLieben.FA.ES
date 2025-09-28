@@ -366,7 +366,7 @@ public class BlobDocumentTagStoreTests
                 await Assert.ThrowsAsync<BlobDataStoreProcessingException>(() =>
                     sut.SetAsync(objectDocument, "test-tag"));
             Assert.Equal(
-                "Unable to find tag document 'test-object-name/tags/document/test-tag.json' while processing save.",
+                "[ELFAES-EXT-0001] Unable to find tag document 'test-object-name/tags/document/test-tag.json' while processing save.",
                 exception.Message);
         }
 

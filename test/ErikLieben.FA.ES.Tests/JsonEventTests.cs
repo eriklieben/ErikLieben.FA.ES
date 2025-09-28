@@ -52,52 +52,52 @@ public class JsonEventTests
             // Act
            var exception =
                Assert.Throws<ArgumentNullException>(() => JsonEvent.To(null!, new TestContext().String));
-            
+
             // Assert
             Assert.Equal("@event", exception.ParamName);
             Assert.Equal("Value cannot be null. (Parameter '@event')", exception.Message);
         }
-        
+
         [Fact]
         public void Should_throw_ArgumentNullException_when_event_payload_is_null()
         {
             // Arrange
             var @event = Substitute.For<IEvent>();
             @event.Payload.Returns((string?)null!);
-            
+
             // Act
            var exception =
                Assert.Throws<ArgumentNullException>(() => JsonEvent.To(@event, new TestContext().String));
-            
+
             // Assert
             Assert.Equal("@event?.Payload", exception.ParamName);
             Assert.Equal("Value cannot be null. (Parameter '@event?.Payload')", exception.Message);
         }
-        
-        
+
+
         [Fact]
         public void Should_throw_ArgumentNullException_when_typeInfo_is_null()
         {
             // Arrange
             var @event = Substitute.For<IEvent>();
             @event.Payload.Returns(string.Empty);
-            
+
             // Act
            var exception =
                Assert.Throws<ArgumentNullException>(() => JsonEvent.To<string>(@event, null!));
-            
+
             // Assert
             Assert.Equal("typeInfo", exception.ParamName);
             Assert.Equal("Value cannot be null. (Parameter 'typeInfo')", exception.Message);
         }
-        
+
         [Fact]
         public void Should_throw_UnableToDeserializeInTransitEventException_when_deserialization_fails()
         {
             // Arrange
             var invalidPayloadEvent = new JsonEvent
             {
-                Payload = "null", 
+                Payload = "null",
                 EventType = "TestEvent",
                 EventVersion = 1
             };
@@ -110,25 +110,25 @@ public class JsonEventTests
             // Assert
             Assert.NotNull(exception);
             Assert.Equal(
-                "Unable to deserialize to event, value is 'null'",
+                "[ELFAES-VAL-0001] Unable to deserialize to event, value is 'null'",
                 exception.Message);
         }
-        
-        
+
+
         [Fact]
         public void Should_return_event_when_deserialization_succeeds()
         {
             // Arrange
             var @event = new JsonEvent
             {
-                Payload = "[\"a\",\"b\"]", 
+                Payload = "[\"a\",\"b\"]",
                 EventType = "TestEvent",
                 EventVersion = 1,
             };
-            
+
             // Act
             var result = JsonEvent.To(@event, new TestContext().ListString);
-            
+
             // Assert
             Assert.NotNull(result);
         }
@@ -147,7 +147,7 @@ public class JsonEventTests
             @event.EventVersion.Returns(1);
             @event.ActionMetadata.Returns(new ActionMetadata());
             @event.Metadata.Returns(new Dictionary<string, string>());
-            var data = new { Id = 1, Name = "TestData" }; 
+            var data = new { Id = 1, Name = "TestData" };
 
             // Act
             var result = JsonEvent.ToEvent(@event, data);
@@ -162,8 +162,8 @@ public class JsonEventTests
             Assert.Equal(new ActionMetadata(), result.ActionMetadata);
             Assert.Equal(data, result.Data());
         }
-        
-        
+
+
         [Fact]
         public void Should_convert_event_to_generic_event_with_expected_values_when_payload_is_list_string()
         {
@@ -189,7 +189,7 @@ public class JsonEventTests
             Assert.Equal(new ActionMetadata(), result.ActionMetadata);
             Assert.Equal(["1", "2", "3"], result.Data());
         }
-    } 
+    }
 }
 
 

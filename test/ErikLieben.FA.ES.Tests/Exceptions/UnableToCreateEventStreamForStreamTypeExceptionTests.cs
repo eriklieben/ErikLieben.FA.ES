@@ -16,7 +16,7 @@ public class UnableToCreateEventStreamForStreamTypeExceptionTests
         var sut = new UnableToCreateEventStreamForStreamTypeException(streamType, fallbackStreamType);
 
         // Assert
-        Assert.Equal($"Unable to create EventStream of the type {streamType} or {fallbackStreamType}. Is your configuration correct?", sut.Message);
+        Assert.Equal($"[ELFAES-CFG-0003] Unable to create EventStream of the type {streamType} or {fallbackStreamType}. Is your configuration correct?", sut.Message);
     }
 
     [Fact]

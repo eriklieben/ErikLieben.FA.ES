@@ -64,7 +64,7 @@ public class LeasedSession : ILeasedSession
 
         if (!eventStream.EventTypeRegistry.TryGetByType(typeof(TPayloadType), out var eventTypeInfo) || eventTypeInfo == null)
         {
-            throw new Exception("TODO: Event type not registered.");
+            throw new InvalidOperationException($"Event type '{typeof(TPayloadType).Name}' is not registered in the event type registry.");
         }
 
         var eventName = string.IsNullOrWhiteSpace(overrideEventType)

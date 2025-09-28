@@ -59,8 +59,8 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 string y = "Project__12345678-abcd-1234-efgh-123456789012__1234567890abcdef12345678900000000001__00000000000000000001";
 
                 // Act & Assert
-                var exception = Assert.Throws<Exception>(() => sut.Compare(x, y));
-                Assert.Equal("it seems you are compare different streams", exception.Message);
+                var exception = Assert.Throws<ErikLieben.FA.ES.Exceptions.VersionTokenStreamMismatchException>(() => sut.Compare(x, y));
+                Assert.Equal("ELFAES-VAL-0004", exception.ErrorCode);
             }
 
             [Theory]

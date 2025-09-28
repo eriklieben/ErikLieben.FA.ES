@@ -6,7 +6,7 @@ namespace ErikLieben.FA.ES.Testing.InMemory;
 public class InMemoryDocumentStore
 {
     private readonly Dictionary<string, IObjectDocument> documents = new();
-    
+
     public Task<IObjectDocument> CreateAsync(string name, string objectId)
     {
         var created = new InMemoryEventStreamDocument(
@@ -28,7 +28,7 @@ public class InMemoryDocumentStore
 
         if (documents.ContainsKey($"{name}/{objectId}"))
         {
-           throw new Exception("Document already exists"); 
+           throw new InvalidOperationException($"Document '{name}/{objectId}' already exists in the in-memory store.");
         }
         else
         {
@@ -45,7 +45,7 @@ public class InMemoryDocumentStore
         }
         else
         {
-            documents.Add($"{document.ObjectName.ToLowerInvariant()}/{document.ObjectId}", document);   
+            documents.Add($"{document.ObjectName.ToLowerInvariant()}/{document.ObjectId}", document);
         }
         return Task.CompletedTask;
     }

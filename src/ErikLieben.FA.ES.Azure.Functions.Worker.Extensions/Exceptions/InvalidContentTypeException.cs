@@ -1,26 +1,48 @@
-﻿namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Exceptions;
+﻿using System;
+using ErikLieben.FA.ES.Exceptions;
+
+namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Exceptions;
 
 /// <summary>
-/// The exception that is thrown when an invalid content-type is provided.
+/// Exception thrown when an invalid content-type is provided to an Azure Functions Worker binding.
+/// Error Code: ELFAES-VAL-0003
 /// </summary>
-internal class InvalidContentTypeException : InvalidOperationException
+/// <remarks>
+/// This exception is thrown in the following scenarios:
+/// - The provided request/content type does not match the supported type(s).
+///
+/// Common causes:
+/// - Client sends an unexpected Content-Type header.
+/// - Binding or attribute expects a different content type.
+///
+/// Recommended actions:
+/// - Ensure the request Content-Type matches the expected value(s).
+/// - Update binding configuration or client request accordingly.
+///
+/// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-val-0003.md
+/// </remarks>
+internal class InvalidContentTypeException : EsException
 {
-    /// <summary>
-    /// Initializes a new instance of the InvalidContentTypeException class with a specified error message.
-    /// </summary>
-    /// <param name="actualContentType">The source that is being provided.</param>
-    /// <param name="expectedContentType">The content type(s) that is supported.</param>
-    public InvalidContentTypeException(string actualContentType, string expectedContentType)
-        : base($"Unexpected content-type '{actualContentType}'. Only '{expectedContentType}' is supported.") { }
+    private const string Code = "ELFAES-VAL-0003";
 
     /// <summary>
-    /// Initializes a new instance of the InvalidContentTypeException class with a specified error message
-    /// and a reference to the inner exception that is the cause of this exception.
+    /// Initializes a new instance of the exception with a formatted message including the actual and expected content types.
     /// </summary>
-    /// <param name="actualContentType">The source that is being provided.</param>
+    /// <param name="actualContentType">The content type that is being provided.</param>
     /// <param name="expectedContentType">The content type(s) that is supported.</param>
-    /// <param name="innerException">The exception that is the cause of the current exception
-    /// or a null reference if no inner exception is specified.</param>
+    public InvalidContentTypeException(string actualContentType, string expectedContentType)
+        : base(Code, $"Unexpected content-type '{actualContentType}'. Only '{expectedContentType}' is supported.")
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the exception with a formatted message and an inner exception.
+    /// </summary>
+    /// <param name="actualContentType">The content type that is being provided.</param>
+    /// <param name="expectedContentType">The content type(s) that is supported.</param>
+    /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public InvalidContentTypeException(string actualContentType, string expectedContentType, Exception innerException)
-        : base($"Unexpected content-type '{actualContentType}'. Only '{expectedContentType}' is supported.", innerException) { }
+        : base(Code, $"Unexpected content-type '{actualContentType}'. Only '{expectedContentType}' is supported.", innerException)
+    {
+    }
 }

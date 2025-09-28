@@ -1,13 +1,37 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.AzureStorage.Exceptions;
 
-public class DocumentConfigurationException : Exception
+/// <summary>
+/// Exception thrown when document-related configuration is invalid or missing.
+/// Error Code: ELFAES-CFG-0006
+/// </summary>
+/// <remarks>
+/// This exception is thrown in the following scenarios:
+/// - Required configuration values for Azure Storage documents are missing or invalid.
+///
+/// Common causes:
+/// - Misconfigured connection strings, container names, or paths.
+/// - Typographical errors in configuration keys.
+///
+/// Recommended actions:
+/// - Validate configuration values during startup.
+/// - Use the provided helper guards to validate inputs.
+///
+/// Documentation: https://github.com/eriklieben/ErikLieben.FA.ES/blob/main/docs/exceptions/elfaes-cfg-0006.md
+/// </remarks>
+public class DocumentConfigurationException : EsException
 {
-    public DocumentConfigurationException(string message) : base(message)
+    private const string Code = "ELFAES-CFG-0006";
+
+    public DocumentConfigurationException(string message) : base(Code, message)
     {
-        
+    }
+
+    public DocumentConfigurationException(string message, Exception innerException) : base(Code, message, innerException)
+    {
     }
 
     /// <summary>Throws an <see cref="ArgumentNullException"/> if <paramref name="argument"/> is null.</summary>

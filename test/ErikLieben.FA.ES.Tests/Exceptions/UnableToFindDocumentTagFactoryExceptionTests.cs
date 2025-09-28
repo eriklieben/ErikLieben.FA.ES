@@ -10,12 +10,12 @@ public class UnableToFindDocumentTagFactoryExceptionTests
     {
         // Arrange
         var message = "Test document tag factory message";
-        
+
         // Act
         var sut = new UnableToFindDocumentTagFactoryException(message);
 
         // Assert
-        Assert.Equal(message, sut.Message);
+        Assert.Equal("[ELFAES-CFG-0005] " + message, sut.Message);
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class UnableToFindDocumentTagFactoryExceptionTests
     {
         // Arrange
         var message = "Test document tag factory message";
-        
+
         // Act
         var sut = new UnableToFindDocumentTagFactoryException(message);
 

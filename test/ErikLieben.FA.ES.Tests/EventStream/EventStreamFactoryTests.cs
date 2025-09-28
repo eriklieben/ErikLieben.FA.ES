@@ -143,7 +143,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var exception =
                     Assert.Throws<UnableToCreateEventStreamForStreamTypeException>(() => sut.Create(document));
                 Assert.Equal(
-                    $"Unable to create EventStream of the type {streamType} or {defaultStreamType}. Is your configuration correct?",
+                    $"[ELFAES-CFG-0003] Unable to create EventStream of the type {streamType} or {defaultStreamType}. Is your configuration correct?",
                     exception.Message);
             }
 
@@ -202,7 +202,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                     Assert.Throws<UnableToCreateEventStreamForStreamTypeException>(() => sut.Create(document));
 
                 Assert.Equal(
-                    $"Unable to create EventStream of the type {documentStreamType} or {fallbackStreamType}. Is your configuration correct?",
+                    $"[ELFAES-CFG-0003] Unable to create EventStream of the type {documentStreamType} or {fallbackStreamType}. Is your configuration correct?",
                     exception.Message);
             }
 

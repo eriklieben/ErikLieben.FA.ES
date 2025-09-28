@@ -12,7 +12,7 @@ public class UnableToDeserializeInTransitEventExceptionTests
         var sut = new UnableToDeserializeInTransitEventException();
 
         // Assert
-        Assert.Equal("Unable to deserialize to event, value is 'null'", sut.Message);
+        Assert.Equal("[ELFAES-VAL-0001] Unable to deserialize to event, value is 'null'", sut.Message);
     }
 
     [Fact]

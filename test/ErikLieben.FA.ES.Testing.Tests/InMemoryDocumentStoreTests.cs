@@ -29,7 +29,7 @@ public class InMemoryDocumentStoreTests
         await store.CreateAsync("order", "1");
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(async () => await store.CreateAsync("order", "1"));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await store.CreateAsync("order", "1"));
     }
 
     [Fact]

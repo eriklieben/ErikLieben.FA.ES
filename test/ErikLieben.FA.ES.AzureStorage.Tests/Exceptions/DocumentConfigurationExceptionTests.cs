@@ -16,7 +16,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 var sut = new DocumentConfigurationException(expectedMessage);
 
                 // Assert
-                Assert.Equal(expectedMessage, sut.Message);
+                Assert.Equal("[ELFAES-CFG-0006] " + expectedMessage, sut.Message);
             }
         }
 
