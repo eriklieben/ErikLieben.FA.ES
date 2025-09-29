@@ -96,7 +96,7 @@ public class InMemoryDataStoreTests
         // Assert
         Assert.False(dict.ContainsKey(0));
         Assert.True(dict.ContainsKey(1));
-        Assert.Equal(1, dict.Count);
+        Assert.Single(dict);
     }
 
     [Fact]

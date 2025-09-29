@@ -55,7 +55,7 @@ public class EventStreamConverterTests
         aggFactory.GetFactory(typeof(TestAggregate)).Returns((IAggregateCovarianceFactory<IBase>?)null);
         var sut = new EventStreamConverter(aggFactory, docFactory, streamFactory);
 
-        var data = new EventStreamData("42", "Order", null, null, null, null, true);
+        var data = new EventStreamData("42", "Order", string.Empty, string.Empty, string.Empty, string.Empty, true);
 
         // Act
         async Task<object?> Act() => await sut.ConvertModelBindingDataAsync(typeof(TestAggregate), data);
@@ -90,7 +90,7 @@ public class EventStreamConverterTests
 
         var sut = new EventStreamConverter(aggFactory, docFactory, streamFactory);
 
-        var data = new EventStreamData("42", "Order", connection: null, documentType: null, defaultStreamType: null, defaultStreamConnection: null, createEmtpyObjectWhenNonExisting: createWhenMissing)
+        var data = new EventStreamData("42", "Order", connection: string.Empty, documentType: string.Empty, defaultStreamType: string.Empty, defaultStreamConnection: string.Empty, createEmtpyObjectWhenNonExisting: createWhenMissing)
         {
             CreateEmptyObjectWhenNonExistent = createWhenMissing
         };
@@ -132,7 +132,8 @@ public class EventStreamConverterTests
         var streamFactory = Substitute.For<IEventStreamFactory>();
         var sut = new EventStreamConverter(aggFactory, docFactory, streamFactory);
 
-        var data = new EventStreamData(null!, "Order", null, null, null, null, true);
+        var data = new EventStreamData("42", "Order", string.Empty, string.Empty, string.Empty, string.Empty, true);
+        data.ObjectId = null;
 
         // Act
         Task<object?> Act() => sut.ConvertModelBindingDataAsync(typeof(TestAggregate), data);

@@ -2,6 +2,7 @@
 ; https://aka.ms/roslyn-analyzer-release-tracking
 
 ### New Rules
+
 Rule ID | Category | Severity | Notes
 ----- | ----- | ----- | -----
 FAES0001 | Usage | Warning | WhenUsageAnalyzer: Use Fold(...) instead of When(...)

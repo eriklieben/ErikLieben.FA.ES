@@ -1,8 +1,9 @@
 ; Shipped analyzer releases
 ; https://aka.ms/roslyn-analyzer-release-tracking
 
-# Release 0.0.0
+## Release 0.0.0
 
-### New Rules
+## New Rules
+
 Rule ID | Category | Severity | Notes
 ----- | ----- | ----- | -----

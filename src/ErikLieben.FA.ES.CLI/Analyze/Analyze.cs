@@ -171,7 +171,6 @@ public class Analyze(Config config, IAnsiConsole console)
                         failed = true;
                         stopwatch.Stop();
                         taskbar.Description = $"[red]Analyze Failed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
-                        // taskbar.IsIndeterminate();
                         taskbar.Value(0);
                         taskbar.StopTask();
 

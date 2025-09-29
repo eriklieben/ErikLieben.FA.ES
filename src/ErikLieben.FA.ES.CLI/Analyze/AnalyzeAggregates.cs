@@ -51,12 +51,6 @@ public class AnalyzeAggregates
         }
 
         var declaration = GetOrCreateAggregateDefinition(aggregates);
-        // declaration.Constructors.AddRange(ConstructorHelper.GetConstructors(classSymbol));
-        // declaration.Properties.AddRange(PropertyHelper.GetPublicGetterProperties(typeSymbol));
-        // declaration.Events.AddRange(WhenMethodHelper.GetEventDefinitions(typeSymbol, compilation, roslyn));
-        // declaration.Commands.AddRange(CommandHelper.GetCommandMethods(typeSymbol, roslyn));
-        // declaration.PostWhen =  PostWhenHelper.GetPostWhenMethod(typeSymbol);
-        // declaration.StreamActions.AddRange(GetStreamActions(classSymbol));
         var newConstructors = ConstructorHelper.GetConstructors(classSymbol)
             .Where(c => declaration.Constructors.All(existing => !AreConstructorsEqual(existing, c)));
         declaration.Constructors.AddRange(newConstructors);
@@ -76,11 +70,11 @@ public class AnalyzeAggregates
         var newStreamActions = GetStreamActions(classSymbol)
             .Where(sa => declaration.StreamActions.All(existing => !AreStreamActionsEqual(existing, sa)));
         declaration.StreamActions.AddRange(newStreamActions);
-        
+
         AppendIdentifierTypeFromMetadata(declaration);
     }
-    
-    
+
+
     private static bool AreConstructorsEqual(ConstructorDefinition existing, ConstructorDefinition newItem)
     {
         return existing.Parameters.Count == newItem.Parameters.Count &&
@@ -99,7 +93,7 @@ public class AnalyzeAggregates
 
     private static bool AreCommandsEqual(CommandDefinition existing, CommandDefinition newItem)
     {
-        return existing.CommandName == newItem.CommandName && 
+        return existing.CommandName == newItem.CommandName &&
                existing.ReturnType.Type == newItem.ReturnType.Type &&
                existing.ReturnType.Namespace == newItem.ReturnType.Namespace;
     }

@@ -88,7 +88,7 @@ internal class EventStreamConverter : IInputConverter
 
     internal async Task<object?> ConvertModelBindingDataAsync(
         Type targetType,
-        EventStreamData data)
+        EventStreamData? data)
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(data.ObjectId);

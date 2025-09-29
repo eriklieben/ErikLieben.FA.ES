@@ -5,7 +5,7 @@ using ErikLieben.FA.ES.VersionTokenParts;
 namespace ErikLieben.FA.ES.JsonConverters;
 
 /// <summary>
-/// Provides JSON serialization and deserialization for <see cref="ObjectIdentifier"/> using the custom format "oid[<value>]<schemaVersion>".
+/// Provides JSON serialization and deserialization for <see cref="ObjectIdentifier"/> using the custom format "oid[&lt;value&gt;]&lt;schemaVersion&gt;".
 /// </summary>
 public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
 {
