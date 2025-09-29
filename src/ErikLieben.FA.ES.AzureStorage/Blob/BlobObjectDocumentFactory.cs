@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.Configuration;
@@ -47,10 +48,17 @@ public BlobObjectDocumentFactory(
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
-        return blobDocumentStore.CreateAsync(objectName.ToLowerInvariant(), objectId);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
+        var result = await blobDocumentStore.CreateAsync(objectName.ToLowerInvariant(), objectId);
+        if (result is null)
+        {
+            throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");
+        }
+        return result;
     }
 
     /// <summary>
@@ -60,10 +68,17 @@ public BlobObjectDocumentFactory(
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetAsync)}");
-        return blobDocumentStore.GetAsync(objectName.ToLowerInvariant(), objectId);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
+        var result = await blobDocumentStore.GetAsync(objectName.ToLowerInvariant(), objectId);
+        if (result is null)
+        {
+            throw new InvalidOperationException("BlobDocumentStore.GetAsync returned null document.");
+        }
+        return result;
     }
 
     /// <summary>
@@ -75,7 +90,10 @@ public BlobObjectDocumentFactory(
     public async Task<IEnumerable<IObjectDocument>> GetByDocumentTagAsync(string objectName, string objectDocumentTag)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetByDocumentTagAsync)}");
-        return await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
+        return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag))
+               ?? Enumerable.Empty<IObjectDocument>();
     }
 
     /// <summary>
@@ -87,6 +105,8 @@ public BlobObjectDocumentFactory(
     public Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetByDocumentTagAsync)}");
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return blobDocumentStore.GetFirstByDocumentByTagAsync(objectName, objectDocumentTag);
     }
 
@@ -96,10 +116,13 @@ public BlobObjectDocumentFactory(
     /// <param name="objectName">The object name (scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetByDocumentTagAsync)}");
-        return blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
+        return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag))
+               ?? Enumerable.Empty<IObjectDocument>();
     }
 
     /// <summary>
@@ -108,9 +131,10 @@ public BlobObjectDocumentFactory(
     /// <param name="document">The object document to save.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null!)
+    public Task SetAsync(IObjectDocument document, string? store = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(SetAsync)}");
+        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfNull(document);
         return blobDocumentStore.SetAsync(document);
     }
 }

@@ -106,7 +106,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         AnsiConsole.MarkupLine($"Saving analyze data to: [gray62]{analyzePath}[/]");
-        File.WriteAllText(analyzePath, JsonSerializer.Serialize(def, AnalyzeJsonOptions));
+        await File.WriteAllTextAsync(analyzePath, newJsonDef);
 
         if (existingFile && !sameFile && settings.WithDiff)
         {

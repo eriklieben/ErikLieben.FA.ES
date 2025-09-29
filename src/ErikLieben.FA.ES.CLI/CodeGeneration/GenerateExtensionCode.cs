@@ -48,7 +48,7 @@ public async Task Generate()
                 continue;
             }
 
-            var rel = (currentFile ?? string.Empty).Replace('\\', '/');
+            var rel = currentFile.Replace('\\', '/');
             var relGen = rel.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
                 ? rel.Substring(0, rel.Length - ".csproj".Length) + "Extensions.Generated.cs"
                 : rel + "Extensions.Generated.cs";

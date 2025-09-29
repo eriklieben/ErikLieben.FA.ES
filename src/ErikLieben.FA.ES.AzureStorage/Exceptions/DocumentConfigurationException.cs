@@ -26,10 +26,19 @@ public class DocumentConfigurationException : EsException
 {
     private const string Code = "ELFAES-CFG-0006";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DocumentConfigurationException"/> class with a specified error message.
+    /// </summary>
+    /// <param name="message">The message that describes the configuration error.</param>
     public DocumentConfigurationException(string message) : base(Code, message)
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DocumentConfigurationException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
+    /// </summary>
+    /// <param name="message">The message that describes the configuration error.</param>
+    /// <param name="innerException">The exception that is the cause of the current exception.</param>
     public DocumentConfigurationException(string message, Exception innerException) : base(Code, message, innerException)
     {
     }
@@ -45,6 +54,11 @@ public class DocumentConfigurationException : EsException
         }
     }
 
+    /// <summary>
+    /// Throws an <see cref="ArgumentNullException"/> if <paramref name="argument"/> is null, empty, or consists only of white-space characters.
+    /// </summary>
+    /// <param name="argument">The string argument to validate as non-null and non-white-space.</param>
+    /// <param name="paramName">The name of the parameter with which <paramref name="argument"/> corresponds.</param>
     public static void ThrowIfIsNullOrWhiteSpace([NotNull] string? argument, [CallerArgumentExpression(nameof(argument))] string? paramName = null)
     {
         if (string.IsNullOrWhiteSpace(argument))

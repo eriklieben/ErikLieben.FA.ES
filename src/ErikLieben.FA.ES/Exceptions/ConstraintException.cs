@@ -25,8 +25,17 @@ public class ConstraintException : EsException
 {
     private const string Code = "ELFAES-BIZ-0001";
 
+    /// <summary>
+    /// Gets the constraint that was violated.
+    /// </summary>
+    /// <value>The constraint that triggered this exception.</value>
     public Constraint Constraint { get; protected set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConstraintException"/> class with a specified error message and the violated constraint.
+    /// </summary>
+    /// <param name="message">The message that describes the error.</param>
+    /// <param name="constraint">The constraint that was violated.</param>
     public ConstraintException(string message, Constraint constraint)
         : base(Code, message)
     {

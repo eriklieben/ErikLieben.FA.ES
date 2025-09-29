@@ -35,7 +35,7 @@ public static class FunctionsEventStoreExtensions
     /// <typeparam name="TKey">The type of the service key.</typeparam>
     /// <typeparam name="T">The service type to resolve.</typeparam>
     /// <param name="serviceCollection">The service collection to read existing keyed registrations from.</param>
-    private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection) where TKey : notnull
+    private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection) where TKey : notnull where T : notnull
     {
         var keys = serviceCollection
             .Where(sd => sd.IsKeyedService && sd.ServiceType == typeof(T) && sd.ServiceKey is TKey)

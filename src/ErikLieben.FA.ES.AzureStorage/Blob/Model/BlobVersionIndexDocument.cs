@@ -56,7 +56,12 @@ public class BlobVersionIndexDocument
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull )]
 [JsonSerializable(typeof(BlobVersionIndexDocument))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
+/// <summary>
+/// Provides the System.Text.Json source-generation context for <see cref="BlobVersionIndexDocument"/> and related types.
+/// </summary>
+/// <remarks>
+/// This context enables fast, reflection-free JSON (de)serialization for the Azure Storage blob version index document.
+/// </remarks>
 public partial class VersionIndexContext : JsonSerializerContext
 {
-
 }

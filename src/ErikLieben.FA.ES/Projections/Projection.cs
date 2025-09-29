@@ -170,7 +170,6 @@ public abstract class Projection : IProjectionBase
     /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
     public async Task UpdateToVersion(VersionToken token, IExecutionContext? context = null)
     {
-
         if (DocumentFactory == null)
         {
             throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
@@ -180,27 +179,30 @@ public abstract class Projection : IProjectionBase
             throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
         }
 
-        if (IsNewer(token) || token.TryUpdateToLatestVersion)
+        // Guard clause to reduce nesting and cognitive complexity
+        if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
-            var startIdx = -1;
-            if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
-            {
-                startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
-            }
-
-            var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-            var eventStream = EventStreamFactory.Create(document);
-            var events = token.TryUpdateToLatestVersion ?
-                await eventStream.ReadAsync(startIdx) :
-                await eventStream.ReadAsync(startIdx, token.Version);
-
-            foreach (var @event in events)
-            {
-                await Fold(@event, document, context);
-                UpdateVersionIndex(@event, document);
-            }
-            await PostWhenAll(document);
+            return;
         }
+
+        var startIdx = -1;
+        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
+        {
+            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+        }
+
+        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
+        var eventStream = EventStreamFactory.Create(document);
+        var events = token.TryUpdateToLatestVersion ?
+            await eventStream.ReadAsync(startIdx) :
+            await eventStream.ReadAsync(startIdx, token.Version);
+
+        foreach (var @event in events)
+        {
+            await Fold(@event, document, context);
+            UpdateVersionIndex(@event, document);
+        }
+        await PostWhenAll(document);
     }
 
     /// <summary>
@@ -225,35 +227,37 @@ public abstract class Projection : IProjectionBase
             throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
         }
 
-        if (IsNewer(token) || token.TryUpdateToLatestVersion)
+        if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
-            var startIdx = -1;
-            if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
+            return;
+        }
+
+        var startIdx = -1;
+        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
+        {
+            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+        }
+
+        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
+        var eventStream = EventStreamFactory.Create(document);
+        var events = token.TryUpdateToLatestVersion ?
+            await eventStream.ReadAsync(startIdx) :
+            await eventStream.ReadAsync(startIdx, token.Version);
+
+        foreach (var @event in events)
+        {
+            if (context != null && @event == context.Event)
             {
-                startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+                throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
             }
 
-            var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-            var eventStream = EventStreamFactory.Create(document);
-            var events = token.TryUpdateToLatestVersion ?
-                await eventStream.ReadAsync(startIdx) :
-                await eventStream.ReadAsync(startIdx, token.Version);
+            await Fold(@event, document, data, context);
+            UpdateVersionIndex(@event, document);
+        }
 
-            foreach (var @event in events)
-            {
-                if (context != null && @event == context.Event)
-                {
-                    throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
-                }
-
-                await Fold(@event, document, data, context);
-                UpdateVersionIndex(@event, document);
-            }
-
-            if (events.Count > 0)
-            {
-                await PostWhenAll(document);
-            }
+        if (events.Count > 0)
+        {
+            await PostWhenAll(document);
         }
     }
 
