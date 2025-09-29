@@ -24,13 +24,14 @@ public class InMemoryDataStore : IDataStore
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
         foreach (var @event in events)
         {
-            if (!Store.ContainsKey(identifier))
+            if (!Store.TryGetValue(identifier, out var dict))
             {
-                Store[identifier] = new();
+                dict = new();
+                Store[identifier] = dict;
             }
 
-            var count = Store[identifier].Count;
-            Store[identifier][count] = @event;
+            var count = dict.Count;
+            dict[count] = @event;
         }
 
         return Task.CompletedTask;
@@ -51,12 +52,12 @@ public class InMemoryDataStore : IDataStore
 
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
 
-        if (!Store.ContainsKey(identifier))
+        if (!Store.TryGetValue(identifier, out var dict))
         {
             return Task.FromResult<IEnumerable<IEvent>?>(new List<IEvent>());
         }
 
-        var storedEvents = Store[identifier].Values.ToList();
+        var storedEvents = dict.Values.ToList();
         return Task.FromResult<IEnumerable<IEvent>?>(storedEvents);
     }
 
@@ -81,9 +82,9 @@ public class InMemoryDataStore : IDataStore
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
         foreach (var @event in events)
         {
-            if (Store.ContainsKey(identifier) && Store[identifier].ContainsKey(@event.EventVersion))
+            if (Store.TryGetValue(identifier, out var dict) && dict.ContainsKey(@event.EventVersion))
             {
-                Store[identifier].Remove(@event.EventVersion);
+                dict.Remove(@event.EventVersion);
             }
         }
         return Task.CompletedTask;

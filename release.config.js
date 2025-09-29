@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('node:path');
 
 module.exports = {
   branches: [
@@ -113,7 +113,7 @@ module.exports = {
         "prepareCmd": "pwsh -File ./build-packages.ps1 -PackageVersion ${nextRelease.version}"
       }
     ],
-    [ 
+    [
       '@semantic-release/npm', {
         npmPublish: false
       }

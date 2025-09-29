@@ -80,7 +80,8 @@ internal class EventStreamConverter : IInputConverter
             ? throw new ArgumentNullException(nameof(bindingData))
             : bindingData.ContentType switch
         {
-            "application/json" => bindingData.Content.ToObjectFromJson<EventStreamData>(),
+            "application/json" => bindingData.Content.ToObjectFromJson<EventStreamData>()
+                ?? throw new InvalidOperationException("Binding data content is null or invalid JSON for EventStreamData."),
             _ => throw new InvalidContentTypeException(bindingData.ContentType, "application/json")
         };
     }

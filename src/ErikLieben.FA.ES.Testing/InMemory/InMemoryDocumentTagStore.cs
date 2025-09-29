@@ -20,9 +20,9 @@ public class InMemoryDocumentTagStore : IDocumentTagStore
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(tag);
 
-        if (Tags.ContainsKey(document.ObjectId) && !Tags[document.ObjectId].Contains(tag))
+        if (Tags.TryGetValue(document.ObjectId, out var list) && !list.Contains(tag))
         {
-            Tags[document.ObjectId].Add(tag);
+            list.Add(tag);
         }
 
         return Task.CompletedTask;

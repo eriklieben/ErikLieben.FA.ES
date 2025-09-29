@@ -119,15 +119,13 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
 
-            if (ancestor is not InvocationExpressionSyntax inv)
-                continue;
-
-            if (GetMemberName(inv) != "Session")
-                continue;
-
-            var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
-            if (IsEventStreamSession(symbol))
-                return true;
+            // Combine checks to reduce nesting (S1066)
+            if (ancestor is InvocationExpressionSyntax inv && GetMemberName(inv) == "Session")
+            {
+                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+                if (IsEventStreamSession(symbol))
+                    return true;
+            }
         }
         return false;
     }

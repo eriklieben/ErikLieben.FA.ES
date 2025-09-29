@@ -102,18 +102,16 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
             if (ancestor is InvocationExpressionSyntax possibleWrapper)
             {
                 var name = GetInvocationName(possibleWrapper);
-                if (name is { } n && (n == "Fold" || n == "When"))
+                // Merge nested conditions to reduce complexity and satisfy S1066
+                if (name is { } n && (n == "Fold" || n == "When") && possibleWrapper.ArgumentList != null)
                 {
                     // Ensure our append invocation is somewhere inside the argument expressions of this wrapper call
-                    if (possibleWrapper.ArgumentList != null)
-                    {
-                        var contains = possibleWrapper.ArgumentList.Arguments
-                            .SelectMany(a => a.Expression.DescendantNodesAndSelf())
-                            .Any(n2 => ReferenceEquals(n2, appendInvocation));
+                    var contains = possibleWrapper.ArgumentList.Arguments
+                        .SelectMany(a => a.Expression.DescendantNodesAndSelf())
+                        .Any(n2 => ReferenceEquals(n2, appendInvocation));
 
-                        if (contains)
-                            return true;
-                    }
+                    if (contains)
+                        return true;
                 }
             }
 
@@ -155,15 +153,13 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
 
-            if (ancestor is not InvocationExpressionSyntax inv)
-                continue;
-
-            if (GetInvocationName(inv) != "Session")
-                continue;
-
-            var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
-            if (IsEventStreamSession(symbol))
-                return true;
+            // Combine checks to reduce nested if-statements (S1066)
+            if (ancestor is InvocationExpressionSyntax inv && GetInvocationName(inv) == "Session")
+            {
+                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+                if (IsEventStreamSession(symbol))
+                    return true;
+            }
         }
         return false;
     }
