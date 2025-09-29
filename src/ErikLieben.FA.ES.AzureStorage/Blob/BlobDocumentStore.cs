@@ -204,7 +204,7 @@ public async Task<IObjectDocument> GetAsync(
     public async Task<IObjectDocument?> GetFirstByDocumentByTagAsync(string objectName, string tag)
     {
         var documentTagStore = documentTagStoreFactory.CreateDocumentTagStore(this.blobSettings.DefaultDocumentTagStore);
-        var objectId = (await documentTagStore.GetAsync(objectName, tag)).ToList().FirstOrDefault();
+        var objectId = (await documentTagStore.GetAsync(objectName, tag)).FirstOrDefault();
         if (!string.IsNullOrEmpty(objectId))
         {
             return await GetAsync(objectName, objectId);
@@ -222,7 +222,7 @@ public async Task<IObjectDocument> GetAsync(
     public async Task<IEnumerable<IObjectDocument>> GetByDocumentByTagAsync(string objectName, string tag)
     {
         var documentTagStore = documentTagStoreFactory.CreateDocumentTagStore(this.settings.DocumentTagType);
-        var objectIds = (await documentTagStore.GetAsync(objectName, tag)).ToList();
+        var objectIds = await documentTagStore.GetAsync(objectName, tag);
         var documents = new List<IObjectDocument>();
         foreach (var objectId in objectIds)
         {
@@ -248,7 +248,7 @@ public async Task<IObjectDocument> GetAsync(
         var etagRetrieved = properties.Value.ETag.ToString().Replace("\u0022", string.Empty);
 
         var (etag, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
-            new BlobRequestConditions { IfMatch = etagRetrieved != null ? new ETag(etagRetrieved) : null });
+            new BlobRequestConditions { IfMatch = string.IsNullOrEmpty(etagRetrieved) ? null : new ETag(etagRetrieved) });
 
         document.SetHash(hash,blobDoc.Hash);
     }

@@ -18,8 +18,8 @@ internal static class PropertyHelper
                 // Check that the getter exists and is not private or internal
                 p.GetMethod != null &&
                 p.GetMethod.DeclaredAccessibility != Accessibility.Private &&
-                p.GetMethod.DeclaredAccessibility != Accessibility.Internal && 
-                // Exclude EqualityContract 
+                p.GetMethod.DeclaredAccessibility != Accessibility.Internal &&
+                // Exclude EqualityContract
                 p.Name != "EqualityContract")
             .Select(p =>
             {
@@ -138,7 +138,6 @@ internal static class PropertyHelper
             .Where<ITypeSymbol>(t => t.TypeKind != TypeKind.Error)
             .Select(t =>
             {
-                var xx = t as INamedTypeSymbol;
                 return new PropertyGenericTypeDefinition(
                     RoslynHelper.GetFullTypeName(t),
                     RoslynHelper.GetFullNamespace(t),

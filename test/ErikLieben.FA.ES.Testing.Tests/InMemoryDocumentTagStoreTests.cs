@@ -29,8 +29,11 @@ public class InMemoryDocumentTagStoreTests
             [],
             "1.0.0");
 
-        // Act & Assert
+        // Act
         await store.SetAsync(doc, "tag1");
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]

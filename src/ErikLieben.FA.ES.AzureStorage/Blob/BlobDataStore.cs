@@ -112,7 +112,8 @@ public class BlobDataStore : IDataStore
         string? documentPath = null;
         if (document.Active.ChunkingEnabled())
         {
-            var lastChunk = document.Active.StreamChunks.Last();
+            var chunks = document.Active.StreamChunks;
+            var lastChunk = chunks[chunks.Count - 1];
             documentPath = $"{document.Active.StreamIdentifier}-{lastChunk.ChunkIdentifier:d10}.json";
         }
         else

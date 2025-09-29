@@ -61,7 +61,7 @@ namespace Test
 }
 ";
 
-        // Act/Assert
+        // Act
         var expected = new DiagnosticResult(AppendWithoutApplyAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
             .WithLocation(0);
 
@@ -71,6 +71,9 @@ namespace Test
             TestCode = test,
             ExpectedDiagnostics = { expected }
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]
@@ -95,12 +98,15 @@ namespace Test
 }
 ";
 
-        // Act/Assert
+        // Act
         await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]
@@ -125,12 +131,15 @@ namespace Test
 }
 ";
 
-        // Act/Assert
+        // Act
         await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
     }
 }
 

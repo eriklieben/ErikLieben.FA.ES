@@ -173,11 +173,11 @@ public abstract class Projection : IProjectionBase
 
         if (DocumentFactory == null)
         {
-            throw new ArgumentNullException(nameof(DocumentFactory));
+            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
         }
         if (EventStreamFactory == null)
         {
-            throw new ArgumentNullException(nameof(EventStreamFactory));
+            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
         }
 
         if (IsNewer(token) || token.TryUpdateToLatestVersion)
@@ -218,11 +218,11 @@ public abstract class Projection : IProjectionBase
     {
         if (DocumentFactory == null)
         {
-            throw new ArgumentNullException(nameof(DocumentFactory));
+            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
         }
         if (EventStreamFactory == null)
         {
-            throw new ArgumentNullException(nameof(EventStreamFactory));
+            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
         }
 
         if (IsNewer(token) || token.TryUpdateToLatestVersion)

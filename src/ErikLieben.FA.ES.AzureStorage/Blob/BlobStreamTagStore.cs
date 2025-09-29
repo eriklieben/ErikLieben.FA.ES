@@ -46,7 +46,7 @@ public class BlobStreamTagStore : IDocumentTagStore
         var blobDoc = BlobEventStreamDocument.From(document);
         ArgumentNullException.ThrowIfNull(blobDoc);
 
-        string? documentPath = $"tags/stream/{document.Active.StreamIdentifier}.json"; ;
+        string? documentPath = $"tags/stream/{document.Active.StreamIdentifier}.json";
         var blob = CreateBlobClient(document, documentPath);
 
         if (!await blob.ExistsAsync())

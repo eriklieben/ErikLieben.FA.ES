@@ -20,12 +20,12 @@ public class InMemoryStream(
     })
 {
 
-    public List<IEvent> Events
+    public IEnumerable<IEvent> Events
     {
         get
         {
             return inMemoryDataSource.Store[InMemoryDataStore.GetStoreKey(Document.ObjectName, Document.ObjectId)]
-                .Select(e => e.Value).ToList();
+                .Select(e => e.Value);
         }
     }
 }
