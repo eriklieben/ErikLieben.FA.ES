@@ -9,6 +9,16 @@ namespace ErikLieben.FA.ES.Testing.Tests;
 
 public class InMemoryDataStoreTests
 {
+    private sealed class TestEvent : IEvent
+    {
+        public string EventType { get; set; } = "Test";
+        public int EventVersion { get; set; }
+        public string? ExternalSequencer { get; } = string.Empty;
+        public ActionMetadata? ActionMetadata { get; } = new();
+        public Dictionary<string, string> Metadata { get; } = new();
+        public string Payload { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; } = DateTime.MinValue;
+    }
     private static InMemoryEventStreamDocument CreateDoc(string name = "Order", string id = "42")
     {
         return new InMemoryEventStreamDocument(

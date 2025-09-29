@@ -96,13 +96,14 @@ internal class EventStreamConverter : IInputConverter
         using var activity = ActivitySource.StartActivity($"EventStreamConverter.{nameof(ConvertModelBindingDataAsync)}");
 
         var factory = aggregrateFactory.GetFactory(targetType);
-        if (factory == null)
+        var objectName = factory?.GetObjectName();
+        if (factory == null || string.IsNullOrWhiteSpace(objectName))
         {
             throw new InvalidOperationException("Configuration error: factory for the requested target type is not configured or cannot be resolved.");
         }
         var document = data.CreateEmptyObjectWhenNonExistent ?
-            await objectDocumentFactory.GetOrCreateAsync(factory.GetObjectName(), data.ObjectId, data.ObjectType) :
-            await objectDocumentFactory.GetAsync(factory.GetObjectName(), data.ObjectId, data.ObjectType);
+            await objectDocumentFactory.GetOrCreateAsync(objectName!, data.ObjectId, data.ObjectType) :
+            await objectDocumentFactory.GetAsync(objectName!, data.ObjectId, data.ObjectType);
 
         var eventStream = eventStreamFactory.Create(document);
         var obj = factory.Create(eventStream);
