@@ -10,14 +10,23 @@ using Microsoft.Extensions.Azure;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
+/// <summary>
+/// Provides an Azure Blob Storage-backed implementation of <see cref="IDocumentTagStore"/> for associating and querying document tags.
+/// </summary>
 public partial class BlobDocumentTagStore : IDocumentTagStore
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
     private readonly string defaultConnectionName;
-    private readonly string defaultDocumentTagType;
 
-    public BlobDocumentTagStore(
+    /// <summary>
+/// Initializes a new instance of the <see cref="BlobDocumentTagStore"/> class.
+/// </summary>
+/// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
+/// <param name="defaultDocumentTagType">The default tag provider type (e.g., "blob").</param>
+/// <param name="defaultConnectionName">The default connection name used when building blob clients.</param>
+/// <param name="autoCreateContainer">True to create containers automatically when missing.</param>
+public BlobDocumentTagStore(
         IAzureClientFactory<BlobServiceClient> clientFactory,
         string defaultDocumentTagType,
         string defaultConnectionName,
@@ -27,16 +36,21 @@ public partial class BlobDocumentTagStore : IDocumentTagStore
 
         this.clientFactory = clientFactory;
         this.autoCreateContainer = autoCreateContainer;
-        this.defaultDocumentTagType = defaultDocumentTagType;
         this.defaultConnectionName = defaultConnectionName;
     }
 
+    /// <summary>
+    /// Associates the specified tag with the given document by storing a tag document in Blob Storage.
+    /// </summary>
+    /// <param name="document">The document to tag.</param>
+    /// <param name="tag">The tag value to associate with the document.</param>
+    /// <returns>A task that represents the asynchronous tagging operation.</returns>
+    /// <exception cref="BlobDataStoreProcessingException">Thrown when the tag document cannot be found during an update.</exception>
+    /// <exception cref="DocumentConfigurationException">Thrown when the blob client cannot be created.</exception>
     public async Task SetAsync(IObjectDocument document, string tag)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);
-        //var blobDoc = BlobEventStreamDocument.From(document);
-
         var filename = ValidBlobFilenameRegex().Replace(tag.ToLowerInvariant(), string.Empty);
         var documentPath = $"tags/document/{filename}.json";
         var blob = CreateBlobClient(document, documentPath);
@@ -64,11 +78,6 @@ public partial class BlobDocumentTagStore : IDocumentTagStore
             new BlobRequestConditions { IfMatch = etag })).Item1
             ?? throw new BlobDataStoreProcessingException($"Unable to find tag document '{document.ObjectName.ToLowerInvariant()}/{documentPath}' while processing save.");
 
-        // if (doc.LastObjectDocumentETag != "*" && doc.LastObjectDocumentETag != blobDoc.PrevHash)
-        // {
-        //     throw new Exception("Something bad is going on");
-        // }
-        // doc.LastObjectDocumentETag = blobDoc.Hash ?? "*";
         if (doc.ObjectIds.All(d => d != document.ObjectId))
         {
             doc.ObjectIds.Add(document.ObjectId);
@@ -79,6 +88,13 @@ public partial class BlobDocumentTagStore : IDocumentTagStore
             new BlobRequestConditions { IfMatch = etag });
     }
 
+    /// <summary>
+    /// Gets the identifiers of documents that have the specified tag within the given object scope.
+    /// </summary>
+    /// <param name="objectName">The object name (container scope) to search within.</param>
+    /// <param name="tag">The tag value to match.</param>
+    /// <returns>An enumerable of document identifiers; empty when the tag document does not exist.</returns>
+    /// <exception cref="DocumentConfigurationException">Thrown when the blob client cannot be created.</exception>
     public async Task<IEnumerable<string>> GetAsync(string objectName, string tag)
     {
         var filename = ValidBlobFilenameRegex().Replace(tag.ToLowerInvariant(), string.Empty);
@@ -89,17 +105,23 @@ public partial class BlobDocumentTagStore : IDocumentTagStore
         var blob = container.GetBlobClient(documentPath)
             ?? throw new DocumentConfigurationException("Unable to create blobClient.");
 
-        var (doc, hash) = await blob.AsEntityAsync(BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument);
+        var (doc, _) = await blob.AsEntityAsync(BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument);
         if (doc == null)
         {
             // A bit more friendly than throwing an exception
             return [];
-            //throw new BlobDataStoreProcessingException($"Unable to find tag document '{objectName.ToLowerInvariant()}/{documentPath}' while processing save.");
         }
 
         return doc.ObjectIds;
     }
 
+    /// <summary>
+    /// Creates a <see cref="BlobClient"/> for the given document and tag path, ensuring the container exists when configured.
+    /// </summary>
+    /// <param name="objectDocument">The object document that provides the container scope and connection name.</param>
+    /// <param name="documentPath">The blob path of the tag document.</param>
+    /// <returns>A <see cref="BlobClient"/> configured for the tag path.</returns>
+    /// <exception cref="DocumentConfigurationException">Thrown when the blob client cannot be created.</exception>
     private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(objectDocument.ObjectName);

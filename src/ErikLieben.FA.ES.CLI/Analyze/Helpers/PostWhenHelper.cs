@@ -16,11 +16,7 @@ internal static class PostWhenHelper
             return null;
         }
 
-        var postWhen = postWhenMethods.FirstOrDefault();
-        if (postWhen == null)
-        {
-            return null;
-        }
+        var postWhen = postWhenMethods.First();
 
         var postWhenDeclaration = new PostWhenDeclaration();
         foreach (var parameter in postWhen.Parameters)
@@ -46,24 +42,6 @@ internal static class PostWhenHelper
 
         var attributes = postAllMethod.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "GeneratedCodeAttribute");
         return attributes == null;
-    }
-
-    private static bool IsInGeneratedFile(INamedTypeSymbol classSymbol)
-    {
-        var syntaxReferences = classSymbol.DeclaringSyntaxReferences;
-
-        foreach (var syntaxReference in syntaxReferences)
-        {
-            var syntaxTree = syntaxReference.SyntaxTree;
-            var filePath = syntaxTree?.FilePath;
-
-            if (!string.IsNullOrEmpty(filePath) && filePath.EndsWith(".Generated.cs", System.StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
 }

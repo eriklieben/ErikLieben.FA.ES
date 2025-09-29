@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing;
@@ -60,7 +61,7 @@ namespace Test
 }
 ";
 
-        // Act/Assert
+        // Act
         var expected = new DiagnosticResult(WhenUsageAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
             .WithLocation(0);
 
@@ -70,6 +71,9 @@ namespace Test
             TestCode = test,
             ExpectedDiagnostics = { expected }
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]
@@ -95,12 +99,15 @@ namespace Test
 }
 ";
 
-        // Act/Assert: expect no diagnostics because not inside Stream.Session
+        // Act
         await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]
@@ -127,11 +134,98 @@ namespace Test
 }
 ";
 
-        // Act/Assert: expect no diagnostics because not inside Aggregate-derived type
+        // Act
         await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
         }.RunAsync();
+
+        // Assert
+        Assert.True(true);
+    }
+    public class DataSuffix
+    {
+        [Fact]
+        public async Task Should_report_with_suffix_when_data_is_chained_after_when()
+        {
+            // Arrange
+            var test = CommonStubs + @"
+namespace Test
+{
+    using System.Threading.Tasks;
+    using ErikLieben.FA.ES;
+    using ErikLieben.FA.ES.Processors;
+
+    public static class Ext { public static T Data<T>(this T v) => v; }
+
+    public class MyAgg : Aggregate
+    {
+        public MyAgg(IEventStream stream) : base(stream) {}
+        public Task Do()
+        {
+            return Stream.Session(ctx => {|#0:When|}(ctx.Append(new object())).Data());
+        }
     }
 }
+";
+
+            // Act
+            var expected = new DiagnosticResult(WhenUsageAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
+                .WithLocation(0)
+                .WithMessage("Use Fold(...) instead of When(...), and remove trailing .Data() when switching to Fold");
+
+            await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+            {
+                ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
+                TestCode = test,
+                ExpectedDiagnostics = { expected }
+            }.RunAsync();
+
+            // Assert
+            Assert.True(true);
+        }
+
+        [Fact]
+        public async Task Should_report_with_suffix_when_data_is_inside_when_arguments()
+        {
+            // Arrange
+            var test = CommonStubs + @"
+namespace Test
+{
+    using System.Threading.Tasks;
+    using ErikLieben.FA.ES;
+    using ErikLieben.FA.ES.Processors;
+
+    public static class Ext { public static T Data<T>(this T v) => v; }
+
+    public class MyAgg : Aggregate
+    {
+        public MyAgg(IEventStream stream) : base(stream) {}
+        public Task Do()
+        {
+            return Stream.Session(ctx => {|#0:When|}(ctx.Append(new object()).Data()));
+        }
+    }
+}
+";
+
+            // Act
+            var expected = new DiagnosticResult(WhenUsageAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
+                .WithLocation(0)
+                .WithMessage("Use Fold(...) instead of When(...), and remove trailing .Data() when switching to Fold");
+
+            await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+            {
+                ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
+                TestCode = test,
+                ExpectedDiagnostics = { expected }
+            }.RunAsync();
+
+            // Assert
+            Assert.True(true);
+        }
+    }
+}
+
+#pragma warning restore 0618

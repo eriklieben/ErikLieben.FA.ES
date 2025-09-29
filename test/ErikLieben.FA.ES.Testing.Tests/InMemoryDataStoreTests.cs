@@ -9,6 +9,16 @@ namespace ErikLieben.FA.ES.Testing.Tests;
 
 public class InMemoryDataStoreTests
 {
+    private sealed class TestEvent : IEvent
+    {
+        public string EventType { get; set; } = "Test";
+        public int EventVersion { get; set; }
+        public string? ExternalSequencer { get; } = string.Empty;
+        public ActionMetadata? ActionMetadata { get; } = new();
+        public Dictionary<string, string> Metadata { get; } = new();
+        public string Payload { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; } = DateTime.MinValue;
+    }
     private static InMemoryEventStreamDocument CreateDoc(string name = "Order", string id = "42")
     {
         return new InMemoryEventStreamDocument(
@@ -63,6 +73,65 @@ public class InMemoryDataStoreTests
         // Assert
         Assert.NotNull(result);
         Assert.Empty(result!);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_remove_events_by_version_and_noop_otherwise()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
+        await store.AppendAsync(document, e0, e1);
+        var key = InMemoryDataStore.GetStoreKey(document.ObjectName, document.ObjectId);
+
+        // Sanity
+        var dict = store.GetDataStoreFor(key);
+        Assert.Equal(2, dict.Count);
+
+        // Act - remove version 0 and a non-existing version 5
+        await store.RemoveAsync(document, new TestEvent { EventVersion = 0 }, new TestEvent { EventVersion = 5 });
+
+        // Assert
+        Assert.False(dict.ContainsKey(0));
+        Assert.True(dict.ContainsKey(1));
+        Assert.Equal(1, dict.Count);
+    }
+
+    [Fact]
+    public async Task GetDataStoreFor_should_return_backing_dictionary()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        await store.AppendAsync(document, new TestEvent { EventVersion = 0 }, new TestEvent { EventVersion = 1 });
+        var key = InMemoryDataStore.GetStoreKey(document.ObjectName, document.ObjectId);
+
+        // Act
+        var dict = store.GetDataStoreFor(key);
+
+        // Assert
+        Assert.Equal(2, dict.Count);
+        Assert.True(dict.ContainsKey(0));
+        Assert.True(dict.ContainsKey(1));
+    }
+
+    [Fact]
+    public async Task Read_should_throw_when_document_is_null_or_stream_identifier_missing()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var invalidDoc = new InMemoryEventStreamDocument(
+            "id",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.ReadAsync(null!));
+        await Assert.ThrowsAsync<ArgumentException>(() => store.ReadAsync(invalidDoc));
     }
 
     [Fact]

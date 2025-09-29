@@ -19,7 +19,6 @@ internal static class ParameterHelper
 
                 // PropertyGenericTypeDefinition
                 var genericTypes = GetGenericTypes(namedTypeSymbol.TypeArguments);
-                //
 
                 var namespaceString = RoslynHelper.GetFullNamespace(namedTypeSymbol);
 

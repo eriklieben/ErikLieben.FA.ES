@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,13 +6,24 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace ErikLieben.FA.ES.Analyzers;
 
+/// <summary>
+/// Roslyn analyzer that warns when an event is appended within a stream session but not applied to the aggregate's active state.
+/// </summary>
+/// <remarks>
+/// In an Aggregate's <c>Stream.Session(...)</c> block, calling <c>Append(...)</c> should be wrapped by a call that applies the
+/// change to the active state (for example, <c>Fold(context.Append(...))</c> or <c>When(context.Append(...))</c>). This analyzer
+/// detects bare <c>Append</c> invocations in that context and reports a warning to encourage correct usage.
+/// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
 {
+    /// <summary>
+    /// Gets the diagnostic identifier used by this analyzer.
+    /// </summary>
     public const string DiagnosticId = "FAES0002";
 
     private static readonly LocalizableString Title = "Appended event is not applied to active state";
-    private static readonly LocalizableString MessageFormat = "Event is appended but not applied to the active state. Wrap with Fold(context.Append(...))";
+    private static readonly LocalizableString MessageFormat = "Event is appended but not applied to the active state; wrap with Fold(context.Append(...))";
     private static readonly LocalizableString Description = "Within a Stream.Session in an Aggregate, appending an event should be applied to the aggregate's active state using Fold(context.Append(...)).";
     private const string Category = "Usage";
 
@@ -24,8 +34,15 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
     private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
     private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
 
+    /// <summary>
+    /// Gets the diagnostics supported by this analyzer.
+    /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+    /// <summary>
+    /// Registers actions that analyze invocation expressions to detect incorrect Append usage inside stream sessions.
+    /// </summary>
+    /// <param name="context">The analysis context used to register actions.</param>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -46,13 +63,13 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
         }
         else if (invocation.Expression is MemberAccessExpressionSyntax member)
         {
-            invokedName = member.Name as SimpleNameSyntax;
+            invokedName = member.Name;
         }
 
         if (invokedName == null)
             return;
 
-        if (!string.Equals(invokedName.Identifier.ValueText, "Append", System.StringComparison.Ordinal))
+        if (!string.Equals(invokedName.Identifier.ValueText, "Append", StringComparison.Ordinal))
             return;
 
         // Ensure it's a method invocation
@@ -85,18 +102,16 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
             if (ancestor is InvocationExpressionSyntax possibleWrapper)
             {
                 var name = GetInvocationName(possibleWrapper);
-                if (name is { } n && (n == "Fold" || n == "When"))
+                // Merge nested conditions to reduce complexity and satisfy S1066
+                if (name is { } n && (n == "Fold" || n == "When") && possibleWrapper.ArgumentList != null)
                 {
                     // Ensure our append invocation is somewhere inside the argument expressions of this wrapper call
-                    if (possibleWrapper.ArgumentList != null)
-                    {
-                        var contains = possibleWrapper.ArgumentList.Arguments
-                            .SelectMany(a => a.Expression.DescendantNodesAndSelf())
-                            .Any(n2 => ReferenceEquals(n2, appendInvocation));
+                    var contains = possibleWrapper.ArgumentList.Arguments
+                        .SelectMany(a => a.Expression.DescendantNodesAndSelf())
+                        .Any(n2 => ReferenceEquals(n2, appendInvocation));
 
-                        if (contains)
-                            return true;
-                    }
+                    if (contains)
+                        return true;
                 }
             }
 
@@ -135,26 +150,27 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
     {
         foreach (var ancestor in node.Ancestors())
         {
-            if (ancestor is InvocationExpressionSyntax inv)
-            {
-                if (inv.Expression is MemberAccessExpressionSyntax mae)
-                {
-                    if (mae.Name is IdentifierNameSyntax name && name.Identifier.ValueText == "Session")
-                    {
-                        var sessionSymbolInfo = model.GetSymbolInfo(inv);
-                        if (sessionSymbolInfo.Symbol is IMethodSymbol sessionMethod)
-                        {
-                            if (sessionMethod.ContainingType?.ToDisplayString() == IEventStreamFullName)
-                                return true;
-                            if (sessionMethod.ContainingType != null && sessionMethod.ContainingType.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName))
-                                return true;
-                        }
-                    }
-                }
-            }
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
+
+            // Combine checks to reduce nested if-statements (S1066)
+            if (ancestor is InvocationExpressionSyntax inv && GetInvocationName(inv) == "Session")
+            {
+                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+                if (IsEventStreamSession(symbol))
+                    return true;
+            }
         }
         return false;
+    }
+
+    private static bool IsEventStreamSession(IMethodSymbol? method)
+    {
+        var type = method?.ContainingType;
+        if (type == null)
+            return false;
+        if (type.ToDisplayString() == IEventStreamFullName)
+            return true;
+        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 }

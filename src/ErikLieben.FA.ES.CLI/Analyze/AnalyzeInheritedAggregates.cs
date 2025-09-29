@@ -9,7 +9,6 @@ namespace ErikLieben.FA.ES.CLI.Analyze;
 public class AnalyzeInheritedAggregates
 {
     private readonly INamedTypeSymbol? typeSymbol;
-    private readonly SemanticModel semanticModel;
     private readonly string solutionRootPath;
     private readonly RoslynHelper roslyn;
 
@@ -23,7 +22,6 @@ public class AnalyzeInheritedAggregates
         ArgumentNullException.ThrowIfNull(solutionRootPath);
 
         this.typeSymbol = typeSymbol;
-        this.semanticModel = semanticModel;
         this.solutionRootPath = solutionRootPath;
 
         roslyn = new RoslynHelper(semanticModel, solutionRootPath);
@@ -38,7 +36,7 @@ public class AnalyzeInheritedAggregates
 
         AnsiConsole.MarkupLine("Analyzing inherited aggregate: [yellow]" + typeSymbol!.Name + "[/]");
         var declaration = GetOrCreateAggregateDefinition(aggregates);
-        declaration.Constructors.AddRange(ConstructorHelper.GetConstructors(typeSymbol));;
+        declaration.Constructors.AddRange(ConstructorHelper.GetConstructors(typeSymbol));
         declaration.Properties.AddRange(PropertyHelper.GetPublicGetterProperties(typeSymbol));
         declaration.Commands.AddRange(CommandHelper.GetCommandMethods(typeSymbol, roslyn));
         AppendIdentifierTypeFromMetadata(declaration);

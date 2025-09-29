@@ -345,8 +345,8 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var token = new VersionToken(objectIdentifier, versionIdentifier);
 
                 // Act & Assert
-                var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => sut.UpdateToVersion(token));
-                Assert.Equal("DocumentFactory", exception.ParamName);
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => sut.UpdateToVersion(token));
+                Assert.Equal("DocumentFactory is not initialized on this Projection instance.", exception.Message);
             }
 
             [Fact]
@@ -523,9 +523,9 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var data = new TestData();
 
                 // Act & Assert
-                var exception = await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                     sut.UpdateToVersion<TestData>(token, null, data));
-                Assert.Equal("DocumentFactory", exception.ParamName);
+                Assert.Equal("DocumentFactory is not initialized on this Projection instance.", exception.Message);
             }
 
             [Fact]

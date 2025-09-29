@@ -11,6 +11,12 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 
 public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 {
+    private static readonly JsonSerializerOptions AnalyzeJsonOptions = new()
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
+    };
+
     public class Settings : CommandSettings
     {
         [CommandArgument(0, "[Path]")] public string? Path { get; set; }
@@ -79,16 +85,12 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
 
         // Save the analysed data
-        var analyzeDir = Path.Combine(Path.GetDirectoryName(settings.Path), ".elfa\\");
+        var analyzeDir = Path.Combine(folderPath!, ".elfa\\");
         Directory.CreateDirectory(analyzeDir);
         var analyzePath = Path.Combine(analyzeDir, "eriklieben.fa.es.analyzed-data.json");
         bool existingFile = false;
         bool sameFile = false;
-        var newJsonDef = JsonSerializer.Serialize(def, new JsonSerializerOptions()
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault
-        });
+        var newJsonDef = JsonSerializer.Serialize(def, AnalyzeJsonOptions);
         if (File.Exists(analyzePath))
         {
             var existingJsonDef = await File.ReadAllTextAsync(analyzePath);
@@ -104,26 +106,32 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         AnsiConsole.MarkupLine($"Saving analyze data to: [gray62]{analyzePath}[/]");
-        File.WriteAllText(analyzePath, JsonSerializer.Serialize(def, new JsonSerializerOptions() { WriteIndented = true }));
+        File.WriteAllText(analyzePath, JsonSerializer.Serialize(def, AnalyzeJsonOptions));
 
         if (existingFile && !sameFile && settings.WithDiff)
         {
-            string vscodeExecutable = FindInCommonLocations();
-            string arguments = $"--new-window --diff {analyzePath}.bak.json {analyzePath}";
-            Process process = new Process();
-            process.StartInfo.FileName = vscodeExecutable;
-            process.StartInfo.Arguments = arguments;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            Console.WriteLine("Starting Visual Studio Code...");
-            process.OutputDataReceived += (_, e) =>  AnsiConsole.MarkupLine($"[gray62]{e.Data}[/]");
-            process.Start();
+            var vscodeExecutable = FindInCommonLocations();
+            if (!string.IsNullOrEmpty(vscodeExecutable))
+            {
+                string arguments = $"--new-window --diff {analyzePath}.bak.json {analyzePath}";
+                using var process = new Process();
+                process.StartInfo.FileName = vscodeExecutable;
+                process.StartInfo.Arguments = arguments;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                Console.WriteLine("Starting Visual Studio Code...");
+                process.OutputDataReceived += (_, e) =>  AnsiConsole.MarkupLine($"[gray62]{e.Data}[/]");
+                process.Start();
 
-            // Wait for the process to exit
-            Console.WriteLine("Waiting for Visual Studio Code to close...");
-            await process.WaitForExitAsync();
-
+                // Wait for the process to exit
+                Console.WriteLine("Waiting for Visual Studio Code to close...");
+                await process.WaitForExitAsync();
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[yellow]Unable to locate VS Code. Skipping diff view.[/]");
+            }
         }
 
         await new GenerateAggregateCode(def, config, solutionPath).Generate();
@@ -150,13 +158,13 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         return null;
     }
 
-    private static string FindInCommonLocations()
+    private static string? FindInCommonLocations()
     {
         // Common locations for user and system installations
         string[] commonPaths = {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Microsoft VS Code\Code.exe"),
-            @"C:\Program Files\Microsoft VS Code\Code.exe",
-            @"C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+            @"C:\\Program Files\\Microsoft VS Code\\Code.exe",
+            @"C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
         };
 
         foreach (var path in commonPaths)

@@ -8,12 +8,21 @@ using Spectre.Console;
 
 namespace ErikLieben.FA.ES.CLI.CodeGeneration;
 
+/// <summary>
+/// Generates supporting partial classes and factories for aggregates that inherit from base Aggregate types, based on the solution model.
+/// </summary>
 public class GenerateInheritedAggregateCode
 {
     private readonly SolutionDefinition solution;
     private readonly Config config;
     private readonly string solutionPath;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GenerateInheritedAggregateCode"/> class.
+    /// </summary>
+    /// <param name="solution">The parsed solution model that contains projects, aggregates, and inheritance relationships.</param>
+    /// <param name="config">The CLI configuration values that influence code generation.</param>
+    /// <param name="solutionPath">The absolute path to the solution root used to resolve and write files.</param>
     public GenerateInheritedAggregateCode(SolutionDefinition solution, Config config, string solutionPath)
     {
         this.solution = solution;
@@ -21,6 +30,10 @@ public class GenerateInheritedAggregateCode
         this.solutionPath = solutionPath;
     }
 
+    /// <summary>
+    /// Scans the solution model and generates partial classes and factories for all inherited aggregates into .Generated.cs files.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous generation operation.</returns>
     public async Task Generate()
     {
         foreach (var project in solution.Projects.Where(p => !p.Name.StartsWith("ErikLieben.FA.ES")))

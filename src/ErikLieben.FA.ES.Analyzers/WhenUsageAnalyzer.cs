@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -7,9 +6,20 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace ErikLieben.FA.ES.Analyzers;
 
+/// <summary>
+/// Roslyn analyzer that warns when the When(...) API is used inside a stream session in an Aggregate and suggests using Fold(...) instead.
+/// </summary>
+/// <remarks>
+/// Within an Aggregate's Stream.Session(...), composing operations with When(...) is discouraged in favor of Fold(...),
+/// which makes state application explicit and consistent. This analyzer detects When invocations in that context and
+/// emits a warning with guidance to switch to Fold. The analyzer ignores usages outside Aggregates and outside a stream session.
+/// </remarks>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class WhenUsageAnalyzer : DiagnosticAnalyzer
 {
+    /// <summary>
+    /// Gets the diagnostic identifier used by this analyzer.
+    /// </summary>
     public const string DiagnosticId = "FAES0001";
 
     private static readonly LocalizableString Title = "Use Fold over When";
@@ -24,8 +34,15 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
     private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
     private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
 
+    /// <summary>
+    /// Gets the diagnostics descriptors produced by this analyzer.
+    /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
+    /// <summary>
+    /// Registers analysis actions to detect discouraged When(...) usage inside Aggregate stream sessions.
+    /// </summary>
+    /// <param name="context">The analysis context used to register actions.</param>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -99,44 +116,48 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
         // and whose containing type implements ErikLieben.FA.ES.IEventStream
         foreach (var ancestor in whenInvocation.Ancestors())
         {
-            if (ancestor is InvocationExpressionSyntax inv)
-            {
-                if (inv.Expression is MemberAccessExpressionSyntax mae)
-                {
-                    if (mae.Name is IdentifierNameSyntax name && name.Identifier.ValueText == "Session")
-                    {
-                        var sessionSymbolInfo = model.GetSymbolInfo(inv);
-                        if (sessionSymbolInfo.Symbol is IMethodSymbol sessionMethod)
-                        {
-                            // Direct on interface type
-                            if (sessionMethod.ContainingType?.ToDisplayString() == IEventStreamFullName)
-                                return true;
-
-                            // Implementations of IEventStream
-                            if (sessionMethod.ContainingType != null && sessionMethod.ContainingType.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName))
-                                return true;
-                        }
-                    }
-                }
-            }
-            // stop at method boundary to avoid walking unrelated scopes
             if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
                 break;
+
+            // Combine checks to reduce nesting (S1066)
+            if (ancestor is InvocationExpressionSyntax inv && GetMemberName(inv) == "Session")
+            {
+                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
+                if (IsEventStreamSession(symbol))
+                    return true;
+            }
         }
         return false;
+    }
+
+    private static string? GetMemberName(InvocationExpressionSyntax invocation)
+    {
+        return invocation.Expression switch
+        {
+            IdentifierNameSyntax id => id.Identifier.ValueText,
+            MemberAccessExpressionSyntax { Name: IdentifierNameSyntax name } => name.Identifier.ValueText,
+            _ => null
+        };
+    }
+
+    private static bool IsEventStreamSession(IMethodSymbol? method)
+    {
+        var type = method?.ContainingType;
+        if (type == null)
+            return false;
+        if (type.ToDisplayString() == IEventStreamFullName)
+            return true;
+        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 
     private static bool IsChainedWithData(InvocationExpressionSyntax whenInvocation)
     {
         // Two ways .Data() can appear relative to When(...):
         // 1) Chained after When: When(...).Data()
-        if (whenInvocation.Parent is MemberAccessExpressionSyntax mae && mae.Name is IdentifierNameSyntax chainedName)
+        if (whenInvocation.Parent is MemberAccessExpressionSyntax { Name: IdentifierNameSyntax { Identifier.ValueText: "Data" } } mae
+            && mae.Parent is InvocationExpressionSyntax)
         {
-            if (string.Equals(chainedName.Identifier.ValueText, "Data", System.StringComparison.Ordinal)
-                && mae.Parent is InvocationExpressionSyntax)
-            {
-                return true;
-            }
+            return true;
         }
 
         // 2) Inside When argument(s): When(context.Append(...).Data())

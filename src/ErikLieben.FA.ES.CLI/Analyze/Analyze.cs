@@ -167,7 +167,7 @@ public class Analyze(Config config, IAnsiConsole console)
                     {
                         console.MarkupLine($"[red]Failed to analyze project:[/] {project.Name}");
                         console.MarkupLine($"[red]Exception:[/] {ex.Message}");
-                        console.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");;
+                        console.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");
                         failed = true;
                         stopwatch.Stop();
                         taskbar.Description = $"[red]Analyze Failed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
@@ -238,14 +238,21 @@ public class Analyze(Config config, IAnsiConsole console)
 
     private async Task<int> CountClassDeclarationsAsync(Solution solution)
     {
-        int totalTasksItems = 0;
+        var totalTasksItems = 0;
 
         foreach (var project in solution.Projects)
         {
             foreach (var document in project.Documents)
             {
                 var syntaxTree = await document.GetSyntaxTreeAsync();
-                totalTasksItems += (await syntaxTree?.GetRootAsync())?.DescendantNodes()?.OfType<ClassDeclarationSyntax>()?.Count() ?? 0;
+                if (syntaxTree is null)
+                {
+                    continue;
+                }
+
+                var root = await syntaxTree.GetRootAsync();
+                var count = root.DescendantNodes().OfType<ClassDeclarationSyntax>().Count();
+                totalTasksItems += count;
             }
         }
 

@@ -4,6 +4,9 @@ using ErikLieben.FA.ES.VersionTokenParts;
 
 namespace ErikLieben.FA.ES.JsonConverters;
 
+/// <summary>
+/// Provides JSON serialization and deserialization for <see cref="VersionIdentifier"/> using the custom format "vid[<value>]<schemaVersion>".
+/// </summary>
 public class VersionIdentifierJsonConverter : JsonConverter<VersionIdentifier>
 {
     private const string Prefix = "vid[";

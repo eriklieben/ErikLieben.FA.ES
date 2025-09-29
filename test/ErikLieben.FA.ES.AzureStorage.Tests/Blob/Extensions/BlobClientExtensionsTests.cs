@@ -153,8 +153,8 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob.Extensions
                     .Returns(Task.FromException<Response>(new Exception("Test exception")));
 
                 // Act & Assert
-                var result = Assert.ThrowsAsync<Exception>(async () =>
-                    await blobClient.AsEntityAsync(
+                await Assert.ThrowsAsync<Exception>(() =>
+                    blobClient.AsEntityAsync(
                     TestDocumentContext.Default.TestDocument,
                     requestOptions));
             }

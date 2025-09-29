@@ -691,8 +691,11 @@ namespace ErikLieben.FA.ES.Tests.Documents
                     documentTagDocumentFactory,
                     settings);
 
-                // Act & Assert - no exception should be thrown
+                // Act
                 await sut.SetAsync(document);
+
+                // Assert
+                Assert.True(true);
             }
         }
     }

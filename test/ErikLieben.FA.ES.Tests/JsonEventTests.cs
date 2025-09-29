@@ -44,7 +44,7 @@ public class JsonEventTests
         Assert.Throws<ArgumentNullException>(() => JsonEvent.ToEvent(@event, typeInfo));
     }
 
-    public class ToOfT()
+    public class ToOfT
     {
         [Fact]
         public void Should_throw_ArgumentNullException_when_event_is_null()

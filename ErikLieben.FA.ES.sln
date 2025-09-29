@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution", "Solution", "{69
 		global.json = global.json
 		LICENSE = LICENSE
 		README.md = README.md
+		.junie\guidelines.md = .junie\guidelines.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ErikLieben.FA.ES.Testing", "src\ErikLieben.FA.ES.Testing\ErikLieben.FA.ES.Testing.csproj", "{B347875B-DC43-49EE-AF49-05205D766F68}"

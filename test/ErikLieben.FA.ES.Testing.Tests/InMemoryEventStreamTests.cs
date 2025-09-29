@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Linq;
 using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;
@@ -52,7 +53,7 @@ public class InMemoryEventStreamTests
         var events = ((InMemoryStream)stream).Events;
 
         // Assert
-        Assert.Equal(2, events.Count);
+        Assert.Equal(2, events.Count());
         Assert.Collection(events,
             e => Assert.Equal("OrderCreated", e.EventType),
             e => Assert.Equal("OrderConfirmed", e.EventType));

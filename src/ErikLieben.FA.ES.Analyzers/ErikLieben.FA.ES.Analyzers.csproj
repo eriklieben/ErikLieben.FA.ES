@@ -47,6 +47,7 @@
         <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
     <ItemGroup>
-      <AdditionalFiles Remove="AnalyzerReleases.Shipped.md" />
+      <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+      <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     </ItemGroup>
 </Project>

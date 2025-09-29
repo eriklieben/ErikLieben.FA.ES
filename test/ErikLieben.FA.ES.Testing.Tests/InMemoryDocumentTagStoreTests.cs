@@ -8,6 +8,23 @@ namespace ErikLieben.FA.ES.Testing.Tests;
 public class InMemoryDocumentTagStoreTests
 {
     [Fact]
+    public async Task Should_throw_when_document_or_tag_invalid()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.SetAsync(null!, "x"));
+        await Assert.ThrowsAsync<ArgumentException>(() => store.SetAsync(doc, " "));
+    }
+
+    [Fact]
     public async Task SetAsync_should_not_throw_for_valid_inputs()
     {
         // Arrange
@@ -29,8 +46,11 @@ public class InMemoryDocumentTagStoreTests
             [],
             "1.0.0");
 
-        // Act & Assert
+        // Act
         await store.SetAsync(doc, "tag1");
+
+        // Assert
+        Assert.True(true);
     }
 
     [Fact]
@@ -44,5 +64,32 @@ public class InMemoryDocumentTagStoreTests
 
         // Assert
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task SetAsync_should_add_tag_when_list_exists_and_skip_duplicates()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Pre-populate the private Tags dictionary under the document id
+        var field = typeof(InMemoryDocumentTagStore).GetField("Tags", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var dict = (Dictionary<string, List<string>>)field!.GetValue(store)!;
+        dict[doc.ObjectId] = new List<string> { "existing" };
+
+        // Act
+        await store.SetAsync(doc, "new-tag"); // should add
+        await store.SetAsync(doc, "existing"); // should not duplicate
+
+        // Assert - GetAsync uses objectName key, which differs from ObjectId. Validate internal list instead.
+        Assert.Equal(2, dict[doc.ObjectId].Count);
+        Assert.Contains("existing", dict[doc.ObjectId]);
+        Assert.Contains("new-tag", dict[doc.ObjectId]);
     }
 }

@@ -1,14 +1,21 @@
 ﻿using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions;
 
+/// <summary>
+/// Provides extension methods to configure the Event Store dependencies for Azure Functions Worker.
+/// </summary>
 public static class FunctionsEventStoreExtensions
 {
+    /// <summary>
+    /// Registers Event Store services and default settings for dependency injection.
+    /// </summary>
+    /// <param name="services">The service collection to add registrations to.</param>
+    /// <param name="settings">The default event stream type settings used to resolve factories.</param>
+    /// <returns>The <see cref="IServiceCollection"/> instance to support fluent configuration.</returns>
     public static IServiceCollection ConfigureEventStore(this IServiceCollection services, EventStreamDefaultTypeSettings settings)
     {
         services.AddSingleton(settings);
@@ -18,29 +25,25 @@ public static class FunctionsEventStoreExtensions
         services.RegisterKeyedDictionary<string, IDocumentTagDocumentFactory>();
         services.AddSingleton<IEventStreamFactory, EventStreamFactory>();
         services.RegisterKeyedDictionary<string, IEventStreamFactory>();
-        
+
         return services;
     }
 
-    private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection)
+    /// <summary>
+    /// Registers a keyed dictionary mapping service keys to resolved services of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="TKey">The type of the service key.</typeparam>
+    /// <typeparam name="T">The service type to resolve.</typeparam>
+    /// <param name="serviceCollection">The service collection to read existing keyed registrations from.</param>
+    private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection) where TKey : notnull
     {
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
         var keys = serviceCollection
-            .Where(sd => sd.IsKeyedService && sd.ServiceType == typeof(T))
-            .Select(d => d.ServiceKey)
+            .Where(sd => sd.IsKeyedService && sd.ServiceType == typeof(T) && sd.ServiceKey is TKey)
+            .Select(sd => (TKey)sd.ServiceKey!)
             .Distinct()
-            .Select(k => (TKey)k)
             .ToList();
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
-
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
-#pragma warning disable CS8621 // Nullability of reference types in return type doesn't match the target delegate (possibly because of nullability attributes).
         serviceCollection.AddTransient<IDictionary<TKey, T>>(p => keys
-            .ToDictionary(k => k, k => p.GetKeyedService<T>(k)));
-#pragma warning restore CS8621 // Nullability of reference types in return type doesn't match the target delegate (possibly because of nullability attributes).
-#pragma warning restore CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            .ToDictionary(k => k, k => p.GetRequiredKeyedService<T>(k)));
     }
 }

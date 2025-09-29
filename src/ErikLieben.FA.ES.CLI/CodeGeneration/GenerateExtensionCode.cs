@@ -9,20 +9,33 @@ using Spectre.Console;
 
 namespace ErikLieben.FA.ES.CLI.CodeGeneration;
 
+/// <summary>
+/// Generates aggregate factory and System.Text.Json source generation context code for a target solution.
+/// </summary>
 public partial class GenerateExtensionCode
 {
     private readonly SolutionDefinition solution;
     private readonly Config config;
     private readonly string solutionPath;
 
-    public GenerateExtensionCode(SolutionDefinition solution, Config config, string solutionPath)
+    /// <summary>
+/// Initializes a new instance of the <see cref="GenerateExtensionCode"/> class.
+/// </summary>
+/// <param name="solution">The parsed solution definition describing projects, aggregates, and events.</param>
+/// <param name="config">The CLI configuration influencing generation behavior.</param>
+/// <param name="solutionPath">The absolute path to the solution root where files are written.</param>
+public GenerateExtensionCode(SolutionDefinition solution, Config config, string solutionPath)
     {
         this.solution = solution;
         this.config = config;
         this.solutionPath = solutionPath;
     }
 
-    public async Task Generate()
+    /// <summary>
+/// Generates extension registration classes and JSON serializer contexts for all eligible projects in the solution.
+/// </summary>
+/// <returns>A task that represents the asynchronous generation operation.</returns>
+public async Task Generate()
     {
 
         foreach (var project in solution.Projects.Where(p => !p.Name.StartsWith("ErikLieben.FA.ES")))
@@ -48,9 +61,9 @@ public partial class GenerateExtensionCode
             {
                 await GenerateExtension(project, path, config);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-
+                // Swallowing exceptions here is intentional to continue generation for other projects; consider logging if needed.
             }
 
         }
