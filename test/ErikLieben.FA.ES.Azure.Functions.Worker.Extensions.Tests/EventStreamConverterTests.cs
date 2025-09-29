@@ -51,6 +51,8 @@ public class EventStreamConverterTests
         var aggFactory = Substitute.For<IAggregateFactory>();
         var docFactory = Substitute.For<IObjectDocumentFactory>();
         var streamFactory = Substitute.For<IEventStreamFactory>();
+        // Explicitly configure to return null; NSubstitute would otherwise auto-create a substitute
+        aggFactory.GetFactory(typeof(TestAggregate)).Returns((IAggregateCovarianceFactory<IBase>?)null);
         var sut = new EventStreamConverter(aggFactory, docFactory, streamFactory);
 
         var data = new EventStreamData("42", "Order", null, null, null, null, true);
