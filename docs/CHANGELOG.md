@@ -1,3 +1,14 @@
+## [1.1.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.0...v1.1.1) (2025-10-19)
+
+### 🐛 Bug fixes
+
+* security upgrade Microsoft.Build.Tasks.Core from 17.14.8 to 17.14.28 ([#20](https://github.com/eriklieben/ErikLieben.FA.ES/issues/20)) ([a587dbb](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a587dbbbc829dedb5949ee7e57b8f3d028f83ce4))
+
+### 💄 Code style adjustments
+
+* resolve sonar cloud warnings ([#19](https://github.com/eriklieben/ErikLieben.FA.ES/issues/19)) ([8d3d02e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d3d02e291ef593b48cf3f6c2486f00300a2f2bd))
+* resolve sonarcloud issues and add xml documentation ([#18](https://github.com/eriklieben/ErikLieben.FA.ES/issues/18)) ([5401b7f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5401b7f9d7b61d718f84424754604c9482125b4d))
+
 ## [1.1.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.0.1...v1.1.0) (2025-09-28)
 
 ### ✨ New features
