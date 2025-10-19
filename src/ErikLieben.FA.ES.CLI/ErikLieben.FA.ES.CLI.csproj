@@ -36,7 +36,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.14.8" />
+      <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.14.28" />
       <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.14.0" />
       <PackageReference Include="Pastel" Version="7.0.0" />
