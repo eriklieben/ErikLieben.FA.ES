@@ -38,9 +38,9 @@
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.25.1" />
 		<PackageReference Include="Azure.Data.Tables" Version="12.11.0" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.13.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.10" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
