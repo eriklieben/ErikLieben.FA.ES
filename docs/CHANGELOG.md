@@ -1,3 +1,19 @@
+## [1.1.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.1...v1.1.2) (2025-10-21)
+
+### 🐛 Bug fixes
+
+* reference correct project from azfunc worker extentions ([#30](https://github.com/eriklieben/ErikLieben.FA.ES/issues/30)) ([2c29199](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2c29199b06281aa52dd8139c7e96517fee4b2d51))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency Azure.Identity to 1.17.0 ([#27](https://github.com/eriklieben/ErikLieben.FA.ES/issues/27)) ([d8b4c0d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/d8b4c0d744d761c91fa36b3a4ae5e92715e767e6))
+* **deps:** Update dependency Microsoft.Bcl.AsyncInterfaces to 9.0.10 ([#24](https://github.com/eriklieben/ErikLieben.FA.ES/issues/24)) ([a239a0e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a239a0e67b429f71f04d33b854c48ed4b3827a3f))
+* **deps:** Update dependency Microsoft.Extensions.DependencyInjection to 9.0.10 ([#21](https://github.com/eriklieben/ErikLieben.FA.ES/issues/21)) ([fc18cce](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fc18ccefba64f92729d24a10fbe0f1dd3ee25043))
+* **deps:** Update dependency Microsoft.NET.Test.Sdk to v18 ([#23](https://github.com/eriklieben/ErikLieben.FA.ES/issues/23)) ([f38881d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f38881d0a544a87edc5cb5739b5f7a1772517d0e))
+* **deps:** Update dependency semantic-release to 24.2.9 ([#25](https://github.com/eriklieben/ErikLieben.FA.ES/issues/25)) ([a648e15](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a648e15aff45e7a5d5d302ae78ad458e1fd204bb))
+* **deps:** Update dependency Spectre.Console.Testing to 0.52.0 ([#22](https://github.com/eriklieben/ErikLieben.FA.ES/issues/22)) ([82c86bc](https://github.com/eriklieben/ErikLieben.FA.ES/commit/82c86bcf20a926cd0bb5d003eeb9ca38ed64b63a))
+* **deps:** Update dependency System.Formats.Asn1 to 9.0.10 ([#26](https://github.com/eriklieben/ErikLieben.FA.ES/issues/26)) ([1c2c103](https://github.com/eriklieben/ErikLieben.FA.ES/commit/1c2c10314f59823654d477178a792301b8d99035))
+
 ## [1.1.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.0...v1.1.1) (2025-10-19)
 
 ### 🐛 Bug fixes
