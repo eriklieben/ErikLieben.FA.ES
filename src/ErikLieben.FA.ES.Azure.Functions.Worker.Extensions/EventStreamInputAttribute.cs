@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Converters;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 
-[assembly: ExtensionInformation("ErikLieben.FA.ES.WebJobs.Isolated.Extensions.Tests", "1.0.0")]
+[assembly: ExtensionInformation("ErikLieben.FA.ES.WebJobs.Isolated.Extensions", "1.1.1")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Tests")]
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions
