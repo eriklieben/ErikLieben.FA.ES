@@ -40,8 +40,8 @@
       <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.14.0" />
       <PackageReference Include="Pastel" Version="7.0.0" />
-      <PackageReference Include="Spectre.Console" Version="0.51.1" />
-      <PackageReference Include="Spectre.Console.Cli" Version="0.51.1" />
+      <PackageReference Include="Spectre.Console" Version="0.52.0" />
+      <PackageReference Include="Spectre.Console.Cli" Version="0.52.0" />
       <PackageReference Include="System.Formats.Asn1" Version="9.0.10" />
       <PackageReference Include="System.Text.Json" Version="9.0.10" />
     </ItemGroup>
