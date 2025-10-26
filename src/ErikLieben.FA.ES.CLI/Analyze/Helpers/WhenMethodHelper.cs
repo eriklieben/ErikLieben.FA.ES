@@ -100,7 +100,7 @@ internal static class WhenMethodHelper
                          a.AttributeClass is INamedTypeSymbol { TypeArguments.Length: 1 })
              .Select(attributeData =>
              {
-                 var namedSymbol = (INamedTypeSymbol)attributeData.AttributeClass!;
+                 var namedSymbol = attributeData.AttributeClass!;
                  var genericArgument = namedSymbol.TypeArguments[0];
                  var typeName = genericArgument.ToDisplayString();
                  var typeSymbol = methodSymbol.ContainingAssembly.GetTypeByMetadataName(typeName);

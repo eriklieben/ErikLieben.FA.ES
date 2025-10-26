@@ -1,6 +1,6 @@
 ﻿namespace ErikLieben.FA.ES.CLI.Setup;
 
-public class Setup
+public static class Setup
 {
     public static async Task Initialize(string solutionPath)
     {

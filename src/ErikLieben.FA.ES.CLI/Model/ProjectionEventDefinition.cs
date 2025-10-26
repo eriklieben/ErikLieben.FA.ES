@@ -11,8 +11,8 @@ public record WhenParameterValueFactory
 {
     public required WhenParameterValueItem Type { get; init; }
     public required WhenParameterValueItem ForType { get; init; }
-    
-    public string EventType { get; init; }
+
+    public string? EventType { get; init; }
 }
 
 public record WhenParameterValueItem

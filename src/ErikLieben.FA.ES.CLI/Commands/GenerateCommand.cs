@@ -67,7 +67,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         var path = Path.Combine(folderPath!, ".elfa/config.json");
         if (File.Exists(path))
         {
-            var content = await File.ReadAllTextAsync(path);
+            var content = await File.ReadAllTextAsync(path, cancellationToken);
             if (!string.IsNullOrWhiteSpace(content))
             {
                 config = JsonSerializer.Deserialize<Config>(content) ?? new Config();
@@ -93,7 +93,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         var newJsonDef = JsonSerializer.Serialize(def, AnalyzeJsonOptions);
         if (File.Exists(analyzePath))
         {
-            var existingJsonDef = await File.ReadAllTextAsync(analyzePath);
+            var existingJsonDef = await File.ReadAllTextAsync(analyzePath, cancellationToken);
             if (!existingJsonDef.Equals(newJsonDef))
             {
                 File.Move(analyzePath, $"{analyzePath}.bak.json", true);
@@ -106,7 +106,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         AnsiConsole.MarkupLine($"Saving analyze data to: [gray62]{analyzePath}[/]");
-        await File.WriteAllTextAsync(analyzePath, newJsonDef);
+        await File.WriteAllTextAsync(analyzePath, newJsonDef, cancellationToken);
 
         if (existingFile && !sameFile && settings.WithDiff)
         {
@@ -126,7 +126,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 // Wait for the process to exit
                 Console.WriteLine("Waiting for Visual Studio Code to close...");
-                await process.WaitForExitAsync();
+                await process.WaitForExitAsync(cancellationToken);
             }
             else
             {
