@@ -48,6 +48,6 @@ public class EventStreamSettingsTests
         var sut = new EventStreamSettings();
 
         // Assert
-        Assert.IsAssignableFrom<IEventStreamSettings>(sut);
+        Assert.IsType<IEventStreamSettings>(sut, exactMatch: false);
     }
 }

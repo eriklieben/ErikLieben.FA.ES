@@ -20,7 +20,7 @@ internal static class CommandHelper
                 CommandName = commandMethod.Name,
                 Parameters = GetMethodParameters(commandMethod),
                 ReturnType = GetMethodReturnType(commandMethod),
-                RequiresAwait = roslyn.IsReturnTypeAwaitable(commandMethod)
+                RequiresAwait = RoslynHelper.IsReturnTypeAwaitable(commandMethod)
             };
 
             var list = roslyn.GetStreamContextUsagesInCommand(commandMethod);

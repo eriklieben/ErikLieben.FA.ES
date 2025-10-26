@@ -22,6 +22,6 @@ public class SnapshotJsonTypeInfoNotSetExceptionTests
         var sut = new SnapshotJsonTypeInfoNotSetException();
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

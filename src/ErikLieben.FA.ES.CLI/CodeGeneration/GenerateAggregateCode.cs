@@ -35,7 +35,7 @@ public class GenerateAggregateCode
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [green]{aggregate.IdentifierName}[/]");
                 var rel = (aggregate.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
                 var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
@@ -47,7 +47,7 @@ public class GenerateAggregateCode
         }
     }
 
-    private async Task GenerateAggregate(AggregateDefinition aggregate, string? path, Config config)
+    private static async Task GenerateAggregate(AggregateDefinition aggregate, string? path, Config config)
     {
         if (!aggregate.IsPartialClass)
         {
@@ -55,8 +55,21 @@ public class GenerateAggregateCode
             return;
         }
 
+        var usings = BuildUsings(aggregate);
+        var postWhenCode = GeneratePostWhenCode(aggregate, usings);
+        var foldCode = GenerateFoldCode(aggregate, usings);
+        var serializableCode = GenerateJsonSerializableCode(aggregate, usings);
+        var (propertyCode, propertySnapshotCode) = GeneratePropertyCode(aggregate, serializableCode);
+        var (get, ctorInput) = GenerateConstructorParameters(aggregate);
+        var setupCode = GenerateSetupCode(aggregate);
+        var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode);
 
-        var code = new StringBuilder();
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
+        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+    }
+
+    internal static List<string> BuildUsings(AggregateDefinition aggregate)
+    {
         var usings = new List<string>
         {
             "System.Text.Json.Serialization",
@@ -67,170 +80,130 @@ public class GenerateAggregateCode
             "System.Diagnostics.CodeAnalysis"
         };
 
-        foreach (var property in aggregate.Properties)
-        {
-            if (!usings.Contains(property.Namespace))
-            {
-                usings.Add(property.Namespace);
-            }
-        }
+        usings.AddRange(aggregate.Properties
+            .Where(p => !usings.Contains(p.Namespace))
+            .Select(p => p.Namespace));
 
+        return usings;
+    }
+
+    internal static StringBuilder GeneratePostWhenCode(AggregateDefinition aggregate, List<string> usings)
+    {
         var postWhenCode = new StringBuilder();
-        if (aggregate.PostWhen != null)
+        if (aggregate.PostWhen == null)
         {
-            postWhenCode.Append("PostWhen(");
-            foreach (var param in aggregate.PostWhen.Parameters)
-            {
-                if (!usings.Contains(param.Namespace))
-                {
-                    usings.Add(param.Namespace);
-                };
-
-                switch (param.Type)
-                {
-                    case "IObjectDocument":
-                        postWhenCode.Append($"Stream.Document, ");
-                        break;
-                    case "IEvent":
-                        postWhenCode.Append($"@event, ");
-                        break;
-                }
-            }
-            var fullPostWhenCode = postWhenCode.ToString();
-            if (fullPostWhenCode.EndsWith(", "))
-            {
-                fullPostWhenCode = fullPostWhenCode.Remove(fullPostWhenCode.Length - 2);
-                postWhenCode.Clear();
-                postWhenCode.Append(fullPostWhenCode);
-            }
-            postWhenCode.Append(");");
-            postWhenCode.AppendLine();
+            return postWhenCode;
         }
 
+        postWhenCode.Append("PostWhen(");
+        usings.AddRange(aggregate.PostWhen.Parameters
+            .Where(p => !usings.Contains(p.Namespace))
+            .Select(p => p.Namespace));
+
+        foreach (var param in aggregate.PostWhen.Parameters)
+        {
+            switch (param.Type)
+            {
+                case "IObjectDocument":
+                    postWhenCode.Append($"Stream.Document, ");
+                    break;
+                case "IEvent":
+                    postWhenCode.Append($"@event, ");
+                    break;
+            }
+        }
+
+        var fullPostWhenCode = postWhenCode.ToString();
+        if (fullPostWhenCode.EndsWith(", "))
+        {
+            fullPostWhenCode = fullPostWhenCode.Remove(fullPostWhenCode.Length - 2);
+            postWhenCode.Clear();
+            postWhenCode.Append(fullPostWhenCode);
+        }
+
+        postWhenCode.Append(");");
+        postWhenCode.AppendLine();
+        return postWhenCode;
+    }
+
+    internal static StringBuilder GenerateFoldCode(AggregateDefinition aggregate, List<string> usings)
+    {
         var foldCode = new StringBuilder();
         foreach (var @event in aggregate.Events)
         {
-            if (@event.ActivationType == "When")
+            if (@event.ActivationType != "When")
             {
-                // When
-                if (!usings.Contains(@event.Namespace))
-                {
-                    usings.Add(@event.Namespace);
-                }
+                continue;
+            }
 
-                if (@event.Parameters.Count > 1)
-                {
-                    foldCode.Append($$$"""
-                                           case "{{{@event.EventName}}}":
-                                                When(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
-                                           """);
-                    foreach (var p in @event.Parameters.Skip(1))
-                    {
-                        switch (p.Type)
-                        {
-                            case "IObjectDocument":
-                                foldCode.Append($"Stream.Document");
-                                break;
-                            case "IEvent":
-                                foldCode.Append($"@event");
-                                break;
-                        }
+            if (!usings.Contains(@event.Namespace))
+            {
+                usings.Add(@event.Namespace);
+            }
 
-                        if (p.Type != @event.Parameters.Last().Type)
-                        {
-                            foldCode.AppendLine(",");
-                        }
-                    }
-                    foldCode.Append(");");
-                    foldCode.AppendLine();
-                    foldCode.AppendLine("break;");
-                }
-                else
-                {
+            if (@event.Parameters.Count > 1)
+            {
+                GenerateFoldCodeWithMultipleParameters(@event, foldCode);
+            }
+            else
+            {
+                GenerateFoldCodeWithSingleParameter(@event, foldCode);
+            }
+        }
+        return foldCode;
+    }
 
-                    foldCode.AppendLine($$"""
-                                          case "{{@event.EventName}}":
-                                              When(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
-                                          break;
-                                          """);
-                }
+    internal static void GenerateFoldCodeWithMultipleParameters(EventDefinition @event, StringBuilder foldCode)
+    {
+        foldCode.Append($$$"""
+                               case "{{{@event.EventName}}}":
+                                    When(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
+                               """);
+
+        foreach (var p in @event.Parameters.Skip(1))
+        {
+            switch (p.Type)
+            {
+                case "IObjectDocument":
+                    foldCode.Append($"Stream.Document");
+                    break;
+                case "IEvent":
+                    foldCode.Append($"@event");
+                    break;
+            }
+
+            if (p.Type != @event.Parameters[^1].Type)
+            {
+                foldCode.AppendLine(",");
             }
         }
 
+        foldCode.Append(");");
+        foldCode.AppendLine();
+        foldCode.AppendLine("break;");
+    }
 
+    internal static void GenerateFoldCodeWithSingleParameter(EventDefinition @event, StringBuilder foldCode)
+    {
+        foldCode.AppendLine($$"""
+                              case "{{@event.EventName}}":
+                                  When(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
+                              break;
+                              """);
+    }
 
-
+    internal static StringBuilder GenerateJsonSerializableCode(AggregateDefinition aggregate, List<string> usings)
+    {
         var serializableCode = new StringBuilder();
-
-        var propertyTypes = new List<string>();
-
-        var newJsonSerializableCode = new StringBuilder();
 
         foreach (var usedEvent in aggregate.Events)
         {
             serializableCode.AppendLine($"[JsonSerializable(typeof({usedEvent.TypeName}))]");
-            newJsonSerializableCode.AppendLine("// <auto-generated />");
-
-            var subTypes = new List<string>();
-
-            // HACK:
-            subTypes.Add("System.String");
-            subTypes.Add("System.Guid");
-
-            foreach (var property in usedEvent.Properties)
-            {
-                foreach (var subType in property.SubTypes)
-                {
-                    var fullSubTypeDef = subType.Namespace + "." + subType.Name;
-                    if (!subTypes.Contains(fullSubTypeDef))
-                    {
-                        subTypes.Add(fullSubTypeDef);
-                    }
-                }
-
-                var fullTypeDef = property.Namespace + "." + property.Type;
-
-                if (property.IsGeneric)
-                {
-                    fullTypeDef += "<";
-                    foreach (var generic in property.GenericTypes)
-                    {
-                        fullTypeDef += generic.Namespace + "." + generic.Name;
-                        if (property.GenericTypes.Last() != generic)
-                        {
-                            fullTypeDef += ",";
-                        }
-                    }
-                    fullTypeDef += ">";
-                }
-
-                if (!propertyTypes.Contains(fullTypeDef))
-                {
-                    propertyTypes.Add(fullTypeDef);
-                }
-
-                if (!subTypes.Contains(fullTypeDef))
-                {
-                    subTypes.Add(fullTypeDef);
-                }
-                //newJsonSerializableCode.AppendLine($"[JsonSerializable(typeof({fullTypeDef}))]");
-            }
-
-            foreach (var subtype in subTypes.Order())
-            {
-                newJsonSerializableCode.AppendLine($"[JsonSerializable(typeof({subtype}))]");
-            }
-
-
-
-            newJsonSerializableCode.AppendLine($"[JsonSerializable(typeof({@usedEvent.TypeName}))]");
-            newJsonSerializableCode.AppendLine(
-                "internal partial class " + usedEvent.TypeName + "JsonSerializerContext : JsonSerializerContext { }");
-            newJsonSerializableCode.AppendLine("");
         }
 
         serializableCode.AppendLine($"[JsonSerializable(typeof({aggregate.IdentifierName}Snapshot))]");
         serializableCode.AppendLine($"[JsonSerializable(typeof({aggregate.IdentifierName}))]");
+
         if (aggregate.IdentifierType != "string")
         {
             if (!usings.Contains(aggregate.IdentifierTypeNamespace))
@@ -240,71 +213,85 @@ public class GenerateAggregateCode
             serializableCode.AppendLine($"[JsonSerializable(typeof({aggregate.IdentifierType}))]");
         }
 
+        return serializableCode;
+    }
+
+    internal static (StringBuilder propertyCode, StringBuilder propertySnapshotCode) GeneratePropertyCode(
+        AggregateDefinition aggregate, StringBuilder serializableCode)
+    {
         var propertyCode = new StringBuilder();
         var propertySnapshotCode = new StringBuilder();
         var propertySubTypes = new List<string>();
+
+        foreach (var subType in aggregate.Properties.SelectMany(p => p.SubTypes)
+            .Where(st => !propertySubTypes.Contains(st.Namespace + "." + st.Name)))
+        {
+            propertySubTypes.Add(subType.Namespace + "." + subType.Name);
+        }
+
         foreach (var property in aggregate.Properties)
         {
-            var type = property.Type;
-            if (property.IsGeneric)
-            {
-                type += "<";
-                foreach (var generic in property.GenericTypes)
-                {
-                    type += generic.Namespace + "." + generic.Name;
-                    if (property.GenericTypes.Last() != generic)
-                    {
-                        type += ",";
-                    }
-                }
-                type += ">";
-            }
-
+            var type = BuildPropertyType(property);
             propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
             propertySnapshotCode.AppendLine($"public required {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
-
-            //
-
-            foreach (var subtype in property.SubTypes)
-            {
-                if (!propertySubTypes.Contains(subtype.Namespace + "." + subtype.Name))
-                {
-                    propertySubTypes.Add(subtype.Namespace + "." + subtype.Name);
-                }
-            }
         }
 
-        //
-            foreach (var subType in propertySubTypes.Order())
+        foreach (var subType in propertySubTypes.Order())
+        {
+            serializableCode.AppendLine($"[JsonSerializable(typeof({subType}))]");
+        }
+
+        return (propertyCode, propertySnapshotCode);
+    }
+
+    internal static string BuildPropertyType(PropertyDefinition property)
+    {
+        var typeBuilder = new StringBuilder(property.Type);
+        if (!property.IsGeneric)
+        {
+            return typeBuilder.ToString();
+        }
+
+        typeBuilder.Append('<');
+        foreach (var generic in property.GenericTypes)
+        {
+            typeBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
+            if (property.GenericTypes[^1] != generic)
             {
-                serializableCode.AppendLine($"[JsonSerializable(typeof({subType}))]");
+                typeBuilder.Append(',');
             }
+        }
+        typeBuilder.Append('>');
 
+        return typeBuilder.ToString();
+    }
 
+    internal static (string get, string ctorInput) GenerateConstructorParameters(AggregateDefinition aggregate)
+    {
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+        var orderedConstructors = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).ToList();
+        var mostParams = orderedConstructors[0];
 
-        // TODO: These probably need to be set to something
-        var get = "";
-        var ctorInput = "";
-        var mostParams = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).First();
         foreach (var param in mostParams.Parameters.Where(param => param.Type != "IEventStream"))
         {
-            get += $"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n";
-            ctorInput += $", {param.Name}!";
+            getBuilder.Append($"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n");
+            ctorInputBuilder.Append($", {param.Name}!");
         }
 
-        string codeGetById = "";
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
 
+    internal static StringBuilder GenerateSetupCode(AggregateDefinition aggregate)
+    {
         var setupCode = new StringBuilder();
         foreach (var usedEvent in aggregate.Events)
         {
-//                  setupCode.AppendLine($$"""
-//                      Stream.RegisterEvent<{{usedEvent.TypeName}}>("{{usedEvent.EventName}}");
-//                  """);
-                 setupCode.AppendLine($$"""
-                     Stream.RegisterEvent<{{usedEvent.TypeName}}>(
-                         "{{usedEvent.EventName}}",
-                         {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
-                 """);
+            setupCode.AppendLine($$"""
+                 Stream.RegisterEvent<{{usedEvent.TypeName}}>(
+                     "{{usedEvent.EventName}}",
+                     {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+             """);
         }
 
         setupCode.AppendLine($$"""
@@ -312,10 +299,29 @@ public class GenerateAggregateCode
              Stream.SetAggregateType({{aggregate.IdentifierName}}JsonSerializerContext.Default.{{aggregate.IdentifierName}});
         """);
 
+        return setupCode;
+    }
+
+    internal static StringBuilder AssembleAggregateCode(
+        AggregateDefinition aggregate,
+        List<string> usings,
+        StringBuilder postWhenCode,
+        StringBuilder foldCode,
+        StringBuilder serializableCode,
+        StringBuilder propertyCode,
+        StringBuilder propertySnapshotCode,
+        string get,
+        string ctorInput,
+        StringBuilder setupCode)
+    {
+        var code = new StringBuilder();
+        string codeGetById = "";
+
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");
         }
+
         code.AppendLine("");
         code.AppendLine($$"""
                           namespace {{aggregate.Namespace}};
@@ -329,11 +335,11 @@ public class GenerateAggregateCode
                                   {
                                       {{foldCode}}
                                   }
-                                  
-                                  {{postWhenCode}}   
-                              
+
+                                  {{postWhenCode}}
+
                               }
-                              
+
                               protected override void GeneratedSetup()
                               {
                                 {{setupCode}}
@@ -343,7 +349,7 @@ public class GenerateAggregateCode
                               {
                                   throw new NotImplementedException();
                               }
-                              
+
                           }
 
 
@@ -388,7 +394,7 @@ public class GenerateAggregateCode
                             }
 
                             public {{aggregate.IdentifierName}}Factory(
-                              IServiceProvider serviceProvider, 
+                              IServiceProvider serviceProvider,
                               IEventStreamFactory eventStreamFactory,
                               IObjectDocumentFactory objectDocumentFactory)
                             {
@@ -421,8 +427,8 @@ public class GenerateAggregateCode
                               var eventStream = eventStreamFactory.Create(document);
                               return new {{aggregate.IdentifierName}}(eventStream{{ctorInput}});
                             }
-                            
-                            
+
+
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
                                  var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString());
@@ -430,7 +436,7 @@ public class GenerateAggregateCode
                                  await obj.Fold();
                                  return obj;
                              }
-                             
+
                              protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent) where T : class
                              {
                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString());
@@ -438,7 +444,7 @@ public class GenerateAggregateCode
                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
                                 await eventStream.Session(context => context.Append(firstEvent));
                                 await obj.Fold();
-                                return obj; 
+                                return obj;
                              }
 
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
@@ -456,7 +462,7 @@ public class GenerateAggregateCode
                                  await obj.Fold();
                                  return (obj, document);
                              }
-                             
+
                             public async Task<{{aggregate.IdentifierName}}> GetFirstByDocumentTag(string tag)
                             {
                                 var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
@@ -468,7 +474,7 @@ public class GenerateAggregateCode
                                 await obj.Fold();
                                 return obj;
                             }
-                            
+
                             public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
                             {
                                 var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag));
@@ -486,8 +492,7 @@ public class GenerateAggregateCode
                           }
                           """);
 
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        return code;
     }
 
     private static string FormatCode(string code, CancellationToken cancelToken = default)

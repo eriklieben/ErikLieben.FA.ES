@@ -36,7 +36,7 @@ public class AnalyzeProjections
             return;
         }
 
-        if (classSymbol?.ContainingAssembly.Identity.Name.StartsWith("ErikLieben.FA.ES") ?? false)
+        if (classSymbol.ContainingAssembly.Identity.Name.StartsWith("ErikLieben.FA.ES"))
         {
             return;
         }

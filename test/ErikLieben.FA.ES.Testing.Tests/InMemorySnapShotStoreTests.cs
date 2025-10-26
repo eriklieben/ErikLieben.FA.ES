@@ -11,7 +11,7 @@ public class InMemorySnapShotStoreTests
 {
     private class Dummy : IBase { public int V { get; set; } public Task Fold() => Task.CompletedTask; public void Fold(IEvent @event) { } public void ProcessSnapshot(object snapshot) { } }
 
-    private static IObjectDocument CreateDoc()
+    private static InMemoryEventStreamDocument CreateDoc()
         => new InMemoryEventStreamDocument(
             "1",
             "order",

@@ -41,7 +41,7 @@ internal static class ParameterHelper
                                 RoslynHelper.GetFullNamespace(t),
                                 [],
                                 []))
-                        .ToList() ?? [],
+                        .ToList(),
                 };
             })
             .Where(p => p != null)

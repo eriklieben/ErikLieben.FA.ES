@@ -36,10 +36,10 @@ public class InMemoryDocumentTagStore : IDocumentTagStore
     /// <returns>An enumerable of document identifiers that match; empty when none found.</returns>
     public Task<IEnumerable<string>> GetAsync(string objectName, string tag)
     {
-        if (!this.Tags.ContainsKey(objectName))
+        if (!this.Tags.TryGetValue(objectName, out var value))
         {
             return Task.FromResult<IEnumerable<string>>(new List<string>());
         }
-        return Task.FromResult<IEnumerable<string>>(this.Tags[objectName]);
+        return Task.FromResult<IEnumerable<string>>(value);
     }
 }

@@ -64,7 +64,7 @@ public abstract class ObjectDocument : IObjectDocument
     /// Gets the list of terminated streams for the object.
     /// </summary>
     [JsonPropertyName("terminatedStreams")]
-    public List<TerminatedStream> TerminatedStreams { get; private set; } = [];
+    public List<TerminatedStream> TerminatedStreams { get; private set; }
 
     /// <summary>
     /// Gets the schema version of the materialized document; may be null.

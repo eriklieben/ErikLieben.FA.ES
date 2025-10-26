@@ -14,12 +14,11 @@ public class SetupTests
         // Arrange
         var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
-        var sut = new CliSetup();
 
         try
         {
             // Act
-            await sut.Initialize(root);
+            await CliSetup.Initialize(root);
 
             // Assert
             var elfa = Path.Combine(root, ".elfa");
@@ -56,13 +55,11 @@ public class SetupTests
         var cfg = Path.Combine(elfa, "config.json");
         await File.WriteAllTextAsync(cfg, "{\"preset\":true}");
 
-        var sut = new CliSetup();
-
         try
         {
             // Act - run twice
-            await sut.Initialize(root);
-            await sut.Initialize(root);
+            await CliSetup.Initialize(root);
+            await CliSetup.Initialize(root);
 
             // Assert
             Assert.True(Directory.Exists(elfa));

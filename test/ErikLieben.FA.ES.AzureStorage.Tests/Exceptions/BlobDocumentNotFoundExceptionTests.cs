@@ -45,7 +45,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 var sut = new BlobDocumentNotFoundException(message, innerException);
 
                 // Assert
-                Assert.IsAssignableFrom<Exception>(sut);
+                Assert.IsType<Exception>(sut, exactMatch: false);
             }
         }
     }

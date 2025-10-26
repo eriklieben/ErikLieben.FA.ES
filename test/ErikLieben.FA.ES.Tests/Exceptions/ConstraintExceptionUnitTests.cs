@@ -31,6 +31,6 @@ public class ConstraintExceptionTests
         var sut = new ConstraintException(message, constraint);
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

@@ -12,6 +12,8 @@ namespace ErikLieben.FA.ES.CLI.CodeGeneration;
 
 public class GenerateProjectionCode
 {
+    private const string IEventTypeName = "IEvent";
+
     private readonly SolutionDefinition solution;
     private readonly Config config;
     private readonly string solutionPath;
@@ -31,14 +33,14 @@ public class GenerateProjectionCode
             {
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [yellow]{projection.Name}[/]");
                 var currentFile = projection.FileLocations.FirstOrDefault();
-                if (currentFile is null || currentFile.ToLowerInvariant().Contains(".generated"))
+                if (currentFile is null || currentFile.Contains(".generated", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
                 var rel = (projection.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
                 var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
@@ -62,13 +64,9 @@ public class GenerateProjectionCode
             "ErikLieben.FA.ES.VersionTokenParts"
         };
 
-        foreach (var property in projection.Properties)
-        {
-            if (!usings.Contains(property.Namespace))
-            {
-                usings.Add(property.Namespace);
-            }
-        }
+        usings.AddRange(projection.Properties
+            .Where(p => !usings.Contains(p.Namespace))
+            .Select(p => p.Namespace));
 
         var foldCode = new StringBuilder();
         var whenParameterDeclarations = new List<string>();
@@ -97,22 +95,24 @@ public class GenerateProjectionCode
             serializableCode.AppendLine($"[JsonSerializable(typeof({usedEvent.TypeName}))]");
             foreach (var property in usedEvent.Properties)
             {
-                var fullTypeDef = property.Namespace + "." + property.Type;
+                var fullTypeDefBuilder = new StringBuilder();
+                fullTypeDefBuilder.Append(property.Namespace).Append('.').Append(property.Type);
 
                 if (property.IsGeneric)
                 {
-                    fullTypeDef += "<";
+                    fullTypeDefBuilder.Append('<');
                     foreach (var generic in property.GenericTypes)
                     {
-                        fullTypeDef += generic.Namespace + "." + generic.Name;
-                        if (property.GenericTypes.Last() != generic)
+                        fullTypeDefBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
+                        if (property.GenericTypes[^1] != generic)
                         {
-                            fullTypeDef += ",";
+                            fullTypeDefBuilder.Append(',');
                         }
                     }
-                    fullTypeDef += ">";
+                    fullTypeDefBuilder.Append('>');
                 }
 
+                var fullTypeDef = fullTypeDefBuilder.ToString();
                 if (!propertyTypes.Contains(fullTypeDef))
                 {
                     propertyTypes.Add(fullTypeDef);
@@ -142,48 +142,51 @@ public class GenerateProjectionCode
         {
             string Inner(PropertyGenericTypeDefinition prop)
             {
-                var type = prop.Namespace + "." + prop.Name;
+                var typeBuilder = new StringBuilder();
+                typeBuilder.Append(prop.Namespace).Append('.').Append(prop.Name);
                 if (prop.GenericTypes.Count != 0)
                 {
-                    type += "<";
+                    typeBuilder.Append('<');
                     foreach (var generic in prop.GenericTypes)
                     {
                         // var x = !string.IsNullOrWhiteSpace(prop.Namespace) ? prop.Namespace + "." : string.Empty;
                         if (prop.GenericTypes.Count != 0)
                         {
-                            type += Inner(prop.GenericTypes.First());
+                            typeBuilder.Append(Inner(prop.GenericTypes[0]));
                         }
                         else
                         {
-                            type += generic.Namespace + "." + generic.Name;
+                            typeBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
                         }
 
                         // type += x + generic.Name;
-                        if (prop.GenericTypes.Last() != generic)
+                        if (prop.GenericTypes[^1] != generic)
                         {
-                            type += ",";
+                            typeBuilder.Append(',');
                         }
                     }
-                    type += ">";
+                    typeBuilder.Append('>');
                 }
-                return type;
+                return typeBuilder.ToString();
             }
 
-            var type = property.Type;
+            var typeBuilder2 = new StringBuilder(property.Type);
             if (property.IsGeneric)
             {
 
-                type += "<";
+                typeBuilder2.Append('<');
                 foreach (var generic in property.GenericTypes)
                 {
-                    type += Inner(generic);
-                    if (property.GenericTypes.Last() != generic)
+                    typeBuilder2.Append(Inner(generic));
+                    if (property.GenericTypes[^1] != generic)
                     {
-                        type += ",";
+                        typeBuilder2.Append(',');
                     }
                 }
-                type += ">";
+                typeBuilder2.Append('>');
             }
+
+            var type = typeBuilder2.ToString();
 
             if (property.Name != "WhenParameterValueFactories")
             {
@@ -228,7 +231,7 @@ public class GenerateProjectionCode
 
 
         var whenParameterValueBindingCode = string.Empty;
-        if (whenParameterDeclarations.Any())
+        if (whenParameterDeclarations.Count > 0)
         {
             whenParameterValueBindingCode = whenParameterDeclarations.Aggregate((x, y) => x + "," + y + Environment.NewLine);
         }
@@ -245,12 +248,12 @@ public class GenerateProjectionCode
                     case "IObjectDocument":
                         postWhenStringBuilder.Append("document");
                         break;
-                    case "IEvent":
+                    case IEventTypeName:
                         postWhenStringBuilder.Append("JsonEvent.ToEvent(@event, @event.EventType)");
                         break;
                 }
 
-                if (parameter != projection.PostWhen.Parameters.Last())
+                if (parameter != projection.PostWhen.Parameters[^1])
                 {
                     postWhenStringBuilder.Append(", ");
                 }
@@ -286,7 +289,7 @@ public class GenerateProjectionCode
                     #nullable restore
                     """;
 
-        var yy= $$"""
+        _ = $$"""
                   public override {{(projection.Events.Any(e => e.ActivationAwaitRequired) ? "async " : string.Empty)}}Task Fold(IEvent @event, IObjectDocument document)
                   {
                       switch (@event.EventType)
@@ -301,8 +304,6 @@ public class GenerateProjectionCode
                   
                   {{postWhenAllDummyCode}}
                  """;
-
-        //
 
         //===
         var ctorCode = new StringBuilder();
@@ -385,7 +386,7 @@ public class GenerateProjectionCode
                     ctorCode.Append("obj." + name);
                 }
 
-                if (parameter != constructor.Parameters.Last())
+                if (parameter != constructor.Parameters[^1])
                 {
                     ctorCode.Append(", ");
                 }
@@ -504,12 +505,12 @@ public class GenerateProjectionCode
                             {{awaitCode}} When(
                           """);
 
-        if (fistParameter.Type == @event.TypeName && fistParameter.Type != "IEvent")
+        if (fistParameter.Type == @event.TypeName && fistParameter.Type != IEventTypeName)
         {
             foldCode.Append(
                 $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
         }
-        else if (fistParameter.Type == "IEvent")
+        else if (fistParameter.Type == IEventTypeName)
         {
             foldCode.Append(
                 $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
@@ -586,7 +587,7 @@ public class GenerateProjectionCode
             }
             else switch (parameter.Type)
             {
-                case "IEvent":
+                case IEventTypeName:
                     foldCode.Append(
                         $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
                     break;
@@ -604,7 +605,7 @@ public class GenerateProjectionCode
                 }
             }
 
-            if (@event.Parameters.Last() != parameter)
+            if (@event.Parameters[^1] != parameter)
             {
                 foldCode.Append(", ");
             }

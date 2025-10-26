@@ -49,7 +49,7 @@ public class InvalidContentTypeExceptionTests
             var sut = new InvalidContentTypeException(actual, expected);
 
             // Assert
-            Assert.IsAssignableFrom<Exception>(sut);
+            Assert.IsType<Exception>(sut, exactMatch: false);
         }
     }
 }

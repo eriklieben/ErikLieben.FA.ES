@@ -247,7 +247,7 @@ public async Task<IObjectDocument> GetAsync(
         var properties = await blob.GetPropertiesAsync();
         var etagRetrieved = properties.Value.ETag.ToString().Replace("\u0022", string.Empty);
 
-        var (etag, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
+        var (_, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
             new BlobRequestConditions { IfMatch = string.IsNullOrEmpty(etagRetrieved) ? null : new ETag(etagRetrieved) });
 
         document.SetHash(hash,blobDoc.Hash);

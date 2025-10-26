@@ -107,7 +107,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
             };
 
             // Assert
-            Assert.IsAssignableFrom<IStreamDependencies>(sut);
+            Assert.IsType<IStreamDependencies>(sut, exactMatch: false);
         }
 
         [Fact]

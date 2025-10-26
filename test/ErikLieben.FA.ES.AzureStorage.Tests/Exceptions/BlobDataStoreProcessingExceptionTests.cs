@@ -29,7 +29,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
                 var sut = new BlobDataStoreProcessingException(errorMessage);
 
                 // Assert
-                Assert.IsAssignableFrom<Exception>(sut);
+                Assert.IsType<Exception>(sut, exactMatch: false);
             }
 
             [Theory]

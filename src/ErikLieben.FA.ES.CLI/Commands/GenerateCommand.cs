@@ -24,7 +24,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("-d|--with-diff")] public bool WithDiff { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         // temp for testing
 #if DEBUG
@@ -67,7 +67,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         var path = Path.Combine(folderPath!, ".elfa/config.json");
         if (File.Exists(path))
         {
-            var content = await File.ReadAllTextAsync(path);
+            var content = await File.ReadAllTextAsync(path, cancellationToken);
             if (!string.IsNullOrWhiteSpace(content))
             {
                 config = JsonSerializer.Deserialize<Config>(content) ?? new Config();
@@ -80,7 +80,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         (var def, string solutionPath) = await analyzer.AnalyzeAsync(settings.Path);
 
         // Temp for testing
-        await new Setup.Setup().Initialize(solutionPath);
+        await Setup.Setup.Initialize(solutionPath);
 
 
 
@@ -93,7 +93,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         var newJsonDef = JsonSerializer.Serialize(def, AnalyzeJsonOptions);
         if (File.Exists(analyzePath))
         {
-            var existingJsonDef = await File.ReadAllTextAsync(analyzePath);
+            var existingJsonDef = await File.ReadAllTextAsync(analyzePath, cancellationToken);
             if (!existingJsonDef.Equals(newJsonDef))
             {
                 File.Move(analyzePath, $"{analyzePath}.bak.json", true);
@@ -106,7 +106,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         }
 
         AnsiConsole.MarkupLine($"Saving analyze data to: [gray62]{analyzePath}[/]");
-        await File.WriteAllTextAsync(analyzePath, newJsonDef);
+        await File.WriteAllTextAsync(analyzePath, newJsonDef, cancellationToken);
 
         if (existingFile && !sameFile && settings.WithDiff)
         {
@@ -126,7 +126,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 // Wait for the process to exit
                 Console.WriteLine("Waiting for Visual Studio Code to close...");
-                await process.WaitForExitAsync();
+                await process.WaitForExitAsync(cancellationToken);
             }
             else
             {
@@ -145,7 +145,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     }
 
 
-    private string? FindSolutionFile()
+    private static string? FindSolutionFile()
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var slnFiles = Directory.GetFiles(currentDirectory, "*.sln", SearchOption.AllDirectories);
@@ -167,14 +167,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             @"C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
         };
 
-        foreach (var path in commonPaths)
-        {
-            if (File.Exists(path))
-            {
-                return path;
-            }
-        }
-        return null;
+        return commonPaths.FirstOrDefault(p => File.Exists(p));
     }
 
 }

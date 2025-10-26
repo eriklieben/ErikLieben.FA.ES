@@ -49,7 +49,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
                 Assert.Equal(objectId, sut.ObjectId);
                 Assert.Equal(objectName, sut.ObjectName);
                 Assert.Same(active, sut.Active);
-                Assert.Equal(terminatedStreams.Count(), sut.TerminatedStreams.Count);
+                Assert.Equal(terminatedStreams.Count, sut.TerminatedStreams.Count);
                 Assert.Same(terminatedStreams.First(), sut.TerminatedStreams.First());
                 Assert.Equal(schemaVersion, sut.SchemaVersion);
                 Assert.Equal(hash, sut.Hash);

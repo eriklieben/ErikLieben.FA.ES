@@ -170,24 +170,19 @@ public class LeasedSession : ILeasedSession
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // TODO: Implement rollback functionality
-            //try
-            //{
-            //    await dataStore.RemoveAsync(document, Events.ToArray());
-            //    // TODO: rollback version number as well?
-            //}
-            //catch (Exception)
-            //{
-            //    throw new StreamInIncorrectStateException(document.ActiveStreamIdentifier, document.ObjectName, document.ObjectId);
-            //}
+            // When rollback is implemented, this should:
+            // 1. Call dataStore.RemoveAsync(document, Events.ToArray()) to remove appended events
+            // 2. Rollback the version number
+            // 3. Wrap any rollback failures in StreamInIncorrectStateException
 
             throw;
         }
 
         // ACTIONS
-        if (postCommitActions.Any())
+        if (postCommitActions.Count > 0)
         {
             using var postCommitActivity = ActivitySource.StartActivity("Session.PostCommitActions");
             foreach (var action in postCommitActions)
@@ -241,9 +236,9 @@ public class LeasedSession : ILeasedSession
         await documentstore.SetAsync(document);
 
         // Notify listeners of closed documents
-        foreach (var cAction in docClosedNotificationActions)
+        if (lastChunk != null)
         {
-            if (lastChunk != null)
+            foreach (var cAction in docClosedNotificationActions)
             {
                 await cAction.StreamDocumentChunkClosed()(eventStream, lastChunk.ChunkIdentifier);
             }

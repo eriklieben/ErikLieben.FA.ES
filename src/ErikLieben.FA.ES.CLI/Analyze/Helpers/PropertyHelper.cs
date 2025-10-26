@@ -51,7 +51,7 @@ internal static class PropertyHelper
                                 RoslynHelper.GetFullNamespace(t),
                                 [],
                                 []))
-                        .ToList() ?? [],
+                        .ToList(),
                 };
             })
             .Where(p => p != null)
@@ -107,7 +107,7 @@ internal static class PropertyHelper
                                     RoslynHelper.GetFullNamespace(t),
                                     [],
                                     []))
-                            .ToList() ?? [],
+                            .ToList(),
                     };
                 })
                 .Where(p => p != null)

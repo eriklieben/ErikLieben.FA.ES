@@ -235,7 +235,7 @@ public class Analyze(Config config, IAnsiConsole console)
         }
     }
 
-    private async Task<int> CountClassDeclarationsAsync(Solution solution)
+    private static async Task<int> CountClassDeclarationsAsync(Solution solution)
     {
         var totalTasksItems = 0;
 

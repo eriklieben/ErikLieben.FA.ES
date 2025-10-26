@@ -22,6 +22,6 @@ public class UnableToDeserializeInTransitEventExceptionTests
         var sut = new UnableToDeserializeInTransitEventException();
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

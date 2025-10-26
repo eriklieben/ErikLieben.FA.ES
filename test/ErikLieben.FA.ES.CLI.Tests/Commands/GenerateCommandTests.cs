@@ -73,7 +73,7 @@ EndGlobal
         try
         {
             // Act
-            var result = await sut.ExecuteAsync(context: null!, settings);
+            var result = await sut.ExecuteAsync(context: null!, settings, CancellationToken.None);
 
             // Assert
             Assert.Equal(1, result);
@@ -97,7 +97,7 @@ EndGlobal
         try
         {
             // Act
-            var result = await sut.ExecuteAsync(context: null!, settings);
+            var result = await sut.ExecuteAsync(context: null!, settings, CancellationToken.None);
 
             // Assert
             Assert.Equal(0, result);
@@ -130,11 +130,11 @@ EndGlobal
         try
         {
             var sut = new GenerateCommand();
-            var mi = typeof(GenerateCommand).GetMethod("FindSolutionFile", BindingFlags.Instance | BindingFlags.NonPublic);
+            var mi = typeof(GenerateCommand).GetMethod("FindSolutionFile", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.NotNull(mi);
 
             // Act
-            var result = (string?)mi!.Invoke(sut, Array.Empty<object>());
+            var result = (string?)mi!.Invoke(null, Array.Empty<object>());
 
             // Assert
             Assert.NotNull(result);
