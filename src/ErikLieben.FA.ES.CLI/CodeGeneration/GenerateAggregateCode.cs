@@ -68,7 +68,7 @@ public class GenerateAggregateCode
         await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
     }
 
-    private static List<string> BuildUsings(AggregateDefinition aggregate)
+    internal static List<string> BuildUsings(AggregateDefinition aggregate)
     {
         var usings = new List<string>
         {
@@ -87,7 +87,7 @@ public class GenerateAggregateCode
         return usings;
     }
 
-    private static StringBuilder GeneratePostWhenCode(AggregateDefinition aggregate, List<string> usings)
+    internal static StringBuilder GeneratePostWhenCode(AggregateDefinition aggregate, List<string> usings)
     {
         var postWhenCode = new StringBuilder();
         if (aggregate.PostWhen == null)
@@ -126,7 +126,7 @@ public class GenerateAggregateCode
         return postWhenCode;
     }
 
-    private static StringBuilder GenerateFoldCode(AggregateDefinition aggregate, List<string> usings)
+    internal static StringBuilder GenerateFoldCode(AggregateDefinition aggregate, List<string> usings)
     {
         var foldCode = new StringBuilder();
         foreach (var @event in aggregate.Events)
@@ -153,7 +153,7 @@ public class GenerateAggregateCode
         return foldCode;
     }
 
-    private static void GenerateFoldCodeWithMultipleParameters(EventDefinition @event, StringBuilder foldCode)
+    internal static void GenerateFoldCodeWithMultipleParameters(EventDefinition @event, StringBuilder foldCode)
     {
         foldCode.Append($$$"""
                                case "{{{@event.EventName}}}":
@@ -183,7 +183,7 @@ public class GenerateAggregateCode
         foldCode.AppendLine("break;");
     }
 
-    private static void GenerateFoldCodeWithSingleParameter(EventDefinition @event, StringBuilder foldCode)
+    internal static void GenerateFoldCodeWithSingleParameter(EventDefinition @event, StringBuilder foldCode)
     {
         foldCode.AppendLine($$"""
                               case "{{@event.EventName}}":
@@ -192,7 +192,7 @@ public class GenerateAggregateCode
                               """);
     }
 
-    private static StringBuilder GenerateJsonSerializableCode(AggregateDefinition aggregate, List<string> usings)
+    internal static StringBuilder GenerateJsonSerializableCode(AggregateDefinition aggregate, List<string> usings)
     {
         var serializableCode = new StringBuilder();
 
@@ -216,7 +216,7 @@ public class GenerateAggregateCode
         return serializableCode;
     }
 
-    private static (StringBuilder propertyCode, StringBuilder propertySnapshotCode) GeneratePropertyCode(
+    internal static (StringBuilder propertyCode, StringBuilder propertySnapshotCode) GeneratePropertyCode(
         AggregateDefinition aggregate, StringBuilder serializableCode)
     {
         var propertyCode = new StringBuilder();
@@ -244,7 +244,7 @@ public class GenerateAggregateCode
         return (propertyCode, propertySnapshotCode);
     }
 
-    private static string BuildPropertyType(PropertyDefinition property)
+    internal static string BuildPropertyType(PropertyDefinition property)
     {
         var typeBuilder = new StringBuilder(property.Type);
         if (!property.IsGeneric)
@@ -266,7 +266,7 @@ public class GenerateAggregateCode
         return typeBuilder.ToString();
     }
 
-    private static (string get, string ctorInput) GenerateConstructorParameters(AggregateDefinition aggregate)
+    internal static (string get, string ctorInput) GenerateConstructorParameters(AggregateDefinition aggregate)
     {
         var getBuilder = new StringBuilder();
         var ctorInputBuilder = new StringBuilder();
@@ -282,7 +282,7 @@ public class GenerateAggregateCode
         return (getBuilder.ToString(), ctorInputBuilder.ToString());
     }
 
-    private static StringBuilder GenerateSetupCode(AggregateDefinition aggregate)
+    internal static StringBuilder GenerateSetupCode(AggregateDefinition aggregate)
     {
         var setupCode = new StringBuilder();
         foreach (var usedEvent in aggregate.Events)
@@ -302,7 +302,7 @@ public class GenerateAggregateCode
         return setupCode;
     }
 
-    private static StringBuilder AssembleAggregateCode(
+    internal static StringBuilder AssembleAggregateCode(
         AggregateDefinition aggregate,
         List<string> usings,
         StringBuilder postWhenCode,
