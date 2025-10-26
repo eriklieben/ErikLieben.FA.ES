@@ -24,6 +24,9 @@ public class SnapshotJsonTypeInfoNotSetException : EsException
 {
     private const string Code = "ELFAES-CFG-0002";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SnapshotJsonTypeInfoNotSetException"/> class.
+    /// </summary>
     public SnapshotJsonTypeInfoNotSetException()
         : base(Code, "Snapshot JsonInfo type should be set to deserialize the snapshot type")
     {

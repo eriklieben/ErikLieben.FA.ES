@@ -7,6 +7,9 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ErikLieben.FA.ES.EventStream;
 
+/// <summary>
+/// Implements a leased session for appending events to an event stream with transactional semantics and action support.
+/// </summary>
 public class LeasedSession : ILeasedSession
 {
     private readonly IDataStore datastore;
@@ -17,11 +20,26 @@ public class LeasedSession : ILeasedSession
     private readonly List<IAsyncPostCommitAction> postCommitActions = [];
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
 
+    /// <summary>
+    /// Gets the buffer of events pending commit in this session.
+    /// </summary>
     public List<JsonEvent> Buffer { get; private set; } = [];
 
     private readonly List<IPreAppendAction> preAppendActions = [];
     private readonly List<IPostReadAction> postReadActions = [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LeasedSession"/> class.
+    /// </summary>
+    /// <param name="eventStream">The event stream associated with this session.</param>
+    /// <param name="document">The object document for the stream.</param>
+    /// <param name="datastore">The data store for persisting events.</param>
+    /// <param name="documentstore">The document store factory for persisting metadata.</param>
+    /// <param name="docClosedNotificationActions">Notifications to execute when stream chunks are closed.</param>
+    /// <param name="postCommitActions">Actions to execute after events are committed.</param>
+    /// <param name="preAppendActions">Actions to execute before events are appended.</param>
+    /// <param name="postReadActions">Actions to execute after events are read.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
     public LeasedSession(
         IEventStream eventStream,
         IObjectDocument document,
@@ -49,6 +67,19 @@ public class LeasedSession : ILeasedSession
         this.preAppendActions.AddRange(preAppendActions);
         this.postReadActions.AddRange(postReadActions);
     }
+
+    /// <summary>
+    /// Appends an event with the specified payload to the session buffer.
+    /// </summary>
+    /// <typeparam name="TPayloadType">The type of the event payload.</typeparam>
+    /// <param name="payload">The event payload.</param>
+    /// <param name="actionMetadata">Optional metadata about the action that triggered this event.</param>
+    /// <param name="overrideEventType">Optional override for the event type name.</param>
+    /// <param name="externalSequencer">Optional external sequencer identifier for event ordering.</param>
+    /// <param name="metadata">Optional additional metadata as key-value pairs.</param>
+    /// <returns>The created event.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when payload is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the event type is not registered.</exception>
     public IEvent<TPayloadType> Append<TPayloadType>(
         TPayloadType payload,
         ActionMetadata? actionMetadata = null,
@@ -99,8 +130,11 @@ public class LeasedSession : ILeasedSession
         return JsonEvent.ToEvent(@event, payload);
     }
 
-
-
+    /// <summary>
+    /// Commits all buffered events to the event stream.
+    /// Handles stream chunking if enabled and executes post-commit actions.
+    /// </summary>
+    /// <returns>A task representing the asynchronous commit operation.</returns>
     public async Task CommitAsync()
     {
         using var activity = ActivitySource.StartActivity($"Session.{nameof(CommitAsync)}");
@@ -245,12 +279,23 @@ public class LeasedSession : ILeasedSession
         }
     }
 
+    /// <summary>
+    /// Checks if a stream is terminated (has reached a terminal state).
+    /// </summary>
+    /// <param name="streamIdentifier">The identifier of the stream to check.</param>
+    /// <returns>True if the stream is terminated, otherwise false.</returns>
     public Task<bool> IsTerminatedASync(string streamIdentifier)
     {
         return Task.FromResult(document.TerminatedStreams
             .Find(ts => ts.StreamIdentifier == streamIdentifier) != null);
     }
 
+    /// <summary>
+    /// Reads events from the stream within the specified version range.
+    /// </summary>
+    /// <param name="startVersion">The starting version (inclusive). Defaults to 0.</param>
+    /// <param name="untilVersion">The ending version (inclusive). If null, reads to the latest version.</param>
+    /// <returns>The collection of events, or null if none found.</returns>
     public Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null)
     {
         using var activity = ActivitySource.StartActivity("Session.ReadAsync");
