@@ -73,7 +73,7 @@ EndGlobal
         try
         {
             // Act
-            var result = await sut.ExecuteAsync(context: null!, settings);
+            var result = await sut.ExecuteAsync(context: null!, settings, CancellationToken.None);
 
             // Assert
             Assert.Equal(1, result);
@@ -97,7 +97,7 @@ EndGlobal
         try
         {
             // Act
-            var result = await sut.ExecuteAsync(context: null!, settings);
+            var result = await sut.ExecuteAsync(context: null!, settings, CancellationToken.None);
 
             // Assert
             Assert.Equal(0, result);

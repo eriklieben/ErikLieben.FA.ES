@@ -2,7 +2,7 @@
 
 public class Setup
 {
-    public async Task Initialize(string solutionPath)
+    public static async Task Initialize(string solutionPath)
     {
         var elfaDirectoryPath = Path.Combine(solutionPath, ".elfa");
         if (!Directory.Exists(elfaDirectoryPath))

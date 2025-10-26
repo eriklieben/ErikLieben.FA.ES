@@ -31,14 +31,14 @@ public class GenerateVersionTokenOfTJsonConverterCode
             {
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [darkcyan]{versionTokenJsonConverter.Name}[/]");
                 var currentFile = versionTokenJsonConverter.FileLocations.FirstOrDefault();
-                if (currentFile is null || currentFile.ToLowerInvariant().Contains(".generated"))
+                if (currentFile is null || currentFile.Contains(".generated", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
                 var rel = (versionTokenJsonConverter.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
                 var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);

@@ -35,7 +35,7 @@ public class GenerateAggregateCode
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [green]{aggregate.IdentifierName}[/]");
                 var rel = (aggregate.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
                 var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
@@ -47,7 +47,7 @@ public class GenerateAggregateCode
         }
     }
 
-    private async Task GenerateAggregate(AggregateDefinition aggregate, string? path, Config config)
+    private static async Task GenerateAggregate(AggregateDefinition aggregate, string? path, Config config)
     {
         if (!aggregate.IsPartialClass)
         {
@@ -67,25 +67,19 @@ public class GenerateAggregateCode
             "System.Diagnostics.CodeAnalysis"
         };
 
-        foreach (var property in aggregate.Properties)
-        {
-            if (!usings.Contains(property.Namespace))
-            {
-                usings.Add(property.Namespace);
-            }
-        }
+        usings.AddRange(aggregate.Properties
+            .Where(p => !usings.Contains(p.Namespace))
+            .Select(p => p.Namespace));
 
         var postWhenCode = new StringBuilder();
         if (aggregate.PostWhen != null)
         {
             postWhenCode.Append("PostWhen(");
+            usings.AddRange(aggregate.PostWhen.Parameters
+                .Where(p => !usings.Contains(p.Namespace))
+                .Select(p => p.Namespace));
             foreach (var param in aggregate.PostWhen.Parameters)
             {
-                if (!usings.Contains(param.Namespace))
-                {
-                    usings.Add(param.Namespace);
-                };
-
                 switch (param.Type)
                 {
                     case "IObjectDocument":
@@ -136,7 +130,7 @@ public class GenerateAggregateCode
                                 break;
                         }
 
-                        if (p.Type != @event.Parameters.Last().Type)
+                        if (p.Type != @event.Parameters[^1].Type)
                         {
                             foldCode.AppendLine(",");
                         }
@@ -188,21 +182,24 @@ public class GenerateAggregateCode
                     }
                 }
 
-                var fullTypeDef = property.Namespace + "." + property.Type;
+                var fullTypeDefBuilder = new StringBuilder();
+                fullTypeDefBuilder.Append(property.Namespace).Append('.').Append(property.Type);
 
                 if (property.IsGeneric)
                 {
-                    fullTypeDef += "<";
+                    fullTypeDefBuilder.Append('<');
                     foreach (var generic in property.GenericTypes)
                     {
-                        fullTypeDef += generic.Namespace + "." + generic.Name;
-                        if (property.GenericTypes.Last() != generic)
+                        fullTypeDefBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
+                        if (property.GenericTypes[^1] != generic)
                         {
-                            fullTypeDef += ",";
+                            fullTypeDefBuilder.Append(',');
                         }
                     }
-                    fullTypeDef += ">";
+                    fullTypeDefBuilder.Append('>');
                 }
+
+                var fullTypeDef = fullTypeDefBuilder.ToString();
 
                 if (!propertyTypes.Contains(fullTypeDef))
                 {
@@ -243,54 +240,50 @@ public class GenerateAggregateCode
         var propertyCode = new StringBuilder();
         var propertySnapshotCode = new StringBuilder();
         var propertySubTypes = new List<string>();
+        foreach (var subType in aggregate.Properties.SelectMany(p => p.SubTypes).Where(st => !propertySubTypes.Contains(st.Namespace + "." + st.Name)))
+        {
+            propertySubTypes.Add(subType.Namespace + "." + subType.Name);
+        }
         foreach (var property in aggregate.Properties)
         {
-            var type = property.Type;
+            var typeBuilder = new StringBuilder(property.Type);
             if (property.IsGeneric)
             {
-                type += "<";
+                typeBuilder.Append('<');
                 foreach (var generic in property.GenericTypes)
                 {
-                    type += generic.Namespace + "." + generic.Name;
-                    if (property.GenericTypes.Last() != generic)
+                    typeBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
+                    if (property.GenericTypes[^1] != generic)
                     {
-                        type += ",";
+                        typeBuilder.Append(',');
                     }
                 }
-                type += ">";
+                typeBuilder.Append('>');
             }
 
+            var type = typeBuilder.ToString();
             propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
             propertySnapshotCode.AppendLine($"public required {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
-
-            //
-
-            foreach (var subtype in property.SubTypes)
-            {
-                if (!propertySubTypes.Contains(subtype.Namespace + "." + subtype.Name))
-                {
-                    propertySubTypes.Add(subtype.Namespace + "." + subtype.Name);
-                }
-            }
         }
 
-        //
-            foreach (var subType in propertySubTypes.Order())
+        foreach (var subType in propertySubTypes.Order())
             {
                 serializableCode.AppendLine($"[JsonSerializable(typeof({subType}))]");
             }
 
-
-
         // TODO: These probably need to be set to something
-        var get = "";
-        var ctorInput = "";
-        var mostParams = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).First();
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+        var orderedConstructors = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).ToList();
+        var mostParams = orderedConstructors[0];
         foreach (var param in mostParams.Parameters.Where(param => param.Type != "IEventStream"))
         {
-            get += $"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n";
-            ctorInput += $", {param.Name}!";
+            getBuilder.Append($"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n");
+            ctorInputBuilder.Append($", {param.Name}!");
         }
+
+        var get = getBuilder.ToString();
+        var ctorInput = ctorInputBuilder.ToString();
 
         string codeGetById = "";
 

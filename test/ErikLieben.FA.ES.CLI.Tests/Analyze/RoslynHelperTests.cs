@@ -32,12 +32,8 @@ public class RoslynHelperTests
                   }
                 """);
 
-            var sut = new RoslynHelper(
-                semanticModel,
-                string.Empty);
-
             // Act
-            var result = sut.IgnoreAggregate(classSymbol);
+            var result = RoslynHelper.IgnoreAggregate(classSymbol);
 
             // Assert
             Assert.True(result);
@@ -60,12 +56,8 @@ public class RoslynHelperTests
                   }
                 """
             );
-            var sut = new RoslynHelper(
-                semanticModel,
-                string.Empty);
-
             // Act
-            var result = sut.IgnoreAggregate(null!);
+            var result = RoslynHelper.IgnoreAggregate(null!);
 
             // Assert
             Assert.False(result);
@@ -88,12 +80,8 @@ public class RoslynHelperTests
                 """
             );
 
-            var sut = new RoslynHelper(
-                semanticModel,
-                string.Empty);
-
             // Act
-            var result = sut.IgnoreAggregate(classSymbol);
+            var result = RoslynHelper.IgnoreAggregate(classSymbol);
 
             // Assert
             Assert.False(result);

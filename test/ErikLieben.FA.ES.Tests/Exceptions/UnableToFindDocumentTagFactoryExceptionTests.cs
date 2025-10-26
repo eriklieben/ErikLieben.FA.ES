@@ -28,6 +28,6 @@ public class UnableToFindDocumentTagFactoryExceptionTests
         var sut = new UnableToFindDocumentTagFactoryException(message);
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

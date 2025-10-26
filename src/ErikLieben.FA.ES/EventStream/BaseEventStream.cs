@@ -199,7 +199,7 @@ public abstract class BaseEventStream : IEventStream
             throw new SnapshotJsonTypeInfoNotSetException();
         }
 
-        var factory = StreamDependencies.AggregateFactory.GetFactory(typeof(T));
+        var factory = StreamDependencies.AggregateFactory.GetFactory<T>();
         var obj = factory!.Create(this);
 
         var events = await ReadAsync(0, untilVersion);

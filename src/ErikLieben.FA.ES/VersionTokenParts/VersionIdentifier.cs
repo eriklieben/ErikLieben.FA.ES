@@ -71,7 +71,7 @@ public record VersionIdentifier : IComparable<VersionIdentifier>, IComparable
     public VersionIdentifier(string streamIdentifier,  int version)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(streamIdentifier);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(version, -1, nameof(version));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(version, -1);
 
         StreamIdentifier = streamIdentifier;
         VersionString = version.ToString(("D20"));

@@ -5,6 +5,8 @@ namespace ErikLieben.FA.ES.Testing.InMemory;
 
 public class InMemoryDocumentStore
 {
+    private const string InMemoryConnectionName = "inMemory";
+
     private readonly Dictionary<string, IObjectDocument> documents = new();
 
     public Task<IObjectDocument> CreateAsync(string name, string objectId)
@@ -14,13 +16,13 @@ public class InMemoryDocumentStore
             name.ToLowerInvariant(),
             new StreamInformation
             {
-                StreamConnectionName = "inMemory",
-                SnapShotConnectionName = "inMemory",
-                DocumentTagConnectionName = "inMemory",
-                StreamTagConnectionName = "inMemory",
+                StreamConnectionName = InMemoryConnectionName,
+                SnapShotConnectionName = InMemoryConnectionName,
+                DocumentTagConnectionName = InMemoryConnectionName,
+                StreamTagConnectionName = InMemoryConnectionName,
                 StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
-                StreamType = "inMemory",
-                DocumentTagType = "inMemory",
+                StreamType = InMemoryConnectionName,
+                DocumentTagType = InMemoryConnectionName,
                 CurrentStreamVersion = -1
             },
             [],

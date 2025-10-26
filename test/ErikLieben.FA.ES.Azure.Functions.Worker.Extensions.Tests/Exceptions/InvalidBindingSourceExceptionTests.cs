@@ -49,7 +49,7 @@ public class InvalidBindingSourceExceptionTests
             var sut = new InvalidBindingSourceException(actual, expected);
 
             // Assert
-            Assert.IsAssignableFrom<Exception>(sut);
+            Assert.IsType<Exception>(sut, exactMatch: false);
         }
     }
 }

@@ -310,7 +310,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var sut = new ExecutionContext<TestEvent, TestData>(@event, document, null);
 
                 // Assert
-                Assert.IsAssignableFrom<IExecutionContext>(sut);
+                Assert.IsType<IExecutionContext>(sut, exactMatch: false);
             }
 
             [Fact]
@@ -324,7 +324,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var sut = new ExecutionContext<TestEvent, TestData>(@event, document, null);
 
                 // Assert
-                Assert.IsAssignableFrom<IExecutionContextWithData<TestData>>(sut);
+                Assert.IsType<IExecutionContextWithData<TestData>>(sut, exactMatch: false);
             }
 
             [Fact]
@@ -338,7 +338,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var sut = new ExecutionContext<TestEvent, TestData>(@event, document, null);
 
                 // Assert
-                Assert.IsAssignableFrom<IExecutionContextWithEvent<TestEvent>>(sut);
+                Assert.IsType<IExecutionContextWithEvent<TestEvent>>(sut, exactMatch: false);
             }
 
             [Fact]
@@ -352,7 +352,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 var sut = new ExecutionContext<TestEvent, TestData>(@event, document, null);
 
                 // Assert
-                Assert.IsAssignableFrom<IExecutionContext<TestEvent, TestData>>(sut);
+                Assert.IsType<IExecutionContext<TestEvent, TestData>>(sut, exactMatch: false);
             }
         }
 

@@ -26,7 +26,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
                 var sut = new BlobJsonProjectionAttribute("test/path");
 
                 // Assert
-                Assert.IsAssignableFrom<Attribute>(sut);
+                Assert.IsType<Attribute>(sut, exactMatch: false);
             }
         }
 

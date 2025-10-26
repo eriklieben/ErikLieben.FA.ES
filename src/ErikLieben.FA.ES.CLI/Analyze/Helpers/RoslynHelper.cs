@@ -9,6 +9,8 @@ internal class RoslynHelper(
     SemanticModel semanticModel,
     string solutionRootPath)
 {
+    private const string FrameworkNamespace = "ErikLieben.FA.ES";
+    private const string FrameworkAttributesNamespace = "ErikLieben.FA.ES.Attributes";
 
     internal bool IsProcessableAggregate(INamedTypeSymbol? classSymbol)
     {
@@ -27,7 +29,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        return !(classSymbol?.ContainingAssembly.Identity.Name.StartsWith("ErikLieben.FA.ES") ?? false);
+        return !(classSymbol?.ContainingAssembly.Identity.Name.StartsWith(FrameworkNamespace) ?? false);
     }
 
     internal bool IsInheritedAggregate(INamedTypeSymbol? classSymbol)
@@ -42,7 +44,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        if ((classSymbol?.ContainingAssembly.Identity.Name.StartsWith("ErikLieben.FA.ES") ?? false))
+        if ((classSymbol?.ContainingAssembly.Identity.Name.StartsWith(FrameworkNamespace) ?? false))
         {
             return false;
         }
@@ -85,7 +87,7 @@ internal class RoslynHelper(
     }
 
 
-    internal bool IgnoreAggregate(INamedTypeSymbol? namedTypeSymbol)
+    internal static bool IgnoreAggregate(INamedTypeSymbol? namedTypeSymbol)
     {
         if (namedTypeSymbol == null)
         {
@@ -97,7 +99,7 @@ internal class RoslynHelper(
             {
                 var typeSymbol = attribute.AttributeClass;
                 if (typeSymbol == null) return true;
-                return GetFullNamespace(typeSymbol) == "ErikLieben.FA.ES.Attributes" &&
+                return GetFullNamespace(typeSymbol) == FrameworkAttributesNamespace &&
                        typeSymbol.Name == "IgnoreAttribute";
             });
     }
@@ -110,7 +112,7 @@ internal class RoslynHelper(
         var objectNameAttribute = attributes.FirstOrDefault(a =>
             a.AttributeClass?.Name == "ObjectNameAttribute" &&
             a.AttributeClass.ContainingNamespace.ToDisplayString()
-                .Equals("ErikLieben.FA.ES.Attributes", StringComparison.Ordinal));
+                .Equals(FrameworkAttributesNamespace, StringComparison.Ordinal));
 
         if (objectNameAttribute == null)
         {
@@ -139,7 +141,7 @@ internal class RoslynHelper(
     internal static string GetIdentifierTypeFromMetadata(List<PropertyDefinition> properties)
     {
         var metadataProperty = properties
-            .FirstOrDefault(p => p.Namespace == "ErikLieben.FA.ES" &&
+            .FirstOrDefault(p => p.Namespace == FrameworkNamespace &&
                                  p.Type.StartsWith("ObjectMetadata<"));
 
         return metadataProperty != null
@@ -163,7 +165,7 @@ internal class RoslynHelper(
         var attribute = symbol
             .GetAttributes()
             .FirstOrDefault(a => a.AttributeClass?.Name == "EventNameAttribute" &&
-                                 GetFullNamespace(a.AttributeClass.ContainingNamespace) == "ErikLieben.FA.ES");
+                                 GetFullNamespace(a.AttributeClass.ContainingNamespace) == FrameworkNamespace);
 
         if (attribute == null)
         {
@@ -345,12 +347,12 @@ internal class RoslynHelper(
                 case ILocalSymbol localSymbol:
                 {
                     var type = localSymbol.Type;
-                    return IsSymbolOfType(type, "ErikLieben.FA.ES", "IEventStream");
+                    return IsSymbolOfType(type, FrameworkNamespace, "IEventStream");
                 }
                 case IPropertySymbol propertySymbol:
                 {
                     var type = propertySymbol.Type;
-                    return IsSymbolOfType(type, "ErikLieben.FA.ES", "IEventStream");
+                    return IsSymbolOfType(type, FrameworkNamespace, "IEventStream");
                 }
                 default:
                     return false;
@@ -362,7 +364,7 @@ internal class RoslynHelper(
         var symbol = semanticModel.GetSymbolInfo(expression).Symbol;
         if (symbol is IParameterSymbol parameterSymbol)
         {
-            return IsSymbolOfType(parameterSymbol.Type, "ErikLieben.FA.ES", "ILeasedSession");
+            return IsSymbolOfType(parameterSymbol.Type, FrameworkNamespace, "ILeasedSession");
         }
 
         return false;
@@ -409,7 +411,7 @@ internal class RoslynHelper(
         return returnType?.Name is "Task" or "ValueTask";
     }
 
-    internal bool IsReturnTypeAwaitable(ISymbol symbol)
+    internal static bool IsReturnTypeAwaitable(ISymbol symbol)
     {
         var methodSymbol = symbol as IMethodSymbol;
         var returnType = methodSymbol?.ReturnType;

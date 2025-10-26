@@ -43,14 +43,14 @@ public async Task Generate()
             AnsiConsole.MarkupLine($"Generating extension registration for: [violet]{project.Name}[/]");
 
             var currentFile = project.FileLocation;
-            if (currentFile.ToLowerInvariant().Contains(".generated"))
+            if (currentFile.Contains(".generated", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
             var rel = currentFile.Replace('\\', '/');
             var relGen = rel.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
-                ? rel.Substring(0, rel.Length - ".csproj".Length) + "Extensions.Generated.cs"
+                ? string.Concat(rel.AsSpan(0, rel.Length - ".csproj".Length), "Extensions.Generated.cs")
                 : rel + "Extensions.Generated.cs";
             var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                 .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
@@ -69,18 +69,14 @@ public async Task Generate()
         }
     }
 
-    private async Task GenerateExtension(ProjectDefinition project, string path, Config config1)
+    private static async Task GenerateExtension(ProjectDefinition project, string path, Config config1)
     {
         var projectName = ProjectNameRegex().Replace(project.Name, string.Empty);
 
         var registerCode = new StringBuilder();
         var mappingCode = new StringBuilder();
 
-        //
-
         var (jsonSerializerCode, jsonNamespaces) = GenerateJsonSerializers(project);
-        //
-
 
         foreach (var declaration in project.Aggregates)
         {
@@ -172,27 +168,11 @@ public async Task Generate()
     {
 
 
-        var events = new List<EventDefinition>();
-        foreach (var aggregateDefinition in project.Aggregates)
-        {
-            foreach (var eventDefinition in aggregateDefinition.Events)
-            {
-                if (events.All(e => e.EventName != eventDefinition.EventName))
-                {
-                    events.Add(eventDefinition);
-                }
-            }
-        }
-        foreach (var projectionDefinition in project.Projections)
-        {
-            foreach (var eventDefinition in projectionDefinition.Events)
-            {
-                if (events.All(e => e.EventName != eventDefinition.EventName))
-                {
-                    events.Add(eventDefinition);
-                }
-            }
-        }
+        var events = project.Aggregates
+            .SelectMany(agg => agg.Events)
+            .Concat(project.Projections.SelectMany(proj => proj.Events))
+            .DistinctBy(e => e.EventName)
+            .ToList();
 
 
 
@@ -210,34 +190,34 @@ public async Task Generate()
                 if (prop.IsGeneric)
                 {
 
-                    var genericDef = "";
+                    var genericDefBuilder = new StringBuilder();
                     foreach (var generic in prop.GenericTypes)
                     {
                         nameSpaceUsigns.Add(generic.Namespace);
-                        genericDef += generic.Name;
-                        if (prop.GenericTypes.Last() != generic)
+                        genericDefBuilder.Append(generic.Name);
+                        if (prop.GenericTypes[^1] != generic)
                         {
-                            genericDef += ", ";
+                            genericDefBuilder.Append(", ");
                         }
 
-                        //
                         foreach (var subType2 in generic.SubTypes)
                         {
                             nameSpaceUsigns.Add(subType2.Namespace);
 
                             if (subType2.GenericTypes.Count != 0)
                             {
-                                var genericDef2 = "";
+                                var genericDef2Builder = new StringBuilder();
                                 foreach (var generic2 in subType2.GenericTypes)
                                 {
                                     nameSpaceUsigns.Add(generic2.Namespace);
-                                    genericDef2 += generic2.Name;
-                                    if (subType2.GenericTypes.Last() != generic2)
+                                    genericDef2Builder.Append(generic2.Name);
+                                    if (subType2.GenericTypes[^1] != generic2)
                                     {
-                                        genericDef2 += ", ";
+                                        genericDef2Builder.Append(", ");
                                     }
                                 }
 
+                                var genericDef2 = genericDef2Builder.ToString();
                                 jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType2.Name}<{genericDef2}>))]");
                             }
                             else
@@ -245,11 +225,10 @@ public async Task Generate()
                                 jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType2.Name}))]");
                             }
 
-
                         }
-                        //
                     }
 
+                    var genericDef = genericDefBuilder.ToString();
                     jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}<{genericDef}>))]");
                 }
                 else
@@ -264,17 +243,18 @@ public async Task Generate()
                     if (subType.GenericTypes.Count != 0)
                     {
 
-                        var genericDef = "";
+                        var genericDefBuilder = new StringBuilder();
                         foreach (var generic in subType.GenericTypes)
                         {
                             nameSpaceUsigns.Add(generic.Namespace);
-                            genericDef += generic.Name;
-                            if (subType.GenericTypes.Last() != generic)
+                            genericDefBuilder.Append(generic.Name);
+                            if (subType.GenericTypes[^1] != generic)
                             {
-                                genericDef += ", ";
+                                genericDefBuilder.Append(", ");
                             }
                         }
 
+                        var genericDef = genericDefBuilder.ToString();
                         jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}<{genericDef}>))]");
                     }
                     else

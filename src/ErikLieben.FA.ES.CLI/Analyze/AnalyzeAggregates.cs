@@ -114,38 +114,20 @@ public class AnalyzeAggregates
 
     private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
     {
-        var streamActions = new List<StreamActionDefinition>();
-
-        var attributes = parameterTypeSymbol.GetAttributes();
-        foreach (var attribute in attributes)
-        {
-            var attributeClassType = attribute.AttributeClass;
-            if (attributeClassType is not { TypeArguments.Length: > 0 })
+        return parameterTypeSymbol.GetAttributes()
+            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 })
+            .SelectMany(attribute => attribute.AttributeClass!.TypeArguments)
+            .Where(typeArgument => typeArgument.TypeKind != TypeKind.Error)
+            .Select(typeArgument => new StreamActionDefinition
             {
-                continue;
-            }
-
-            foreach (var typeArgument in attributeClassType.TypeArguments)
-            {
-                var typeArgumentType = typeArgument.TypeKind;
-                if (typeArgumentType == TypeKind.Error)
-                {
-                    continue;
-                }
-
-                streamActions.Add(new StreamActionDefinition
-                {
-                    Namespace = RoslynHelper.GetFullNamespace(typeArgument),
-                    Type = RoslynHelper.GetFullTypeName(typeArgument),
-                    StreamActionInterfaces = typeArgument.AllInterfaces
-                        .Where(i => StreamInterfaces.Contains(i.Name))
-                        .Select(i => i.Name)
-                        .ToList()
-                });
-            }
-        }
-
-        return streamActions;
+                Namespace = RoslynHelper.GetFullNamespace(typeArgument),
+                Type = RoslynHelper.GetFullTypeName(typeArgument),
+                StreamActionInterfaces = typeArgument.AllInterfaces
+                    .Where(i => StreamInterfaces.Contains(i.Name))
+                    .Select(i => i.Name)
+                    .ToList()
+            })
+            .ToList();
     }
 
 

@@ -41,14 +41,14 @@ public class GenerateInheritedAggregateCode
             foreach (var aggregate in project.InheritedAggregates)
             {
                 var currentFile = Path.Combine(solutionPath,aggregate.FileLocations.FirstOrDefault() ?? throw new InvalidOperationException());
-                if (currentFile is null || currentFile.ToLowerInvariant().Contains(".generated"))
+                if (currentFile is null || currentFile.Contains(".generated", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [green]{aggregate.IdentifierName}[/]");
                 var rel = (aggregate.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-                    ? rel.Substring(0, rel.Length - 3) + ".Generated.cs"
+                    ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
                 var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
@@ -94,14 +94,18 @@ public class GenerateInheritedAggregateCode
 
 
 
-        var get = "";
-        var ctorInput = "";
-        var mostParams = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).First();
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+        var orderedConstructors = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).ToList();
+        var mostParams = orderedConstructors[0];
         foreach (var param in mostParams.Parameters.Where(param => param.Type != "IEventStream"))
         {
-            get += $"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n";
-            ctorInput += $", {param.Name}!";
+            getBuilder.Append($"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n");
+            ctorInputBuilder.Append($", {param.Name}!");
         }
+
+        var get = getBuilder.ToString();
+        var ctorInput = ctorInputBuilder.ToString();
 
         string codeGetById = "";
 
@@ -114,7 +118,8 @@ public class GenerateInheritedAggregateCode
                 usings.Add(cmdMethod.ReturnType.Namespace);
             }
 
-            var text = $"{cmdMethod.ReturnType.Type} {cmdMethod.CommandName}(";
+            var textBuilder = new StringBuilder();
+            textBuilder.Append($"{cmdMethod.ReturnType.Type} {cmdMethod.CommandName}(");
 
             foreach (var param in cmdMethod.Parameters)
             {
@@ -125,36 +130,36 @@ public class GenerateInheritedAggregateCode
 
                 if (param.IsGeneric && param.GenericTypes != null)
                 {
-                    text += param.Type;
-                    text += "<";
+                    textBuilder.Append(param.Type);
+                    textBuilder.Append('<');
                     foreach (var generic in param.GenericTypes)
                     {
-                        text += generic.Namespace + "." + generic.Name;
-                        if (param.GenericTypes.Last() != generic)
+                        textBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
+                        if (param.GenericTypes[^1] != generic)
                         {
-                            text += ",";
+                            textBuilder.Append(',');
                         }
                     }
 
-                    text += ">";
+                    textBuilder.Append('>');
 
-                    text += $" {param.Name}, ";
+                    textBuilder.Append($" {param.Name}, ");
                 }
                 else
                 {
-                    text += $"{param.Type} {param.Name}, ";
+                    textBuilder.Append($"{param.Type} {param.Name}, ");
                 }
 
 
             }
 
+            var text = textBuilder.ToString();
             if (text.EndsWith(", "))
             {
                 text = text.Remove(text.Length - 2);
             }
 
-            text += ");";
-            propertyCode.AppendLine(text);
+            propertyCode.AppendLine(text + ");");
         }
 
 

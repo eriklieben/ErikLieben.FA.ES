@@ -24,7 +24,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("-d|--with-diff")] public bool WithDiff { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         // temp for testing
 #if DEBUG
@@ -80,7 +80,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         (var def, string solutionPath) = await analyzer.AnalyzeAsync(settings.Path);
 
         // Temp for testing
-        await new Setup.Setup().Initialize(solutionPath);
+        await Setup.Setup.Initialize(solutionPath);
 
 
 
@@ -145,7 +145,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     }
 
 
-    private string? FindSolutionFile()
+    private static string? FindSolutionFile()
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var slnFiles = Directory.GetFiles(currentDirectory, "*.sln", SearchOption.AllDirectories);
@@ -167,14 +167,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             @"C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
         };
 
-        foreach (var path in commonPaths)
-        {
-            if (File.Exists(path))
-            {
-                return path;
-            }
-        }
-        return null;
+        return commonPaths.FirstOrDefault(p => File.Exists(p));
     }
 
 }

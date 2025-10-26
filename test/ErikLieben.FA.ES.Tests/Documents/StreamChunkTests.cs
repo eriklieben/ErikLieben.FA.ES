@@ -101,15 +101,17 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
         public class JsonSerialization
         {
+            private static readonly JsonSerializerOptions DefaultOptions = new();
+            private static readonly JsonSerializerOptions NotIndentedOptions = new() { WriteIndented = false };
+
             [Fact]
             public void Should_serialize_with_correct_property_names()
             {
                 // Arrange
                 var sut = new StreamChunk(42, 1, 100);
-                var options = new JsonSerializerOptions();
 
                 // Act
-                var json = JsonSerializer.Serialize(sut, options);
+                var json = JsonSerializer.Serialize(sut, DefaultOptions);
 
                 // Assert
                 Assert.Contains("\"id\":42", json);
@@ -122,10 +124,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
             {
                 // Arrange
                 var sut = new StreamChunk(0, null, null);
-                var options = new JsonSerializerOptions();
 
                 // Act
-                var json = JsonSerializer.Serialize(sut, options);
+                var json = JsonSerializer.Serialize(sut, DefaultOptions);
 
                 // Assert
                 Assert.Contains("\"id\":0", json);
@@ -136,10 +137,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
             {
                 // Arrange
                 string json = "{\"id\":42,\"first\":1,\"last\":100}";
-                var options = new JsonSerializerOptions();
 
                 // Act
-                var result = JsonSerializer.Deserialize<StreamChunk>(json, options);
+                var result = JsonSerializer.Deserialize<StreamChunk>(json, DefaultOptions);
 
                 // Assert
                 Assert.NotNull(result);
@@ -153,13 +153,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
             {
                 // Arrange
                 var sut = new StreamChunk(42, 1, 100);
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = false
-                };
 
                 // Act
-                var json = JsonSerializer.Serialize(sut, options);
+                var json = JsonSerializer.Serialize(sut, NotIndentedOptions);
 
                 // Assert
                 // Check that id appears before first, and first appears before last
@@ -176,10 +172,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
             {
                 // Arrange
                 var sut = new StreamChunk(42, null, null);
-                var options = new JsonSerializerOptions();
 
                 // Act
-                var json = JsonSerializer.Serialize(sut, options);
+                var json = JsonSerializer.Serialize(sut, DefaultOptions);
 
                 // Assert
                 Assert.Contains("\"id\":42", json);

@@ -14,6 +14,17 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
 public class BlobDocumentTagStoreTests
 {
+    private static readonly JsonSerializerOptions SnakeCaseLowerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true
+    };
+
+    private static readonly JsonSerializerOptions CaseInsensitiveOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly BlobServiceClient blobServiceClient;
     private readonly BlobContainerClient blobContainerClient;
@@ -278,11 +289,7 @@ public class BlobDocumentTagStoreTests
             blobClient.GetPropertiesAsync().Returns(Task.FromResult(response));
 
             // Mock DownloadToAsync instead of AsEntityAsync
-            var jsonData = JsonSerializer.Serialize(existingDoc, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-                WriteIndented = true
-            });
+            var jsonData = JsonSerializer.Serialize(existingDoc, SnakeCaseLowerOptions);
             var jsonBytes = Encoding.UTF8.GetBytes(jsonData);
 
             blobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
@@ -327,10 +334,7 @@ public class BlobDocumentTagStoreTests
             stream.Position = 0;
             using var reader = new StreamReader(stream);
             var json = reader.ReadToEnd();
-            var doc = JsonSerializer.Deserialize<BlobDocumentTagStoreDocument>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var doc = JsonSerializer.Deserialize<BlobDocumentTagStoreDocument>(json, CaseInsensitiveOptions);
 
             return doc != null &&
                    doc.Tag == expectedTag &&

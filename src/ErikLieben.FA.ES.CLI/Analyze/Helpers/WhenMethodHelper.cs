@@ -75,113 +75,60 @@ internal static class WhenMethodHelper
 
     private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
     {
-        var streamActions = new List<StreamActionDefinition>();
-
-        var attributes = parameterTypeSymbol.GetAttributes();
-        foreach (var attribute in attributes)
-        {
-            var attributeClassType = attribute.AttributeClass;
-            if (attributeClassType is { TypeArguments.Length: > 0 })
+        return parameterTypeSymbol.GetAttributes()
+            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 })
+            .SelectMany(attribute => attribute.AttributeClass!.TypeArguments)
+            .Where(typeArgument => typeArgument.TypeKind != TypeKind.Error)
+            .Select(typeArgument => new StreamActionDefinition
             {
-                foreach (var typeArgument in attributeClassType.TypeArguments)
-                {
-                    var typeArgumentType = typeArgument.TypeKind;
-                    if (typeArgumentType == TypeKind.Error)
-                    {
-                        continue;
-                    }
-
-                    streamActions.Add(new StreamActionDefinition
-                    {
-                        Namespace = RoslynHelper.GetFullNamespace(typeArgument),
-                        Type = RoslynHelper.GetFullTypeName(typeArgument),
-                        StreamActionInterfaces = typeArgument.AllInterfaces
-                            .Where(i => StreamInterfaces.Contains(i.Name))
-                            .Select(i => i.Name)
-                            .ToList()
-                    });
-                }
-            }
-        }
-
-        return streamActions;
+                Namespace = RoslynHelper.GetFullNamespace(typeArgument),
+                Type = RoslynHelper.GetFullTypeName(typeArgument),
+                StreamActionInterfaces = typeArgument.AllInterfaces
+                    .Where(i => StreamInterfaces.Contains(i.Name))
+                    .Select(i => i.Name)
+                    .ToList()
+            })
+            .ToList();
     }
 
 
     private static List<WhenParameterValueFactory> GetWhenParameterValueFactories(IMethodSymbol methodSymbol)
      {
-         var whenParameterValueFactories = new List<WhenParameterValueFactory>();
-
-         foreach (var attributeData in methodSymbol.GetAttributes())
-         {
-             var attributeType = attributeData.AttributeClass;
-             if (attributeType == null)
+         return methodSymbol.GetAttributes()
+             .Where(a => a.AttributeClass != null &&
+                         a.AttributeClass.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Attributes.WhenParameterValueFactoryAttribute<T>" &&
+                         a.AttributeClass is INamedTypeSymbol { TypeArguments.Length: 1 })
+             .Select(attributeData =>
              {
-                 continue;
-             }
-
-             if (attributeType.OriginalDefinition.ToDisplayString() !=
-                 "ErikLieben.FA.ES.Attributes.WhenParameterValueFactoryAttribute<T>")
-             {
-                 continue;
-             }
-
-             if (attributeType is not INamedTypeSymbol { TypeArguments.Length: 1 } namedSymbol)
-             {
-                 continue;
-             }
-
-             var genericArgument = namedSymbol.TypeArguments[0];
-             var typeName = genericArgument.ToDisplayString();
-             var typeSymbol = methodSymbol.ContainingAssembly.GetTypeByMetadataName(typeName);
-
-             if (typeSymbol == null)
-             {
-                 continue;
-             }
-
-             foreach (var implementedInterface in typeSymbol.AllInterfaces)
-             {
-                 if (implementedInterface.OriginalDefinition.ToDisplayString() ==
-                     "ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory<TValue, TEventType>")
+                 var namedSymbol = (INamedTypeSymbol)attributeData.AttributeClass!;
+                 var genericArgument = namedSymbol.TypeArguments[0];
+                 var typeName = genericArgument.ToDisplayString();
+                 var typeSymbol = methodSymbol.ContainingAssembly.GetTypeByMetadataName(typeName);
+                 return (typeName, typeSymbol);
+             })
+             .Where(x => x.typeSymbol != null)
+             .SelectMany(x => x.typeSymbol!.AllInterfaces
+                 .Where(i =>
+                     i.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory<TValue, TEventType>" ||
+                     i.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory<TValue>")
+                 .Select(i => new WhenParameterValueFactory
                  {
-                     whenParameterValueFactories.Add(new WhenParameterValueFactory
+                     Type = new WhenParameterValueItem
                      {
-                         Type = new WhenParameterValueItem()
-                         {
-                             Type  = typeName,
-                             Namespace = string.Empty,
-                         },
-                         ForType = new WhenParameterValueItem
-                         {
-                             Type = implementedInterface.TypeArguments[0].ToDisplayString(),
-                             Namespace = RoslynHelper.GetFullNamespace(implementedInterface.TypeArguments[0])
-                         },
-
-                         EventType = implementedInterface.TypeArguments[1].ToDisplayString()
-                     });
-                 }
-                 else if (implementedInterface.OriginalDefinition.ToDisplayString() ==
-                          "ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory<TValue>")
-                 {
-                     whenParameterValueFactories.Add(new WhenParameterValueFactory
+                         Type = x.typeName,
+                         Namespace = string.Empty,
+                     },
+                     ForType = new WhenParameterValueItem
                      {
-                         Type = new WhenParameterValueItem()
-                         {
-                             Type = typeName,
-                             Namespace = string.Empty,
-                         },
-                         ForType = new WhenParameterValueItem
-                         {
-                             Type = implementedInterface.TypeArguments[0].ToDisplayString(),
-                             Namespace = RoslynHelper.GetFullNamespace(implementedInterface.TypeArguments[0])
-                         },
-                     });
-                 }
-             }
-         }
-
-         return whenParameterValueFactories;
+                         Type = i.TypeArguments[0].ToDisplayString(),
+                         Namespace = RoslynHelper.GetFullNamespace(i.TypeArguments[0])
+                     },
+                     EventType = i.OriginalDefinition.ToDisplayString() ==
+                         "ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory<TValue, TEventType>"
+                         ? i.TypeArguments[1].ToDisplayString()
+                         : null
+                 }))
+             .ToList();
      }
 
     private static bool IsAwaitable(IMethodSymbol methodSymbol, Compilation compilation)

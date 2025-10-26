@@ -16,7 +16,7 @@ internal static class PostWhenHelper
             return null;
         }
 
-        var postWhen = postWhenMethods.First();
+        var postWhen = postWhenMethods[0];
 
         var postWhenDeclaration = new PostWhenDeclaration();
         foreach (var parameter in postWhen.Parameters)

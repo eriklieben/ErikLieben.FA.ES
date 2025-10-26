@@ -28,6 +28,6 @@ public class UnableToFindDocumentFactoryExceptionTests
         var sut = new UnableToFindDocumentFactoryException(message);
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

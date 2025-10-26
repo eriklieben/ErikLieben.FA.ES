@@ -80,11 +80,16 @@ public class InMemoryDataStore : IDataStore
     public Task RemoveAsync(IObjectDocument document, params IEvent[] events)
     {
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
-        foreach (var @event in events)
+        if (Store.TryGetValue(identifier, out var dict))
         {
-            if (Store.TryGetValue(identifier, out var dict) && dict.ContainsKey(@event.EventVersion))
+            var keysToRemove = events
+                .Where(e => dict.ContainsKey(e.EventVersion))
+                .Select(e => e.EventVersion)
+                .ToList();
+
+            foreach (var key in keysToRemove)
             {
-                dict.Remove(@event.EventVersion);
+                dict.Remove(key);
             }
         }
         return Task.CompletedTask;

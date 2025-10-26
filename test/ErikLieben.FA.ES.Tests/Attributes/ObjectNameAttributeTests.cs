@@ -13,7 +13,7 @@ namespace ErikLieben.FA.ES.Tests.Attributes
             var sut = new ObjectNameAttribute("TestName");
 
             // Assert
-            Assert.IsAssignableFrom<Attribute>(sut);
+            Assert.IsType<Attribute>(sut, exactMatch: false);
         }
 
         [Fact]

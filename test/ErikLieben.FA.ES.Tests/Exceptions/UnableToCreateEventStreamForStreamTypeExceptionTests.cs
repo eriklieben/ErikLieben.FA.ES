@@ -30,6 +30,6 @@ public class UnableToCreateEventStreamForStreamTypeExceptionTests
         var sut = new UnableToCreateEventStreamForStreamTypeException(streamType, fallbackStreamType);
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }

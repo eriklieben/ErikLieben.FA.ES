@@ -22,6 +22,6 @@ public class AggregateJsonTypeInfoNotSetExceptionTests
         var sut = new AggregateJsonTypeInfoNotSetException();
 
         // Assert
-        Assert.IsAssignableFrom<Exception>(sut);
+        Assert.IsType<Exception>(sut, exactMatch: false);
     }
 }
