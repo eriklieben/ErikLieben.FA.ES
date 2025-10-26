@@ -538,7 +538,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var mockAggregate = Substitute.For<TestAggregate>();
                 var typedFactory = Substitute.For<IAggregateFactory<TestAggregate>>();
                 typedFactory.Create(Arg.Any<IEventStream>()).Returns(mockAggregate);
-                dependencies.AggregateFactory.GetFactory(typeof(TestAggregate)).Returns(typedFactory);
+                dependencies.AggregateFactory.GetFactory<TestAggregate>().Returns(typedFactory);
 
                 var event1 = Substitute.For<IEvent>();
                 var event2 = Substitute.For<IEvent>();
@@ -549,7 +549,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 await sut.Snapshot<TestAggregate>(5);
 
                 // Assert
-                dependencies.AggregateFactory.Received(1).GetFactory(typeof(TestAggregate));
+                dependencies.AggregateFactory.Received(1).GetFactory<TestAggregate>();
                 await dependencies.SnapshotStore.Received(1).SetAsync(
                     Arg.Any<IBase>(), typeInfo, document, 5, null);
 
@@ -577,7 +577,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 sut.SetAggregateType(typeInfo);
 
                 var typedFactory = Substitute.For<IAggregateFactory<TestAggregate>>();
-                dependencies.AggregateFactory.GetFactory(typeof(TestAggregate)).Returns(typedFactory);
+                dependencies.AggregateFactory.GetFactory<TestAggregate>().Returns(typedFactory);
                 dependencies.DataStore.ReadAsync(document, 0, 5, Arg.Any<int?>()).Returns([]);
                 var snapshotName = "CustomSnapshot";
 
@@ -616,7 +616,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var mockAggregate = Substitute.For<TestAggregate>();
                 var typedFactory = Substitute.For<IAggregateFactory<TestAggregate>>();
                 typedFactory.Create(Arg.Any<IEventStream>()).Returns(mockAggregate);
-                dependencies.AggregateFactory.GetFactory(typeof(TestAggregate)).Returns(typedFactory);
+                dependencies.AggregateFactory.GetFactory<TestAggregate>().Returns(typedFactory);
 
                 var event1 = Substitute.For<IEvent>();
                 var event2 = Substitute.For<IEvent>();
@@ -649,7 +649,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = new TestEventStream(document, dependencies);
                 sut.SetAggregateType(typeInfo);
 
-                dependencies.AggregateFactory.GetFactory(typeof(TestAggregate))
+                dependencies.AggregateFactory.GetFactory<TestAggregate>()
                     .Returns((IAggregateFactory<TestAggregate>)null!);
 
                 // Act & Assert

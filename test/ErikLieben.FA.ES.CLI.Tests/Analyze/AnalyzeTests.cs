@@ -153,10 +153,10 @@ EndGlobal
             var console = new TestConsole();
             var sut = new CLI.Analyze.Analyze(config, console);
 
-            // Reflect CountClassDeclarationsAsync
-            var mi = typeof(CLI.Analyze.Analyze).GetMethod("CountClassDeclarationsAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+            // Reflect CountClassDeclarationsAsync (static method)
+            var mi = typeof(CLI.Analyze.Analyze).GetMethod("CountClassDeclarationsAsync", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
-            var task = (Task<int>)mi!.Invoke(sut, new object[] { solution })!;
+            var task = (Task<int>)mi!.Invoke(null, new object[] { solution })!;
             var result = await task;
 
             // Assert
