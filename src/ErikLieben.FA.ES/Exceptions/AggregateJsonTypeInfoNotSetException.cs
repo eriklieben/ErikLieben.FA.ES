@@ -24,6 +24,9 @@ public class AggregateJsonTypeInfoNotSetException : EsException
 {
     private const string Code = "ELFAES-CFG-0001";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AggregateJsonTypeInfoNotSetException"/> class.
+    /// </summary>
     public AggregateJsonTypeInfoNotSetException()
         : base(Code, "Aggregate JsonInfo type should be set to deserialize the aggregate type")
     {

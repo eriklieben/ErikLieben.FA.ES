@@ -12,6 +12,14 @@ public class VersionIdentifierJsonConverter : JsonConverter<VersionIdentifier>
     private const string Prefix = "vid[";
     private const char SuffixStart = ']';
 
+    /// <summary>
+    /// Reads and converts JSON to a <see cref="VersionIdentifier"/>.
+    /// </summary>
+    /// <param name="reader">The reader to read JSON from.</param>
+    /// <param name="typeToConvert">The type to convert.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <returns>The deserialized version identifier.</returns>
+    /// <exception cref="JsonException">Thrown when the JSON format is invalid.</exception>
     public override VersionIdentifier Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var versionIdentifierString = reader.GetString();
@@ -43,6 +51,13 @@ public class VersionIdentifierJsonConverter : JsonConverter<VersionIdentifier>
         return versionIdentifier;
     }
 
+    /// <summary>
+    /// Writes a <see cref="VersionIdentifier"/> as JSON.
+    /// </summary>
+    /// <param name="writer">The writer to write JSON to.</param>
+    /// <param name="value">The version identifier to serialize.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the schema version is null or empty.</exception>
     public override void Write(Utf8JsonWriter writer, VersionIdentifier value, JsonSerializerOptions options)
     {
         if (string.IsNullOrEmpty(value.SchemaVersion))
@@ -54,7 +69,14 @@ public class VersionIdentifierJsonConverter : JsonConverter<VersionIdentifier>
         writer.WriteStringValue(formattedValue);
     }
 
-    // Handling dictionary keys
+    /// <summary>
+    /// Reads and converts a JSON property name to a <see cref="VersionIdentifier"/> for use as a dictionary key.
+    /// </summary>
+    /// <param name="reader">The reader to read JSON from.</param>
+    /// <param name="typeToConvert">The type to convert.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <returns>The deserialized version identifier.</returns>
+    /// <exception cref="JsonException">Thrown when the JSON format is invalid.</exception>
     public override VersionIdentifier ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var versionIdentifierString = reader.GetString();
@@ -83,6 +105,13 @@ public class VersionIdentifierJsonConverter : JsonConverter<VersionIdentifier>
         };
     }
 
+    /// <summary>
+    /// Writes a <see cref="VersionIdentifier"/> as a JSON property name for use as a dictionary key.
+    /// </summary>
+    /// <param name="writer">The writer to write JSON to.</param>
+    /// <param name="value">The version identifier to serialize.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the schema version is null or empty.</exception>
     public override void WriteAsPropertyName(Utf8JsonWriter writer, VersionIdentifier value, JsonSerializerOptions options)
     {
         if (string.IsNullOrEmpty(value.SchemaVersion))

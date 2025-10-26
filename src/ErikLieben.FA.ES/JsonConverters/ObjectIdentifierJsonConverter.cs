@@ -12,6 +12,14 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
     private const string Prefix = "oid[";
     private const char SuffixStart = ']';
 
+    /// <summary>
+    /// Reads and converts JSON to an <see cref="ObjectIdentifier"/>.
+    /// </summary>
+    /// <param name="reader">The reader to read JSON from.</param>
+    /// <param name="typeToConvert">The type to convert.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <returns>The deserialized object identifier.</returns>
+    /// <exception cref="JsonException">Thrown when the JSON format is invalid.</exception>
     public override ObjectIdentifier Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var objectIdentifierString = reader.GetString();
@@ -43,6 +51,13 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
         return objectIdentifier;
     }
 
+    /// <summary>
+    /// Writes an <see cref="ObjectIdentifier"/> as JSON.
+    /// </summary>
+    /// <param name="writer">The writer to write JSON to.</param>
+    /// <param name="value">The object identifier to serialize.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the schema version is null or empty.</exception>
     public override void Write(Utf8JsonWriter writer, ObjectIdentifier value, JsonSerializerOptions options)
     {
         if (string.IsNullOrEmpty(value.SchemaVersion))
@@ -54,7 +69,14 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
         writer.WriteStringValue(formattedValue);
     }
 
-    // Handling dictionary keys
+    /// <summary>
+    /// Reads and converts a JSON property name to an <see cref="ObjectIdentifier"/> for use as a dictionary key.
+    /// </summary>
+    /// <param name="reader">The reader to read JSON from.</param>
+    /// <param name="typeToConvert">The type to convert.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <returns>The deserialized object identifier.</returns>
+    /// <exception cref="JsonException">Thrown when the JSON format is invalid.</exception>
     public override ObjectIdentifier ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var objectIdentifierString = reader.GetString();
@@ -83,6 +105,13 @@ public class ObjectIdentifierJsonConverter : JsonConverter<ObjectIdentifier>
         };
     }
 
+    /// <summary>
+    /// Writes an <see cref="ObjectIdentifier"/> as a JSON property name for use as a dictionary key.
+    /// </summary>
+    /// <param name="writer">The writer to write JSON to.</param>
+    /// <param name="value">The object identifier to serialize.</param>
+    /// <param name="options">Serialization options.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the schema version is null or empty.</exception>
     public override void WriteAsPropertyName(Utf8JsonWriter writer, ObjectIdentifier value, JsonSerializerOptions options)
     {
         if (string.IsNullOrEmpty(value.SchemaVersion))
