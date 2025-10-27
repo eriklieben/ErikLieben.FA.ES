@@ -1,3 +1,24 @@
+## [1.2.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.2...v1.2.0) (2025-10-27)
+
+### 📚 Documentation
+
+* add xml documentation on public surface ([#32](https://github.com/eriklieben/ErikLieben.FA.ES/issues/32)) ([1c76aad](https://github.com/eriklieben/ErikLieben.FA.ES/commit/1c76aadf1df845db606a6bfada14aeb122fb36d4))
+
+### ✨ New features
+
+* GetFirstByDocumentTag(string tag) should return Task<T?> not Ta… ([#36](https://github.com/eriklieben/ErikLieben.FA.ES/issues/36)) ([09b5be0](https://github.com/eriklieben/ErikLieben.FA.ES/commit/09b5be0597f1a0c328eb35922f6066e4340dd020))
+
+### 💄 Code style adjustments
+
+* reduce cyclomatic complexity ([#33](https://github.com/eriklieben/ErikLieben.FA.ES/issues/33)) ([01ba5ac](https://github.com/eriklieben/ErikLieben.FA.ES/commit/01ba5ace99ac5cf4031da695a480abd981f4d073))
+* resolve Sonarcloud issues ([#34](https://github.com/eriklieben/ErikLieben.FA.ES/issues/34)) ([823c222](https://github.com/eriklieben/ErikLieben.FA.ES/commit/823c222b8a07ace72e15d660c30ebce05809884f))
+* resolve sonarcloud issues ([#35](https://github.com/eriklieben/ErikLieben.FA.ES/issues/35)) ([2e60699](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2e60699e6492709293d75cdfc8aeec9d4105f635))
+* resolve Sonarcloud issues and small bump of dependencies ([#31](https://github.com/eriklieben/ErikLieben.FA.ES/issues/31)) ([77c4dff](https://github.com/eriklieben/ErikLieben.FA.ES/commit/77c4dff2b50e51104f2842ffca0a05c7b4f9e17c))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency semantic-release to v25 ([#29](https://github.com/eriklieben/ErikLieben.FA.ES/issues/29)) ([7c9e094](https://github.com/eriklieben/ErikLieben.FA.ES/commit/7c9e094dae3746e8aa117f506726b7138c7f786e))
+
 ## [1.1.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.1...v1.1.2) (2025-10-21)
 
 ### 🐛 Bug fixes
