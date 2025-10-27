@@ -51,7 +51,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
         }
     }
 
-    private async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, Config config, List<VersionTokenDefinition> versionTokens)
+    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, Config config, List<VersionTokenDefinition> versionTokens)
     {
         if (!versionTokenJsonConverter.IsPartialClass)
         {

@@ -5,6 +5,29 @@ using ErikLieben.FA.ES.Testing.InMemory;
 namespace ErikLieben.FA.ES.Testing;
 
 /// <summary>
+/// Represents an assertion failure in test context verification.
+/// </summary>
+public class TestAssertionException : Exception
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestAssertionException"/> class with a specified error message.
+    /// </summary>
+    /// <param name="message">The message that describes the assertion failure.</param>
+    public TestAssertionException(string message) : base(message)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestAssertionException"/> class with a specified error message and inner exception.
+    /// </summary>
+    /// <param name="message">The message that describes the assertion failure.</param>
+    /// <param name="innerException">The exception that caused this assertion failure.</param>
+    public TestAssertionException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
+}
+
+/// <summary>
 /// Provides a lightweight testing context that exposes factories and captured in-memory events for assertions.
 /// </summary>
 /// <param name="documentFactory">The object document factory used to create or retrieve documents under test.</param>
@@ -59,14 +82,14 @@ public class AssertionExtension(TestContext context)
 /// <param name="objectName">The logical name/scope of the object.</param>
 /// <param name="objectId">The identifier of the object.</param>
 /// <returns>An <see cref="EventAssertionExtension"/> to chain event-level assertions.</returns>
-/// <exception cref="Exception">Thrown when the object is not found in the in-memory store.</exception>
+/// <exception cref="TestAssertionException">Thrown when the object is not found in the in-memory store.</exception>
 public EventAssertionExtension ShouldHaveObject(string objectName, string objectId)
     {
         var key = InMemoryDataStore.GetStoreKey(objectName, objectId);
         var events = context.Events[key];
         if (events == null)
         {
-            throw new Exception($"Object {key} does not exist.");
+            throw new TestAssertionException($"Object {key} does not exist.");
         }
         return new EventAssertionExtension(events!);
     }
@@ -84,12 +107,12 @@ public class EventAssertionExtension(Dictionary<int, IEvent> events)
 /// </summary>
 /// <param name="expectedCount">The expected number of events.</param>
 /// <returns>The same <see cref="EventAssertionExtension"/> to allow chaining.</returns>
-/// <exception cref="Exception">Thrown when the actual count differs from the expected count.</exception>
+/// <exception cref="TestAssertionException">Thrown when the actual count differs from the expected count.</exception>
 public EventAssertionExtension WithEventCount(int expectedCount)
     {
         if (events.Count != expectedCount)
         {
-            throw new Exception($"Expected count is {expectedCount} but actual count is {events.Count}.");
+            throw new TestAssertionException($"Expected count is {expectedCount} but actual count is {events.Count}.");
         }
 
         return this;
@@ -101,7 +124,7 @@ public EventAssertionExtension WithEventCount(int expectedCount)
 /// <typeparam name="TEvent">The event payload type to compare by JSON serialization.</typeparam>
 /// <param name="expected">The expected event payload.</param>
 /// <returns>The same <see cref="EventAssertionExtension"/> to allow chaining.</returns>
-/// <exception cref="Exception">Thrown when the event type or payload does not match.</exception>
+/// <exception cref="TestAssertionException">Thrown when the event type or payload does not match.</exception>
 public EventAssertionExtension WithEventAtLastPosition<TEvent>(TEvent expected)
     {
         // Get event name
@@ -109,26 +132,26 @@ public EventAssertionExtension WithEventAtLastPosition<TEvent>(TEvent expected)
             .FirstOrDefault() as EventNameAttribute;
         if (eventNameAttribute == null)
         {
-            throw new Exception($"EventNameAttribute is not found on {typeof(TEvent).Name}");
+            throw new TestAssertionException($"EventNameAttribute is not found on {typeof(TEvent).Name}");
         }
         var eventName = eventNameAttribute.GetType().GetConstructors()
             .FirstOrDefault()?
             .GetParameters()
             .FirstOrDefault()?.ParameterType == typeof(string)
             ? eventNameAttribute.GetType().GetProperty("Name")?.GetValue(eventNameAttribute)?.ToString()
-            : throw new Exception("The first constructor parameter is not a string.");
+            : throw new TestAssertionException("The first constructor parameter is not a string.");
 
         var eventType = events[events.Keys.Max()].EventType;
         if (eventName != eventType)
         {
-            throw new Exception($"Type '{eventType}' of event is different from expected ('{eventName}').");
+            throw new TestAssertionException($"Type '{eventType}' of event is different from expected ('{eventName}').");
         }
 
         var payload = JsonSerializer.Serialize(expected);
         var payloadCurrent = events[events.Keys.Max()].Payload;
         if (payload != payloadCurrent)
         {
-            throw new Exception($"Expected payload '{payload}' is different from payload at position {events.Keys.Max()} (last) ('{payloadCurrent}').");
+            throw new TestAssertionException($"Expected payload '{payload}' is different from payload at position {events.Keys.Max()} (last) ('{payloadCurrent}').");
         }
 
         return this;
@@ -140,7 +163,7 @@ public EventAssertionExtension WithEventAtLastPosition<TEvent>(TEvent expected)
 /// <typeparam name="TEvent">The event payload type to compare by JSON serialization.</typeparam>
 /// <param name="expected">The expected event payload.</param>
 /// <returns>The same <see cref="EventAssertionExtension"/> to allow chaining.</returns>
-/// <exception cref="Exception">Thrown when the count, event type, or payload does not match.</exception>
+/// <exception cref="TestAssertionException">Thrown when the count, event type, or payload does not match.</exception>
 public EventAssertionExtension WithSingleEvent<TEvent>(TEvent expected)
     {
         // Get event name
@@ -148,31 +171,31 @@ public EventAssertionExtension WithSingleEvent<TEvent>(TEvent expected)
             .FirstOrDefault() as EventNameAttribute;
         if (eventNameAttribute == null)
         {
-            throw new Exception($"EventNameAttribute is not found on {typeof(TEvent).Name}");
+            throw new TestAssertionException($"EventNameAttribute is not found on {typeof(TEvent).Name}");
         }
         var eventName = eventNameAttribute.GetType().GetConstructors()
             .FirstOrDefault()?
             .GetParameters()
             .FirstOrDefault()?.ParameterType == typeof(string)
             ? eventNameAttribute.GetType().GetProperty("Name")?.GetValue(eventNameAttribute)?.ToString()
-            : throw new Exception("The first constructor parameter is not a string.");
+            : throw new TestAssertionException("The first constructor parameter is not a string.");
 
         if (events.Count != 1)
         {
-            throw new Exception($"Expected count is 1 but actual count is {events.Count}.");
+            throw new TestAssertionException($"Expected count is 1 but actual count is {events.Count}.");
         }
 
         var eventType = events[0].EventType;
         if (eventName != eventType)
         {
-            throw new Exception($"Type '{eventType}' of event is different from expected ('{eventName}').");
+            throw new TestAssertionException($"Type '{eventType}' of event is different from expected ('{eventName}').");
         }
 
         var payload = JsonSerializer.Serialize(expected);
         var payloadCurrent = events[0].Payload;
         if (payload != payloadCurrent)
         {
-            throw new Exception($"Expected payload '{payload}' is different from payload ('{payloadCurrent}').");
+            throw new TestAssertionException($"Expected payload '{payload}' is different from payload ('{payloadCurrent}').");
         }
 
         return this;
@@ -185,12 +208,12 @@ public EventAssertionExtension WithSingleEvent<TEvent>(TEvent expected)
 /// <param name="position">The zero-based position of the event to verify.</param>
 /// <param name="expected">The expected event payload.</param>
 /// <returns>The same <see cref="EventAssertionExtension"/> to allow chaining.</returns>
-/// <exception cref="Exception">Thrown when the position is out of range or when the event type/payload does not match.</exception>
+/// <exception cref="TestAssertionException">Thrown when the position is out of range or when the event type/payload does not match.</exception>
 public EventAssertionExtension WithEventAtPosition<TEvent>(int position, TEvent expected)
     {
         if (position < 0 || position >= events.Count)
         {
-            throw new Exception("Position is out of range");
+            throw new TestAssertionException("Position is out of range");
         }
 
         // Get event name
@@ -198,24 +221,24 @@ public EventAssertionExtension WithEventAtPosition<TEvent>(int position, TEvent 
             .FirstOrDefault() as EventNameAttribute;
         if (eventNameAttribute == null)
         {
-            throw new Exception($"EventNameAttribute is not found on {typeof(TEvent).Name}");
+            throw new TestAssertionException($"EventNameAttribute is not found on {typeof(TEvent).Name}");
         }
         var eventName = eventNameAttribute.GetType().GetConstructors()
             .FirstOrDefault()?
             .GetParameters()
             .FirstOrDefault()?.ParameterType == typeof(string)
             ? eventNameAttribute.GetType().GetProperty("Name")?.GetValue(eventNameAttribute)?.ToString()
-            : throw new Exception("The first constructor parameter is not a string.");
+            : throw new TestAssertionException("The first constructor parameter is not a string.");
 
         if (eventName != events[position].EventType)
         {
-            throw new Exception($"Type '{events[position].EventType}' of event is different from expected ('{eventName}').");
+            throw new TestAssertionException($"Type '{events[position].EventType}' of event is different from expected ('{eventName}').");
         }
 
         var payload = JsonSerializer.Serialize(expected);
         if (payload != events[position].Payload)
         {
-            throw new Exception($"Expected payload '{payload}' is different from payload at position {position} ('{events[position].Payload}').");
+            throw new TestAssertionException($"Expected payload '{payload}' is different from payload at position {position} ('{events[position].Payload}').");
         }
 
         return this;

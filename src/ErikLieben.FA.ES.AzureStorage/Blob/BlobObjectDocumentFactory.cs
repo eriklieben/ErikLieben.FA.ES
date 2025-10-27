@@ -36,8 +36,10 @@ public BlobObjectDocumentFactory(
     /// Initializes a new instance of the <see cref="BlobObjectDocumentFactory"/> class using a pre-configured <see cref="IBlobDocumentStore"/>.
     /// </summary>
     /// <param name="blobDocumentStore">The blob document store to delegate operations to.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="blobDocumentStore"/> is null.</exception>
     public BlobObjectDocumentFactory(IBlobDocumentStore blobDocumentStore)
     {
+        ArgumentNullException.ThrowIfNull(blobDocumentStore);
         this.blobDocumentStore = blobDocumentStore;
     }
 
@@ -53,7 +55,7 @@ public BlobObjectDocumentFactory(
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
-        var result = await blobDocumentStore.CreateAsync(objectName.ToLowerInvariant(), objectId);
+        var result = await blobDocumentStore.CreateAsync(objectName!.ToLowerInvariant(), objectId!);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");
