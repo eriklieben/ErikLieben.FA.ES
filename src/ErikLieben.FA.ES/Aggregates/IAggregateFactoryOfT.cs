@@ -54,8 +54,8 @@ public interface IAggregateFactory<T> : IAggregateCovarianceFactory<T> where T :
     /// Gets the first aggregate tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
-    /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetFirstByDocumentTag(string tag);
+    /// <returns>A task that returns the aggregate instance, or null if not found.</returns>
+    Task<T?> GetFirstByDocumentTag(string tag);
 
     /// <summary>
     /// Gets all aggregates tagged with the specified document tag.
@@ -97,8 +97,8 @@ public interface IAggregateFactory<T,TId> : IAggregateCovarianceFactory<T> where
     /// Gets the first aggregate tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
-    /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetFirstByDocumentTag(string tag);
+    /// <returns>A task that returns the aggregate instance, or null if not found.</returns>
+    Task<T?> GetFirstByDocumentTag(string tag);
 
     /// <summary>
     /// Gets all aggregates tagged with the specified document tag.

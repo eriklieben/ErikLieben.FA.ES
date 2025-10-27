@@ -209,7 +209,7 @@ public class GenerateInheritedAggregateCodeTests
         Assert.Contains("public async Task<Customer> CreateAsync(Guid id)", code);
         Assert.Contains("public async Task<Customer> GetAsync(Guid id)", code);
         Assert.Contains("public async Task<(Customer, IObjectDocument)> GetWithDocumentAsync(Guid id)", code);
-        Assert.Contains("public async Task<Customer> GetFirstByDocumentTag(string tag)", code);
+        Assert.Contains("public async Task<Customer?> GetFirstByDocumentTag(string tag)", code);
         Assert.Contains("public async Task<IEnumerable<Customer>> GetAllByDocumentTag(string tag)", code);
     }
 }

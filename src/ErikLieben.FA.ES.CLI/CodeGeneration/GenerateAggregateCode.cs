@@ -463,12 +463,12 @@ public class GenerateAggregateCode
                                  return (obj, document);
                              }
 
-                            public async Task<{{aggregate.IdentifierName}}> GetFirstByDocumentTag(string tag)
+                            public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag)
                             {
                                 var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
                                 if (document == null)
                                 {
-                                    return null!;
+                                    return null;
                                 }
                                 var obj = Create(document);
                                 await obj.Fold();
