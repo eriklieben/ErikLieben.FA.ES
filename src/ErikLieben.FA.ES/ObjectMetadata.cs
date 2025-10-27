@@ -43,12 +43,12 @@ public class ObjectMetadata<T> : ObjectMetadata
             throw new InvalidOperationException("StreamId is null or whitespace");
         }
 
-        if (Id == null)
+        if (EqualityComparer<T>.Default.Equals(Id, default))
         {
             throw new InvalidOperationException("Id is null");
         }
 
-        return new VersionToken(objectName, Id.ToString()!, StreamId, VersionInStream);
+        return new VersionToken(objectName, Id!.ToString()!, StreamId, VersionInStream);
     }
 
 }

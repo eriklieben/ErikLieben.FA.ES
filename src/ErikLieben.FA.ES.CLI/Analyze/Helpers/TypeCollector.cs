@@ -40,33 +40,55 @@ internal static class TypeCollector
 
     internal static void GetAllTypesInClass(INamedTypeSymbol? typeSymbol, HashSet<ITypeSymbol> collectedTypes)
     {
-        if (IsSystemNoiseType(typeSymbol))
+        if (ShouldSkipType(typeSymbol, collectedTypes))
         {
             return;
         }
 
-        if (typeSymbol == null || collectedTypes.Contains(typeSymbol) ||
-            typeSymbol.SpecialType == SpecialType.System_Object)
-            return;
-
         // Stop recursion for primitive and system types, but allow concrete types like Guid, String, Int32, etc.
-        if (typeSymbol.SpecialType != SpecialType.None || IsSystemType(typeSymbol) || IsExcludedBaseType(typeSymbol))
+        if (typeSymbol!.SpecialType != SpecialType.None || IsSystemType(typeSymbol) || IsExcludedBaseType(typeSymbol))
         {
             collectedTypes.Add(typeSymbol);
             return;
         }
 
+        // Add this type to the collection (custom class, enum, struct, etc.)
+        collectedTypes.Add(typeSymbol);
+        CollectGenericTypeArguments(typeSymbol, collectedTypes);
+        ProcessTypeMembers(typeSymbol, collectedTypes);
+        ProcessBaseType(typeSymbol, collectedTypes);
+    }
+
+    private static bool ShouldSkipType(INamedTypeSymbol? typeSymbol, HashSet<ITypeSymbol> collectedTypes)
+    {
+        if (IsSystemNoiseType(typeSymbol))
+        {
+            return true;
+        }
+
+        if (typeSymbol == null || collectedTypes.Contains(typeSymbol) ||
+            typeSymbol.SpecialType == SpecialType.System_Object)
+        {
+            return true;
+        }
+
         // Avoid collecting interfaces
         if (typeSymbol.TypeKind == TypeKind.Interface)
-            return;
+        {
+            return true;
+        }
 
         // Avoid types from Reflection namespace or other unrelated types
         if (IsFromUnwantedNamespace(typeSymbol))
-            return;
+        {
+            return true;
+        }
 
-        // Add this type to the collection (custom class, enum, struct, etc.)
-        collectedTypes.Add(typeSymbol);
+        return false;
+    }
 
+    private static void CollectGenericTypeArguments(INamedTypeSymbol typeSymbol, HashSet<ITypeSymbol> collectedTypes)
+    {
         if (typeSymbol.IsGenericType)
         {
             foreach (var typeSymbolTypeArgument in typeSymbol.TypeArguments)
@@ -74,41 +96,48 @@ internal static class TypeCollector
                 collectedTypes.Add(typeSymbolTypeArgument);
             }
         }
+    }
 
-        // Process members of the type (properties, fields, etc.)
+    private static void ProcessTypeMembers(INamedTypeSymbol typeSymbol, HashSet<ITypeSymbol> collectedTypes)
+    {
         foreach (var member in typeSymbol.GetMembers())
         {
-            // Check if the member is a property
             if (member is IPropertySymbol propertySymbol)
             {
-                var propertyType = propertySymbol.Type;
+                ProcessPropertyType(propertySymbol.Type, collectedTypes);
+            }
+        }
+    }
 
-                // If propertyType is another named type, analyze it
-                if (propertyType is INamedTypeSymbol namedType)
-                {
-                    GetAllTypesInClass(namedType, collectedTypes);
+    private static void ProcessPropertyType(ITypeSymbol propertyType, HashSet<ITypeSymbol> collectedTypes)
+    {
+        if (propertyType is INamedTypeSymbol namedType)
+        {
+            GetAllTypesInClass(namedType, collectedTypes);
+            ProcessGenericTypeArguments(namedType, collectedTypes);
+        }
+        else if (propertyType is IArrayTypeSymbol arrayType)
+        {
+            GetAllTypesInClass(arrayType.ElementType as INamedTypeSymbol, collectedTypes);
+        }
+    }
 
-                    // Handle generics (e.g., IList<FeatureFlag>, List<FeatureFlag>)
-                    if (namedType.IsGenericType)
-                    {
-                        foreach (var typeArgument in namedType.TypeArguments)
-                        {
-                            if (typeArgument is INamedTypeSymbol genericTypeArgument)
-                            {
-                                GetAllTypesInClass(genericTypeArgument, collectedTypes);
-                            }
-                        }
-                    }
-                }
-                // If the propertyType is an array, analyze its element type
-                else if (propertyType is IArrayTypeSymbol arrayType)
+    private static void ProcessGenericTypeArguments(INamedTypeSymbol namedType, HashSet<ITypeSymbol> collectedTypes)
+    {
+        if (namedType.IsGenericType)
+        {
+            foreach (var typeArgument in namedType.TypeArguments)
+            {
+                if (typeArgument is INamedTypeSymbol genericTypeArgument)
                 {
-                    GetAllTypesInClass(arrayType.ElementType as INamedTypeSymbol, collectedTypes);
+                    GetAllTypesInClass(genericTypeArgument, collectedTypes);
                 }
             }
         }
+    }
 
-        // Recursively analyze the base type, but not for excluded types (e.g., System.ValueType)
+    private static void ProcessBaseType(INamedTypeSymbol typeSymbol, HashSet<ITypeSymbol> collectedTypes)
+    {
         if (typeSymbol.BaseType != null && !IsExcludedBaseType(typeSymbol.BaseType))
         {
             GetAllTypesInClass(typeSymbol.BaseType, collectedTypes);

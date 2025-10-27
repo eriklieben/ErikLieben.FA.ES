@@ -678,7 +678,11 @@ public class RoslynHelperTests
             var result = filePath.First().Split("ErikLieben.FA.ES.CLI.Tests")[1];
 
             // Assert
+#if DEBUG
             Assert.Equal(@"\bin\Debug\net9.0\System.Private.CoreLib.dll", result);
+#else
+            Assert.Equal(@"\bin\Release\net9.0\System.Private.CoreLib.dll", result);
+#endif
         }
 
 

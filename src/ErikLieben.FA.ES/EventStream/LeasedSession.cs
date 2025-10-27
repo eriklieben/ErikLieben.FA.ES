@@ -145,63 +145,11 @@ public class LeasedSession : ILeasedSession
         {
             if (!document.Active.ChunkingEnabled())
             {
-                await documentstore.SetAsync(document);
-                await datastore.AppendAsync(document, [.. Buffer]);
+                await CommitWithoutChunkingAsync();
             }
             else
             {
-                int rowsPerPartition = document.Active.ChunkSettings?.ChunkSize ?? 1000; // TODO: what to set as default
-                int latestEventIndex = 0;
-                int chunkIdentifier = 0;
-                while (Buffer.Count > 0)
-                {
-                    if (document.Active.StreamChunks.Count > 0)
-                    {
-                        chunkIdentifier = document.Active.StreamChunks[^1].ChunkIdentifier;
-                    }
-
-                    var availableSpaceInCurrentPartition =
-                        DeterminateAvailableSpaceInChunk(rowsPerPartition, ref latestEventIndex);
-
-                    var eventsToAdd = Buffer.Take(availableSpaceInCurrentPartition).ToList();
-                    Buffer = Buffer.Except(eventsToAdd).ToList();
-
-                    if (eventsToAdd.Count > 0)
-                    {
-                        if (document.Active.StreamChunks.Count == 0)
-                        {
-                            await CreateNewChunk(
-                                1,
-                                eventsToAdd[^1].EventVersion);
-                        }
-
-                        var lastChunk = document.Active.StreamChunks[^1];
-                        lastChunk.LastEventVersion = eventsToAdd[^1].EventVersion;
-
-                        await documentstore.SetAsync(document);
-                        await datastore.AppendAsync(document, [.. eventsToAdd]);
-                    }
-
-                    if (Buffer.Count > 0)
-                    {
-                        await CreateNewChunk(
-                            chunkIdentifier,
-                            eventsToAdd[^1].EventVersion);
-
-                    } else {
-
-                        var availableSpaceInLastPartition =
-                            DeterminateAvailableSpaceInChunk(rowsPerPartition, ref latestEventIndex);
-
-                        if (availableSpaceInLastPartition == 0 && document.Active.StreamChunks[^1].LastEventVersion == latestEventIndex)
-                        {
-                            await CreateNewChunk(
-                                chunkIdentifier,
-                                eventsToAdd[^1].EventVersion);
-                        }
-                    }
-
-                }
+                await CommitWithChunkingAsync();
             }
         }
         catch (Exception)
@@ -215,7 +163,80 @@ public class LeasedSession : ILeasedSession
             throw;
         }
 
-        // ACTIONS
+        await ExecutePostCommitActionsAsync(allEvents);
+        Buffer.Clear();
+    }
+
+    private async Task CommitWithoutChunkingAsync()
+    {
+        await documentstore.SetAsync(document);
+        await datastore.AppendAsync(document, [.. Buffer]);
+    }
+
+    private async Task CommitWithChunkingAsync()
+    {
+        int rowsPerPartition = document.Active.ChunkSettings?.ChunkSize ?? 1000; // TODO: what to set as default
+        int latestEventIndex = 0;
+
+        while (Buffer.Count > 0)
+        {
+            int chunkIdentifier = GetCurrentChunkIdentifier();
+            var availableSpaceInCurrentPartition = DeterminateAvailableSpaceInChunk(rowsPerPartition, ref latestEventIndex);
+
+            var eventsToAdd = Buffer.Take(availableSpaceInCurrentPartition).ToList();
+            Buffer = Buffer.Except(eventsToAdd).ToList();
+
+            if (eventsToAdd.Count > 0)
+            {
+                await AppendEventsToCurrentChunkAsync(eventsToAdd);
+            }
+
+            await CreateChunkIfNeededAsync(chunkIdentifier, eventsToAdd, rowsPerPartition, latestEventIndex);
+        }
+    }
+
+    private int GetCurrentChunkIdentifier()
+    {
+        return document.Active.StreamChunks.Count > 0
+            ? document.Active.StreamChunks[^1].ChunkIdentifier
+            : 0;
+    }
+
+    private async Task AppendEventsToCurrentChunkAsync(List<JsonEvent> eventsToAdd)
+    {
+        if (document.Active.StreamChunks.Count == 0)
+        {
+            await CreateNewChunk(1, eventsToAdd[^1].EventVersion);
+        }
+
+        var lastChunk = document.Active.StreamChunks[^1];
+        lastChunk.LastEventVersion = eventsToAdd[^1].EventVersion;
+
+        await documentstore.SetAsync(document);
+        await datastore.AppendAsync(document, [.. eventsToAdd]);
+    }
+
+    private async Task CreateChunkIfNeededAsync(
+        int chunkIdentifier,
+        List<JsonEvent> eventsToAdd,
+        int rowsPerPartition,
+        int latestEventIndex)
+    {
+        if (Buffer.Count > 0 || IsCurrentChunkFull(rowsPerPartition, latestEventIndex))
+        {
+            await CreateNewChunk(chunkIdentifier, eventsToAdd[^1].EventVersion);
+        }
+    }
+
+    private bool IsCurrentChunkFull(int rowsPerPartition, int latestEventIndex)
+    {
+        var availableSpaceInLastPartition = DeterminateAvailableSpaceInChunk(rowsPerPartition, ref latestEventIndex);
+        return availableSpaceInLastPartition == 0 &&
+               document.Active.StreamChunks[^1].LastEventVersion == latestEventIndex;
+    }
+
+    private async Task ExecutePostCommitActionsAsync(List<JsonEvent> allEvents)
+    {
         if (postCommitActions.Count > 0)
         {
             using var postCommitActivity = ActivitySource.StartActivity("Session.PostCommitActions");
@@ -225,9 +246,6 @@ public class LeasedSession : ILeasedSession
                 await action.PostCommitAsync(allEvents, document);
             }
         }
-
-        // Clear the buffer here?
-        Buffer.Clear();
     }
 
     private int DeterminateAvailableSpaceInChunk(int rowsPerPartition, ref int latestEventIndex)
