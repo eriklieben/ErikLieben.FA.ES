@@ -37,8 +37,10 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object name (scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Unused in this implementation.</param>
+    /// <param name="store">Unused in this implementation.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag)
+    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
     {
         var documentId = (await this.documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList().FirstOrDefault();
         if (string.IsNullOrWhiteSpace(documentId))
@@ -46,7 +48,7 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
             return null!;
         }
 
-        return await GetAsync(objectName, documentId);
+        return await GetAsync(objectName, documentId, store);
     }
 
     /// <summary>
@@ -54,14 +56,16 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object name (scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Unused in this implementation.</param>
+    /// <param name="store">Unused in this implementation.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
     {
         var documentIds = (await this.documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList();
         var documents = new List<IObjectDocument>();
         foreach (var documentId in documentIds)
         {
-            documents.Add(await GetAsync(objectName, documentId));
+            documents.Add(await GetAsync(objectName, documentId, store));
         }
         return documents;
     }

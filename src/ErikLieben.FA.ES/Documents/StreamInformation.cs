@@ -61,6 +61,46 @@ public class StreamInformation : IStreamInformation
     public List<StreamSnapShot> SnapShots { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the document provider type (e.g., "blob", "cosmos").
+    /// </summary>
+    public string DocumentType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the event stream tag provider type.
+    /// </summary>
+    public string EventStreamTagType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the document reference provider type.
+    /// </summary>
+    public string DocumentRefType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the named connection for event stream data storage.
+    /// </summary>
+    public string DataStore { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the named connection for document storage.
+    /// </summary>
+    public string DocumentStore { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the named connection for document tag storage.
+    /// </summary>
+    public string DocumentTagStore { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the named connection for stream tag storage.
+    /// </summary>
+    public string StreamTagStore { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the named connection for snapshot storage.
+    /// </summary>
+    public string SnapShotStore { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets a value indicating whether chunking is enabled.
     /// </summary>
     public bool ChunkingEnabled()
