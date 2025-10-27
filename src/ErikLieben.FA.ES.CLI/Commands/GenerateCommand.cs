@@ -41,7 +41,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         // Analyze solution
         var analyzer = new Analyze.Analyze(config, AnsiConsole.Console);
-        (var def, string solutionPath) = await analyzer.AnalyzeAsync(settings.Path);
+        (var def, string solutionPath) = await analyzer.AnalyzeAsync(settings.Path!);
 
         // Temp for testing
         await Setup.Setup.Initialize(solutionPath);

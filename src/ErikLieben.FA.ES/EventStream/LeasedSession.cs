@@ -222,11 +222,7 @@ public class LeasedSession : ILeasedSession
         int rowsPerPartition,
         int latestEventIndex)
     {
-        if (Buffer.Count > 0)
-        {
-            await CreateNewChunk(chunkIdentifier, eventsToAdd[^1].EventVersion);
-        }
-        else if (IsCurrentChunkFull(rowsPerPartition, latestEventIndex))
+        if (Buffer.Count > 0 || IsCurrentChunkFull(rowsPerPartition, latestEventIndex))
         {
             await CreateNewChunk(chunkIdentifier, eventsToAdd[^1].EventVersion);
         }

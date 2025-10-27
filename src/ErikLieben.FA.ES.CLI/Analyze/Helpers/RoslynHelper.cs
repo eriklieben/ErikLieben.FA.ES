@@ -309,7 +309,7 @@ internal class RoslynHelper(
         InvocationExpressionSyntax methodInvocation,
         out ArgumentSyntax? firstArgument)
     {
-        firstArgument = null;
+        firstArgument = null!;
 
         if (methodInvocation.Expression is not MemberAccessExpressionSyntax memberAccess ||
             memberAccess.Name.Identifier.Text != "Append")

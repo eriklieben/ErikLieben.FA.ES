@@ -10,6 +10,18 @@ using Spectre.Console;
 
 namespace ErikLieben.FA.ES.CLI.CodeGeneration;
 
+/// <summary>
+/// Holds the generated code components for a projection class.
+/// </summary>
+internal record ProjectionCodeComponents(
+    string FoldMethod,
+    string WhenParameterValueBindingCode,
+    StringBuilder CtorCode,
+    string CheckpointJsonAnnotation,
+    string JsonBlobFactoryCode,
+    StringBuilder PropertyCode,
+    StringBuilder SerializableCode);
+
 public class GenerateProjectionCode
 {
     private const string IEventTypeName = "IEvent";
@@ -55,8 +67,8 @@ public class GenerateProjectionCode
     {
         var usings = InitializeUsings(projection);
         var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
-        var (serializableCode, newJsonSerializableCode) = GenerateJsonSerializationCode(projection);
-        var (propertyCode, propertySnapshotCode) = GeneratePropertyCode(projection);
+        var (serializableCode, _) = GenerateJsonSerializationCode(projection);
+        var (propertyCode, _) = GeneratePropertyCode(projection);
         var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings);
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
@@ -65,8 +77,11 @@ public class GenerateProjectionCode
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
-        await AssembleAndWriteCode(projection, usings, foldMethod, whenParameterValueBindingCode, ctorCode,
-            checkpointJsonAnnotation, jsonBlobFactoryCode, propertyCode, serializableCode, path);
+        var codeComponents = new ProjectionCodeComponents(
+            foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
+            jsonBlobFactoryCode, propertyCode, serializableCode);
+
+        await AssembleAndWriteCode(projection, usings, codeComponents, path);
     }
 
     private static List<string> InitializeUsings(ProjectionDefinition projection)
@@ -88,7 +103,7 @@ public class GenerateProjectionCode
         return usings;
     }
 
-    private (StringBuilder foldCode, List<string> whenParameterDeclarations) GenerateWhenMethodsForProjection(
+    private static (StringBuilder foldCode, List<string> whenParameterDeclarations) GenerateWhenMethodsForProjection(
         ProjectionDefinition projection, List<string> usings)
     {
         var foldCode = new StringBuilder();
@@ -436,10 +451,11 @@ public class GenerateProjectionCode
         }
     }
 
-    private static async Task AssembleAndWriteCode(ProjectionDefinition projection, List<string> usings,
-        string foldMethod, string whenParameterValueBindingCode, StringBuilder ctorCode,
-        string checkpointJsonAnnotation, string jsonBlobFactoryCode, StringBuilder propertyCode,
-        StringBuilder serializableCode, string? path)
+    private static async Task AssembleAndWriteCode(
+        ProjectionDefinition projection,
+        List<string> usings,
+        ProjectionCodeComponents components,
+        string? path)
     {
         var code = new StringBuilder();
 
@@ -463,11 +479,11 @@ public class GenerateProjectionCode
                                 : base(documentFactory,eventStreamFactory) {
                               }
 
-                              {{foldMethod}}
+                              {{components.FoldMethod}}
 
                               protected override Dictionary<string, IProjectionWhenParameterValueFactory> WhenParameterValueFactories { get; } =
                                     new Dictionary<string, IProjectionWhenParameterValueFactory>(){
-                                        {{ whenParameterValueBindingCode }}
+                                        {{ components.WhenParameterValueBindingCode }}
                                     };
 
                               public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
@@ -476,7 +492,7 @@ public class GenerateProjectionCode
                                 if (obj is null) {
                                     return null;
                                 }
-                                return new {{projection.Name}}({{ctorCode}});
+                                return new {{projection.Name}}({{components.CtorCode}});
                               }
 
 
@@ -485,20 +501,20 @@ public class GenerateProjectionCode
                                 return JsonSerializer.Serialize(this, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
                               }
 
-                              {{checkpointJsonAnnotation}}
+                              {{components.CheckpointJsonAnnotation}}
                               public override Checkpoint Checkpoint { get; set; } = [];
                           }
 
-                          {{jsonBlobFactoryCode}}
+                          {{components.JsonBlobFactoryCode}}
 
                           #nullable enable
                           // <auto-generated />
                           public interface I{{projection.Name}} {
-                                {{propertyCode}}
+                                {{components.PropertyCode}}
                           }
                           #nullable restore
 
-                          {{serializableCode}}
+                          {{components.SerializableCode}}
                           // <auto-generated />
                           internal partial class {{projection.Name}}JsonSerializerContext : JsonSerializerContext
                           {
