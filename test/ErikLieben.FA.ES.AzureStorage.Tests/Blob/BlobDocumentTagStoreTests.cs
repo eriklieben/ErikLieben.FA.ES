@@ -329,7 +329,7 @@ public class BlobDocumentTagStoreTests
                     opts.HttpHeaders.ContentType == "application/json"));
         }
 
-        private bool VerifyUploadedJson(Stream stream, string expectedTag, string expectedObjectId)
+        private static bool VerifyUploadedJson(Stream stream, string expectedTag, string expectedObjectId)
         {
             stream.Position = 0;
             using var reader = new StreamReader(stream);

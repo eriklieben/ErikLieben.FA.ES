@@ -11,7 +11,7 @@ public class InMemoryDocumentTagDocumentFactory : IDocumentTagDocumentFactory
         return new InMemoryDocumentTagStore();
     }
 
-    public IDocumentTagStore CreateDocumentTagStore()
+    public static IDocumentTagStore CreateDocumentTagStore()
     {
         return new InMemoryDocumentTagStore();
     }

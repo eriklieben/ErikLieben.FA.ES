@@ -11,7 +11,7 @@ public class InMemoryDataStore : IDataStore
     /// <summary>
     /// Gets the internal storage of events grouped by stream identifier and version.
     /// </summary>
-    public Dictionary<string, Dictionary<int, IEvent>> Store = new();
+    public Dictionary<string, Dictionary<int, IEvent>> Store { get; } = new();
 
     /// <summary>
     /// Appends the specified events to the in-memory event stream for the given document.

@@ -62,7 +62,7 @@ public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
     /// </summary>
     /// <returns>The created document tag store instance.</returns>
     /// <exception cref="NotImplementedException">This method is not implemented.</exception>
-    public IDocumentTagStore CreateDocumentTagStore()
+    public static IDocumentTagStore CreateDocumentTagStore()
     {
         throw new NotImplementedException();
     }

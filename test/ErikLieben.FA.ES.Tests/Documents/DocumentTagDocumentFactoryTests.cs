@@ -263,7 +263,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
                 var sut = new DocumentTagDocumentFactory(factories, settings);
 
                 // Act & Assert
-                Assert.Throws<NotImplementedException>(() => sut.CreateDocumentTagStore());
+                Assert.Throws<NotImplementedException>(() => DocumentTagDocumentFactory.CreateDocumentTagStore());
             }
         }
     }
