@@ -279,58 +279,82 @@ internal class RoslynHelper(
     private List<CommandEventDefinition> GetCommandEventDefinitions(CSharpSyntaxNode body)
     {
         var list = new List<CommandEventDefinition>();
-
-        var methodInvocations = body.DescendantNodes()
-            .OfType<InvocationExpressionSyntax>();
+        var methodInvocations = body.DescendantNodes().OfType<InvocationExpressionSyntax>();
 
         foreach (var methodInvocation in methodInvocations)
         {
-            if (methodInvocation.Expression is not MemberAccessExpressionSyntax memberAccess ||
-                memberAccess.Name.Identifier.Text != "Append")
+            if (!IsAppendInvocationOnLeasedSession(methodInvocation, out var firstArgument))
             {
                 continue;
             }
 
-            if (!IsContextOfTypeILeasedSession(memberAccess.Expression))
-            {
-                continue;
-            }
-
-            var argumentList = methodInvocation?.ArgumentList;
-            if (argumentList == null || argumentList.Arguments.Count == 0)
-            {
-                continue;
-            }
-
-            var firstArgument = argumentList.Arguments.First();
-            if (firstArgument.Expression is not ObjectCreationExpressionSyntax objectCreationExpression)
-            {
-                continue;
-            }
-
-            var typeSyntax = objectCreationExpression?.Type;
-            if (typeSyntax == null)
-            {
-                continue;
-            }
-
-            var symbolInfo = semanticModel.GetSymbolInfo(typeSyntax);
-            var typeInfo = semanticModel.GetTypeInfo(firstArgument.Expression);
-            if (symbolInfo.Symbol == null || typeInfo.Type == null)
+            if (!TryGetEventTypeInfo(firstArgument, out var symbolInfo, out var typeInfo))
             {
                 continue;
             }
 
             list.Add(new CommandEventDefinition
             {
-                EventName = RoslynHelper.GetEventName(symbolInfo.Symbol),
-                Namespace = RoslynHelper.GetFullNamespace(symbolInfo.Symbol),
-                File = GetFilePaths(symbolInfo.Symbol).FirstOrDefault() ?? string.Empty,
-                TypeName = RoslynHelper.GetFullTypeName(typeInfo.Type),
+                EventName = RoslynHelper.GetEventName(symbolInfo.Symbol!),
+                Namespace = RoslynHelper.GetFullNamespace(symbolInfo.Symbol!),
+                File = GetFilePaths(symbolInfo.Symbol!).FirstOrDefault() ?? string.Empty,
+                TypeName = RoslynHelper.GetFullTypeName(typeInfo.Type!),
             });
         }
 
         return list;
+    }
+
+    private bool IsAppendInvocationOnLeasedSession(
+        InvocationExpressionSyntax methodInvocation,
+        out ArgumentSyntax? firstArgument)
+    {
+        firstArgument = null;
+
+        if (methodInvocation.Expression is not MemberAccessExpressionSyntax memberAccess ||
+            memberAccess.Name.Identifier.Text != "Append")
+        {
+            return false;
+        }
+
+        if (!IsContextOfTypeILeasedSession(memberAccess.Expression))
+        {
+            return false;
+        }
+
+        var argumentList = methodInvocation.ArgumentList;
+        if (argumentList == null || argumentList.Arguments.Count == 0)
+        {
+            return false;
+        }
+
+        firstArgument = argumentList.Arguments.First();
+        return firstArgument.Expression is ObjectCreationExpressionSyntax;
+    }
+
+    private bool TryGetEventTypeInfo(
+        ArgumentSyntax argument,
+        out SymbolInfo symbolInfo,
+        out TypeInfo typeInfo)
+    {
+        symbolInfo = default;
+        typeInfo = default;
+
+        if (argument.Expression is not ObjectCreationExpressionSyntax objectCreationExpression)
+        {
+            return false;
+        }
+
+        var typeSyntax = objectCreationExpression.Type;
+        if (typeSyntax == null)
+        {
+            return false;
+        }
+
+        symbolInfo = semanticModel.GetSymbolInfo(typeSyntax);
+        typeInfo = semanticModel.GetTypeInfo(argument.Expression);
+
+        return symbolInfo.Symbol != null && typeInfo.Type != null;
     }
 
     private bool IsStreamOfTypeIEventStream(ExpressionSyntax expression)

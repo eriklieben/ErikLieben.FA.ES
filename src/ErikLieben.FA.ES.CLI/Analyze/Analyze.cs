@@ -45,7 +45,6 @@ public class Analyze(Config config, IAnsiConsole console)
                 new SpinnerColumn())
             .StartAsync(async ctx =>
             {
-
                 var taskbar = ctx.AddTask("[yellow]Analyzing projects[/]", maxValue: await CountClassDeclarationsAsync(solution));
                 var stopwatch = Stopwatch.StartNew();
                 taskbar.StartTask();
@@ -56,131 +55,18 @@ public class Analyze(Config config, IAnsiConsole console)
                     await semaphore.WaitAsync();
                     try
                     {
-                        console.MarkupLine($"Loading project: [gray54]{project.FilePath}[/]");
-                        var compilation = await project.GetCompilationAsync();
-                        if (compilation == null)
-                        {
-                            console.MarkupLine($"[red]Failed to compile project:[/] {project.Name}");
-                            return;
-                        }
-
-                        if (config.Es.EnableDiagnostics)
-                        {
-                            LogCompilationIssues(compilation);
-                        }
-
-                        var projectDefinition = new ProjectDefinition
-                        {
-                            Name = project.Name,
-                            FileLocation = project.FilePath?.Replace(solutionRootPath, string.Empty) ?? string.Empty,
-                            Namespace = project.DefaultNamespace ?? string.Empty,
-                        };
-
-                        var innerSemaphore = new SemaphoreSlim(maxConcurrency);
-                        var syntaxTreeTasks = compilation.SyntaxTrees.Select(async syntaxTree =>
-                        {
-                            await innerSemaphore.WaitAsync();
-                            try
-                            {
-                                var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                                var root = await syntaxTree.GetRootAsync();
-                                var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
-                                var classDeclarationsList = classDeclarations.ToList();
-                                classDeclarationsList.ForEach(classDeclaration =>
-                                {
-                                    if (semanticModel.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol
-                                            classSymbol || classSymbol.ContainingAssembly.Name.StartsWith("ErikLieben.FA.ES") ||
-                                        classDeclaration.SyntaxTree.FilePath.EndsWith(".Generated.cs", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        taskbar.Increment(1);
-                                        return;
-                                    }
-
-                                    new AnalyzeAggregates(
-                                        classSymbol,
-                                        classDeclaration,
-                                        semanticModel,
-                                        compilation,
-                                        solutionRootPath).Run(projectDefinition.Aggregates);
-
-                                    new AnalyzeInheritedAggregates(
-                                        classSymbol,
-                                        semanticModel,
-                                        solutionRootPath).Run(projectDefinition.InheritedAggregates);
-
-                                    new AnalyzeProjections(
-                                        classSymbol,
-                                        semanticModel,
-                                        compilation,
-                                        solutionRootPath).Run(projectDefinition.Projections);
-
-
-                                    new AnalyzeVersionTokenOfTJsonConverter(
-                                        classSymbol,
-                                        solutionRootPath).Run(projectDefinition.VersionTokenJsonConverterDefinitions);
-
-                                    taskbar.Increment(1);
-                                });
-
-                                var recordDeclarations = root.DescendantNodes().OfType<RecordDeclarationSyntax>();
-                                var recordDeclarationsList = recordDeclarations.ToList();
-                                recordDeclarationsList.ForEach(recordDeclaration =>
-                                {
-
-                                    if (semanticModel.GetDeclaredSymbol(recordDeclaration) is not INamedTypeSymbol
-                                            recordSymbol || recordSymbol.ContainingAssembly.Name.StartsWith("ErikLieben.FA.ES") ||
-                                        recordDeclaration.SyntaxTree.FilePath.EndsWith(".Generated.cs", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        taskbar.Increment(1);
-                                        return;
-                                    }
-
-                                    new AnalyzeVersionTokenOfT(
-                                            recordSymbol,
-                                            solutionRootPath)
-                                        .Run(projectDefinition.VersionTokens);
-
-
-                                });
-
-
-                            }
-                            finally
-                            {
-                                innerSemaphore.Release();
-                            }
-                        });
-
-                        await Task.WhenAll(syntaxTreeTasks);
-
-
-                        if (projectDefinition.Projections.Count != 0 ||
-                            projectDefinition.Aggregates.Count != 0 ||
-                            projectDefinition.InheritedAggregates.Count != 0 ||
-                            projectDefinition.VersionTokens.Count != 0)
-                        {
-                            solutionDefinition.Projects.Add(projectDefinition);
-                        }
-
+                        await ProcessProjectAsync(project, solutionDefinition, solutionRootPath, maxConcurrency, taskbar);
                     }
                     catch (Exception ex)
                     {
-                        console.MarkupLine($"[red]Failed to analyze project:[/] {project.Name}");
-                        console.MarkupLine($"[red]Exception:[/] {ex.Message}");
-                        console.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");
+                        HandleProjectFailure(project, ex, taskbar, stopwatch);
                         failed = true;
-                        stopwatch.Stop();
-                        taskbar.Description = $"[red]Analyze Failed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
-                        taskbar.Value(0);
-                        taskbar.StopTask();
-
                     }
                     finally
                     {
                         semaphore.Release();
                     }
                 });
-
 
                 await Task.WhenAll(projectTasks);
 
@@ -192,6 +78,195 @@ public class Analyze(Config config, IAnsiConsole console)
                 }
             });
         return (solutionDefinition, solutionRootPath);
+    }
+
+    private async Task ProcessProjectAsync(
+        Project project,
+        SolutionDefinition solutionDefinition,
+        string solutionRootPath,
+        int maxConcurrency,
+        ProgressTask taskbar)
+    {
+        console.MarkupLine($"Loading project: [gray54]{project.FilePath}[/]");
+        var compilation = await project.GetCompilationAsync();
+        if (compilation == null)
+        {
+            console.MarkupLine($"[red]Failed to compile project:[/] {project.Name}");
+            return;
+        }
+
+        if (config.Es.EnableDiagnostics)
+        {
+            LogCompilationIssues(compilation);
+        }
+
+        var projectDefinition = new ProjectDefinition
+        {
+            Name = project.Name,
+            FileLocation = project.FilePath?.Replace(solutionRootPath, string.Empty) ?? string.Empty,
+            Namespace = project.DefaultNamespace ?? string.Empty,
+        };
+
+        await ProcessSyntaxTreesAsync(compilation, projectDefinition, solutionRootPath, maxConcurrency, taskbar);
+
+        if (HasRelevantDefinitions(projectDefinition))
+        {
+            solutionDefinition.Projects.Add(projectDefinition);
+        }
+    }
+
+    private static bool HasRelevantDefinitions(ProjectDefinition projectDefinition)
+    {
+        return projectDefinition.Projections.Count != 0 ||
+               projectDefinition.Aggregates.Count != 0 ||
+               projectDefinition.InheritedAggregates.Count != 0 ||
+               projectDefinition.VersionTokens.Count != 0;
+    }
+
+    private static async Task ProcessSyntaxTreesAsync(
+        Compilation compilation,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        int maxConcurrency,
+        ProgressTask taskbar)
+    {
+        var innerSemaphore = new SemaphoreSlim(maxConcurrency);
+        var syntaxTreeTasks = compilation.SyntaxTrees.Select(async syntaxTree =>
+        {
+            await innerSemaphore.WaitAsync();
+            try
+            {
+                var semanticModel = compilation.GetSemanticModel(syntaxTree);
+                var root = await syntaxTree.GetRootAsync();
+
+                var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
+                ProcessClassDeclarations(classDeclarations, semanticModel, compilation, projectDefinition, solutionRootPath, taskbar);
+
+                var recordDeclarations = root.DescendantNodes().OfType<RecordDeclarationSyntax>().ToList();
+                ProcessRecordDeclarations(recordDeclarations, semanticModel, projectDefinition, solutionRootPath, taskbar);
+            }
+            finally
+            {
+                innerSemaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(syntaxTreeTasks);
+    }
+
+    private static void ProcessClassDeclarations(
+        List<ClassDeclarationSyntax> classDeclarations,
+        SemanticModel semanticModel,
+        Compilation compilation,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        ProgressTask taskbar)
+    {
+        foreach (var classDeclaration in classDeclarations)
+        {
+            if (!TryGetUserDefinedClassSymbol(classDeclaration, semanticModel, out var classSymbol))
+            {
+                taskbar.Increment(1);
+                continue;
+            }
+
+            new AnalyzeAggregates(classSymbol, classDeclaration, semanticModel, compilation, solutionRootPath)
+                .Run(projectDefinition.Aggregates);
+
+            new AnalyzeInheritedAggregates(classSymbol, semanticModel, solutionRootPath)
+                .Run(projectDefinition.InheritedAggregates);
+
+            new AnalyzeProjections(classSymbol, semanticModel, compilation, solutionRootPath)
+                .Run(projectDefinition.Projections);
+
+            new AnalyzeVersionTokenOfTJsonConverter(classSymbol, solutionRootPath)
+                .Run(projectDefinition.VersionTokenJsonConverterDefinitions);
+
+            taskbar.Increment(1);
+        }
+    }
+
+    private static void ProcessRecordDeclarations(
+        List<RecordDeclarationSyntax> recordDeclarations,
+        SemanticModel semanticModel,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        ProgressTask taskbar)
+    {
+        foreach (var recordDeclaration in recordDeclarations)
+        {
+            if (!TryGetUserDefinedRecordSymbol(recordDeclaration, semanticModel, out var recordSymbol))
+            {
+                taskbar.Increment(1);
+                continue;
+            }
+
+            new AnalyzeVersionTokenOfT(recordSymbol, solutionRootPath)
+                .Run(projectDefinition.VersionTokens);
+        }
+    }
+
+    private static bool TryGetUserDefinedClassSymbol(
+        ClassDeclarationSyntax classDeclaration,
+        SemanticModel semanticModel,
+        out INamedTypeSymbol classSymbol)
+    {
+        classSymbol = null!;
+
+        if (semanticModel.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol symbol)
+        {
+            return false;
+        }
+
+        if (symbol.ContainingAssembly.Name.StartsWith("ErikLieben.FA.ES"))
+        {
+            return false;
+        }
+
+        if (classDeclaration.SyntaxTree.FilePath.EndsWith(".Generated.cs", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        classSymbol = symbol;
+        return true;
+    }
+
+    private static bool TryGetUserDefinedRecordSymbol(
+        RecordDeclarationSyntax recordDeclaration,
+        SemanticModel semanticModel,
+        out INamedTypeSymbol recordSymbol)
+    {
+        recordSymbol = null!;
+
+        if (semanticModel.GetDeclaredSymbol(recordDeclaration) is not INamedTypeSymbol symbol)
+        {
+            return false;
+        }
+
+        if (symbol.ContainingAssembly.Name.StartsWith("ErikLieben.FA.ES"))
+        {
+            return false;
+        }
+
+        if (recordDeclaration.SyntaxTree.FilePath.EndsWith(".Generated.cs", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        recordSymbol = symbol;
+        return true;
+    }
+
+    private void HandleProjectFailure(Project project, Exception ex, ProgressTask taskbar, Stopwatch stopwatch)
+    {
+        console.MarkupLine($"[red]Failed to analyze project:[/] {project.Name}");
+        console.MarkupLine($"[red]Exception:[/] {ex.Message}");
+        console.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");
+        stopwatch.Stop();
+        taskbar.Description = $"[red]Analyze Failed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
+        taskbar.Value(0);
+        taskbar.StopTask();
     }
 
     private static void LogCompilationIssues(Compilation compilation)

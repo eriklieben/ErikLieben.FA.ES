@@ -166,138 +166,174 @@ public async Task Generate()
 
     private static (StringBuilder, List<string>) GenerateJsonSerializers(ProjectDefinition project)
     {
+        var events = CollectDistinctEvents(project);
+        var nameSpaceUsings = new List<string>();
+        var jsonSerializerCode = new StringBuilder();
 
+        foreach (var eventDefinition in events)
+        {
+            ProcessEventDefinition(eventDefinition, nameSpaceUsings, jsonSerializerCode);
+        }
 
-        var events = project.Aggregates
+        return (jsonSerializerCode, nameSpaceUsings);
+    }
+
+    private static List<EventDefinition> CollectDistinctEvents(ProjectDefinition project)
+    {
+        return project.Aggregates
             .SelectMany(agg => agg.Events)
             .Concat(project.Projections.SelectMany(proj => proj.Events))
             .DistinctBy(e => e.EventName)
             .ToList();
+    }
 
+    private static void ProcessEventDefinition(
+        EventDefinition eventDefinition,
+        List<string> nameSpaceUsings,
+        StringBuilder jsonSerializerCode)
+    {
+        var jsonSerializerCodeList = new List<string>();
 
+        nameSpaceUsings.Add(eventDefinition.Namespace);
+        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({eventDefinition.TypeName}))]");
 
-        var nameSpaceUsigns = new List<string>();
-        var jsonSerializerCode = new StringBuilder();
-        foreach (var eventDefinition in events)
+        ProcessEventProperties(eventDefinition, nameSpaceUsings, jsonSerializerCodeList);
+        ProcessEventParameters(eventDefinition, nameSpaceUsings, jsonSerializerCodeList);
+
+        AppendSerializerContext(eventDefinition, jsonSerializerCodeList, jsonSerializerCode);
+    }
+
+    private static void ProcessEventProperties(
+        EventDefinition eventDefinition,
+        List<string> nameSpaceUsings,
+        List<string> jsonSerializerCodeList)
+    {
+        foreach (var prop in eventDefinition.Properties)
         {
-            var jsonSerializerCodeList = new List<string>();
+            nameSpaceUsings.Add(prop.Namespace);
 
-            nameSpaceUsigns.Add(eventDefinition.Namespace);
-            jsonSerializerCodeList.Add($"[JsonSerializable(typeof({eventDefinition.TypeName}))]");
-            foreach (var prop in eventDefinition.Properties)
+            if (prop.IsGeneric)
             {
-                nameSpaceUsigns.Add(prop.Namespace);
-                if (prop.IsGeneric)
-                {
-
-                    var genericDefBuilder = new StringBuilder();
-                    foreach (var generic in prop.GenericTypes)
-                    {
-                        nameSpaceUsigns.Add(generic.Namespace);
-                        genericDefBuilder.Append(generic.Name);
-                        if (prop.GenericTypes[^1] != generic)
-                        {
-                            genericDefBuilder.Append(", ");
-                        }
-
-                        foreach (var subType2 in generic.SubTypes)
-                        {
-                            nameSpaceUsigns.Add(subType2.Namespace);
-
-                            if (subType2.GenericTypes.Count != 0)
-                            {
-                                var genericDef2Builder = new StringBuilder();
-                                foreach (var generic2 in subType2.GenericTypes)
-                                {
-                                    nameSpaceUsigns.Add(generic2.Namespace);
-                                    genericDef2Builder.Append(generic2.Name);
-                                    if (subType2.GenericTypes[^1] != generic2)
-                                    {
-                                        genericDef2Builder.Append(", ");
-                                    }
-                                }
-
-                                var genericDef2 = genericDef2Builder.ToString();
-                                jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType2.Name}<{genericDef2}>))]");
-                            }
-                            else
-                            {
-                                jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType2.Name}))]");
-                            }
-
-                        }
-                    }
-
-                    var genericDef = genericDefBuilder.ToString();
-                    jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}<{genericDef}>))]");
-                }
-                else
-                {
-                    jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}))]");
-                }
-
-                foreach (var subType in prop.SubTypes)
-                {
-                    nameSpaceUsigns.Add(subType.Namespace);
-
-                    if (subType.GenericTypes.Count != 0)
-                    {
-
-                        var genericDefBuilder = new StringBuilder();
-                        foreach (var generic in subType.GenericTypes)
-                        {
-                            nameSpaceUsigns.Add(generic.Namespace);
-                            genericDefBuilder.Append(generic.Name);
-                            if (subType.GenericTypes[^1] != generic)
-                            {
-                                genericDefBuilder.Append(", ");
-                            }
-                        }
-
-                        var genericDef = genericDefBuilder.ToString();
-                        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}<{genericDef}>))]");
-                    }
-                    else
-                    {
-                        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}))]");
-                    }
-
-                   //  nameSpaceUsigns.Add(subType.Namespace);
-                   // jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}))]");
-                }
+                ProcessGenericProperty(prop, nameSpaceUsings, jsonSerializerCodeList);
+            }
+            else
+            {
+                jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}))]");
             }
 
-            // Add json serializers for parameter types (Temp fix)
-            foreach (var parameter in eventDefinition.Parameters)
+            ProcessPropertySubTypes(prop.SubTypes, nameSpaceUsings, jsonSerializerCodeList);
+        }
+    }
+
+    private static void ProcessGenericProperty(
+        PropertyDefinition prop,
+        List<string> nameSpaceUsings,
+        List<string> jsonSerializerCodeList)
+    {
+        var genericSignature = BuildGenericTypeSignature(prop.GenericTypes, nameSpaceUsings);
+        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}<{genericSignature}>))]");
+
+        // Process nested subtypes within generic types
+        foreach (var generic in prop.GenericTypes)
+        {
+            foreach (var subType2 in generic.SubTypes)
             {
-                foreach (var subType in parameter.SubTypes)
-                {
-                    if (!nameSpaceUsigns.Contains(subType.Namespace))
-                    {
-                        nameSpaceUsigns.Add(subType.Namespace);
-                    }
-
-                    if (parameter.Type != subType.Name)
-                    {
-                        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}))]");
-                    }
-                }
+                nameSpaceUsings.Add(subType2.Namespace);
+                AddSerializerForType(subType2, jsonSerializerCodeList, nameSpaceUsings);
             }
+        }
+    }
 
-            jsonSerializerCode.Append(string.Join(Environment.NewLine, jsonSerializerCodeList.Distinct().Where(i =>
-                !i.StartsWith("[JsonSerializable(typeof(IList<") &&
-                !i.StartsWith("[JsonSerializable(typeof(List<") &&
-                !i.StartsWith("[JsonSerializable(typeof(Collection<")
-                ).Order()));
-            jsonSerializerCode.AppendLine("");
-            jsonSerializerCode.AppendLine("// <auto-generated />");
-            jsonSerializerCode.AppendLine(
-                "internal partial class " + eventDefinition.TypeName +
-                "JsonSerializerContext : JsonSerializerContext { }");
-            jsonSerializerCode.AppendLine("");
+    private static void ProcessPropertySubTypes(
+        List<PropertyGenericTypeDefinition> subTypes,
+        List<string> nameSpaceUsings,
+        List<string> jsonSerializerCodeList)
+    {
+        foreach (var subType in subTypes)
+        {
+            nameSpaceUsings.Add(subType.Namespace);
+            AddSerializerForType(subType, jsonSerializerCodeList, nameSpaceUsings);
+        }
+    }
+
+    private static void AddSerializerForType(
+        PropertyGenericTypeDefinition type,
+        List<string> jsonSerializerCodeList,
+        List<string> nameSpaceUsings)
+    {
+        if (type.GenericTypes.Count != 0)
+        {
+            var genericSignature = BuildGenericTypeSignature(type.GenericTypes, nameSpaceUsings);
+            jsonSerializerCodeList.Add($"[JsonSerializable(typeof({type.Name}<{genericSignature}>))]");
+        }
+        else
+        {
+            jsonSerializerCodeList.Add($"[JsonSerializable(typeof({type.Name}))]");
+        }
+    }
+
+    private static string BuildGenericTypeSignature(
+        List<PropertyGenericTypeDefinition> genericTypes,
+        List<string> nameSpaceUsings)
+    {
+        var builder = new StringBuilder();
+
+        for (int i = 0; i < genericTypes.Count; i++)
+        {
+            var generic = genericTypes[i];
+            nameSpaceUsings.Add(generic.Namespace);
+            builder.Append(generic.Name);
+
+            if (i < genericTypes.Count - 1)
+            {
+                builder.Append(", ");
+            }
         }
 
-        return (jsonSerializerCode, nameSpaceUsigns);
+        return builder.ToString();
+    }
+
+    private static void ProcessEventParameters(
+        EventDefinition eventDefinition,
+        List<string> nameSpaceUsings,
+        List<string> jsonSerializerCodeList)
+    {
+        foreach (var parameter in eventDefinition.Parameters)
+        {
+            foreach (var subType in parameter.SubTypes)
+            {
+                if (!nameSpaceUsings.Contains(subType.Namespace))
+                {
+                    nameSpaceUsings.Add(subType.Namespace);
+                }
+
+                if (parameter.Type != subType.Name)
+                {
+                    jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}))]");
+                }
+            }
+        }
+    }
+
+    private static void AppendSerializerContext(
+        EventDefinition eventDefinition,
+        List<string> jsonSerializerCodeList,
+        StringBuilder jsonSerializerCode)
+    {
+        var filteredSerializers = jsonSerializerCodeList
+            .Distinct()
+            .Where(i =>
+                !i.StartsWith("[JsonSerializable(typeof(IList<") &&
+                !i.StartsWith("[JsonSerializable(typeof(List<") &&
+                !i.StartsWith("[JsonSerializable(typeof(Collection<"))
+            .Order();
+
+        jsonSerializerCode.Append(string.Join(Environment.NewLine, filteredSerializers));
+        jsonSerializerCode.AppendLine("");
+        jsonSerializerCode.AppendLine("// <auto-generated />");
+        jsonSerializerCode.AppendLine(
+            $"internal partial class {eventDefinition.TypeName}JsonSerializerContext : JsonSerializerContext {{ }}");
+        jsonSerializerCode.AppendLine("");
     }
 
 

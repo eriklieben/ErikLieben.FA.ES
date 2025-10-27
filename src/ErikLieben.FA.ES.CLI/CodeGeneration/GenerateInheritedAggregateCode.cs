@@ -75,7 +75,17 @@ public class GenerateInheritedAggregateCode
 
     private async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path, Config config, AggregateDefinition? actualAgregate)
     {
-        var code = new StringBuilder();
+        var usings = BuildUsings(aggregate);
+        var (diCode, ctorParams) = BuildConstructorDependencyCode(aggregate);
+        var commandMethodSignatures = BuildCommandMethodSignatures(aggregate, usings);
+        var codeContent = GenerateCodeContent(aggregate, usings, diCode, ctorParams, commandMethodSignatures);
+
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
+        await File.WriteAllTextAsync(path!, FormatCode(codeContent));
+    }
+
+    private static List<string> BuildUsings(InheritedAggregateDefinition aggregate)
+    {
         var usings = new List<string>
         {
             "System.Text.Json.Serialization",
@@ -85,83 +95,115 @@ public class GenerateInheritedAggregateCode
             "ErikLieben.FA.ES.Documents",
             "System.Diagnostics.CodeAnalysis"
         };
+
         if (!string.IsNullOrWhiteSpace(aggregate.ParentInterfaceNamespace))
         {
             usings.Add(aggregate.ParentInterfaceNamespace);
         }
 
+        return usings;
+    }
 
-
-
-
+    private static (string DiCode, string CtorParams) BuildConstructorDependencyCode(InheritedAggregateDefinition aggregate)
+    {
         var getBuilder = new StringBuilder();
         var ctorInputBuilder = new StringBuilder();
         var orderedConstructors = aggregate.Constructors.OrderByDescending(c => c.Parameters.Count).ToList();
         var mostParams = orderedConstructors[0];
+
         foreach (var param in mostParams.Parameters.Where(param => param.Type != "IEventStream"))
         {
             getBuilder.Append($"var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};\n");
             ctorInputBuilder.Append($", {param.Name}!");
         }
 
-        var get = getBuilder.ToString();
-        var ctorInput = ctorInputBuilder.ToString();
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
 
-        string codeGetById = "";
-
+    private static string BuildCommandMethodSignatures(InheritedAggregateDefinition aggregate, List<string> usings)
+    {
         var propertyCode = new StringBuilder();
+
         foreach (var cmdMethod in aggregate.Commands)
         {
-
             if (!usings.Contains(cmdMethod.ReturnType.Namespace))
             {
                 usings.Add(cmdMethod.ReturnType.Namespace);
             }
 
-            var textBuilder = new StringBuilder();
-            textBuilder.Append($"{cmdMethod.ReturnType.Type} {cmdMethod.CommandName}(");
-
-            foreach (var param in cmdMethod.Parameters)
-            {
-                if (!usings.Contains(param.Namespace))
-                {
-                    usings.Add(param.Namespace);
-                }
-
-                if (param.IsGeneric && param.GenericTypes != null)
-                {
-                    textBuilder.Append(param.Type);
-                    textBuilder.Append('<');
-                    foreach (var generic in param.GenericTypes)
-                    {
-                        textBuilder.Append(generic.Namespace).Append('.').Append(generic.Name);
-                        if (param.GenericTypes[^1] != generic)
-                        {
-                            textBuilder.Append(',');
-                        }
-                    }
-
-                    textBuilder.Append('>');
-
-                    textBuilder.Append($" {param.Name}, ");
-                }
-                else
-                {
-                    textBuilder.Append($"{param.Type} {param.Name}, ");
-                }
-
-
-            }
-
-            var text = textBuilder.ToString();
-            if (text.EndsWith(", "))
-            {
-                text = text.Remove(text.Length - 2);
-            }
-
-            propertyCode.AppendLine(text + ");");
+            var methodSignature = BuildMethodSignature(cmdMethod, usings);
+            propertyCode.AppendLine(methodSignature + ");");
         }
 
+        return propertyCode.ToString();
+    }
+
+    private static string BuildMethodSignature(CommandDefinition cmdMethod, List<string> usings)
+    {
+        var textBuilder = new StringBuilder();
+        textBuilder.Append($"{cmdMethod.ReturnType.Type} {cmdMethod.CommandName}(");
+
+        foreach (var param in cmdMethod.Parameters)
+        {
+            if (!usings.Contains(param.Namespace))
+            {
+                usings.Add(param.Namespace);
+            }
+
+            textBuilder.Append(BuildParameterSignature(param));
+            textBuilder.Append(", ");
+        }
+
+        var text = textBuilder.ToString();
+        if (text.EndsWith(", "))
+        {
+            text = text.Remove(text.Length - 2);
+        }
+
+        return text;
+    }
+
+    private static string BuildParameterSignature(CommandParameter param)
+    {
+        if (param.IsGeneric && param.GenericTypes != null)
+        {
+            return BuildGenericParameterSignature(param);
+        }
+
+        return $"{param.Type} {param.Name}";
+    }
+
+    private static string BuildGenericParameterSignature(CommandParameter param)
+    {
+        var builder = new StringBuilder();
+        builder.Append(param.Type);
+        builder.Append('<');
+
+        for (int i = 0; i < param.GenericTypes!.Count; i++)
+        {
+            var generic = param.GenericTypes[i];
+            builder.Append(generic.Namespace).Append('.').Append(generic.Name);
+
+            if (i < param.GenericTypes.Count - 1)
+            {
+                builder.Append(',');
+            }
+        }
+
+        builder.Append('>');
+        builder.Append($" {param.Name}");
+
+        return builder.ToString();
+    }
+
+    private static string GenerateCodeContent(
+        InheritedAggregateDefinition aggregate,
+        List<string> usings,
+        string diCode,
+        string ctorParams,
+        string commandMethodSignatures)
+    {
+        var code = new StringBuilder();
 
         foreach (var namespaceName in usings.Order())
         {
@@ -169,8 +211,10 @@ public class GenerateInheritedAggregateCode
         }
         code.AppendLine("");
 
+        string codeGetById = "";
+
         code.AppendLine($$"""
-                          
+
                           namespace {{aggregate.Namespace}};
 
                           //<auto-generated />
@@ -184,50 +228,50 @@ public class GenerateInheritedAggregateCode
                             private readonly IEventStreamFactory eventStreamFactory;
                             private readonly IObjectDocumentFactory objectDocumentFactory;
                             private readonly IServiceProvider serviceProvider;
-                          
+
                             public static string ObjectName => "{{aggregate.ObjectName}}";
-                          
+
                             public string GetObjectName()
                             {
                                 return ObjectName;
                             }
-                          
+
                             public {{aggregate.IdentifierName}}Factory(
-                              IServiceProvider serviceProvider, 
+                              IServiceProvider serviceProvider,
                               IEventStreamFactory eventStreamFactory,
                               IObjectDocumentFactory objectDocumentFactory)
                             {
                               ArgumentNullException.ThrowIfNull(serviceProvider);
                               ArgumentNullException.ThrowIfNull(eventStreamFactory);
                               ArgumentNullException.ThrowIfNull(objectDocumentFactory);
-                          
+
                               this.serviceProvider = serviceProvider;
                               this.eventStreamFactory = eventStreamFactory;
                               this.objectDocumentFactory = objectDocumentFactory;
                             }
-                          
+
                             public {{aggregate.IdentifierName}} Create(IEventStream eventStream)
                             {
                               ArgumentNullException.ThrowIfNull(eventStream);
-                          
+
                               // get the params required from DI
-                              {{get}}
-                          
-                              return new {{aggregate.IdentifierName}}(eventStream{{ctorInput}});
+                              {{diCode}}
+
+                              return new {{aggregate.IdentifierName}}(eventStream{{ctorParams}});
                             }
-                          
+
                             public {{aggregate.IdentifierName}} Create(IObjectDocument document)
                             {
                               ArgumentNullException.ThrowIfNull(document);
-                          
+
                               // get the params required from DI
-                              {{get}}
-                          
+                              {{diCode}}
+
                               var eventStream = eventStreamFactory.Create(document);
-                              return new {{aggregate.IdentifierName}}(eventStream{{ctorInput}});
+                              return new {{aggregate.IdentifierName}}(eventStream{{ctorParams}});
                             }
-                            
-                            
+
+
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
                                  var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString());
@@ -235,7 +279,7 @@ public class GenerateInheritedAggregateCode
                                  await obj.Fold();
                                  return obj;
                              }
-                          
+
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
                              {
                                  var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString());
@@ -243,7 +287,7 @@ public class GenerateInheritedAggregateCode
                                  await obj.Fold();
                                  return obj;
                              }
-                          
+
                              public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
                              {
                                  var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString());
@@ -251,7 +295,7 @@ public class GenerateInheritedAggregateCode
                                  await obj.Fold();
                                  return (obj, document);
                              }
-                             
+
                             public async Task<{{aggregate.IdentifierName}}> GetFirstByDocumentTag(string tag)
                             {
                                 var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
@@ -263,7 +307,7 @@ public class GenerateInheritedAggregateCode
                                 await obj.Fold();
                                 return obj;
                             }
-                            
+
                             public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
                             {
                                 var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag));
@@ -281,12 +325,11 @@ public class GenerateInheritedAggregateCode
                           }
 
                           public interface I{{aggregate.IdentifierName}} : {{aggregate.ParentInterface}} {
-                                {{propertyCode.ToString()}}
+                                {{commandMethodSignatures}}
                           }
                           """);
 
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        return code.ToString();
     }
 
     private static string FormatCode(string code, CancellationToken cancelToken = default)
