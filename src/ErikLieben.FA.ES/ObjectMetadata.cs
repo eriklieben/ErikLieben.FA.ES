@@ -48,7 +48,7 @@ public class ObjectMetadata<T> : ObjectMetadata
             throw new InvalidOperationException("Id is null");
         }
 
-        return new VersionToken(objectName, Id.ToString()!, StreamId, VersionInStream);
+        return new VersionToken(objectName, Id!.ToString()!, StreamId, VersionInStream);
     }
 
 }

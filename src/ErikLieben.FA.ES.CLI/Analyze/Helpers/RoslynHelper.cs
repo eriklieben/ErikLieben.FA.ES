@@ -288,7 +288,7 @@ internal class RoslynHelper(
                 continue;
             }
 
-            if (!TryGetEventTypeInfo(firstArgument, out var symbolInfo, out var typeInfo))
+            if (!TryGetEventTypeInfo(firstArgument!, out var symbolInfo, out var typeInfo))
             {
                 continue;
             }
