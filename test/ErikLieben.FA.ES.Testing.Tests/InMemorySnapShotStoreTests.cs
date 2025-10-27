@@ -29,7 +29,7 @@ public class InMemorySnapShotStoreTests
             [],
             "1.0.0");
 
-    private static JsonTypeInfo<Dummy> TypeInfo => (JsonTypeInfo<Dummy>)JsonTypeInfo.CreateJsonTypeInfo(typeof(Dummy), new())!;
+    private static JsonTypeInfo<Dummy> TypeInfo => JsonTypeInfo.CreateJsonTypeInfo<Dummy>(new())!;
 
     [Fact]
     public async Task Set_and_Get_should_roundtrip_snapshot()

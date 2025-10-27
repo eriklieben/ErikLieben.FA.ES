@@ -150,7 +150,7 @@ public abstract class Projection : IProjectionBase
             case IProjectionWhenParameterValueFactory<T, Te> factoryWithEvent:
             {
                 var eventW = @event as IEvent<Te>;
-                return factoryWithEvent?.Create(document, eventW!);
+                return factoryWithEvent.Create(document, eventW!);
             }
             case IProjectionWhenParameterValueFactory<T> factoryWithoutEvent:
                 return factoryWithoutEvent.Create(document, @event);

@@ -58,12 +58,12 @@ public class GenerateProjectionCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateProjection(projection, path, config);
+                await GenerateProjection(projection, path);
             }
         }
     }
 
-    private async Task GenerateProjection(ProjectionDefinition projection, string? path, Config config)
+    private async Task GenerateProjection(ProjectionDefinition projection, string? path)
     {
         var usings = InitializeUsings(projection);
         var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);

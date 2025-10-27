@@ -31,7 +31,7 @@ public class InMemoryDocumentTagDocumentFactoryTests
 
         // Act
         var s1 = factory.CreateDocumentTagStore(document);
-        var s2 = factory.CreateDocumentTagStore();
+        var s2 = InMemoryDocumentTagDocumentFactory.CreateDocumentTagStore();
         var s3 = factory.CreateDocumentTagStore("anything");
 
         // Assert

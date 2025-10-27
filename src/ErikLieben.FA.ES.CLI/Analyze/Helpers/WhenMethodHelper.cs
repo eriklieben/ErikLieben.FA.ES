@@ -75,25 +75,6 @@ internal static class WhenMethodHelper
         "IPreReadAction"
     ];
 
-    private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
-    {
-        return parameterTypeSymbol.GetAttributes()
-            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 })
-            .SelectMany(attribute => attribute.AttributeClass!.TypeArguments)
-            .Where(typeArgument => typeArgument.TypeKind != TypeKind.Error)
-            .Select(typeArgument => new StreamActionDefinition
-            {
-                Namespace = RoslynHelper.GetFullNamespace(typeArgument),
-                Type = RoslynHelper.GetFullTypeName(typeArgument),
-                StreamActionInterfaces = typeArgument.AllInterfaces
-                    .Where(i => StreamInterfaces.Contains(i.Name))
-                    .Select(i => i.Name)
-                    .ToList()
-            })
-            .ToList();
-    }
-
-
     private static List<WhenParameterValueFactory> GetWhenParameterValueFactories(IMethodSymbol methodSymbol)
      {
          return methodSymbol.GetAttributes()

@@ -43,14 +43,14 @@ public class GenerateVersionTokenOfTCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionToken, path, config);
+                await GenerateVersionToken(versionToken, path);
             }
 
             // Generate json
         }
     }
 
-    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, Config config)
+    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path)
     {
         if (!versionToken.IsPartialClass)
         {

@@ -44,14 +44,14 @@ public class GenerateVersionTokenOfTJsonConverterCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionTokenJsonConverter, path, config, project.VersionTokens);
+                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens);
             }
 
             // Generate json
         }
     }
 
-    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, Config config, List<VersionTokenDefinition> versionTokens)
+    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens)
     {
         if (!versionTokenJsonConverter.IsPartialClass)
         {

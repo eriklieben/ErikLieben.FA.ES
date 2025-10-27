@@ -22,12 +22,12 @@ public class VersionTokenComparer : IVersionTokenComparer
             return 0;
         }
 
-        if (x == null && y != null)
+        if (x == null)
         {
             return -1;
         }
 
-        if (x != null && y == null)
+        if (y == null)
         {
             return 1;
         }
