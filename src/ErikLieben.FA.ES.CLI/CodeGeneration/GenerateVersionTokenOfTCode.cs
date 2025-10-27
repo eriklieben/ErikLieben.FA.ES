@@ -50,7 +50,7 @@ public class GenerateVersionTokenOfTCode
         }
     }
 
-    private async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, Config config)
+    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, Config config)
     {
         if (!versionToken.IsPartialClass)
         {

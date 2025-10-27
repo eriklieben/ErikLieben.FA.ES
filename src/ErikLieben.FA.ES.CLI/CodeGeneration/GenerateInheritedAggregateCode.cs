@@ -73,7 +73,7 @@ public class GenerateInheritedAggregateCode
         }
     }
 
-    private async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path, Config config, AggregateDefinition? actualAgregate)
+    private static async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path, Config config, AggregateDefinition? actualAgregate)
     {
         var usings = BuildUsings(aggregate);
         var (diCode, ctorParams) = BuildConstructorDependencyCode(aggregate);

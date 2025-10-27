@@ -55,7 +55,9 @@ internal static class WhenMethodHelper
                     Name = p.Name,
                     Type = RoslynHelper.GetFullTypeName(p.Type),
                     Namespace = RoslynHelper.GetFullNamespace(p.Type),
-                    GenericArguments = RoslynHelper.GetGenericArguments(p.Type as INamedTypeSymbol)
+                    GenericArguments = p.Type is INamedTypeSymbol namedType
+                        ? RoslynHelper.GetGenericArguments(namedType)
+                        : []
                 }).ToList(),
             });
         }

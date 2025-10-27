@@ -50,18 +50,17 @@ public class BlobVersionIndexDocument
     }
 }
 
-
-[JsonSourceGenerationOptions(
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull )]
-[JsonSerializable(typeof(BlobVersionIndexDocument))]
-[JsonSerializable(typeof(Dictionary<string, string>))]
 /// <summary>
 /// Provides the System.Text.Json source-generation context for <see cref="BlobVersionIndexDocument"/> and related types.
 /// </summary>
 /// <remarks>
 /// This context enables fast, reflection-free JSON (de)serialization for the Azure Storage blob version index document.
 /// </remarks>
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull )]
+[JsonSerializable(typeof(BlobVersionIndexDocument))]
+[JsonSerializable(typeof(Dictionary<string, string>))]
 public partial class VersionIndexContext : JsonSerializerContext
 {
 }

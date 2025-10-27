@@ -115,6 +115,7 @@ public record JsonEvent : IEvent, IJsonEventWithoutPayload
     {
         ArgumentNullException.ThrowIfNull(@event);
         ArgumentNullException.ThrowIfNull(typeInfo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(@event.Payload);
 
         var obj = JsonSerializer.Deserialize(@event.Payload, typeInfo)
             ?? throw new UnableToDeserializeInTransitEventException();

@@ -23,8 +23,6 @@ public record CommandParameter
     public required bool IsGeneric { get; init; }
     
     public required List<PropertyGenericTypeDefinition> GenericTypes { get; init; } = new();
-    
-    //public required List<PropertyGenericTypeDefinition> SubTypes { get; init; } = new(); 
 }
 
 public record CommandReturnType

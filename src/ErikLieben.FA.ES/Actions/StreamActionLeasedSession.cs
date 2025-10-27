@@ -42,13 +42,7 @@ public class StreamActionLeasedSession(ILeasedSession session) : ILeasedSession
     /// <returns>A task that completes when the commit has finished.</returns>
     public Task CommitAsync()
     {
-        // Pre commit
-        // Buffer.ForEach();
-
         return session.CommitAsync();
-
-        // Post commit
-        // Buffer.ForEach();
     }
 
     /// <summary>

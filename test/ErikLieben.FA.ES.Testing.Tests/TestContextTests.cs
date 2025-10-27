@@ -74,7 +74,7 @@ public class TestContextTests
         ctx.Events[key] = new Dictionary<int, IEvent> { [0] = new JsonEvent { EventType = "EvtA", EventVersion = 0, Payload = JsonSerializer.Serialize(new EvtA("x")) } };
 
         // Act & Assert
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("order", "2").WithEventAtPosition(5, new EvtA("x")));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("order", "2").WithEventAtPosition(5, new EvtA("x")));
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class TestContextTests
         };
 
         // Act & Assert (expected type EvtA but stored is EvtB)
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("order", "3").WithEventAtLastPosition(new EvtA("y")));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("order", "3").WithEventAtLastPosition(new EvtA("y")));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class TestContextTests
         };
 
         // Act & Assert (payload different)
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("order", "4").WithEventAtPosition(0, new EvtA("two")));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("order", "4").WithEventAtPosition(0, new EvtA("two")));
     }
 
     [Fact]
@@ -119,6 +119,32 @@ public class TestContextTests
         };
 
         // Act & Assert
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("order", "5").WithSingleEvent(new NoAttr("x")));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("order", "5").WithSingleEvent(new NoAttr("x")));
+    }
+
+    [Fact]
+    public void TestAssertionException_should_be_constructable_with_message()
+    {
+        // Arrange & Act
+        var exception = new TestAssertionException("Test message");
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("Test message", exception.Message);
+    }
+
+    [Fact]
+    public void TestAssertionException_should_be_constructable_with_message_and_inner_exception()
+    {
+        // Arrange
+        var innerException = new InvalidOperationException("Inner error");
+
+        // Act
+        var exception = new TestAssertionException("Test message", innerException);
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("Test message", exception.Message);
+        Assert.Same(innerException, exception.InnerException);
     }
 }

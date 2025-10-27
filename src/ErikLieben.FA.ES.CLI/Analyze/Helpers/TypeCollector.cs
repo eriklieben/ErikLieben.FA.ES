@@ -61,12 +61,17 @@ internal static class TypeCollector
 
     private static bool ShouldSkipType(INamedTypeSymbol? typeSymbol, HashSet<ITypeSymbol> collectedTypes)
     {
+        if (typeSymbol == null)
+        {
+            return true;
+        }
+
         if (IsSystemNoiseType(typeSymbol))
         {
             return true;
         }
 
-        if (typeSymbol == null || collectedTypes.Contains(typeSymbol) ||
+        if (collectedTypes.Contains(typeSymbol) ||
             typeSymbol.SpecialType == SpecialType.System_Object)
         {
             return true;

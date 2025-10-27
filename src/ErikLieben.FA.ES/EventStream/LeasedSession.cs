@@ -258,7 +258,6 @@ public class LeasedSession : ILeasedSession
                 latestEventIndex = lastChunk.LastEventVersion.Value;
             }
         }
-        // int positionInCurrentPartition = (latestEventIndex + 1) % rowsPerPartition;
         int positionInCurrentPartition = (latestEventIndex + 1) -
                                          ((latestEventIndex / rowsPerPartition) * rowsPerPartition);
 

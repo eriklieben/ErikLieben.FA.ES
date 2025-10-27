@@ -93,8 +93,6 @@ public abstract class Projection : IProjectionBase
         return Fold<object>(@event, document, null!, context);
     }
 
-    // public abstract void LoadFromJson(string json);
-
     /// <summary>
     /// Serializes the projection state to a JSON string.
     /// </summary>
@@ -260,36 +258,6 @@ public abstract class Projection : IProjectionBase
             await PostWhenAll(document);
         }
     }
-
-    // public async Task UpdateToVersion(VersionToken token)
-    // {
-    //     if (documentFactory == null || eventStreamFactory == null)
-    //     {
-    //         throw new Exception("documentFactory or eventStreamFactory is null");
-    //     }
-    //
-    //     if (IsNewer(token) || token.TryUpdateToLatestVersion)
-    //     {
-    //         var startIdx = -1;
-    //         if (VersionIndex != null && VersionIndex.TryGetValue(token.ObjectIdentifier, out var value))
-    //         {
-    //             startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
-    //         }
-    //
-    //         var document = await documentFactory.GetAsync(token.ObjectName, token.ObjectId);
-    //         var eventStream = eventStreamFactory.Create(document);
-    //         var events = token.TryUpdateToLatestVersion ?
-    //             await eventStream.ReadAsync(startIdx) :
-    //             await eventStream.ReadAsync(startIdx, token.Version);
-    //
-    //         foreach (var @event in events)
-    //         {
-    //             var executionContext = new ExecutionContext(@event, null!); // TODO: context.,..
-    //             await Fold(@event, document, executionContext);
-    //             UpdateVersionIndex(@event, document);
-    //         }
-    //     }
-    // }
 
     /// <summary>
     /// Updates the projection to the latest versions for all tracked streams in the checkpoint.
