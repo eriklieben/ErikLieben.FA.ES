@@ -42,12 +42,12 @@ public class GenerateAggregateCode
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
 
-                await GenerateAggregate(aggregate, path, config);
+                await GenerateAggregate(aggregate, path);
             }
         }
     }
 
-    private static async Task GenerateAggregate(AggregateDefinition aggregate, string? path, Config config)
+    private static async Task GenerateAggregate(AggregateDefinition aggregate, string? path)
     {
         if (!aggregate.IsPartialClass)
         {

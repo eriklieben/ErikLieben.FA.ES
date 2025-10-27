@@ -56,7 +56,11 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
 
-        var result = await blobDocumentStore.CreateAsync(objectName!.ToLowerInvariant(), objectId!);
+        // After validation, both objectName and objectId are guaranteed to be non-null
+        var objectNameLower = objectName.ToLowerInvariant();
+#pragma warning disable CS8604 // Possible null reference argument - validated above
+        var result = await blobDocumentStore.CreateAsync(objectNameLower, objectId);
+#pragma warning restore CS8604
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");

@@ -59,7 +59,7 @@ public async Task Generate()
 
             try
             {
-                await GenerateExtension(project, path, config);
+                await GenerateExtension(project, path);
             }
             catch (Exception)
             {
@@ -69,7 +69,7 @@ public async Task Generate()
         }
     }
 
-    private static async Task GenerateExtension(ProjectDefinition project, string path, Config config1)
+    private static async Task GenerateExtension(ProjectDefinition project, string path)
     {
         var projectName = ProjectNameRegex().Replace(project.Name, string.Empty);
 

@@ -15,13 +15,13 @@ public class ObjectDocumentWithTags : ObjectDocument, IObjectDocumentWithMethods
     public ObjectDocumentWithTags(
         IObjectDocument document,
         IDocumentTagStore documentTagStore) : base(
-    document?.ObjectId ?? throw new ArgumentNullException(nameof(document)),
-    document?.ObjectName ?? throw new ArgumentNullException(nameof(document)),
-    document?.Active ?? throw new ArgumentNullException(nameof(document)),
-    document?.TerminatedStreams ?? throw new ArgumentNullException(nameof(document)),
-    document?.SchemaVersion,
-    document?.Hash,
-    document?.PrevHash)
+    (document ?? throw new ArgumentNullException(nameof(document))).ObjectId,
+    document.ObjectName,
+    document.Active,
+    document.TerminatedStreams,
+    document.SchemaVersion,
+    document.Hash,
+    document.PrevHash)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(documentTagStore);

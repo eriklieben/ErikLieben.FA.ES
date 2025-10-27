@@ -56,11 +56,9 @@ public class GenerateInheritedAggregateCode
                            throw new InvalidOperationException();
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
 
-                var actualAgregate = project.Aggregates.FirstOrDefault(a => a.IdentifierName == aggregate.InheritedIdentifierName && a.Namespace == aggregate.InheritedNamespace);
-
                 try
                 {
-                    await GenerateAggregate(aggregate, path, config, actualAgregate);
+                    await GenerateAggregate(aggregate, path);
                 }
                 catch (Exception e)
                 {
@@ -73,7 +71,7 @@ public class GenerateInheritedAggregateCode
         }
     }
 
-    private static async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path, Config config, AggregateDefinition? actualAgregate)
+    private static async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path)
     {
         var usings = BuildUsings(aggregate);
         var (diCode, ctorParams) = BuildConstructorDependencyCode(aggregate);

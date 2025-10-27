@@ -446,7 +446,7 @@ internal class RoslynHelper(
     internal static bool IsSystemNullable(ITypeSymbol? typeSymbol)
     {
         return typeSymbol?.NullableAnnotation == NullableAnnotation.Annotated &&
-               typeSymbol?.OriginalDefinition.ToDisplayString() != "System.Nullable<T>";
+               typeSymbol.OriginalDefinition.ToDisplayString() != "System.Nullable<T>";
     }
 
     internal static bool IsExplicitlyNullableType(ITypeSymbol? typeSymbol)
