@@ -55,7 +55,12 @@ public BlobObjectDocumentFactory(
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
-        var result = await blobDocumentStore.CreateAsync(objectName!.ToLowerInvariant(), objectId!);
+
+        // Explicit null check to satisfy static analysis after custom validation
+        var validObjectName = objectName ?? throw new ArgumentNullException(nameof(objectName));
+        var validObjectId = objectId ?? throw new ArgumentNullException(nameof(objectId));
+
+        var result = await blobDocumentStore.CreateAsync(validObjectName.ToLowerInvariant(), validObjectId);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");
@@ -75,7 +80,12 @@ public BlobObjectDocumentFactory(
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
-        var result = await blobDocumentStore.GetAsync(objectName.ToLowerInvariant(), objectId);
+
+        // Explicit null check to satisfy static analysis after custom validation
+        var validObjectName = objectName ?? throw new ArgumentNullException(nameof(objectName));
+        var validObjectId = objectId ?? throw new ArgumentNullException(nameof(objectId));
+
+        var result = await blobDocumentStore.GetAsync(validObjectName.ToLowerInvariant(), validObjectId);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.GetAsync returned null document.");

@@ -39,7 +39,7 @@ public class TestContextAssertionTests
         var ctx = CreateContext();
 
         // Act & Assert
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("order", "1"));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("order", "1"));
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class TestContextAssertionTests
         ctx.Assert.ShouldHaveObject("user", "1").WithEventCount(2);
 
         // Single (will fail because there are 2) -> verify throws
-        Assert.ThrowsAny<Exception>(() => ctx.Assert.ShouldHaveObject("user", "1").WithSingleEvent(new UserRegistered("u@example.com")));
+        Assert.Throws<TestAssertionException>(() => ctx.Assert.ShouldHaveObject("user", "1").WithSingleEvent(new UserRegistered("u@example.com")));
 
         // Position
         ctx.Assert.ShouldHaveObject("user", "1").WithEventAtPosition(0, new UserRegistered("u@example.com"));

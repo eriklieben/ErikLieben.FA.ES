@@ -86,12 +86,11 @@ public class AssertionExtension(TestContext context)
 public EventAssertionExtension ShouldHaveObject(string objectName, string objectId)
     {
         var key = InMemoryDataStore.GetStoreKey(objectName, objectId);
-        var events = context.Events[key];
-        if (events == null)
+        if (!context.Events.TryGetValue(key, out var events) || events == null)
         {
             throw new TestAssertionException($"Object {key} does not exist.");
         }
-        return new EventAssertionExtension(events!);
+        return new EventAssertionExtension(events);
     }
 }
 
