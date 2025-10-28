@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.2.0...v1.3.0) (2025-10-28)
+
+### ✨ New features
+
+* allow EventStreamBlobSettings on top of Aggregate ([#37](https://github.com/eriklieben/ErikLieben.FA.ES/issues/37)) ([2d3ed5c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2d3ed5c5b62b012a95d59c9bdcab14bd766b0fdc))
+
 ## [1.2.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.1.2...v1.2.0) (2025-10-27)
 
 ### 📚 Documentation
