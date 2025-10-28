@@ -27,6 +27,16 @@ public record AggregateDefinition
     public List<StreamActionDefinition> StreamActions { get; init; } = [];
 
     public bool IsPartialClass { get; init; }
+
+    /// <summary>
+    /// Settings extracted from [EventStreamType] attribute if present.
+    /// </summary>
+    public EventStreamTypeAttributeData? EventStreamTypeAttribute { get; set; }
+
+    /// <summary>
+    /// Settings extracted from [EventStreamBlobSettings] attribute if present.
+    /// </summary>
+    public EventStreamBlobSettingsAttributeData? EventStreamBlobSettingsAttribute { get; set; }
 }
 
 public record PostWhenDeclaration
@@ -73,4 +83,38 @@ public record InheritedAggregateDefinition
     public required string ParentInterface { get; init; } = string.Empty;
 
     public required string ParentInterfaceNamespace { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Settings extracted from [EventStreamType] attribute if present.
+    /// </summary>
+    public EventStreamTypeAttributeData? EventStreamTypeAttribute { get; set; }
+
+    /// <summary>
+    /// Settings extracted from [EventStreamBlobSettings] attribute if present.
+    /// </summary>
+    public EventStreamBlobSettingsAttributeData? EventStreamBlobSettingsAttribute { get; set; }
+}
+
+/// <summary>
+/// Data extracted from [EventStreamType] attribute at compile-time.
+/// </summary>
+public record EventStreamTypeAttributeData
+{
+    public string? StreamType { get; init; }
+    public string? DocumentType { get; init; }
+    public string? DocumentTagType { get; init; }
+    public string? EventStreamTagType { get; init; }
+    public string? DocumentRefType { get; init; }
+}
+
+/// <summary>
+/// Data extracted from [EventStreamBlobSettings] attribute at compile-time.
+/// </summary>
+public record EventStreamBlobSettingsAttributeData
+{
+    public string? DataStore { get; init; }
+    public string? DocumentStore { get; init; }
+    public string? DocumentTagStore { get; init; }
+    public string? StreamTagStore { get; init; }
+    public string? SnapShotStore { get; init; }
 }

@@ -85,6 +85,12 @@ public async Task Generate()
                 continue;
             }
 
+            // Add identifier namespace to the list
+            if (!string.IsNullOrWhiteSpace(declaration.IdentifierTypeNamespace) && !jsonNamespaces.Contains(declaration.IdentifierTypeNamespace))
+            {
+                jsonNamespaces.Add(declaration.IdentifierTypeNamespace);
+            }
+
             registerCode.AppendLine(
                 $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
             registerCode.AppendLine(
@@ -96,6 +102,12 @@ public async Task Generate()
 
         foreach (var declaration in project.InheritedAggregates)
         {
+            // Add identifier namespace to the list
+            if (!string.IsNullOrWhiteSpace(declaration.IdentifierTypeNamespace) && !jsonNamespaces.Contains(declaration.IdentifierTypeNamespace))
+            {
+                jsonNamespaces.Add(declaration.IdentifierTypeNamespace);
+            }
+
             registerCode.AppendLine(
                 $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
             registerCode.AppendLine(

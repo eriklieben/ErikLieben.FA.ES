@@ -22,7 +22,6 @@ public class BlobDocumentStore : IBlobDocumentStore
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamBlobSettings blobSettings;
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
 
     /// <summary>
@@ -31,22 +30,18 @@ public class BlobDocumentStore : IBlobDocumentStore
 /// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
 /// <param name="documentTagStoreFactory">The factory used to access document tag storage.</param>
 /// <param name="blobSettings">The blob storage settings used for containers and chunking.</param>
-/// <param name="settings">The default event stream type settings.</param>
 /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
 public BlobDocumentStore(
         IAzureClientFactory<BlobServiceClient> clientFactory,
         IDocumentTagDocumentFactory documentTagStoreFactory,
-        EventStreamBlobSettings blobSettings,
-        EventStreamDefaultTypeSettings settings)
+        EventStreamBlobSettings blobSettings)
     {
         ArgumentNullException.ThrowIfNull(clientFactory);
         ArgumentNullException.ThrowIfNull(blobSettings);
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(documentTagStoreFactory);
 
         this.clientFactory = clientFactory;
         this.blobSettings = blobSettings;
-        this.settings = settings;
         this.documentTagStoreFactory = documentTagStoreFactory;
     }
 
@@ -55,15 +50,18 @@ public BlobDocumentStore(
 /// </summary>
 /// <param name="name">The object name used to determine the container and path.</param>
 /// <param name="objectId">The identifier of the object to create.</param>
+/// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
 /// <returns>The created or existing object document loaded from storage.</returns>
 /// <exception cref="BlobDocumentStoreContainerNotFoundException">Thrown when the configured document container does not exist.</exception>
 [return: System.Diagnostics.CodeAnalysis.MaybeNull]
     public async Task<IObjectDocument> CreateAsync(
         string name,
-        string objectId)
+        string objectId,
+        string? store = null)
     {
         var documentPath = $"{name}/{objectId}.json";
-        var blob = CreateBlobClient(blobSettings.DefaultDocumentStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var targetStore = store ?? blobSettings.DefaultDocumentStore;
+        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         try
         {
@@ -75,7 +73,7 @@ public BlobDocumentStore(
                         name,
                         new StreamInformation
                         {
-                            StreamConnectionName = blobSettings.DefaultDocumentStore,
+                            StreamConnectionName = targetStore,
                             SnapShotConnectionName = blobSettings.DefaultSnapShotStore,
                             DocumentTagConnectionName = blobSettings.DefaultDocumentTagStore,
                             StreamTagConnectionName = blobSettings.DefaultDocumentTagStore,
@@ -83,6 +81,9 @@ public BlobDocumentStore(
                             StreamType = "blob",
                             DocumentTagType = "blob",
                             CurrentStreamVersion = -1,
+                            // Initialize store settings from the target store
+                            DocumentStore = targetStore,
+                            DataStore = targetStore,
                             ChunkSettings = blobSettings.EnableStreamChunks
                                 ? new StreamChunkSettings
                                 {
@@ -147,15 +148,18 @@ public BlobDocumentStore(
 /// </summary>
 /// <param name="name">The object name used to determine the container and path.</param>
 /// <param name="objectId">The identifier of the object to retrieve.</param>
+/// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
 /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
 /// <exception cref="BlobDocumentNotFoundException">Thrown when the document blob cannot be found.</exception>
 public async Task<IObjectDocument> GetAsync(
         string name,
-        string objectId)
+        string objectId,
+        string? store = null)
     {
 
         var documentPath = $"{name}/{objectId}.json";
-        var blob = CreateBlobClient(blobSettings.DefaultDocumentStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var targetStore = store ?? blobSettings.DefaultDocumentStore;
+        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         ETag? etag;
         try
@@ -200,14 +204,17 @@ public async Task<IObjectDocument> GetAsync(
     /// </summary>
     /// <param name="objectName">The object name (container scope) to search within.</param>
     /// <param name="tag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the document. If not provided, uses the default document store.</param>
     /// <returns>The first matching document or null if no document matches.</returns>
-    public async Task<IObjectDocument?> GetFirstByDocumentByTagAsync(string objectName, string tag)
+    public async Task<IObjectDocument?> GetFirstByDocumentByTagAsync(string objectName, string tag, string? documentTagStore = null, string? store = null)
     {
-        var documentTagStore = documentTagStoreFactory.CreateDocumentTagStore(this.blobSettings.DefaultDocumentTagStore);
-        var objectId = (await documentTagStore.GetAsync(objectName, tag)).FirstOrDefault();
+        var targetDocumentTagStore = documentTagStore ?? this.blobSettings.DefaultDocumentTagStore;
+        var documentTagStoreInstance = documentTagStoreFactory.CreateDocumentTagStore(targetDocumentTagStore);
+        var objectId = (await documentTagStoreInstance.GetAsync(objectName, tag)).FirstOrDefault();
         if (!string.IsNullOrEmpty(objectId))
         {
-            return await GetAsync(objectName, objectId);
+            return await GetAsync(objectName, objectId, store);
         }
         return null;
     }
@@ -218,15 +225,18 @@ public async Task<IObjectDocument> GetAsync(
     /// </summary>
     /// <param name="objectName">The object name (container scope) to search within.</param>
     /// <param name="tag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByDocumentByTagAsync(string objectName, string tag)
+    public async Task<IEnumerable<IObjectDocument>> GetByDocumentByTagAsync(string objectName, string tag, string? documentTagStore = null, string? store = null)
     {
-        var documentTagStore = documentTagStoreFactory.CreateDocumentTagStore(this.settings.DocumentTagType);
-        var objectIds = await documentTagStore.GetAsync(objectName, tag);
+        var targetDocumentTagStore = documentTagStore ?? this.blobSettings.DefaultDocumentTagStore;
+        var documentTagStoreInstance = documentTagStoreFactory.CreateDocumentTagStore(targetDocumentTagStore);
+        var objectIds = await documentTagStoreInstance.GetAsync(objectName, tag);
         var documents = new List<IObjectDocument>();
         foreach (var objectId in objectIds)
         {
-            documents.Add(await GetAsync(objectName, objectId));
+            documents.Add(await GetAsync(objectName, objectId, store));
         }
         return documents;
     }
@@ -238,17 +248,33 @@ public async Task<IObjectDocument> GetAsync(
     /// <returns>A task that represents the asynchronous save operation.</returns>
     public async Task SetAsync(IObjectDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         var documentPath = $"{document.ObjectName}/{document.ObjectId}.json";
-        var blob = CreateBlobClient(blobSettings.DefaultDocumentStore, blobSettings.DefaultDocumentContainerName, documentPath);
+
+        // Use document-specific store if configured, otherwise fall back to default
+        var documentStore = GetDocumentStore(document);
+        var blob = CreateBlobClient(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         var blobDoc = BlobEventStreamDocument.From(document);
         ArgumentNullException.ThrowIfNull(blobDoc);
 
-        var properties = await blob.GetPropertiesAsync();
-        var etagRetrieved = properties.Value.ETag.ToString().Replace("\u0022", string.Empty);
+        // Try to get properties, but handle the case where blob doesn't exist yet
+        ETag? etag = null;
+        try
+        {
+            var properties = await blob.GetPropertiesAsync();
+            var etagRetrieved = properties.Value.ETag.ToString().Replace("\u0022", string.Empty);
+            etag = string.IsNullOrEmpty(etagRetrieved) ? null : new ETag(etagRetrieved);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "BlobNotFound")
+        {
+            // Blob doesn't exist yet - this is fine for new documents being created with custom store settings
+            etag = null;
+        }
 
         var (_, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
-            new BlobRequestConditions { IfMatch = string.IsNullOrEmpty(etagRetrieved) ? null : new ETag(etagRetrieved) });
+            new BlobRequestConditions { IfMatch = etag });
 
         document.SetHash(hash,blobDoc.Hash);
     }
@@ -280,5 +306,17 @@ public async Task<IObjectDocument> GetAsync(
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Gets the document store name from the document's active stream, falling back to the default if not configured.
+    /// </summary>
+    /// <param name="document">The document to retrieve the store setting from.</param>
+    /// <returns>The configured store name or the default document store.</returns>
+    private string GetDocumentStore(IObjectDocument document)
+    {
+        return !string.IsNullOrWhiteSpace(document.Active.DocumentStore)
+            ? document.Active.DocumentStore
+            : blobSettings.DefaultDocumentStore;
     }
 }

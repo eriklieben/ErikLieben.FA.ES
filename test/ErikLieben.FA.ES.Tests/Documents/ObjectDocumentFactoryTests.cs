@@ -143,9 +143,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var expectedDocument = Substitute.For<IObjectDocument>();
-                mockFactory.GetAsync("TestObject", "123").Returns(Task.FromResult(expectedDocument));
+                mockFactory.GetAsync("TestObject", "123", "CustomStore").Returns(Task.FromResult(expectedDocument));
 
-                objectDocumentFactories.Add("CustomStore", mockFactory);
+                objectDocumentFactories.Add("defaultstore", mockFactory);
 
                 var sut = new ObjectDocumentFactory(
                     objectDocumentFactories,
@@ -157,7 +157,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 // Assert
                 Assert.Same(expectedDocument, result);
-                await mockFactory.Received(1).GetAsync("TestObject", "123");
+                await mockFactory.Received(1).GetAsync("TestObject", "123", "CustomStore");
             }
 
             [Fact]
@@ -309,9 +309,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var expectedDocument = Substitute.For<IObjectDocument>();
-                mockFactory.GetOrCreateAsync("TestObject", "123").Returns(Task.FromResult(expectedDocument));
+                mockFactory.GetOrCreateAsync("TestObject", "123", "CustomStore").Returns(Task.FromResult(expectedDocument));
 
-                objectDocumentFactories.Add("CustomStore", mockFactory);
+                objectDocumentFactories.Add("defaultstore", mockFactory);
 
                 var sut = new ObjectDocumentFactory(
                     objectDocumentFactories,
@@ -323,7 +323,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 // Assert
                 Assert.Same(expectedDocument, result);
-                await mockFactory.Received(1).GetOrCreateAsync("TestObject", "123");
+                await mockFactory.Received(1).GetOrCreateAsync("TestObject", "123", "CustomStore");
             }
 
             [Fact]
@@ -647,7 +647,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var document = Substitute.For<IObjectDocument>();
 
-                objectDocumentFactories.Add("CustomStore", mockFactory);
+                objectDocumentFactories.Add("defaultstore", mockFactory);
 
                 var sut = new ObjectDocumentFactory(
                     objectDocumentFactories,
@@ -658,7 +658,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
                 await sut.SetAsync(document, "CustomStore");
 
                 // Assert
-                await mockFactory.Received(1).SetAsync(document);
+                await mockFactory.Received(1).SetAsync(document, "CustomStore");
             }
 
             [Fact]

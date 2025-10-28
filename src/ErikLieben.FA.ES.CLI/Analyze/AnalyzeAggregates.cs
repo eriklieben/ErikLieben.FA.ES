@@ -71,6 +71,10 @@ public class AnalyzeAggregates
             .Where(sa => declaration.StreamActions.All(existing => !AreStreamActionsEqual(existing, sa)));
         declaration.StreamActions.AddRange(newStreamActions);
 
+        // Extract attribute-based settings
+        declaration.EventStreamTypeAttribute = AttributeExtractor.ExtractEventStreamTypeAttribute(classSymbol);
+        declaration.EventStreamBlobSettingsAttribute = AttributeExtractor.ExtractEventStreamBlobSettingsAttribute(classSymbol);
+
         AppendIdentifierTypeFromMetadata(declaration);
     }
 

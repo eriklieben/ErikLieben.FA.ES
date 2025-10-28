@@ -34,6 +34,135 @@ namespace ErikLieben.FA.ES.Tests.Documents
             }
 
             [Fact]
+            public void Should_set_and_get_new_provider_type_properties()
+            {
+                // Arrange
+                var sut = new StreamInformation
+                {
+                    StreamIdentifier = "stream-123",
+                    StreamType = "blob",
+                    DocumentType = "cosmos",
+                    DocumentTagType = "redis",
+                    EventStreamTagType = "memory",
+                    DocumentRefType = "sql",
+                    CurrentStreamVersion = 5,
+                    StreamConnectionName = "stream-connection",
+                    DocumentTagConnectionName = "document-tag-connection",
+                    StreamTagConnectionName = "stream-tag-connection",
+                    SnapShotConnectionName = "snapshot-connection"
+                };
+
+                // Act & Assert
+                Assert.Equal("blob", sut.StreamType);
+                Assert.Equal("cosmos", sut.DocumentType);
+                Assert.Equal("redis", sut.DocumentTagType);
+                Assert.Equal("memory", sut.EventStreamTagType);
+                Assert.Equal("sql", sut.DocumentRefType);
+            }
+
+            [Fact]
+            public void Should_set_and_get_new_named_connection_properties()
+            {
+                // Arrange
+                var sut = new StreamInformation
+                {
+                    StreamIdentifier = "stream-123",
+                    StreamType = "blob",
+                    DocumentType = "blob",
+                    DocumentTagType = "blob",
+                    EventStreamTagType = "blob",
+                    DocumentRefType = "blob",
+                    CurrentStreamVersion = 5,
+                    DataStore = "Store1",
+                    DocumentStore = "Store2",
+                    DocumentTagStore = "Store3",
+                    StreamTagStore = "Store4",
+                    SnapShotStore = "Store5",
+                    StreamConnectionName = "stream-connection",
+                    DocumentTagConnectionName = "document-tag-connection",
+                    StreamTagConnectionName = "stream-tag-connection",
+                    SnapShotConnectionName = "snapshot-connection"
+                };
+
+                // Act & Assert
+                Assert.Equal("Store1", sut.DataStore);
+                Assert.Equal("Store2", sut.DocumentStore);
+                Assert.Equal("Store3", sut.DocumentTagStore);
+                Assert.Equal("Store4", sut.StreamTagStore);
+                Assert.Equal("Store5", sut.SnapShotStore);
+            }
+
+            [Fact]
+            public void Should_initialize_new_properties_with_empty_strings()
+            {
+                // Arrange & Act
+                var sut = new StreamInformation();
+
+                // Assert
+                Assert.Equal(string.Empty, sut.DocumentType);
+                Assert.Equal(string.Empty, sut.EventStreamTagType);
+                Assert.Equal(string.Empty, sut.DocumentRefType);
+                Assert.Equal(string.Empty, sut.DataStore);
+                Assert.Equal(string.Empty, sut.DocumentStore);
+                Assert.Equal(string.Empty, sut.DocumentTagStore);
+                Assert.Equal(string.Empty, sut.StreamTagStore);
+                Assert.Equal(string.Empty, sut.SnapShotStore);
+            }
+
+            [Fact]
+            public void Should_support_mixed_provider_types_scenario()
+            {
+                // Arrange - Blob for events, Cosmos for documents
+                var sut = new StreamInformation
+                {
+                    StreamIdentifier = "stream-123",
+                    StreamType = "blob",
+                    DocumentType = "cosmos",
+                    DocumentTagType = "cosmos",
+                    EventStreamTagType = "blob",
+                    DocumentRefType = "cosmos",
+                    CurrentStreamVersion = 0,
+                    StreamConnectionName = "stream-connection",
+                    DocumentTagConnectionName = "document-tag-connection",
+                    StreamTagConnectionName = "stream-tag-connection",
+                    SnapShotConnectionName = "snapshot-connection"
+                };
+
+                // Act & Assert
+                Assert.Equal("blob", sut.StreamType);
+                Assert.Equal("cosmos", sut.DocumentType);
+                Assert.Equal("cosmos", sut.DocumentTagType);
+                Assert.Equal("blob", sut.EventStreamTagType);
+                Assert.Equal("cosmos", sut.DocumentRefType);
+            }
+
+            [Fact]
+            public void Should_support_performance_tiering_scenario()
+            {
+                // Arrange - High throughput for data, cold storage for snapshots
+                var sut = new StreamInformation
+                {
+                    StreamIdentifier = "stream-123",
+                    StreamType = "blob",
+                    CurrentStreamVersion = 0,
+                    DataStore = "HighThroughputStore",
+                    SnapShotStore = "ColdStore",
+                    StreamConnectionName = "stream-connection",
+                    DocumentTagConnectionName = "document-tag-connection",
+                    StreamTagConnectionName = "stream-tag-connection",
+                    SnapShotConnectionName = "snapshot-connection",
+                    DocumentStore = string.Empty,
+                    DocumentTagStore = string.Empty,
+                    StreamTagStore = string.Empty
+                };
+
+                // Act & Assert
+                Assert.Equal("HighThroughputStore", sut.DataStore);
+                Assert.Equal("ColdStore", sut.SnapShotStore);
+                Assert.Equal(string.Empty, sut.DocumentStore);
+            }
+
+            [Fact]
             public void Should_initialize_empty_collections()
             {
                 // Arrange & Act

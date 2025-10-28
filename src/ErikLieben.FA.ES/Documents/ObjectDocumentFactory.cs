@@ -40,21 +40,21 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object type/name.</param>
     /// <param name="objectId">The object identifier.</param>
-    /// <param name="store">An optional store type override; when null, uses <see cref="EventStreamDefaultTypeSettings.DocumentType"/>.</param>
+    /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
     {
         using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetAsync)}");
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
-        store ??= settings.DocumentType.ToLowerInvariant();
-        if (objectDocumentFactories.TryGetValue(store, out IObjectDocumentFactory? objectDocumentFactory))
+        var factoryType = settings.DocumentType.ToLowerInvariant();
+        if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            return objectDocumentFactory.GetAsync(objectName, objectId);
+            return objectDocumentFactory.GetAsync(objectName, objectId, store);
         }
 
         throw new UnableToFindDocumentFactoryException(
-            $"Unable to find store for DocumentType: {store}." +
+            $"Unable to find store for DocumentType: {factoryType}." +
             " Are you sure it's properly registered in the configuration?");
     }
 
@@ -63,7 +63,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object type/name.</param>
     /// <param name="objectId">The object identifier.</param>
-    /// <param name="store">An optional store type override; when null, uses <see cref="EventStreamDefaultTypeSettings.DocumentType"/>.</param>
+    /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
     {
         using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetOrCreateAsync)}");
@@ -72,14 +72,14 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
-        store ??= settings.DocumentType.ToLowerInvariant();
-        if (objectDocumentFactories.TryGetValue(store, out var objectDocumentFactory))
+        var factoryType = settings.DocumentType.ToLowerInvariant();
+        if (objectDocumentFactories.TryGetValue(factoryType, out var objectDocumentFactory))
         {
-            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId);
+            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, store);
         }
 
         throw new UnableToFindDocumentFactoryException(
-            $"Unable to find store for DocumentType: {store}." +
+            $"Unable to find store for DocumentType: {factoryType}." +
             " Are you sure it's properly registered in the configuration?");
     }
 
@@ -88,11 +88,14 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object name (scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the document. If not provided, uses the default document store.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag)
+    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
     {
-        var documentTagStore = this.documentTagDocumentFactory.CreateDocumentTagStore(settings.DocumentTagType);
-         var objectIds = (await documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList();
+        var targetDocumentTagStore = documentTagStore ?? settings.DocumentTagType;
+        var documentTagStoreInstance = this.documentTagDocumentFactory.CreateDocumentTagStore(targetDocumentTagStore);
+         var objectIds = (await documentTagStoreInstance.GetAsync(objectName, objectDocumentTag)).ToList();
 
          var objectId = objectIds.FirstOrDefault();
          if (string.IsNullOrWhiteSpace(objectId))
@@ -100,7 +103,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
              return null;
          }
 
-         return await this.GetAsync(objectName, objectId);
+         return await this.GetAsync(objectName, objectId, store);
     }
 
     /// <summary>
@@ -108,16 +111,19 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object name (scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
     {
-        var documentTagStore = this.documentTagDocumentFactory.CreateDocumentTagStore(settings.DocumentTagType);
-        var objectIds = (await documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList();
+        var targetDocumentTagStore = documentTagStore ?? settings.DocumentTagType;
+        var documentTagStoreInstance = this.documentTagDocumentFactory.CreateDocumentTagStore(targetDocumentTagStore);
+        var objectIds = (await documentTagStoreInstance.GetAsync(objectName, objectDocumentTag)).ToList();
 
         var documents = new List<IObjectDocument>();
         foreach (var objectId in objectIds.Where(objectId => !string.IsNullOrWhiteSpace(objectId)))
         {
-            documents.Add(await this.GetAsync(objectName, objectId));
+            documents.Add(await this.GetAsync(objectName, objectId, store));
         }
 
         return documents;
@@ -127,16 +133,16 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// Persists the provided object document using the appropriate provider.
     /// </summary>
     /// <param name="document">The object document to persist.</param>
-    /// <param name="store">An optional store type override; when null, uses <see cref="EventStreamDefaultTypeSettings.DocumentType"/>.</param>
+    /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     public async Task SetAsync(IObjectDocument document, string? store = null)
     {
         using var activity = ActivitySource.StartActivity("ObjectDocument.SetAsync");
         ArgumentNullException.ThrowIfNull(document);
 
-        store ??= settings.DocumentType.ToLowerInvariant();
-        if (objectDocumentFactories.TryGetValue(store, out IObjectDocumentFactory? objectDocumentFactory))
+        var factoryType = settings.DocumentType.ToLowerInvariant();
+        if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            await objectDocumentFactory.SetAsync(document);
+            await objectDocumentFactory.SetAsync(document, store);
         }
     }
 }

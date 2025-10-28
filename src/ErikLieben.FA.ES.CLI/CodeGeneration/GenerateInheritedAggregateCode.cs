@@ -136,6 +136,38 @@ public class GenerateInheritedAggregateCode
         return propertyCode.ToString();
     }
 
+    /// <summary>
+    /// Gets the DocumentStore value from the EventStreamBlobSettings attribute, or null if not configured.
+    /// </summary>
+    private static string? GetDocumentStoreFromAttribute(InheritedAggregateDefinition aggregate)
+    {
+        return aggregate.EventStreamBlobSettingsAttribute?.DocumentStore;
+    }
+
+    /// <summary>
+    /// Gets the DocumentTagStore value from the EventStreamBlobSettings attribute, or null if not configured.
+    /// </summary>
+    private static string? GetDocumentTagStoreFromAttribute(InheritedAggregateDefinition aggregate)
+    {
+        return aggregate.EventStreamBlobSettingsAttribute?.DocumentTagStore;
+    }
+
+    /// <summary>
+    /// Generates code that applies attribute-based settings to new documents.
+    /// </summary>
+    private static string GenerateSettingsApplicationCode(InheritedAggregateDefinition aggregate)
+    {
+        var assignments = new List<string>();
+
+        AggregateSettingsCodeGenerator.ExtractEventStreamTypeSettings(aggregate.EventStreamTypeAttribute, assignments);
+        AggregateSettingsCodeGenerator.ExtractEventStreamBlobSettings(aggregate.EventStreamBlobSettingsAttribute, assignments);
+
+        if (assignments.Count == 0)
+            return string.Empty;
+
+        return AggregateSettingsCodeGenerator.BuildSettingsCodeBlock(assignments);
+    }
+
     private static string BuildMethodSignature(CommandDefinition cmdMethod, List<string> usings)
     {
         var textBuilder = new StringBuilder();
@@ -272,7 +304,8 @@ public class GenerateInheritedAggregateCode
 
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString());
+                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                             {{GenerateSettingsApplicationCode(aggregate)}}
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return obj;
@@ -280,7 +313,7 @@ public class GenerateInheritedAggregateCode
 
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString());
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return obj;
@@ -288,7 +321,7 @@ public class GenerateInheritedAggregateCode
 
                              public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString());
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return (obj, document);
@@ -296,7 +329,7 @@ public class GenerateInheritedAggregateCode
 
                             public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag)
                             {
-                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
+                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentTagStoreFromAttribute(aggregate)}\\\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
                                 if (document == null)
                                 {
                                     return null;
@@ -308,7 +341,7 @@ public class GenerateInheritedAggregateCode
 
                             public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
                             {
-                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag));
+                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentTagStoreFromAttribute(aggregate)}\\\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}}));
                                 var items = new List<{{aggregate.IdentifierName}}>();
                                 foreach (var document in documents)
                                 {

@@ -73,7 +73,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         // Allow unit tests to skip the hardcoded debug path by setting ELFA_SKIP_DEBUG_PATH=1
         if (Environment.GetEnvironmentVariable("ELFA_SKIP_DEBUG_PATH") != "1" && string.IsNullOrEmpty(settings.Path))
         {
-            settings.Path = @"D:\ErikLieben.FA.ES\demo\DemoApp.Solution.sln";
+            settings.Path = @"D:\CLAUDE\TEST\ErikLieben.FA.ES\demo\DemoApp.Solution.sln";
         }
 #endif
 

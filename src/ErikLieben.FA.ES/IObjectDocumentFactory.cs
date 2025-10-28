@@ -30,16 +30,20 @@ public interface IObjectDocumentFactory
     /// </summary>
     /// <param name="objectName">The object name (container scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the document. If not provided, uses the default document store.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag);
+    Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null);
 
     /// <summary>
     /// Gets all object documents that have the specified document tag.
     /// </summary>
     /// <param name="objectName">The object name (container scope) to search within.</param>
     /// <param name="objectDocumentTag">The document tag value to match.</param>
+    /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
+    /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag);
+    Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null);
 
     /// <summary>
     /// Persists the provided object document to the underlying store.

@@ -39,6 +39,11 @@ public class AnalyzeInheritedAggregates
         declaration.Constructors.AddRange(ConstructorHelper.GetConstructors(typeSymbol));
         declaration.Properties.AddRange(PropertyHelper.GetPublicGetterProperties(typeSymbol));
         declaration.Commands.AddRange(CommandHelper.GetCommandMethods(typeSymbol, roslyn));
+
+        // Extract attribute-based settings
+        declaration.EventStreamTypeAttribute = AttributeExtractor.ExtractEventStreamTypeAttribute(typeSymbol);
+        declaration.EventStreamBlobSettingsAttribute = AttributeExtractor.ExtractEventStreamBlobSettingsAttribute(typeSymbol);
+
         AppendIdentifierTypeFromMetadata(declaration);
     }
 
@@ -150,5 +155,4 @@ public class AnalyzeInheritedAggregates
 
         return type;
     }
-
 }

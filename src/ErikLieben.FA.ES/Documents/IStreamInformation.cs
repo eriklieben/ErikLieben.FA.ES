@@ -68,6 +68,46 @@ public interface IStreamInformation
     string StreamType { get; set; }
 
     /// <summary>
+    /// Gets or sets the document provider type (e.g., "blob", "cosmos").
+    /// </summary>
+    string DocumentType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the event stream tag provider type.
+    /// </summary>
+    string EventStreamTagType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the document reference provider type.
+    /// </summary>
+    string DocumentRefType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the named connection for event stream data storage.
+    /// </summary>
+    string DataStore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the named connection for document storage.
+    /// </summary>
+    string DocumentStore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the named connection for document tag storage.
+    /// </summary>
+    string DocumentTagStore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the named connection for stream tag storage.
+    /// </summary>
+    string StreamTagStore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the named connection for snapshot storage.
+    /// </summary>
+    string SnapShotStore { get; set; }
+
+    /// <summary>
     /// Gets a value indicating whether chunking is enabled.
     /// </summary>
     bool ChunkingEnabled();
