@@ -29,7 +29,7 @@ public BlobObjectDocumentFactory(
         EventStreamDefaultTypeSettings settings,
         EventStreamBlobSettings blobSettings)
     {
-        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings, settings);
+        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings);
     }
 
     /// <summary>

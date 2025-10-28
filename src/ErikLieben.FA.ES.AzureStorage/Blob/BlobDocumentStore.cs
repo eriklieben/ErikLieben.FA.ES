@@ -22,7 +22,6 @@ public class BlobDocumentStore : IBlobDocumentStore
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamBlobSettings blobSettings;
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
 
     /// <summary>
@@ -31,22 +30,18 @@ public class BlobDocumentStore : IBlobDocumentStore
 /// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
 /// <param name="documentTagStoreFactory">The factory used to access document tag storage.</param>
 /// <param name="blobSettings">The blob storage settings used for containers and chunking.</param>
-/// <param name="settings">The default event stream type settings.</param>
 /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
 public BlobDocumentStore(
         IAzureClientFactory<BlobServiceClient> clientFactory,
         IDocumentTagDocumentFactory documentTagStoreFactory,
-        EventStreamBlobSettings blobSettings,
-        EventStreamDefaultTypeSettings settings)
+        EventStreamBlobSettings blobSettings)
     {
         ArgumentNullException.ThrowIfNull(clientFactory);
         ArgumentNullException.ThrowIfNull(blobSettings);
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(documentTagStoreFactory);
 
         this.clientFactory = clientFactory;
         this.blobSettings = blobSettings;
-        this.settings = settings;
         this.documentTagStoreFactory = documentTagStoreFactory;
     }
 
@@ -253,6 +248,8 @@ public async Task<IObjectDocument> GetAsync(
     /// <returns>A task that represents the asynchronous save operation.</returns>
     public async Task SetAsync(IObjectDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         var documentPath = $"{document.ObjectName}/{document.ObjectId}.json";
 
         // Use document-specific store if configured, otherwise fall back to default
@@ -320,18 +317,6 @@ public async Task<IObjectDocument> GetAsync(
     {
         return !string.IsNullOrWhiteSpace(document.Active.DocumentStore)
             ? document.Active.DocumentStore
-            : blobSettings.DefaultDocumentStore;
-    }
-
-    /// <summary>
-    /// Gets the data store name from the document's active stream, falling back to the default if not configured.
-    /// </summary>
-    /// <param name="document">The document to retrieve the store setting from.</param>
-    /// <returns>The configured store name or the default document store.</returns>
-    private string GetDataStore(IObjectDocument document)
-    {
-        return !string.IsNullOrWhiteSpace(document.Active.DataStore)
-            ? document.Active.DataStore
             : blobSettings.DefaultDocumentStore;
     }
 }

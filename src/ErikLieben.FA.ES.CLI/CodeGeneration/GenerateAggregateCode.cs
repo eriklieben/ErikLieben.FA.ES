@@ -325,60 +325,13 @@ public class GenerateAggregateCode
     {
         var assignments = new List<string>();
 
-        // Extract EventStreamType settings
-        if (aggregate.EventStreamTypeAttribute != null)
-        {
-            var attr = aggregate.EventStreamTypeAttribute;
+        AggregateSettingsCodeGenerator.ExtractEventStreamTypeSettings(aggregate.EventStreamTypeAttribute, assignments);
+        AggregateSettingsCodeGenerator.ExtractEventStreamBlobSettings(aggregate.EventStreamBlobSettingsAttribute, assignments);
 
-            if (attr.StreamType != null)
-                assignments.Add($"document.Active.StreamType = \"{attr.StreamType}\";");
-            if (attr.DocumentType != null)
-                assignments.Add($"document.Active.DocumentType = \"{attr.DocumentType}\";");
-            if (attr.DocumentTagType != null)
-                assignments.Add($"document.Active.DocumentTagType = \"{attr.DocumentTagType}\";");
-            if (attr.EventStreamTagType != null)
-                assignments.Add($"document.Active.EventStreamTagType = \"{attr.EventStreamTagType}\";");
-            if (attr.DocumentRefType != null)
-                assignments.Add($"document.Active.DocumentRefType = \"{attr.DocumentRefType}\";");
-        }
-
-        // Extract EventStreamBlobSettings
-        if (aggregate.EventStreamBlobSettingsAttribute != null)
-        {
-            var attr = aggregate.EventStreamBlobSettingsAttribute;
-
-            if (attr.DataStore != null)
-                assignments.Add($"document.Active.DataStore = \"{attr.DataStore}\";");
-            if (attr.DocumentStore != null)
-                assignments.Add($"document.Active.DocumentStore = \"{attr.DocumentStore}\";");
-            if (attr.DocumentTagStore != null)
-                assignments.Add($"document.Active.DocumentTagStore = \"{attr.DocumentTagStore}\";");
-            if (attr.StreamTagStore != null)
-                assignments.Add($"document.Active.StreamTagStore = \"{attr.StreamTagStore}\";");
-            if (attr.SnapShotStore != null)
-                assignments.Add($"document.Active.SnapShotStore = \"{attr.SnapShotStore}\";");
-        }
-
-        // If no settings to apply, return empty string
         if (assignments.Count == 0)
             return string.Empty;
 
-        // Build the code block with proper indentation for raw string literals
-        var code = new StringBuilder();
-        code.AppendLine();
-        code.AppendLine("                                 // Apply aggregate-specific settings for new documents");
-        code.AppendLine("                                 if (document.Active.CurrentStreamVersion == -1)");
-        code.AppendLine("                                 {");
-
-        foreach (var assignment in assignments)
-        {
-            code.AppendLine($"                                     {assignment}");
-        }
-
-        code.AppendLine("                                     await this.objectDocumentFactory.SetAsync(document);");
-        code.Append("                                 }");
-
-        return code.ToString();
+        return AggregateSettingsCodeGenerator.BuildSettingsCodeBlock(assignments);
     }
 
     internal static StringBuilder AssembleAggregateCode(
