@@ -19,6 +19,8 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
 public class BlobDocumentStoreTests
 {
+    private static readonly JsonSerializerOptions CachedJsonSerializerOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamDefaultTypeSettings defaultTypeSettings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
@@ -454,8 +456,7 @@ public class BlobDocumentStoreTests
             blobClient.GetPropertiesAsync().Returns(response);
 
             // Mock the download with serialized document data
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var serializedDoc = JsonSerializer.Serialize(deserializedDoc, options);
+            var serializedDoc = JsonSerializer.Serialize(deserializedDoc, CachedJsonSerializerOptions);
             var docBytes = Encoding.UTF8.GetBytes(serializedDoc);
 
             blobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
@@ -587,10 +588,9 @@ public class BlobDocumentStoreTests
             blobClient.GetPropertiesAsync().Returns(response);
 
             // Mock the downloads with serialized document data
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var serializedDoc1 = JsonSerializer.Serialize(deserializedDoc1, options);
+            var serializedDoc1 = JsonSerializer.Serialize(deserializedDoc1, CachedJsonSerializerOptions);
             var docBytes1 = Encoding.UTF8.GetBytes(serializedDoc1);
-            var serializedDoc2 = JsonSerializer.Serialize(deserializedDoc2, options);
+            var serializedDoc2 = JsonSerializer.Serialize(deserializedDoc2, CachedJsonSerializerOptions);
             var docBytes2 = Encoding.UTF8.GetBytes(serializedDoc2);
 
             var callCount = 0;
