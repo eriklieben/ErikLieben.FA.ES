@@ -739,6 +739,10 @@ public class BlobDocumentStoreTests
             objectDocument.ObjectId.Returns(objectId);
             objectDocument.ObjectName.Returns(objectName);
 
+            // Mock Active property to return a valid state
+            var mockActive = new StreamInformation();
+            objectDocument.Active.Returns(mockActive);
+
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
             blobClient.GetPropertiesAsync().Returns(response);
