@@ -1,3 +1,14 @@
+## [1.3.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.0...v1.3.1) (2025-11-03)
+
+### 🐛 Bug fixes
+
+* correct path in linux for .elfa, add [#nullable](https://github.com/eriklieben/ErikLieben.FA.ES/issues/nullable), accept objectnam… ([#40](https://github.com/eriklieben/ErikLieben.FA.ES/issues/40)) ([3a23d94](https://github.com/eriklieben/ErikLieben.FA.ES/commit/3a23d948752bf73bff0b218f55fdf1fdbe2cc74f))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency node to v24 ([#39](https://github.com/eriklieben/ErikLieben.FA.ES/issues/39)) ([2dd19c5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2dd19c5b985b6f81f32055d2961ca97fbeeef462))
+* **deps:** Update dependency Pastel to 7.0.1 ([#38](https://github.com/eriklieben/ErikLieben.FA.ES/issues/38)) ([5d005cb](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5d005cbc6cace2fdf1975b0a4fc4f3c021831b43))
+
 ## [1.3.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.2.0...v1.3.0) (2025-10-28)
 
 ### ✨ New features
