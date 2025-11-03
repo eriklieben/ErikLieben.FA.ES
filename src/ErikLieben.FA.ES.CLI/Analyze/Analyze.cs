@@ -97,7 +97,7 @@ public class Analyze(Config config, IAnsiConsole console)
 
         if (config.Es.EnableDiagnostics)
         {
-            LogCompilationIssues(compilation);
+            LogCompilationIssues(compilation, console);
         }
 
         var projectDefinition = new ProjectDefinition
@@ -269,7 +269,7 @@ public class Analyze(Config config, IAnsiConsole console)
         taskbar.StopTask();
     }
 
-    private static void LogCompilationIssues(Compilation compilation)
+    private static void LogCompilationIssues(Compilation compilation, IAnsiConsole console)
     {
         var diagnostics = compilation.GetDiagnostics();
         foreach (var diagnostic in diagnostics)
@@ -284,13 +284,13 @@ public class Analyze(Config config, IAnsiConsole console)
 
             var escapedId = Markup.Escape(diagnostic.Id);
             var escapedMessage = Markup.Escape(diagnostic.GetMessage(CultureInfo.InvariantCulture));
-            AnsiConsole.MarkupLine($"[{severityColor}]{diagnostic.Severity}[/] {escapedId} - {escapedMessage}");
+            console.MarkupLine($"[{severityColor}]{diagnostic.Severity}[/] {escapedId} - {escapedMessage}");
 
             if (diagnostic.Location.IsInSource)
             {
                 var lineSpan = diagnostic.Location.GetLineSpan();
                 var escapedPath = Markup.Escape(lineSpan.Path);
-                AnsiConsole.MarkupLine($"  at [green]{escapedPath}[/]:line {lineSpan.StartLinePosition.Line + 1}, column {lineSpan.StartLinePosition.Character + 1}");
+                console.MarkupLine($"  at [green]{escapedPath}[/]:line {lineSpan.StartLinePosition.Line + 1}, column {lineSpan.StartLinePosition.Character + 1}");
 
                 if (diagnostic.Location.SourceTree != null)
                 {
@@ -301,12 +301,12 @@ public class Analyze(Config config, IAnsiConsole console)
                     {
                         var line = text.Split('\n')[startLine].Trim();
                         var escapedLine = Markup.Escape(line);
-                        AnsiConsole.MarkupLine($"  Code: [dim]{escapedLine}[/]");
+                        console.MarkupLine($"  Code: [dim]{escapedLine}[/]");
                     }
                 }
             }
 
-            AnsiConsole.WriteLine();
+            console.WriteLine();
         }
     }
 

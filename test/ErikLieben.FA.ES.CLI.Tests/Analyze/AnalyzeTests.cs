@@ -169,13 +169,14 @@ EndGlobal
             // Arrange: create a compilation with a syntax error
             var tree = CSharpSyntaxTree.ParseText("public class {");
             var compilation = CSharpCompilation.Create("Err", new[] { tree }, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var console = new TestConsole();
 
             // Reflect LogCompilationIssues
             var mi = typeof(CLI.Analyze.Analyze).GetMethod("LogCompilationIssues", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
 
             // Act & Assert: should not throw
-            mi!.Invoke(null, new object[] { compilation });
+            mi!.Invoke(null, new object[] { compilation, console });
         }
 
         [Fact]
