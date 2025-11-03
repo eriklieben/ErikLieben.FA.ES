@@ -240,6 +240,8 @@ public class GenerateInheritedAggregateCode
             code.AppendLine($"using {namespaceName};");
         }
         code.AppendLine("");
+        code.AppendLine("#nullable enable");
+        code.AppendLine("");
 
         string codeGetById = "";
 

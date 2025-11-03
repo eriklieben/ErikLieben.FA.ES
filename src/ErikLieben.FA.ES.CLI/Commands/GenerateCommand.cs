@@ -47,7 +47,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         await Setup.Setup.Initialize(solutionPath);
 
         // Save analyzed data
-        var analyzeDir = Path.Combine(folderPath, ".elfa\\");
+        var analyzeDir = Path.Combine(folderPath, ".elfa");
         var (analyzePath, hasChanges) = await SaveAnalyzeDataWithBackupAsync(analyzeDir, def, cancellationToken);
 
         // Show diff if requested and changes exist

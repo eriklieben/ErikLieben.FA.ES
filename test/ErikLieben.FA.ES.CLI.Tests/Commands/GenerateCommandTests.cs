@@ -101,7 +101,7 @@ EndGlobal
 
             // Assert
             Assert.Equal(0, result);
-            var expectedAnalyzePath = Path.Combine(Path.GetDirectoryName(slnPath)!, ".elfa\\","eriklieben.fa.es.analyzed-data.json");
+            var expectedAnalyzePath = Path.Combine(Path.GetDirectoryName(slnPath)!, ".elfa", "eriklieben.fa.es.analyzed-data.json");
             Assert.True(File.Exists(expectedAnalyzePath));
 
             var content = await File.ReadAllTextAsync(expectedAnalyzePath);
