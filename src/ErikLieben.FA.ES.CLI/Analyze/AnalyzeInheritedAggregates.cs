@@ -91,7 +91,7 @@ public class AnalyzeInheritedAggregates
         aggregate = new InheritedAggregateDefinition
         {
             IdentifierName = typeSymbol!.Name,
-            ObjectName = RoslynHelper.GetObjectName(parentType!),
+            ObjectName = GetObjectNameWithFallback(typeSymbol, parentType),
             Namespace = RoslynHelper.GetFullNamespace(typeSymbol),
             FileLocations = typeSymbol.DeclaringSyntaxReferences
                 .Select(r => NormalizeRelativeFile(r.SyntaxTree.FilePath))
@@ -107,6 +107,35 @@ public class AnalyzeInheritedAggregates
         aggregates.Add(aggregate);
 
         return aggregate;
+    }
+
+    private static string GetObjectNameWithFallback(INamedTypeSymbol typeSymbol, INamedTypeSymbol? parentType)
+    {
+        const string FrameworkAttributesNamespace = "ErikLieben.FA.ES.Attributes";
+
+        // First check if the inherited aggregate itself has the ObjectNameAttribute
+        var objectNameAttribute = typeSymbol.GetAttributes().FirstOrDefault(a =>
+            a.AttributeClass?.Name == "ObjectNameAttribute" &&
+            a.AttributeClass.ContainingNamespace.ToDisplayString()
+                .Equals(FrameworkAttributesNamespace, StringComparison.Ordinal));
+
+        if (objectNameAttribute != null)
+        {
+            var retrievedObjectName = objectNameAttribute.ConstructorArguments.FirstOrDefault().Value?.ToString();
+            if (!string.IsNullOrWhiteSpace(retrievedObjectName))
+            {
+                return retrievedObjectName;
+            }
+        }
+
+        // Fall back to parent type if it exists
+        if (parentType != null)
+        {
+            return RoslynHelper.GetObjectName(parentType);
+        }
+
+        // Default: first character lowercase + rest of the name
+        return char.ToLower(typeSymbol.Name[0]) + typeSymbol.Name[1..];
     }
 
     private string NormalizeRelativeFile(string? filePath)

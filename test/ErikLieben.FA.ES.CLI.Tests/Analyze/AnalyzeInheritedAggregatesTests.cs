@@ -187,6 +187,102 @@ namespace App.Domain { public class Base(ErikLieben.FA.ES.IEventStream s) : Erik
             Assert.Equal("String", agg.IdentifierType);
             Assert.Equal("System", agg.IdentifierTypeNamespace);
         }
+
+        [Fact]
+        public void Should_use_object_name_from_inherited_aggregate_attribute_when_present()
+        {
+            // Arrange: inherited aggregate with its own ObjectNameAttribute
+            var code = @"
+using System;
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEventStream {} }
+namespace ErikLieben.FA.ES.Attributes { [AttributeUsage(AttributeTargets.Class)] public class ObjectNameAttribute : Attribute { public ObjectNameAttribute(string name) { Name = name; } public string Name { get; init; } } }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){} } }
+namespace App.Domain {
+  public class OrderBase(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) { }
+  [ErikLieben.FA.ES.Attributes.ObjectName(""custom-order"")]
+  public class Order(ErikLieben.FA.ES.IEventStream s) : OrderBase(s) { }
+}
+";
+            var baseRoot = Path.GetTempPath();
+            var root = Path.Combine(baseRoot, "Repo", "App");
+            var (symbol, semanticModel, compilation) = GetClassSymbol(
+                code,
+                filePath: Path.Combine(root, "Domain", "Order.cs"));
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root + Path.DirectorySeparatorChar);
+            var list = new List<InheritedAggregateDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var agg = list.First();
+            Assert.Equal("custom-order", agg.ObjectName);
+        }
+
+        [Fact]
+        public void Should_use_object_name_from_parent_attribute_when_inherited_aggregate_has_no_attribute()
+        {
+            // Arrange: inherited aggregate without ObjectNameAttribute, but parent has it
+            var code = @"
+using System;
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEventStream {} }
+namespace ErikLieben.FA.ES.Attributes { [AttributeUsage(AttributeTargets.Class)] public class ObjectNameAttribute : Attribute { public ObjectNameAttribute(string name) { Name = name; } public string Name { get; init; } } }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){} } }
+namespace App.Domain {
+  [ErikLieben.FA.ES.Attributes.ObjectName(""base-order"")]
+  public class OrderBase(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) { }
+  public class Order(ErikLieben.FA.ES.IEventStream s) : OrderBase(s) { }
+}
+";
+            var baseRoot = Path.GetTempPath();
+            var root = Path.Combine(baseRoot, "Repo", "App");
+            var (symbol, semanticModel, compilation) = GetClassSymbol(
+                code,
+                filePath: Path.Combine(root, "Domain", "Order.cs"));
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root + Path.DirectorySeparatorChar);
+            var list = new List<InheritedAggregateDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var agg = list.First();
+            Assert.Equal("base-order", agg.ObjectName);
+        }
+
+        [Fact]
+        public void Should_use_default_object_name_when_neither_inherited_nor_parent_has_attribute()
+        {
+            // Arrange: neither inherited aggregate nor parent has ObjectNameAttribute
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEventStream {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){} } }
+namespace App.Domain {
+  public class OrderBase(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) { }
+  public class Order(ErikLieben.FA.ES.IEventStream s) : OrderBase(s) { }
+}
+";
+            var baseRoot = Path.GetTempPath();
+            var root = Path.Combine(baseRoot, "Repo", "App");
+            var (symbol, semanticModel, compilation) = GetClassSymbol(
+                code,
+                filePath: Path.Combine(root, "Domain", "Order.cs"));
+            var sut = new AnalyzeInheritedAggregates(symbol!, semanticModel, root + Path.DirectorySeparatorChar);
+            var list = new List<InheritedAggregateDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var agg = list.First();
+            Assert.Equal("orderBase", agg.ObjectName);
+        }
     }
 
     private static (INamedTypeSymbol?, SemanticModel) GetTypeSymbol(string code)
