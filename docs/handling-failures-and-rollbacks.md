@@ -9,6 +9,10 @@
   - [3. Action Pipeline for Validation](#3-action-pipeline-for-validation)
   - [4. Stream Termination](#4-stream-termination)
   - [5. Sagas and Process Managers](#5-sagas-and-process-managers)
+- [Advanced Pattern: Multi-Aggregate Coordination with Minimal Compensation](#advanced-pattern-multi-aggregate-coordination-with-minimal-compensation)
+  - [Strategy 1: Provisional Events Pattern (Recommended)](#strategy-1-provisional-events-pattern-recommended)
+  - [Strategy 2: Single Transaction with Validation](#strategy-2-single-transaction-with-validation)
+  - [Strategy 3: Batch with Checkpointing](#strategy-3-batch-with-checkpointing)
 - [Practical Examples](#practical-examples)
 - [Best Practices](#best-practices)
 - [Common Patterns](#common-patterns)
@@ -568,6 +572,802 @@ public partial class OrderProcess : Aggregate
 
 ---
 
+## Advanced Pattern: Multi-Aggregate Coordination with Minimal Compensation
+
+### The Challenge
+
+When a single action needs to update multiple aggregates, you face a distributed transaction problem:
+
+```
+Scenario: Account details change affects 5 projects
+  Project 1: [Updated] ✅
+  Project 2: [Updated] ✅
+  Project 3: [Updated] ✅
+  Project 4: [Failed]  ❌ System crashes
+  Project 5: [Not started]
+
+Problem: How do we handle this without:
+- Writing 3 compensating events immediately
+- Losing the ability to retry
+- Creating duplicate events on retry
+```
+
+**The naive approach** would be to immediately compensate the 3 successful projects, but this creates unnecessary events and loses valuable information about the intent.
+
+**A better approach** uses the **Provisional Events Pattern** combined with a **Process Manager**.
+
+---
+
+### Strategy 1: Provisional Events Pattern (Recommended)
+
+This pattern minimizes compensation events by using provisional/pending state that can be confirmed or cancelled.
+
+#### Step 1: Define Provisional Events
+
+```csharp
+// Provisional event - indicates intent, not finalized
+[EventName("Project.AccountUpdatePending")]
+public record ProjectAccountUpdatePending(
+    string ProjectId,
+    string ProcessId,              // ← Links to process manager
+    string NewAccountName,
+    string NewAccountDetails,
+    DateTimeOffset PendingAt
+);
+
+// Confirmation event - minimal, just confirms the pending change
+[EventName("Project.AccountUpdateConfirmed")]
+public record ProjectAccountUpdateConfirmed(
+    string ProjectId,
+    string ProcessId,
+    DateTimeOffset ConfirmedAt
+);
+
+// Cancellation event - cancels the pending change
+[EventName("Project.AccountUpdateCancelled")]
+public record ProjectAccountUpdateCancelled(
+    string ProjectId,
+    string ProcessId,
+    string Reason,
+    DateTimeOffset CancelledAt
+);
+```
+
+#### Step 2: Aggregate Handles Provisional State
+
+```csharp
+public partial class Project : Aggregate
+{
+    private string? _accountName;
+    private string? _accountDetails;
+    private ProjectAccountUpdateStatus _updateStatus = ProjectAccountUpdateStatus.None;
+    private string? _pendingAccountName;
+    private string? _pendingAccountDetails;
+    private string? _pendingProcessId;
+
+    private void When(ProjectAccountUpdatePending @event)
+    {
+        // Store pending state - don't apply yet
+        _pendingAccountName = @event.NewAccountName;
+        _pendingAccountDetails = @event.NewAccountDetails;
+        _pendingProcessId = @event.ProcessId;
+        _updateStatus = ProjectAccountUpdateStatus.Pending;
+    }
+
+    private void When(ProjectAccountUpdateConfirmed @event)
+    {
+        // Now apply the pending changes
+        _accountName = _pendingAccountName;
+        _accountDetails = _pendingAccountDetails;
+        _updateStatus = ProjectAccountUpdateStatus.Confirmed;
+
+        // Clear pending state
+        _pendingAccountName = null;
+        _pendingAccountDetails = null;
+        _pendingProcessId = null;
+    }
+
+    private void When(ProjectAccountUpdateCancelled @event)
+    {
+        // Discard pending changes
+        _pendingAccountName = null;
+        _pendingAccountDetails = null;
+        _pendingProcessId = null;
+        _updateStatus = ProjectAccountUpdateStatus.None;
+    }
+
+    public async Task ApplyAccountUpdateProvisionally(
+        string processId,
+        string newAccountName,
+        string newAccountDetails)
+    {
+        // Check if already processed for this process
+        if (_pendingProcessId == processId ||
+            (_updateStatus == ProjectAccountUpdateStatus.Confirmed && _pendingProcessId == processId))
+        {
+            return; // Idempotent - already processed
+        }
+
+        await Stream.Session(context =>
+        {
+            context.Append(new ProjectAccountUpdatePending(
+                Stream.Document.ObjectId,
+                processId,
+                newAccountName,
+                newAccountDetails,
+                DateTimeOffset.UtcNow
+            ));
+            return Fold(context);
+        });
+    }
+
+    public async Task ConfirmAccountUpdate(string processId)
+    {
+        if (_pendingProcessId != processId)
+            throw new InvalidOperationException(
+                $"No pending update for process {processId}");
+
+        if (_updateStatus == ProjectAccountUpdateStatus.Confirmed)
+            return; // Already confirmed - idempotent
+
+        await Stream.Session(context =>
+        {
+            context.Append(new ProjectAccountUpdateConfirmed(
+                Stream.Document.ObjectId,
+                processId,
+                DateTimeOffset.UtcNow
+            ));
+            return Fold(context);
+        });
+    }
+
+    public async Task CancelAccountUpdate(string processId, string reason)
+    {
+        if (_pendingProcessId != processId)
+            return; // Not for this process - idempotent
+
+        if (_updateStatus == ProjectAccountUpdateStatus.None)
+            return; // Already cancelled - idempotent
+
+        await Stream.Session(context =>
+        {
+            context.Append(new ProjectAccountUpdateCancelled(
+                Stream.Document.ObjectId,
+                processId,
+                reason,
+                DateTimeOffset.UtcNow
+            ));
+            return Fold(context);
+        });
+    }
+}
+
+public enum ProjectAccountUpdateStatus
+{
+    None,
+    Pending,
+    Confirmed
+}
+```
+
+#### Step 3: Process Manager Coordinates Updates
+
+```csharp
+[EventName("AccountUpdateProcess.Started")]
+public record AccountUpdateProcessStarted(
+    string ProcessId,
+    string AccountId,
+    List<string> ProjectIds,
+    string NewAccountName,
+    string NewAccountDetails
+);
+
+[EventName("AccountUpdateProcess.ProjectProvisioned")]
+public record AccountUpdateProcessProjectProvisioned(
+    string ProcessId,
+    string ProjectId,
+    int CompletedCount,
+    int TotalCount
+);
+
+[EventName("AccountUpdateProcess.Failed")]
+public record AccountUpdateProcessFailed(
+    string ProcessId,
+    string FailedProjectId,
+    string Reason,
+    int ProvisionedCount
+);
+
+[EventName("AccountUpdateProcess.AllProvisioned")]
+public record AccountUpdateProcessAllProvisioned(
+    string ProcessId,
+    int TotalCount
+);
+
+[EventName("AccountUpdateProcess.Confirmed")]
+public record AccountUpdateProcessConfirmed(
+    string ProcessId,
+    DateTimeOffset ConfirmedAt
+);
+
+[EventName("AccountUpdateProcess.Cancelled")]
+public record AccountUpdateProcessCancelled(
+    string ProcessId,
+    string Reason,
+    DateTimeOffset CancelledAt
+);
+
+public partial class AccountUpdateProcess : Aggregate
+{
+    private string? _processId;
+    private List<string> _projectIds = new();
+    private HashSet<string> _provisionedProjects = new();
+    private AccountUpdateProcessStatus _status = AccountUpdateProcessStatus.New;
+    private string? _newAccountName;
+    private string? _newAccountDetails;
+    private string? _failureReason;
+
+    private void When(AccountUpdateProcessStarted @event)
+    {
+        _processId = @event.ProcessId;
+        _projectIds = @event.ProjectIds;
+        _newAccountName = @event.NewAccountName;
+        _newAccountDetails = @event.NewAccountDetails;
+        _status = AccountUpdateProcessStatus.Started;
+    }
+
+    private void When(AccountUpdateProcessProjectProvisioned @event)
+    {
+        _provisionedProjects.Add(@event.ProjectId);
+    }
+
+    private void When(AccountUpdateProcessAllProvisioned @event)
+    {
+        _status = AccountUpdateProcessStatus.AllProvisioned;
+    }
+
+    private void When(AccountUpdateProcessFailed @event)
+    {
+        _status = AccountUpdateProcessStatus.Failed;
+        _failureReason = @event.Reason;
+    }
+
+    private void When(AccountUpdateProcessConfirmed @event)
+    {
+        _status = AccountUpdateProcessStatus.Confirmed;
+    }
+
+    private void When(AccountUpdateProcessCancelled @event)
+    {
+        _status = AccountUpdateProcessStatus.Cancelled;
+    }
+
+    public async Task ExecuteAccountUpdate(
+        string accountId,
+        List<string> projectIds,
+        string newAccountName,
+        string newAccountDetails,
+        Func<string, Task<Project>> getProject)
+    {
+        var processId = Guid.NewGuid().ToString();
+
+        // Step 1: Record start
+        await Stream.Session(context =>
+        {
+            context.Append(new AccountUpdateProcessStarted(
+                processId,
+                accountId,
+                projectIds,
+                newAccountName,
+                newAccountDetails
+            ));
+            return Fold(context);
+        });
+
+        // Step 2: Provision all projects (two-phase commit phase 1)
+        try
+        {
+            for (int i = 0; i < projectIds.Count; i++)
+            {
+                var projectId = projectIds[i];
+
+                try
+                {
+                    var project = await getProject(projectId);
+
+                    // Apply provisional update
+                    await project.ApplyAccountUpdateProvisionally(
+                        processId,
+                        newAccountName,
+                        newAccountDetails
+                    );
+
+                    // Record progress
+                    await Stream.Session(context =>
+                    {
+                        context.Append(new AccountUpdateProcessProjectProvisioned(
+                            processId,
+                            projectId,
+                            i + 1,
+                            projectIds.Count
+                        ));
+                        return Fold(context);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Record failure
+                    await Stream.Session(context =>
+                    {
+                        context.Append(new AccountUpdateProcessFailed(
+                            processId,
+                            projectId,
+                            ex.Message,
+                            i
+                        ));
+                        return Fold(context);
+                    });
+
+                    // Cancel all provisioned projects
+                    await CancelProvisionedProjects(getProject);
+                    throw;
+                }
+            }
+
+            // Step 3: All provisioned successfully
+            await Stream.Session(context =>
+            {
+                context.Append(new AccountUpdateProcessAllProvisioned(
+                    processId,
+                    projectIds.Count
+                ));
+                return Fold(context);
+            });
+
+            // Step 4: Confirm all projects (two-phase commit phase 2)
+            await ConfirmAllProjects(getProject);
+
+            // Step 5: Mark process as confirmed
+            await Stream.Session(context =>
+            {
+                context.Append(new AccountUpdateProcessConfirmed(
+                    processId,
+                    DateTimeOffset.UtcNow
+                ));
+                return Fold(context);
+            });
+        }
+        catch (Exception ex)
+        {
+            // Process failed - provisioned projects are already cancelled
+            throw;
+        }
+    }
+
+    private async Task CancelProvisionedProjects(
+        Func<string, Task<Project>> getProject)
+    {
+        foreach (var projectId in _provisionedProjects)
+        {
+            try
+            {
+                var project = await getProject(projectId);
+                await project.CancelAccountUpdate(
+                    _processId!,
+                    _failureReason ?? "Process failed"
+                );
+            }
+            catch (Exception ex)
+            {
+                // Log but continue cancelling others
+                // Consider recording this failure in the process stream
+            }
+        }
+
+        await Stream.Session(context =>
+        {
+            context.Append(new AccountUpdateProcessCancelled(
+                _processId!,
+                _failureReason ?? "Process failed",
+                DateTimeOffset.UtcNow
+            ));
+            return Fold(context);
+        });
+    }
+
+    private async Task ConfirmAllProjects(
+        Func<string, Task<Project>> getProject)
+    {
+        foreach (var projectId in _projectIds)
+        {
+            var project = await getProject(projectId);
+            await project.ConfirmAccountUpdate(_processId!);
+        }
+    }
+
+    // Resume from failure - can be called to retry the process
+    public async Task Resume(Func<string, Task<Project>> getProject)
+    {
+        if (_status == AccountUpdateProcessStatus.Confirmed)
+            return; // Already completed
+
+        if (_status == AccountUpdateProcessStatus.Cancelled)
+        {
+            // Cannot resume cancelled process
+            throw new InvalidOperationException("Process was cancelled");
+        }
+
+        // If we failed during provisioning, cancel what we have and restart
+        if (_status == AccountUpdateProcessStatus.Failed)
+        {
+            await CancelProvisionedProjects(getProject);
+
+            // Client should create a new process to retry
+            return;
+        }
+
+        // If all provisioned but not confirmed, complete the confirmation
+        if (_status == AccountUpdateProcessStatus.AllProvisioned)
+        {
+            await ConfirmAllProjects(getProject);
+
+            await Stream.Session(context =>
+            {
+                context.Append(new AccountUpdateProcessConfirmed(
+                    _processId!,
+                    DateTimeOffset.UtcNow
+                ));
+                return Fold(context);
+            });
+        }
+    }
+}
+
+public enum AccountUpdateProcessStatus
+{
+    New,
+    Started,
+    Failed,
+    AllProvisioned,
+    Confirmed,
+    Cancelled
+}
+```
+
+#### Key Benefits of This Approach
+
+1. **Minimal Events on Failure**:
+   - 3 projects get 1 pending event each (3 events)
+   - 1 cancellation event per project (3 events)
+   - Total: 6 events (vs 6 full update + 3 full compensation = potentially 12+ events)
+
+2. **Idempotent Retry**:
+   - Process can be safely retried
+   - Projects check if they've already processed this processId
+   - No duplicate events on retry
+
+3. **Clear Intent**:
+   - Pending events show what *would* have happened
+   - Full audit trail of the distributed transaction
+   - Can analyze failures easily
+
+4. **Atomic Confirmation**:
+   - Once all projects are provisioned, confirmation is quick
+   - If confirmation fails, can resume from that point
+
+---
+
+### Strategy 2: Single Transaction with Validation
+
+For smaller sets of aggregates where you control the infrastructure, you can use a single transaction.
+
+#### Using ErikLieben.FA.ES Features
+
+```csharp
+public async Task UpdateAccountAcrossProjects(
+    string accountId,
+    List<string> projectIds,
+    string newAccountName)
+{
+    var processId = Guid.NewGuid().ToString();
+    var metadata = new ActionMetadata(
+        CorrelationId: processId,
+        EventOccuredAt: DateTimeOffset.UtcNow
+    );
+
+    // Validate all projects can be updated BEFORE committing any events
+    var projects = new List<Project>();
+    foreach (var projectId in projectIds)
+    {
+        var project = await GetProject(projectId);
+        await project.Fold(); // Load current state
+
+        // Validate business rules
+        if (!project.CanUpdateAccount())
+        {
+            throw new InvalidOperationException(
+                $"Project {projectId} cannot update account");
+        }
+
+        projects.Add(project);
+    }
+
+    // All validations passed - now commit all at once
+    var updateTasks = projects.Select(async project =>
+    {
+        await project.Stream.Session(context =>
+        {
+            context.Append(
+                new ProjectAccountUpdated(
+                    project.Stream.Document.ObjectId,
+                    newAccountName
+                ),
+                actionMetadata: metadata
+            );
+            return project.Fold(context);
+        });
+    });
+
+    // Execute all updates
+    // Note: This isn't a true ACID transaction across aggregates,
+    // but we've validated first to minimize failure risk
+    await Task.WhenAll(updateTasks);
+}
+```
+
+**Trade-offs:**
+- ✅ Simpler code
+- ✅ Fewer events
+- ❌ Not truly atomic (no cross-aggregate transactions)
+- ❌ Validation doesn't prevent concurrent modifications
+- ❌ If one fails mid-way, need compensation
+
+---
+
+### Strategy 3: Batch with Checkpointing
+
+For very large numbers of aggregates (100s or 1000s), use batch processing with checkpointing.
+
+```csharp
+[EventName("AccountUpdateBatch.Started")]
+public record AccountUpdateBatchStarted(
+    string BatchId,
+    string AccountId,
+    int TotalProjects
+);
+
+[EventName("AccountUpdateBatch.CheckpointReached")]
+public record AccountUpdateBatchCheckpointReached(
+    string BatchId,
+    int ProcessedCount,
+    int TotalCount,
+    string LastProcessedProjectId
+);
+
+[EventName("AccountUpdateBatch.Completed")]
+public record AccountUpdateBatchCompleted(
+    string BatchId,
+    int SuccessCount,
+    int FailureCount
+);
+
+[EventName("AccountUpdateBatch.ProjectFailed")]
+public record AccountUpdateBatchProjectFailed(
+    string BatchId,
+    string ProjectId,
+    string Reason
+);
+
+public partial class AccountUpdateBatch : Aggregate
+{
+    private string? _batchId;
+    private int _processedCount;
+    private int _totalCount;
+    private string? _lastProcessedProjectId;
+    private List<string> _failedProjects = new();
+    private BatchStatus _status = BatchStatus.New;
+
+    public async Task ExecuteBatchUpdate(
+        List<string> projectIds,
+        string newAccountName,
+        Func<string, Task<Project>> getProject,
+        int checkpointInterval = 10)
+    {
+        var batchId = Guid.NewGuid().ToString();
+
+        await Stream.Session(context =>
+        {
+            context.Append(new AccountUpdateBatchStarted(
+                batchId,
+                newAccountName,
+                projectIds.Count
+            ));
+            return Fold(context);
+        });
+
+        for (int i = 0; i < projectIds.Count; i++)
+        {
+            var projectId = projectIds[i];
+
+            try
+            {
+                var project = await getProject(projectId);
+                await project.UpdateAccount(newAccountName);
+
+                _processedCount++;
+                _lastProcessedProjectId = projectId;
+
+                // Checkpoint periodically
+                if ((i + 1) % checkpointInterval == 0)
+                {
+                    await Stream.Session(context =>
+                    {
+                        context.Append(new AccountUpdateBatchCheckpointReached(
+                            batchId,
+                            _processedCount,
+                            projectIds.Count,
+                            projectId
+                        ));
+                        return Fold(context);
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Record failure but continue processing others
+                await Stream.Session(context =>
+                {
+                    context.Append(new AccountUpdateBatchProjectFailed(
+                        batchId,
+                        projectId,
+                        ex.Message
+                    ));
+                    return Fold(context);
+                });
+
+                _failedProjects.Add(projectId);
+            }
+        }
+
+        // Complete
+        await Stream.Session(context =>
+        {
+            context.Append(new AccountUpdateBatchCompleted(
+                batchId,
+                _processedCount - _failedProjects.Count,
+                _failedProjects.Count
+            ));
+            return Fold(context);
+        });
+    }
+
+    // Resume from last checkpoint
+    public async Task Resume(
+        List<string> allProjectIds,
+        string newAccountName,
+        Func<string, Task<Project>> getProject)
+    {
+        // Find where we left off
+        var startIndex = allProjectIds.IndexOf(_lastProcessedProjectId!) + 1;
+        var remainingProjects = allProjectIds.Skip(startIndex).ToList();
+
+        // Continue processing
+        await ExecuteBatchUpdate(
+            remainingProjects,
+            newAccountName,
+            getProject
+        );
+    }
+}
+
+public enum BatchStatus
+{
+    New,
+    InProgress,
+    Completed,
+    Failed
+}
+```
+
+**Trade-offs:**
+- ✅ Handles large numbers of aggregates
+- ✅ Can resume from checkpoint on failure
+- ✅ Doesn't require all-or-nothing semantics
+- ❌ Not atomic - some projects may be updated while others aren't
+- ❌ Need to handle partial success scenarios
+- ⚠️ Consider if your business rules allow partial updates
+
+---
+
+### Comparison: Which Strategy to Use?
+
+| Strategy | Use When | Events on Failure | Retry Complexity | Atomicity |
+|----------|----------|-------------------|------------------|-----------|
+| **Provisional Events** | 2-100 aggregates, need atomicity | Minimal (1 pending + 1 cancel per aggregate) | Low (idempotent) | Semantic atomic |
+| **Single Transaction** | 2-10 aggregates, low failure risk | Medium (need full compensation) | Medium | No guarantee |
+| **Batch Checkpointing** | 100+ aggregates, partial success OK | High (many events) | Low (resume from checkpoint) | No atomicity |
+
+---
+
+### Example: Your 5 Projects Scenario
+
+Using **Provisional Events Pattern** (recommended):
+
+```csharp
+// Usage
+var process = await GetOrCreateProcess(processId);
+var projectIds = new List<string> { "p1", "p2", "p3", "p4", "p5" };
+
+await process.ExecuteAccountUpdate(
+    accountId: "acc-123",
+    projectIds: projectIds,
+    newAccountName: "New Account Name",
+    newAccountDetails: "New details",
+    getProject: async (id) => await projectRepository.Get(id)
+);
+```
+
+**Event Flow on Success:**
+```
+Process Stream:
+  1. AccountUpdateProcess.Started (5 projects)
+  2. AccountUpdateProcess.ProjectProvisioned (p1, 1/5)
+  3. AccountUpdateProcess.ProjectProvisioned (p2, 2/5)
+  4. AccountUpdateProcess.ProjectProvisioned (p3, 3/5)
+  5. AccountUpdateProcess.ProjectProvisioned (p4, 4/5)
+  6. AccountUpdateProcess.ProjectProvisioned (p5, 5/5)
+  7. AccountUpdateProcess.AllProvisioned
+  8. AccountUpdateProcess.Confirmed
+
+Project Streams (p1-p5):
+  Each gets: ProjectAccountUpdatePending, ProjectAccountUpdateConfirmed
+
+Total: 8 process events + 10 project events = 18 events
+```
+
+**Event Flow on Failure (after p3):**
+```
+Process Stream:
+  1. AccountUpdateProcess.Started (5 projects)
+  2. AccountUpdateProcess.ProjectProvisioned (p1, 1/5)
+  3. AccountUpdateProcess.ProjectProvisioned (p2, 2/5)
+  4. AccountUpdateProcess.ProjectProvisioned (p3, 3/5)
+  5. AccountUpdateProcess.Failed (p4, "Connection timeout", 3 provisioned)
+  6. AccountUpdateProcess.Cancelled (reason: "Connection timeout")
+
+Project Streams:
+  p1: ProjectAccountUpdatePending, ProjectAccountUpdateCancelled
+  p2: ProjectAccountUpdatePending, ProjectAccountUpdateCancelled
+  p3: ProjectAccountUpdatePending, ProjectAccountUpdateCancelled
+  p4: (no events)
+  p5: (no events)
+
+Total: 6 process events + 6 project events = 12 events
+
+On retry (new process):
+  - New processId generated
+  - All 5 projects get provisioned with new processId
+  - No duplicate events because processId is different
+  - All 5 confirmed on success
+```
+
+**Key advantage**: The pending events contain all the data, so cancellation events are lightweight. On retry with a new process, there's no conflict because each process has its own ID.
+
+---
+
+### Best Practices for Multi-Aggregate Coordination
+
+1. **Use Process IDs**: Always include a process/correlation ID to link events together
+2. **Make Operations Idempotent**: Check if the operation was already performed
+3. **Record Intent Early**: Create the process manager event before modifying aggregates
+4. **Fail Fast**: Validate as much as possible before committing events
+5. **Optimize for Success**: Design for the happy path; handle failures gracefully
+6. **Consider Timeouts**: Provisional events should have expiration (use background job to auto-cancel)
+7. **Monitor Progress**: Emit progress events for observability
+8. **Test Failure Scenarios**: Explicitly test failures at each step
+
+---
+
 ## Practical Examples
 
 ### Example 1: Bank Transfer with Compensation
@@ -1070,6 +1870,9 @@ By embracing these patterns, you build systems that are resilient, auditable, an
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Last Updated:** 2025-11-04
 **Author:** ErikLieben.FA.ES Documentation Team
+**Changelog:**
+- v1.1: Added "Advanced Pattern: Multi-Aggregate Coordination with Minimal Compensation" section with three strategies for handling distributed transactions
+- v1.0: Initial release
