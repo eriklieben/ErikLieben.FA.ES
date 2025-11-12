@@ -351,7 +351,10 @@ public class GenerateAggregateCode
 
         foreach (var namespaceName in usings.Order())
         {
-            code.AppendLine($"using {namespaceName};");
+            if (!string.IsNullOrWhiteSpace(namespaceName))
+            {
+                code.AppendLine($"using {namespaceName};");
+            }
         }
 
         code.AppendLine("");
@@ -459,7 +462,7 @@ public class GenerateAggregateCode
 
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
                              {{GenerateSettingsApplicationCode(aggregate)}}
                                  var obj = Create(document);
                                  await obj.Fold();
@@ -468,7 +471,7 @@ public class GenerateAggregateCode
 
                              protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent) where T : class
                              {
-                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
                             {{GenerateSettingsApplicationCode(aggregate)}}
                                 var eventStream = eventStreamFactory.Create(document);
                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
@@ -479,7 +482,7 @@ public class GenerateAggregateCode
 
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return obj;
@@ -487,7 +490,7 @@ public class GenerateAggregateCode
 
                              public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return (obj, document);
@@ -495,7 +498,7 @@ public class GenerateAggregateCode
 
                             public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag)
                             {
-                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentTagStoreFromAttribute(aggregate)}\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentTagStoreFromAttribute(aggregate) + "\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
                                 if (document == null)
                                 {
                                     return null;
@@ -507,7 +510,7 @@ public class GenerateAggregateCode
 
                             public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
                             {
-                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentTagStoreFromAttribute(aggregate)}\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}}));
+                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentTagStoreFromAttribute(aggregate) + "\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}}));
                                 var items = new List<{{aggregate.IdentifierName}}>();
                                 foreach (var document in documents)
                                 {
