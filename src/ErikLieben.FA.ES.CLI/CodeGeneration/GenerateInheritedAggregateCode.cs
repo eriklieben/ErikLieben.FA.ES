@@ -180,7 +180,19 @@ public class GenerateInheritedAggregateCode
                 usings.Add(param.Namespace);
             }
 
-            textBuilder.Append(BuildParameterSignature(param));
+            // Add namespaces for generic types
+            if (param.IsGeneric && param.GenericTypes != null)
+            {
+                foreach (var genericType in param.GenericTypes)
+                {
+                    if (!string.IsNullOrWhiteSpace(genericType.Namespace) && !usings.Contains(genericType.Namespace))
+                    {
+                        usings.Add(genericType.Namespace);
+                    }
+                }
+            }
+
+            textBuilder.Append(BuildParameterSignature(param, usings));
             textBuilder.Append(", ");
         }
 
@@ -193,30 +205,41 @@ public class GenerateInheritedAggregateCode
         return text;
     }
 
-    private static string BuildParameterSignature(CommandParameter param)
+    private static string BuildParameterSignature(CommandParameter param, List<string> usings)
     {
         if (param.IsGeneric && param.GenericTypes != null)
         {
-            return BuildGenericParameterSignature(param);
+            return BuildGenericParameterSignature(param, usings);
         }
 
         return $"{param.Type} {param.Name}";
     }
 
-    private static string BuildGenericParameterSignature(CommandParameter param)
+    private static string BuildGenericParameterSignature(CommandParameter param, List<string> usings)
     {
         var builder = new StringBuilder();
-        builder.Append(param.Type);
+
+        // Extract base type name without generic parameters
+        // e.g., "IEnumerable<QuestionIdentifier>" -> "IEnumerable"
+        var baseTypeName = param.Type;
+        var genericStartIndex = baseTypeName.IndexOf('<');
+        if (genericStartIndex > 0)
+        {
+            baseTypeName = baseTypeName.Substring(0, genericStartIndex);
+        }
+
+        builder.Append(baseTypeName);
         builder.Append('<');
 
         for (int i = 0; i < param.GenericTypes!.Count; i++)
         {
             var generic = param.GenericTypes[i];
-            builder.Append(generic.Namespace).Append('.').Append(generic.Name);
+            // Use short name only, since we've added the namespace to usings
+            builder.Append(generic.Name);
 
             if (i < param.GenericTypes.Count - 1)
             {
-                builder.Append(',');
+                builder.Append(", ");
             }
         }
 
