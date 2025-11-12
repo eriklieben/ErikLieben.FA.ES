@@ -1,3 +1,9 @@
+## [1.3.6](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.5...v1.3.6) (2025-11-12)
+
+### 🐛 Bug fixes
+
+* disable source gen attribute on interfaces ([cf5415a](https://github.com/eriklieben/ErikLieben.FA.ES/commit/cf5415a32eaf86a2c1665d1972a9b816077146d9))
+
 ## [1.3.5](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.4...v1.3.5) (2025-11-12)
 
 ### 🐛 Bug fixes
