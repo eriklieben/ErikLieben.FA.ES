@@ -1,3 +1,9 @@
+## [1.3.4](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.3...v1.3.4) (2025-11-12)
+
+### 🐛 Bug fixes
+
+* previous correction caused issues with generic types, this fixes… ([#44](https://github.com/eriklieben/ErikLieben.FA.ES/issues/44)) ([311ddd0](https://github.com/eriklieben/ErikLieben.FA.ES/commit/311ddd039b99d90c07bc739ff69420939d103a49))
+
 ## [1.3.3](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.2...v1.3.3) (2025-11-12)
 
 ### 🐛 Bug fixes
