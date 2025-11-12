@@ -134,4 +134,64 @@ public class RoslynHelperMoreTests
         Assert.Equal("Evt", ev.TypeName);
         Assert.Equal("Evt", ev.EventName); // default derived from type name
     }
+
+    [Fact]
+    public void GetFullTypeNameIncludingGenerics_should_handle_array_types()
+    {
+        var code = @"namespace ArrayTest{ public class Container{ public string[] Names {get;set;} = null!; } }";
+        var (comp, model, tree) = Compile(code);
+        var cls = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+        var symbol = (INamedTypeSymbol)model.GetDeclaredSymbol(cls)!;
+        var prop = symbol.GetMembers().OfType<IPropertySymbol>().First();
+        var arrayType = prop.Type;
+
+        var result = RoslynHelper.GetFullTypeNameIncludingGenerics(arrayType);
+
+        Assert.Equal("String[]", result);
+    }
+
+    [Fact]
+    public void GetFullTypeNameIncludingGenerics_should_handle_multidimensional_arrays()
+    {
+        var code = @"namespace ArrayTest{ public class Container{ public int[][] Matrix {get;set;} = null!; } }";
+        var (comp, model, tree) = Compile(code);
+        var cls = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+        var symbol = (INamedTypeSymbol)model.GetDeclaredSymbol(cls)!;
+        var prop = symbol.GetMembers().OfType<IPropertySymbol>().First();
+        var arrayType = prop.Type;
+
+        var result = RoslynHelper.GetFullTypeNameIncludingGenerics(arrayType);
+
+        Assert.Equal("Int32[][]", result);
+    }
+
+    [Fact]
+    public void GetFullTypeNameIncludingGenerics_should_handle_generic_types_with_arrays()
+    {
+        var code = @"namespace GenericArrayTest{ public class Container{ public System.Collections.Generic.List<string[]> Items {get;set;} = null!; } }";
+        var (comp, model, tree) = Compile(code);
+        var cls = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+        var symbol = (INamedTypeSymbol)model.GetDeclaredSymbol(cls)!;
+        var prop = symbol.GetMembers().OfType<IPropertySymbol>().First();
+        var genericType = prop.Type;
+
+        var result = RoslynHelper.GetFullTypeNameIncludingGenerics(genericType);
+
+        Assert.Equal("List<String[]>", result);
+    }
+
+    [Fact]
+    public void GetFullTypeNameIncludingGenerics_should_handle_nested_generic_types()
+    {
+        var code = @"namespace NestedGenericTest{ public class Container{ public System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<int>> Data {get;set;} = null!; } }";
+        var (comp, model, tree) = Compile(code);
+        var cls = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+        var symbol = (INamedTypeSymbol)model.GetDeclaredSymbol(cls)!;
+        var prop = symbol.GetMembers().OfType<IPropertySymbol>().First();
+        var genericType = prop.Type;
+
+        var result = RoslynHelper.GetFullTypeNameIncludingGenerics(genericType);
+
+        Assert.Equal("Dictionary<String, List<Int32>>", result);
+    }
 }
