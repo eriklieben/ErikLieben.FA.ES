@@ -44,14 +44,14 @@ public class GenerateVersionTokenOfTJsonConverterCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens);
+                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens, solution.Generator?.Version ?? "1.0.0");
             }
 
             // Generate json
         }
     }
 
-    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens)
+    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens, string version)
     {
         if (!versionTokenJsonConverter.IsPartialClass)
         {
@@ -63,7 +63,9 @@ public class GenerateVersionTokenOfTJsonConverterCode
         var usings = new List<string>
         {
             "System.Text.Json",
-            "ErikLieben.FA.ES"
+            "ErikLieben.FA.ES",
+            "System.CodeDom.Compiler",
+            "System.Diagnostics.CodeAnalysis"
         };
         usings.AddRange(versionTokens.Select(versionToken => versionToken.NamespaceOfType));
 
@@ -75,10 +77,14 @@ public class GenerateVersionTokenOfTJsonConverterCode
         code.Append($$"""
 
                       namespace {{versionTokenJsonConverter.Namespace}};
-                        
+
                       #nullable enable
+                      [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                      [ExcludeFromCodeCoverage]
                       public partial class {{versionTokenJsonConverter.Name}}<T>
                       {
+                      [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                      [ExcludeFromCodeCoverage]
                       public override partial T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
                       {
                       var versionToken = Converter.Read(ref reader, typeof(VersionToken), options);

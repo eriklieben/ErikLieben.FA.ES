@@ -43,14 +43,14 @@ public class GenerateVersionTokenOfTCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionToken, path);
+                await GenerateVersionToken(versionToken, path, solution.Generator?.Version ?? "1.0.0");
             }
 
             // Generate json
         }
     }
 
-    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path)
+    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, string version)
     {
         if (!versionToken.IsPartialClass)
         {
@@ -67,55 +67,75 @@ public class GenerateVersionTokenOfTCode
             using ErikLieben.FA.ES.Documents;
             using ErikLieben.FA.ES.VersionTokenParts;
             using {{versionToken.NamespaceOfType}};
-            
+            using System.CodeDom.Compiler;
+            using System.Diagnostics.CodeAnalysis;
+
             namespace {{versionToken.Namespace}};
-            
+
+            [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+            [ExcludeFromCodeCoverage]
             public partial record {{versionToken.Name}}
             {
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}() {}
-            
+
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}(string versionTokenString) : base(versionTokenString) { }
-            
+
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}({{versionToken.GenericType}} objectId, string versionIdentifierPart)
                 {
                     ArgumentNullException.ThrowIfNull(versionIdentifierPart);
-            
+
                     Version = -1;
                     Value = $"{ObjectName}__{objectId}__{versionIdentifierPart}";
                     ParseFullString(Value);
                 }
-            
+
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}({{versionToken.GenericType}} objectId, string streamIdentifier, int version)
                 {
                     ArgumentException.ThrowIfNullOrWhiteSpace(streamIdentifier);
-            
+
                     ObjectId = objectId;
                     StreamIdentifier = streamIdentifier;
                     Version = version;
                     VersionString = ToVersionTokenString(version);
-            
+
                     var objectIdentifierPart = $"{ObjectName}__{ObjectId}";
                     var versionIdentifierPart = $"{StreamIdentifier}__{VersionString}";
                     Value = $"{objectIdentifierPart}__{versionIdentifierPart}";
                     ParseFullString(Value);
                 }
-            
+
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}({{versionToken.GenericType}} objectId, VersionIdentifier versionIdentifier)
                 {
                     ArgumentNullException.ThrowIfNull(versionIdentifier);
-            
+
                     Version = -1;
                     ParseFullString($"{ObjectName}__{objectId}__{versionIdentifier.Value}");
                 }
-            
+
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public {{versionToken.Name}}(IEvent @event, IObjectDocument document) : base(@event, document)
                 {
                 }
             }
-            
-            
+
+
+            [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+            [ExcludeFromCodeCoverage]
             public static class ObjectMetaData{{versionToken.Name}}Extensions
             {
+                [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                [ExcludeFromCodeCoverage]
                 public static {{versionToken.Name}} ToVersionToken(this ObjectMetadata<{{versionToken.GenericType}}> token)
                 {
                     return new {{versionToken.Name}}(token.Id, token.StreamId, token.VersionInStream);

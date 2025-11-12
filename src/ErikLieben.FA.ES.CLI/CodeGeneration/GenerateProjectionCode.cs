@@ -66,14 +66,15 @@ public class GenerateProjectionCode
     private async Task GenerateProjection(ProjectionDefinition projection, string? path)
     {
         var usings = InitializeUsings(projection);
+        var version = solution.Generator?.Version ?? "1.0.0";
         var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
-        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings);
+        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, version);
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
-        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings);
-        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode);
+        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, version);
+        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, version);
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
@@ -81,7 +82,7 @@ public class GenerateProjectionCode
             foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
             jsonBlobFactoryCode, propertyCode, serializableCode);
 
-        await AssembleAndWriteCode(projection, usings, codeComponents, path);
+        await AssembleAndWriteCode(projection, usings, codeComponents, path, solution.Generator?.Version ?? "1.0.0");
     }
 
     private static List<string> InitializeUsings(ProjectionDefinition projection)
@@ -93,7 +94,9 @@ public class GenerateProjectionCode
             "ErikLieben.FA.ES.Projections",
             "ErikLieben.FA.ES.Documents",
             "System.Text.Json",
-            "ErikLieben.FA.ES.VersionTokenParts"
+            "ErikLieben.FA.ES.VersionTokenParts",
+            "System.CodeDom.Compiler",
+            "System.Diagnostics.CodeAnalysis"
         };
 
         usings.AddRange(projection.Properties
@@ -249,7 +252,7 @@ public class GenerateProjectionCode
         return typeBuilder.ToString();
     }
 
-    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings)
+    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string version)
     {
         if (projection.BlobProjection == null)
         {
@@ -261,6 +264,8 @@ public class GenerateProjectionCode
         usings.Add("Azure.Storage.Blobs");
 
         return $$"""
+                 [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                 [ExcludeFromCodeCoverage]
                  public class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
@@ -270,8 +275,12 @@ public class GenerateProjectionCode
                          "{{projection.BlobProjection.Connection}}",
                          "{{projection.BlobProjection.Container}}")
                  {
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
                      protected override bool HasExternalCheckpoint => {{projection.ExternalCheckpoint.ToString().ToLowerInvariant()}};
 
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
                      protected override {{projection.Name}} New()
                      {
                          return new {{projection.Name}}(objectDocumentFactory, eventStreamFactory);
@@ -322,23 +331,23 @@ public class GenerateProjectionCode
         return postWhenStringBuilder.ToString();
     }
 
-    private string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings)
+    private string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings, string version)
     {
         if (projection.HasPostWhenAllMethod)
         {
             return string.Empty;
         }
 
-        usings.Add("System.CodeDom.Compiler");
         var postWhenAllDummyCode = new StringBuilder();
-        postWhenAllDummyCode.Append($"[GeneratedCode(\"ErikLieben.FA.ES\", \"{solution.Generator?.Version}\")]\n");
+        postWhenAllDummyCode.Append($"[GeneratedCode(\"ErikLieben.FA.ES\", \"{version}\")]\n");
+        postWhenAllDummyCode.Append("[ExcludeFromCodeCoverage]\n");
         postWhenAllDummyCode.Append("protected override Task PostWhenAll(IObjectDocument document) { return Task.CompletedTask; }");
 
         return postWhenAllDummyCode.ToString();
     }
 
     private static string GenerateFoldMethod(ProjectionDefinition projection, StringBuilder foldCode,
-        string postWhenCode, string postWhenAllDummyCode)
+        string postWhenCode, string postWhenAllDummyCode, string version)
     {
         var isAsync = projection.Events.Any(e => e.ActivationAwaitRequired);
         var asyncKeyword = isAsync ? "async " : string.Empty;
@@ -346,6 +355,8 @@ public class GenerateProjectionCode
 
         return $$$"""
                   #nullable enable
+                  [GeneratedCode("ErikLieben.FA.ES", "{{{version}}}")]
+                  [ExcludeFromCodeCoverage]
                   public override {{{asyncKeyword}}}Task Fold<T>(IEvent @event, IObjectDocument document, T? data = default(T?), IExecutionContext? parentContext = null) where T : class {
 
 
@@ -455,7 +466,8 @@ public class GenerateProjectionCode
         ProjectionDefinition projection,
         List<string> usings,
         ProjectionCodeComponents components,
-        string? path)
+        string? path,
+        string version)
     {
         var code = new StringBuilder();
 
@@ -470,22 +482,32 @@ public class GenerateProjectionCode
                           namespace {{projection.Namespace}};
 
                           // <auto-generated />
+                          [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                          [ExcludeFromCodeCoverage]
                           public partial class {{projection.Name}} : I{{projection.Name}} {
 
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
                               public {{projection.Name}}() : base() {
                               }
 
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
                               public {{projection.Name}}(IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
                                 : base(documentFactory,eventStreamFactory) {
                               }
 
                               {{components.FoldMethod}}
 
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
                               protected override Dictionary<string, IProjectionWhenParameterValueFactory> WhenParameterValueFactories { get; } =
                                     new Dictionary<string, IProjectionWhenParameterValueFactory>(){
                                         {{ components.WhenParameterValueBindingCode }}
                                     };
 
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
                               public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
                               {
                                 var obj = JsonSerializer.Deserialize(json, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
@@ -495,7 +517,8 @@ public class GenerateProjectionCode
                                 return new {{projection.Name}}({{components.CtorCode}});
                               }
 
-
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
                               public override string ToJson()
                               {
                                 return JsonSerializer.Serialize(this, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
@@ -509,6 +532,8 @@ public class GenerateProjectionCode
 
                           #nullable enable
                           // <auto-generated />
+                          [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                          [ExcludeFromCodeCoverage]
                           public interface I{{projection.Name}} {
                                 {{components.PropertyCode}}
                           }
@@ -516,6 +541,8 @@ public class GenerateProjectionCode
 
                           {{components.SerializableCode}}
                           // <auto-generated />
+                          [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                          [ExcludeFromCodeCoverage]
                           internal partial class {{projection.Name}}JsonSerializerContext : JsonSerializerContext
                           {
                           }
