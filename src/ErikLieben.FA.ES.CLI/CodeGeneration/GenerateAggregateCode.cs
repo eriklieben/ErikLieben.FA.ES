@@ -349,12 +349,9 @@ public class GenerateAggregateCode
         var code = new StringBuilder();
         string codeGetById = "";
 
-        foreach (var namespaceName in usings.Order())
+        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Order())
         {
-            if (!string.IsNullOrWhiteSpace(namespaceName))
-            {
-                code.AppendLine($"using {namespaceName};");
-            }
+            code.AppendLine($"using {namespaceName};");
         }
 
         code.AppendLine("");
@@ -516,6 +513,7 @@ public class GenerateAggregateCode
                                 {
                                     var obj = Create(document);
                                     await obj.Fold();
+                                    items.Add(obj);
                                 }
                                 return items;
                             }
