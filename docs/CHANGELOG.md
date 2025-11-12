@@ -1,3 +1,9 @@
+## [1.3.5](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.4...v1.3.5) (2025-11-12)
+
+### 🐛 Bug fixes
+
+* exclude generated code from code coverage and make sure identifier of interface is added to usings ([#45](https://github.com/eriklieben/ErikLieben.FA.ES/issues/45)) ([fc40744](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fc40744af382b18f93c13df21b5525f96247389a))
+
 ## [1.3.4](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.3...v1.3.4) (2025-11-12)
 
 ### 🐛 Bug fixes
