@@ -1,3 +1,9 @@
+## [1.3.3](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.2...v1.3.3) (2025-11-12)
+
+### 🐛 Bug fixes
+
+* correctly generate code with adjusted Store, don't add escape ch… ([#43](https://github.com/eriklieben/ErikLieben.FA.ES/issues/43)) ([0ce8c72](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0ce8c72da9257a86204c0b50797be753de1600ba))
+
 ## [1.3.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.1...v1.3.2) (2025-11-12)
 
 ### 🐛 Bug fixes
