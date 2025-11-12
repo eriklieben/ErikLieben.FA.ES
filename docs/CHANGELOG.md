@@ -1,3 +1,13 @@
+## [1.3.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.1...v1.3.2) (2025-11-12)
+
+### 🐛 Bug fixes
+
+* correctly generate code with adjusted Store, don't add escape ch… ([#42](https://github.com/eriklieben/ErikLieben.FA.ES/issues/42)) ([1c82caa](https://github.com/eriklieben/ErikLieben.FA.ES/commit/1c82caaed6fa20909291f0cbd59f9def2c3d1e8e))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency semantic-release to 25.0.2 ([#41](https://github.com/eriklieben/ErikLieben.FA.ES/issues/41)) ([d49fe21](https://github.com/eriklieben/ErikLieben.FA.ES/commit/d49fe2142d23edf92e665615ae0e3eac0238f915))
+
 ## [1.3.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.0...v1.3.1) (2025-11-03)
 
 ### 🐛 Bug fixes
