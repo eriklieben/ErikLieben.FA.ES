@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddKeyedSingleton<IDocumentTagDocumentFactory, BlobTagFactory>("blob");
         services.AddKeyedSingleton<IObjectDocumentFactory, BlobObjectDocumentFactory>("blob");
         services.AddKeyedSingleton<IEventStreamFactory, BlobEventStreamFactory>("blob");
+        services.AddKeyedSingleton<IObjectIdProvider, BlobObjectIdProvider>("blob");
         return services;
     }
 }

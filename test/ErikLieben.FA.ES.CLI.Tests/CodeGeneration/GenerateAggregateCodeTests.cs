@@ -632,4 +632,252 @@ public class GenerateAggregateCodeTests
         Assert.Contains("var svc = serviceProvider.GetService(typeof(IService)) as IService;", code);
         Assert.Contains("return new TestAggregate(eventStream, svc!);", code);
     }
+
+    [Fact]
+    public async Task Generate_includes_repository_interface()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Product.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository interface
+        Assert.Contains("public partial interface IProductRepository", code);
+        Assert.Contains("Task<PagedResult<string>> GetObjectIdsAsync(", code);
+        Assert.Contains("string? continuationToken", code);
+        Assert.Contains("int pageSize", code);
+        Assert.Contains("Task<Product?> GetByIdAsync(", code);
+        Assert.Contains("Task<bool> ExistsAsync(", code);
+        Assert.Contains("Task<long> CountAsync(", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_repository_implementation()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Order.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository class
+        Assert.Contains("public partial class OrderRepository : IOrderRepository", code);
+        Assert.Contains("private readonly IOrderFactory orderFactory;", code);
+        Assert.Contains("private readonly IObjectDocumentFactory objectDocumentFactory;", code);
+        Assert.Contains("private readonly IObjectIdProvider objectIdProvider;", code);
+
+        // Repository constructor
+        Assert.Contains("public OrderRepository(", code);
+        Assert.Contains("IOrderFactory orderFactory,", code);
+        Assert.Contains("IObjectDocumentFactory objectDocumentFactory,", code);
+        Assert.Contains("IObjectIdProvider objectIdProvider)", code);
+
+        // GetObjectIdsAsync implementation
+        Assert.Contains("public async Task<PagedResult<string>> GetObjectIdsAsync(", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);", code);
+        Assert.Contains("return await objectIdProvider.GetObjectIdsAsync(", code);
+        Assert.Contains("ObjectName,", code);
+
+        // GetByIdAsync implementation
+        Assert.Contains("public async Task<Order?> GetByIdAsync(", code);
+        Assert.Contains("var obj = orderFactory.Create(document);", code);
+        Assert.Contains("await obj.Fold();", code);
+        Assert.Contains("return obj;", code);
+
+        // ExistsAsync implementation
+        Assert.Contains("public async Task<bool> ExistsAsync(", code);
+        Assert.Contains("objectIdProvider.ExistsAsync", code);
+
+        // CountAsync implementation
+        Assert.Contains("public async Task<long> CountAsync(", code);
+        Assert.Contains("objectIdProvider.CountAsync", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_obsolete_attributes_to_factory_query_methods()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Customer",
+            ObjectName = "customer",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Customer.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Customer.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // GetAsync with Obsolete
+        Assert.Contains("[Obsolete", code);
+        Assert.Contains("Use ICustomerRepository.GetByIdAsync instead", code);
+        Assert.Contains("GetAsync", code);
+
+        // GetWithDocumentAsync with Obsolete
+        Assert.Contains("GetWithDocumentAsync", code);
+
+        // GetFirstByDocumentTag with Obsolete
+        Assert.Contains("GetFirstByDocumentTag", code);
+
+        // GetAllByDocumentTag with Obsolete
+        Assert.Contains("GetAllByDocumentTag", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_validates_page_size_bounds()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Invoice",
+            ObjectName = "invoice",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Invoice.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Invoice.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Page size validation
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);", code);
+    }
 }

@@ -309,4 +309,155 @@ public class GenerateExtensionCodeTests
         // Subtypes and nested generics should be serialized
         Assert.Contains("[JsonSerializable(typeof(Dictionary<String, Int32>))]", code);
     }
+
+    [Fact]
+    public async Task Generate_registers_repository_interfaces_and_implementations()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates =
+            [
+                new AggregateDefinition
+                {
+                    IdentifierName = "Product",
+                    ObjectName = "product",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    IsPartialClass = true,
+                    FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+                },
+                new AggregateDefinition
+                {
+                    IdentifierName = "Order",
+                    ObjectName = "order",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    IsPartialClass = true,
+                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                }
+            ],
+            InheritedAggregates = new List<InheritedAggregateDefinition>(),
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository registrations with AddScoped
+        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
+        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+    }
+
+    [Fact]
+    public async Task Generate_registers_repositories_for_inherited_aggregates()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition>(),
+            InheritedAggregates =
+            [
+                new InheritedAggregateDefinition
+                {
+                    InheritedIdentifierName = "OrderBase",
+                    InheritedNamespace = "Demo.App.Domain",
+                    IdentifierName = "Order",
+                    ObjectName = "order",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    ParentInterface = "Demo.App.Domain.IOrder",
+                    ParentInterfaceNamespace = "Demo.App.Domain",
+                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                }
+            ],
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository registration for inherited aggregate
+        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+    }
+
+    [Fact]
+    public async Task Generate_does_not_register_repositories_for_non_partial_aggregates()
+    {
+        // Arrange
+        var partialAgg = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+        };
+
+        var nonPartialAgg = new AggregateDefinition
+        {
+            IdentifierName = "Temp",
+            ObjectName = "temp",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = false,
+            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { partialAgg, nonPartialAgg },
+            InheritedAggregates = new List<InheritedAggregateDefinition>(),
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository for partial aggregate should be registered
+        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
+
+        // Repository for non-partial aggregate should NOT be registered
+        Assert.DoesNotContain("ITempRepository", code);
+        Assert.DoesNotContain("TempRepository", code);
+    }
 }

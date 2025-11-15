@@ -25,6 +25,8 @@ public static class FunctionsEventStoreExtensions
         services.RegisterKeyedDictionary<string, IDocumentTagDocumentFactory>();
         services.AddSingleton<IEventStreamFactory, EventStreamFactory>();
         services.RegisterKeyedDictionary<string, IEventStreamFactory>();
+        services.AddSingleton<IObjectIdProvider, ObjectIdProvider>();
+        services.RegisterKeyedDictionary<string, IObjectIdProvider>();
 
         return services;
     }

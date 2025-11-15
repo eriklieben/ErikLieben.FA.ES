@@ -95,6 +95,8 @@ public async Task Generate()
                 $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
             registerCode.AppendLine(
                 $"serviceCollection.AddSingleton<I{declaration.IdentifierName}Factory, {declaration.IdentifierName}Factory>();");
+            registerCode.AppendLine(
+                $"serviceCollection.AddScoped<I{declaration.IdentifierName}Repository, {declaration.IdentifierName}Repository>();");
             mappingCode.AppendLine(
                 $"Type agg when agg == typeof({declaration.IdentifierName}) => typeof(IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>),");
         }
@@ -112,6 +114,8 @@ public async Task Generate()
                 $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
             registerCode.AppendLine(
                 $"serviceCollection.AddSingleton<I{declaration.IdentifierName}Factory, {declaration.IdentifierName}Factory>();");
+            registerCode.AppendLine(
+                $"serviceCollection.AddScoped<I{declaration.IdentifierName}Repository, {declaration.IdentifierName}Repository>();");
             mappingCode.AppendLine(
                 $"Type agg when agg == typeof({declaration.IdentifierName}) => typeof(IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>),");
         }
