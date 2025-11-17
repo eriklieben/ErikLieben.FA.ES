@@ -290,7 +290,10 @@ public abstract class Projection : IProjectionBase
     private string GenerateCheckpointFingerprint()
     {
         StringBuilder sb = new();
-        Checkpoint!.OrderBy(i => i.Key).ToList().ForEach(i => sb.AppendLine($"{i.Key}|{i.Value}"));
+        foreach (var item in Checkpoint!.OrderBy(i => i.Key))
+        {
+            sb.AppendLine($"{item.Key}|{item.Value}");
+        }
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
         Span<char> chars = stackalloc char[bytes.Length * 2];
         for (int i = 0; i < bytes.Length; i++)
