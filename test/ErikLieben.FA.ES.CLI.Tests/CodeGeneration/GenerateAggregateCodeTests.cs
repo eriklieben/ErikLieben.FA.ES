@@ -880,4 +880,219 @@ public class GenerateAggregateCodeTests
         Assert.Contains("ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);", code);
         Assert.Contains("ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);", code);
     }
+
+    [Fact]
+    public async Task Generate_factory_GetAsync_includes_upToVersion_parameter()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "BlogPost",
+            ObjectName = "blogpost",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\BlogPost.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "BlogPost.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Factory GetAsync should have upToVersion parameter
+        Assert.Contains("public async Task<BlogPost> GetAsync(Guid id, int? upToVersion = null)", code);
+    }
+
+    [Fact]
+    public async Task Generate_factory_GetAsync_uses_ReadAsync_with_upToVersion()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Article",
+            ObjectName = "article",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Article.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Article.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Factory GetAsync should use ReadAsync with upToVersion
+        Assert.Contains("var events = await eventStream.ReadAsync(0, upToVersion);", code);
+
+        // Should manually fold each event
+        Assert.Contains("foreach (var e in events)", code);
+        Assert.Contains("obj.Fold(e);", code);
+
+        // Comment should indicate this creates event stream to read events
+        Assert.Contains("// Create event stream to read events", code);
+        Assert.Contains("// Read events up to version (null = all events)", code);
+        Assert.Contains("// Create aggregate and fold events", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_GetByIdAsync_includes_upToVersion_parameter()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Comment",
+            ObjectName = "comment",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Comment.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Comment.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository interface should have upToVersion parameter with XML docs
+        Assert.Contains("/// <param name=\"upToVersion\">Optional: The maximum event version to fold. If null, loads to current state.</param>", code);
+        Assert.Contains("Task<Comment?> GetByIdAsync(", code);
+        Assert.Contains("int? upToVersion = null,", code);
+
+        // Repository implementation should have upToVersion parameter
+        Assert.Contains("public async Task<Comment?> GetByIdAsync(", code);
+        Assert.Contains("int? upToVersion = null,", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_GetByIdAsync_delegates_to_factory_with_upToVersion()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Review",
+            ObjectName = "review",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Review.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Review.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository GetByIdAsync should delegate to factory with upToVersion
+        Assert.Contains("return await reviewFactory.GetAsync(id, upToVersion);", code);
+    }
 }

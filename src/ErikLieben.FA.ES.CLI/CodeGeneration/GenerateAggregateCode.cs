@@ -478,11 +478,23 @@ public class GenerateAggregateCode
                              }
 
                              [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetByIdAsync instead. This method will be removed in a future version.")]
-                             public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
+                             public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id, int? upToVersion = null)
                              {
                                  var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
-                                 var obj = Create(document);
-                                 await obj.Fold();
+
+                                 // Create event stream to read events
+                                 var eventStream = eventStreamFactory.Create(document);
+
+                                 // Read events up to version (null = all events)
+                                 var events = await eventStream.ReadAsync(0, upToVersion);
+
+                                 // Create aggregate and fold events
+                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
+                                 foreach (var e in events)
+                                 {
+                                     obj.Fold(e);
+                                 }
+
                                  return obj;
                              }
 
@@ -539,8 +551,10 @@ public class GenerateAggregateCode
                               /// <summary>
                               /// Gets a single aggregate by ID.
                               /// </summary>
+                              /// <param name="upToVersion">Optional: The maximum event version to fold. If null, loads to current state.</param>
                               Task<{{aggregate.IdentifierName}}?> GetByIdAsync(
                                   {{aggregate.IdentifierType}} id,
+                                  int? upToVersion = null,
                                   CancellationToken cancellationToken = default);
 
                               /// <summary>
@@ -618,14 +632,12 @@ public class GenerateAggregateCode
 
                               public async Task<{{aggregate.IdentifierName}}?> GetByIdAsync(
                                   {{aggregate.IdentifierType}} id,
+                                  int? upToVersion = null,
                                   CancellationToken cancellationToken = default)
                               {
                                   try
                                   {
-                                      var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
-                                      var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
-                                      await obj.Fold();
-                                      return obj;
+                                      return await {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.GetAsync(id, upToVersion);
                                   }
                                   catch (Exception)
                                   {

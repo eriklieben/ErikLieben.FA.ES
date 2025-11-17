@@ -16,6 +16,7 @@ public abstract class BlobProjectionFactory<T> where T : Projection
     private readonly IAzureClientFactory<BlobServiceClient> _blobServiceClientFactory;
     private readonly string _connectionName;
     private readonly string _containerOrPath;
+    private readonly bool _autoCreateContainer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlobProjectionFactory{T}"/> class.
@@ -23,14 +24,17 @@ public abstract class BlobProjectionFactory<T> where T : Projection
     /// <param name="blobServiceClientFactory">The factory for creating Azure Blob Service clients.</param>
     /// <param name="connectionName">The name of the Azure client connection.</param>
     /// <param name="containerOrPath">The container name or blob path where the projection is stored.</param>
+    /// <param name="autoCreateContainer">A value indicating whether the target blob container is created automatically when missing. Defaults to true.</param>
     protected BlobProjectionFactory(
         IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
         string connectionName,
-        string containerOrPath)
+        string containerOrPath,
+        bool autoCreateContainer = true)
     {
         _blobServiceClientFactory = blobServiceClientFactory ?? throw new ArgumentNullException(nameof(blobServiceClientFactory));
         _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
         _containerOrPath = containerOrPath ?? throw new ArgumentNullException(nameof(containerOrPath));
+        _autoCreateContainer = autoCreateContainer;
     }
 
     /// <summary>
@@ -70,7 +74,12 @@ public abstract class BlobProjectionFactory<T> where T : Projection
     {
         var blobServiceClient = GetBlobServiceClient();
         var containerClient = blobServiceClient.GetBlobContainerClient(_containerOrPath);
-        await containerClient.CreateIfNotExistsAsync();
+
+        if (_autoCreateContainer)
+        {
+            await containerClient.CreateIfNotExistsAsync();
+        }
+
         return containerClient;
     }
 
