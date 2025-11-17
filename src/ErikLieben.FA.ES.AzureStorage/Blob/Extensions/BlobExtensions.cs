@@ -30,7 +30,7 @@ public static class BlobExtensions
         {
             using MemoryStream s = new();
             await blobClient.DownloadToAsync(s, requestOptions);
-            var json = Encoding.UTF8.GetString(s.ToArray());
+            var json = Encoding.UTF8.GetString(s.GetBuffer(), 0, (int)s.Length);
             return (JsonSerializer.Deserialize(json, jsonTypeInfo), ComputeSha256Hash(json));
         }
         catch (RequestFailedException ex)
@@ -79,7 +79,7 @@ public static class BlobExtensions
         {
             using MemoryStream s = new();
             await blobJson.DownloadToAsync(s, requestOptions);
-            return Encoding.UTF8.GetString(s.ToArray());
+            return Encoding.UTF8.GetString(s.GetBuffer(), 0, (int)s.Length);
 
         }
         catch (RequestFailedException ex)
@@ -107,8 +107,11 @@ public static class BlobExtensions
         Dictionary<string, string> metadata = null!,
         Dictionary<string, string> tags = null!)
     {
+        var serialized = JsonSerializer.Serialize(@object, jsonTypeInfo);
+        var bytes = Encoding.UTF8.GetBytes(serialized);
+
         var info = await blobJson.UploadAsync(
-            new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(@object, jsonTypeInfo))),
+            new MemoryStream(bytes),
             new BlobUploadOptions
             {
                 HttpHeaders = new BlobHttpHeaders
@@ -143,10 +146,11 @@ public static class BlobExtensions
         Dictionary<string, string> tags = null!) where Document : class
     {
         var serialized = JsonSerializer.Serialize(entity, jsonTypeInfo);
-        var hash = ComputeSha256Hash(serialized);
+        var bytes = Encoding.UTF8.GetBytes(serialized);
+        var hash = ComputeSha256Hash(bytes, 0, bytes.Length);
 
         var info = await blobClient.UploadAsync(
-            new MemoryStream(Encoding.UTF8.GetBytes(serialized)),
+            new MemoryStream(bytes),
             new BlobUploadOptions
             {
                 HttpHeaders = new BlobHttpHeaders
@@ -168,13 +172,26 @@ public static class BlobExtensions
     /// <returns>The lowercase hexadecimal SHA-256 string.</returns>
     private static string ComputeSha256Hash(string rawData)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        StringBuilder builder = new();
-        foreach (var b in bytes)
-        {
-            builder.Append(b.ToString("x2"));
-        }
+        var inputBytes = Encoding.UTF8.GetBytes(rawData);
+        return ComputeSha256Hash(inputBytes, 0, inputBytes.Length);
+    }
 
-        return builder.ToString();
+    /// <summary>
+    /// Computes the hexadecimal SHA-256 hash for the specified byte array.
+    /// </summary>
+    /// <param name="data">The input byte array.</param>
+    /// <param name="offset">The offset in the array.</param>
+    /// <param name="count">The number of bytes to hash.</param>
+    /// <returns>The lowercase hexadecimal SHA-256 string.</returns>
+    private static string ComputeSha256Hash(byte[] data, int offset, int count)
+    {
+        ReadOnlySpan<byte> dataSpan = data.AsSpan(offset, count);
+        var bytes = SHA256.HashData(dataSpan);
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
+        }
+        return new string(chars);
     }
 }

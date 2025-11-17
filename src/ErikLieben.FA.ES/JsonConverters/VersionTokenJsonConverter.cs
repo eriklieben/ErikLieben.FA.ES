@@ -40,8 +40,9 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
             throw new JsonException($"Invalid versionToken format: {versionTokenString}");
         }
 
-        var value = versionTokenString.Substring(Prefix.Length, suffixStartIndex - Prefix.Length);
-        var schemaVersion = versionTokenString.Substring(suffixStartIndex + 1); // Extract version part after ']'
+        ReadOnlySpan<char> span = versionTokenString.AsSpan();
+        var value = span.Slice(Prefix.Length, suffixStartIndex - Prefix.Length).ToString();
+        var schemaVersion = span[(suffixStartIndex + 1)..].ToString();
 
         if (string.IsNullOrEmpty(schemaVersion))
         {
@@ -99,8 +100,9 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
             throw new JsonException($"Invalid versionToken format as property name: {versionTokenString}");
         }
 
-        var value = versionTokenString.Substring(Prefix.Length, suffixStartIndex - Prefix.Length);
-        var schemaVersion = versionTokenString.Substring(suffixStartIndex + 1);
+        ReadOnlySpan<char> span = versionTokenString.AsSpan();
+        var value = span.Slice(Prefix.Length, suffixStartIndex - Prefix.Length).ToString();
+        var schemaVersion = span[(suffixStartIndex + 1)..].ToString();
 
         if (string.IsNullOrEmpty(schemaVersion))
         {

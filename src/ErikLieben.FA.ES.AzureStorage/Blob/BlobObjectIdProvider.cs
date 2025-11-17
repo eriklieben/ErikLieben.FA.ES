@@ -177,19 +177,21 @@ public class BlobObjectIdProvider : IObjectIdProvider
     {
         // Expected format: {objectName}/{objectId}.json
         var prefix = $"{objectName}/";
-        if (!blobPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        ReadOnlySpan<char> pathSpan = blobPath.AsSpan();
+
+        if (!pathSpan.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return string.Empty;
         }
 
-        var remainder = blobPath.Substring(prefix.Length);
+        var remainder = pathSpan[prefix.Length..];
 
         // Remove .json extension if present
         if (remainder.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
         {
-            remainder = remainder.Substring(0, remainder.Length - ".json".Length);
+            remainder = remainder[..^5]; // Remove ".json" (5 characters)
         }
 
-        return remainder;
+        return remainder.ToString();
     }
 }

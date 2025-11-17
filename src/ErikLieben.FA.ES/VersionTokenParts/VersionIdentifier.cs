@@ -86,14 +86,26 @@ public record VersionIdentifier : IComparable<VersionIdentifier>, IComparable
     public VersionIdentifier(string versionTokenString)
     {
         ArgumentNullException.ThrowIfNull(versionTokenString);
-        var parts = versionTokenString.Split("__").Where((s) => !string.IsNullOrWhiteSpace(s)).ToArray();
-        if (parts.Length != 2)
+
+        ReadOnlySpan<char> span = versionTokenString.AsSpan().Trim();
+        int separatorIdx = span.IndexOf("__");
+
+        if (separatorIdx == -1)
         {
             throw new ArgumentException(
                 $"IdentifierString must consist out if 2 parts split by __, current token is '{versionTokenString}'");
         }
 
-        StreamIdentifier = parts[0];
-        VersionString = parts[1];
+        ReadOnlySpan<char> firstPart = span[..separatorIdx].Trim();
+        ReadOnlySpan<char> secondPart = span[(separatorIdx + 2)..].Trim();
+
+        if (firstPart.IsEmpty || secondPart.IsEmpty)
+        {
+            throw new ArgumentException(
+                $"IdentifierString must consist out if 2 parts split by __, current token is '{versionTokenString}'");
+        }
+
+        StreamIdentifier = firstPart.ToString();
+        VersionString = secondPart.ToString();
     }
 }

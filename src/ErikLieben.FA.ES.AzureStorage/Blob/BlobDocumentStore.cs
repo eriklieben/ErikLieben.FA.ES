@@ -299,13 +299,12 @@ public async Task<IObjectDocument> GetAsync(
     private static string ComputeSha256Hash(string rawData)
     {
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        StringBuilder builder = new();
-        foreach (byte b in bytes)
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
         {
-            builder.Append(b.ToString("x2"));
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
         }
-
-        return builder.ToString();
+        return new string(chars);
     }
 
     /// <summary>

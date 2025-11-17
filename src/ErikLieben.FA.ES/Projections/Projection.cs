@@ -292,13 +292,12 @@ public abstract class Projection : IProjectionBase
         StringBuilder sb = new();
         Checkpoint!.OrderBy(i => i.Key).ToList().ForEach(i => sb.AppendLine($"{i.Key}|{i.Value}"));
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
-        StringBuilder builder = new();
-        foreach (var t in bytes)
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
         {
-            builder.Append(t.ToString("x2"));
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
         }
-        var checkpointFingerprint = builder.ToString();
-        return checkpointFingerprint;
+        return new string(chars);
     }
 
     /// <summary>
