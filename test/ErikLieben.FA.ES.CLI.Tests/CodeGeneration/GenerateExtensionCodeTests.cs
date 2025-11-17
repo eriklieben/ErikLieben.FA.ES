@@ -460,4 +460,45 @@ public class GenerateExtensionCodeTests
         Assert.DoesNotContain("ITempRepository", code);
         Assert.DoesNotContain("TempRepository", code);
     }
+
+    [Fact]
+    public async Task Generate_includes_aggregate_namespaces_in_using_statements()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates =
+            [
+                new AggregateDefinition
+                {
+                    IdentifierName = "Product",
+                    ObjectName = "product",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain.Aggregates",  // Different namespace from project
+                    IsPartialClass = true,
+                    FileLocations = new List<string> { "Demo\\Domain\\Aggregates\\Product.cs" }
+                }
+            ],
+            InheritedAggregates = new List<InheritedAggregateDefinition>(),
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Aggregate namespace should be included in using statements
+        Assert.Contains("using Demo.App.Domain.Aggregates;", code);
+    }
 }

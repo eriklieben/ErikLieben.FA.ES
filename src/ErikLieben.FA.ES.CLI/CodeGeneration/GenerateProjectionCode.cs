@@ -20,7 +20,8 @@ internal record ProjectionCodeComponents(
     string CheckpointJsonAnnotation,
     string JsonBlobFactoryCode,
     StringBuilder PropertyCode,
-    StringBuilder SerializableCode);
+    StringBuilder SerializableCode,
+    string DeserializationCode);
 
 public class GenerateProjectionCode
 {
@@ -69,7 +70,8 @@ public class GenerateProjectionCode
         var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
-        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings);
+        var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
+        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput);
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings);
@@ -77,9 +79,11 @@ public class GenerateProjectionCode
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
+        var deserializationCode = GenerateDeserializationCode(projection, ctorCode.ToString());
+
         var codeComponents = new ProjectionCodeComponents(
             foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
-            jsonBlobFactoryCode, propertyCode, serializableCode);
+            jsonBlobFactoryCode, propertyCode, serializableCode, deserializationCode);
 
         await AssembleAndWriteCode(projection, usings, codeComponents, path);
     }
@@ -149,8 +153,118 @@ public class GenerateProjectionCode
             newJsonSerializableCode.AppendLine("");
         }
 
+        // Add serialization for projection's own properties
+        foreach (var property in projection.Properties)
+        {
+            AddPropertySerializationAttributes(property, serializableCode, propertyTypes);
+        }
+
         serializableCode.AppendLine($"[JsonSerializable(typeof({projection.Name}))]");
         return (serializableCode, newJsonSerializableCode);
+    }
+
+    private static void AddPropertySerializationAttributes(
+        PropertyDefinition property,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var fullTypeDef = BuildFullTypeDefinition(property);
+
+        // Add the main type
+        if (!processedTypes.Contains(fullTypeDef))
+        {
+            processedTypes.Add(fullTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({fullTypeDef}))]");
+        }
+
+        // If it's a generic collection type, also add the inner type
+        if (property.IsGeneric && property.GenericTypes.Count > 0)
+        {
+            foreach (var genericType in property.GenericTypes)
+            {
+                var genericTypeDef = $"{genericType.Namespace}.{genericType.Name}";
+                if (!processedTypes.Contains(genericTypeDef))
+                {
+                    processedTypes.Add(genericTypeDef);
+                    serializableCode.AppendLine($"[JsonSerializable(typeof({genericTypeDef}))]");
+                }
+
+                // Process nested generic types recursively
+                if (genericType.GenericTypes.Count > 0)
+                {
+                    ProcessNestedGenericType(genericType, serializableCode, processedTypes);
+                }
+
+                // Process SubTypes of the generic type (e.g., TextItem within QuestionItem)
+                foreach (var subType in genericType.SubTypes)
+                {
+                    ProcessSubType(subType, serializableCode, processedTypes);
+                }
+            }
+        }
+
+        // Process SubTypes (nested complex types within the property)
+        foreach (var subType in property.SubTypes)
+        {
+            ProcessSubType(subType, serializableCode, processedTypes);
+        }
+    }
+
+    private static void ProcessNestedGenericType(
+        PropertyGenericTypeDefinition genericType,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var genericTypeDef = BuildGenericTypeDefinition(genericType);
+        if (!processedTypes.Contains(genericTypeDef))
+        {
+            processedTypes.Add(genericTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({genericTypeDef}))]");
+        }
+
+        // Recursively process subtypes
+        foreach (var subType in genericType.SubTypes)
+        {
+            ProcessSubType(subType, serializableCode, processedTypes);
+        }
+    }
+
+    private static void ProcessSubType(
+        PropertyGenericTypeDefinition subType,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var subTypeDef = BuildGenericTypeDefinition(subType);
+        if (!processedTypes.Contains(subTypeDef))
+        {
+            processedTypes.Add(subTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({subTypeDef}))]");
+        }
+
+        // Recursively process nested subtypes
+        foreach (var nestedSubType in subType.SubTypes)
+        {
+            ProcessSubType(nestedSubType, serializableCode, processedTypes);
+        }
+    }
+
+    private static string BuildGenericTypeDefinition(PropertyGenericTypeDefinition type)
+    {
+        var builder = new StringBuilder();
+        builder.Append(type.Namespace).Append('.').Append(type.Name);
+
+        if (type.GenericTypes.Count > 0)
+        {
+            builder.Append('<');
+            for (int i = 0; i < type.GenericTypes.Count; i++)
+            {
+                if (i > 0) builder.Append(", ");
+                builder.Append(BuildGenericTypeDefinition(type.GenericTypes[i]));
+            }
+            builder.Append('>');
+        }
+
+        return builder.ToString();
     }
 
     private static string BuildFullTypeDefinition(PropertyDefinition property)
@@ -249,7 +363,34 @@ public class GenerateProjectionCode
         return typeBuilder.ToString();
     }
 
-    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings)
+    private static (string get, string ctorInput) GenerateConstructorParametersForFactory(ProjectionDefinition projection)
+    {
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+
+        // Find the best constructor (prefer one with most parameters that includes IObjectDocumentFactory and IEventStreamFactory)
+        var specialDependencies = new[] { "IObjectDocumentFactory", "IEventStreamFactory" };
+        var bestMatch = projection.Constructors
+            .Where(ctor => specialDependencies.All(dep => ctor.Parameters.Any(p => p.Type == dep)))
+            .OrderByDescending(ctor => ctor.Parameters.Count)
+            .FirstOrDefault();
+
+        if (bestMatch == null)
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        // Generate DI resolution for parameters that are not IObjectDocumentFactory or IEventStreamFactory
+        foreach (var param in bestMatch.Parameters.Where(p => p.Type != "IObjectDocumentFactory" && p.Type != "IEventStreamFactory"))
+        {
+            getBuilder.AppendLine($"            var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};");
+            ctorInputBuilder.Append($", {param.Name}!");
+        }
+
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
+
+    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
     {
         if (projection.BlobProjection == null)
         {
@@ -260,11 +401,16 @@ public class GenerateProjectionCode
         usings.Add("Microsoft.Extensions.Azure");
         usings.Add("Azure.Storage.Blobs");
 
+        var newMethodBody = string.IsNullOrEmpty(get)
+            ? $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+
         return $$"""
                  public class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
-                     IEventStreamFactory eventStreamFactory)
+                     IEventStreamFactory eventStreamFactory,
+                     IServiceProvider serviceProvider)
                      : BlobProjectionFactory<{{projection.Name}}>(
                          blobServiceClientFactory,
                          "{{projection.BlobProjection.Connection}}",
@@ -274,7 +420,12 @@ public class GenerateProjectionCode
 
                      protected override {{projection.Name}} New()
                      {
-                         return new {{projection.Name}}(objectDocumentFactory, eventStreamFactory);
+                         {{newMethodBody}}
+                     }
+
+                     protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                     {
+                         return {{projection.Name}}.LoadFromJson(json, documentFactory, eventStreamFactory);
                      }
                  }
                 """;
@@ -451,6 +602,125 @@ public class GenerateProjectionCode
         }
     }
 
+    private static string GenerateDeserializationCode(ProjectionDefinition projection, string ctorParams)
+    {
+        var code = new StringBuilder();
+
+        // Generate variable declarations for each property
+        code.AppendLine("// Deserialize each property manually to preserve data");
+
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
+        {
+            var fullTypeDef = BuildFullTypeDefinition(property);
+            code.AppendLine($"                                {fullTypeDef}? {ToCamelCase(property.Name)} = null;");
+        }
+
+        code.AppendLine("                                Checkpoint checkpoint = [];");
+        code.AppendLine();
+        code.AppendLine("                                var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json));");
+        code.AppendLine("                                ");
+        code.AppendLine("                                if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)");
+        code.AppendLine("                                    return null;");
+        code.AppendLine();
+        code.AppendLine("                                while (reader.Read())");
+        code.AppendLine("                                {");
+        code.AppendLine("                                    if (reader.TokenType == JsonTokenType.EndObject)");
+        code.AppendLine("                                        break;");
+        code.AppendLine();
+        code.AppendLine("                                    if (reader.TokenType != JsonTokenType.PropertyName)");
+        code.AppendLine("                                        continue;");
+        code.AppendLine();
+        code.AppendLine("                                    string? propertyName = reader.GetString();");
+        code.AppendLine("                                    reader.Read();");
+        code.AppendLine();
+        code.AppendLine("                                    switch (propertyName)");
+        code.AppendLine("                                    {");
+
+        // Generate case for each property
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories"))
+        {
+            var jsonPropertyName = property.Name == "Checkpoint" ? "$checkpoint" : property.Name;
+            var varName = property.Name == "Checkpoint" ? "checkpoint" : ToCamelCase(property.Name);
+            var fullTypeDef = BuildFullTypeDefinition(property);
+
+            code.AppendLine($"                                        case \"{jsonPropertyName}\":");
+            code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options);");
+            code.AppendLine("                                            break;");
+        }
+
+        code.AppendLine("                                    }");
+        code.AppendLine("                                }");
+        code.AppendLine();
+        code.AppendLine($"                                // Create instance with factories and deserialized properties");
+
+        // Build constructor call with parameters
+        var ctorParamsWithValues = ctorParams;
+        if (ctorParams.Contains("documentFactory, eventStreamFactory"))
+        {
+            // Extract additional parameters beyond the standard factories
+            var extraParams = new List<string>();
+            foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint"))
+            {
+                var varName = ToCamelCase(property.Name);
+                var paramMatch = $", {varName}";
+                if (ctorParams.Contains(paramMatch))
+                {
+                    extraParams.Add($", {varName}");
+                }
+            }
+
+            if (extraParams.Any())
+            {
+                ctorParamsWithValues = "documentFactory, eventStreamFactory" + string.Join("", extraParams.Select(p => $"{p}!"));
+            }
+        }
+
+        code.AppendLine($"                                var instance = new {projection.Name}({ctorParamsWithValues});");
+        code.AppendLine();
+
+        // Generate code to populate each property (skip those that were constructor parameters)
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
+        {
+            var varName = ToCamelCase(property.Name);
+
+            // Skip if this property was passed to constructor
+            if (ctorParams.Contains($", {varName}"))
+                continue;
+
+            if (property.Type == "Dictionary")
+            {
+                code.AppendLine($"                                if ({varName} != null)");
+                code.AppendLine("                                {");
+                code.AppendLine($"                                    foreach (var kvp in {varName})");
+                code.AppendLine("                                    {");
+                code.AppendLine($"                                        instance.{property.Name}[kvp.Key] = kvp.Value;");
+                code.AppendLine("                                    }");
+                code.AppendLine("                                }");
+            }
+            else if (property.Type == "List")
+            {
+                code.AppendLine($"                                if ({varName} != null)");
+                code.AppendLine("                                {");
+                code.AppendLine($"                                    instance.{property.Name}.Clear();");
+                code.AppendLine($"                                    instance.{property.Name}.AddRange({varName});");
+                code.AppendLine("                                }");
+            }
+        }
+
+        code.AppendLine("                                instance.Checkpoint = checkpoint;");
+        code.AppendLine();
+        code.AppendLine("                                return instance;");
+
+        return code.ToString();
+    }
+
+    private static string ToCamelCase(string name)
+    {
+        if (string.IsNullOrEmpty(name) || char.IsLower(name[0]))
+            return name;
+        return char.ToLowerInvariant(name[0]) + name.Substring(1);
+    }
+
     private static async Task AssembleAndWriteCode(
         ProjectionDefinition projection,
         List<string> usings,
@@ -488,11 +758,7 @@ public class GenerateProjectionCode
 
                               public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
                               {
-                                var obj = JsonSerializer.Deserialize(json, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
-                                if (obj is null) {
-                                    return null;
-                                }
-                                return new {{projection.Name}}({{components.CtorCode}});
+                                {{components.DeserializationCode}}
                               }
 
 
@@ -598,7 +864,11 @@ public class GenerateProjectionCode
     {
         foreach (var parameterFactory in @event.WhenParameterValueFactories)
         {
-            var toAdd = $"{{\"{parameterFactory.ForType.Type}\", new {parameterFactory.Type.Type}()}}";
+            // Normalize type name to match what's used in WhenParameterDeclarations
+            // "string" -> "String", "int" -> "Int32", etc.
+            var normalizedTypeName = NormalizeTypeName(parameterFactory.ForType.Type, parameterFactory.ForType.Namespace);
+
+            var toAdd = $"{{\"{normalizedTypeName}\", new {parameterFactory.Type.Type}()}}";
             if (!whenParameterDeclarations.Contains(toAdd))
             {
                 whenParameterDeclarations.Add(toAdd);
@@ -609,6 +879,36 @@ public class GenerateProjectionCode
                 usings.Add(parameterFactory.ForType.Namespace);
             }
         }
+    }
+
+    private static string NormalizeTypeName(string typeName, string typeNamespace)
+    {
+        // Map C# keyword aliases to their CLR type names
+        // This ensures consistent dictionary keys for lookups
+        if (typeNamespace == "System")
+        {
+            return typeName switch
+            {
+                "string" => "String",
+                "int" => "Int32",
+                "long" => "Int64",
+                "short" => "Int16",
+                "byte" => "Byte",
+                "sbyte" => "SByte",
+                "uint" => "UInt32",
+                "ulong" => "UInt64",
+                "ushort" => "UInt16",
+                "bool" => "Boolean",
+                "decimal" => "Decimal",
+                "double" => "Double",
+                "float" => "Single",
+                "char" => "Char",
+                "object" => "Object",
+                _ => typeName
+            };
+        }
+
+        return typeName;
     }
 
     private static Dictionary<string, string> BuildExecutionContextLookups(
@@ -676,7 +976,8 @@ public class GenerateProjectionCode
         List<string> usings)
     {
         usings.Add(parameterDeclaration.Namespace);
-        return $"GetWhenParameterValue<{parameterDeclaration.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{parameterDeclaration.Namespace}.{parameterDeclaration.Type}\",{Environment.NewLine}\t\t\tdocument, @event)!";
+        // The parameterDeclaration.Type already contains the full type name (e.g., "Demo.App.Events.SomeType" or "String")
+        return $"GetWhenParameterValue<{parameterDeclaration.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{parameterDeclaration.Type}\",{Environment.NewLine}\t\t\tdocument, @event)!";
     }
 
     private static void AppendParameterArguments(
