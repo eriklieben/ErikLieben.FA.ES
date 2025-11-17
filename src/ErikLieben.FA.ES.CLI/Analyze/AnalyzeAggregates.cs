@@ -63,6 +63,33 @@ public class AnalyzeAggregates
         var newCommands = CommandHelper.GetCommandMethods(typeSymbol, roslyn)
             .Where(c => declaration.Commands.All(existing => !AreCommandsEqual(existing, c)));
         declaration.Commands.AddRange(newCommands);
+
+        // Merge events from commands into the aggregate's event list (for events without When handlers, like legacy events that get upcasted)
+        foreach (var command in declaration.Commands)
+        {
+            foreach (var commandEvent in command.ProducesEvents)
+            {
+                // Convert CommandEventDefinition to EventDefinition
+                var eventDef = new EventDefinition
+                {
+                    EventName = commandEvent.EventName,
+                    TypeName = commandEvent.TypeName,
+                    Namespace = commandEvent.Namespace,
+                    File = commandEvent.File,
+                    ActivationType = "Command", // Mark as coming from a command, not a When method
+                    ActivationAwaitRequired = false, // Event registration doesn't require await
+                    Parameters = new List<ParameterDefinition>(), // Commands don't have When parameters
+                    Properties = new List<PropertyDefinition>() // Will be populated from event type
+                };
+
+                // Only add if not already in the events list
+                if (declaration.Events.All(existing => !AreEventsEqual(existing, eventDef)))
+                {
+                    declaration.Events.Add(eventDef);
+                }
+            }
+        }
+
         if (declaration.PostWhen == null)
         {
             declaration.PostWhen = PostWhenHelper.GetPostWhenMethod(typeSymbol);

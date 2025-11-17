@@ -245,6 +245,79 @@ namespace App.Domain { public partial class A(ErikLieben.FA.ES.IEventStream s) :
             var agg = aggregates.First();
             Assert.Single(agg.Events);
         }
+
+        [Fact]
+        public void Should_merge_command_events_without_when_handlers_into_events_list()
+        {
+            // Arrange: Aggregate with a command that appends an event, but NO When handler for that event
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { }
+  public interface ILeasedSession { Task Append(object evt); }
+  public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors {
+  public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream stream){ Stream = stream; }
+    protected ErikLieben.FA.ES.IEventStream Stream { get; }
+  }
+}
+namespace ErikLieben.FA.ES { public interface IEventStream { System.Threading.Tasks.Task Session(System.Func<ILeasedSession, System.Threading.Tasks.Task> f); } }
+namespace App.Domain {
+  public partial class Project(ErikLieben.FA.ES.IEventStream stream) : ErikLieben.FA.ES.Processors.Aggregate(stream)
+  {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+    // Obsolete command that appends legacy event
+    [System.Obsolete(""Use CompleteProjectSuccessfully instead"")]
+    public System.Threading.Tasks.Task CompleteProject() {
+      return Stream.Session(ctx => { return ctx.Append(new ProjectCompleted()); });
+    }
+    // New command with When handler
+    public System.Threading.Tasks.Task CompleteProjectSuccessfully() {
+      return Stream.Session(ctx => { return ctx.Append(new ProjectCompletedSuccessfully()); });
+    }
+    // When handler ONLY for new event
+    public void When(ProjectCompletedSuccessfully e) { }
+  }
+  public record ProjectCompleted();  // Legacy event, no When handler
+  public record ProjectCompletedSuccessfully();  // New event, has When handler
+}
+";
+            var (classSymbol, classDeclaration, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Project.cs"));
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.Equal(2, agg.Events.Count);
+
+            // Both events should be in the events list
+            var legacyEvent = agg.Events.FirstOrDefault(e => e.TypeName == "ProjectCompleted");
+            Assert.NotNull(legacyEvent);
+            Assert.Equal("Command", legacyEvent!.ActivationType); // Comes from command, not When
+
+            var newEvent = agg.Events.FirstOrDefault(e => e.TypeName == "ProjectCompletedSuccessfully");
+            Assert.NotNull(newEvent);
+            Assert.Equal("When", newEvent.ActivationType); // Has When handler
+
+            // Both commands should be detected
+            Assert.Equal(2, agg.Commands.Count);
+            var legacyCommand = agg.Commands.FirstOrDefault(c => c.CommandName == "CompleteProject");
+            Assert.NotNull(legacyCommand);
+            Assert.Single(legacyCommand!.ProducesEvents);
+            Assert.Equal("ProjectCompleted", legacyCommand.ProducesEvents.First().TypeName);
+
+            var newCommand = agg.Commands.FirstOrDefault(c => c.CommandName == "CompleteProjectSuccessfully");
+            Assert.NotNull(newCommand);
+            Assert.Single(newCommand!.ProducesEvents);
+            Assert.Equal("ProjectCompletedSuccessfully", newCommand.ProducesEvents.First().TypeName);
+        }
     }
 
     private static (INamedTypeSymbol?, ClassDeclarationSyntax?, SemanticModel, CSharpCompilation?) GetFromCode(

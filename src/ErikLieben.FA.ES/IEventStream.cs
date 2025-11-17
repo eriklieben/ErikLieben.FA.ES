@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.Notifications;
 using ErikLieben.FA.ES.Processors;
 using System.Text.Json.Serialization.Metadata;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Upcasting;
 
 namespace ErikLieben.FA.ES;
 
@@ -69,6 +70,9 @@ public interface IEventStream
     /// </summary>
     /// <param name="action">The post-read action to register.</param>
     void RegisterPostReadAction(IPostReadAction action);
+
+
+    void RegisterUpcaster(IEventUpcaster upcaster);
 
     /// <summary>
     /// Reads events from the stream within the specified range.

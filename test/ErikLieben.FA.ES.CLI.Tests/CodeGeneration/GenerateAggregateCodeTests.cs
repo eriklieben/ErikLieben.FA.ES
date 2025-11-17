@@ -1095,4 +1095,197 @@ public class GenerateAggregateCodeTests
         // Repository GetByIdAsync should delegate to factory with upToVersion
         Assert.Contains("return await reviewFactory.GetAsync(id, upToVersion);", code);
     }
+
+    [Fact]
+    public void GenerateFoldCode_skips_command_events_without_when_handlers()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = new List<EventDefinition>
+            {
+                new()
+                {
+                    TypeName = "LegacyEventCompleted",
+                    Namespace = "Test.Events",
+                    EventName = "Legacy.Completed",
+                    ActivationType = "Command", // From command, no When handler
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition>()
+                },
+                new()
+                {
+                    TypeName = "UserCreated",
+                    Namespace = "Test.Events",
+                    EventName = "User.Created",
+                    ActivationType = "When", // Has When handler
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition> { new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" } }
+                }
+            }
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+
+        // Should include the When event
+        Assert.Contains("case \"User.Created\":", code);
+        Assert.Contains("UserCreated", code);
+
+        // Should NOT include the Command event
+        Assert.DoesNotContain("case \"Legacy.Completed\":", code);
+        Assert.DoesNotContain("LegacyEventCompleted", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_registers_command_events_without_when_handlers()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "TestAggregate",
+            ObjectName = "TestAggregate",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = new List<EventDefinition>
+            {
+                new()
+                {
+                    TypeName = "ProjectCompleted",
+                    EventName = "Project.Completed",
+                    Namespace = "Test.Events",
+                    ActivationType = "Command", // From obsolete command, no When handler
+                    ActivationAwaitRequired = false,
+                    File = ""
+                },
+                new()
+                {
+                    TypeName = "ProjectCompletedSuccessfully",
+                    EventName = "Project.CompletedSuccessfully",
+                    Namespace = "Test.Events",
+                    ActivationType = "When", // Has When handler
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            }
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+
+        // Both events should be registered, regardless of ActivationType
+        Assert.Contains("Stream.RegisterEvent<ProjectCompleted>", code);
+        Assert.Contains("\"Project.Completed\"", code);
+        Assert.Contains("ProjectCompletedJsonSerializerContext.Default.ProjectCompleted", code);
+
+        Assert.Contains("Stream.RegisterEvent<ProjectCompletedSuccessfully>", code);
+        Assert.Contains("\"Project.CompletedSuccessfully\"", code);
+        Assert.Contains("ProjectCompletedSuccessfullyJsonSerializerContext.Default.ProjectCompletedSuccessfully", code);
+    }
+
+    [Fact]
+    public async Task Generate_registers_command_events_but_skips_fold_cases()
+    {
+        // Arrange - Simulating an aggregate with a legacy event (from command) and a new event (with When)
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Account",
+            ObjectName = "Account",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters = [new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Status", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>
+            {
+                // Legacy event from deprecated command - should be registered but NOT have Fold case
+                new()
+                {
+                    TypeName = "AccountClosed",
+                    Namespace = "Demo.App.Events",
+                    EventName = "Account.Closed",
+                    ActivationType = "Command",
+                    ActivationAwaitRequired = false,
+                    Properties = new List<PropertyDefinition>()
+                },
+                // New event with When handler - should be registered AND have Fold case
+                new()
+                {
+                    TypeName = "AccountClosedSuccessfully",
+                    Namespace = "Demo.App.Events",
+                    EventName = "Account.ClosedSuccessfully",
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    Properties = new List<PropertyDefinition>(),
+                    Parameters = new List<ParameterDefinition>
+                    {
+                        new() { Name = "e", Type = "AccountClosedSuccessfully", Namespace = "Demo.App.Events" }
+                    }
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Account.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // BOTH events should be registered in GeneratedSetup
+        Assert.Contains("Stream.RegisterEvent<AccountClosed>(", code);
+        Assert.Contains("\"Account.Closed\"", code);
+        Assert.Contains("AccountClosedJsonSerializerContext.Default.AccountClosed", code);
+
+        Assert.Contains("Stream.RegisterEvent<AccountClosedSuccessfully>(", code);
+        Assert.Contains("\"Account.ClosedSuccessfully\"", code);
+        Assert.Contains("AccountClosedSuccessfullyJsonSerializerContext.Default.AccountClosedSuccessfully", code);
+
+        // Only the When event should have a Fold case
+        Assert.Contains("case \"Account.ClosedSuccessfully\":", code);
+        Assert.Contains("When(JsonEvent.To(@event, AccountClosedSuccessfullyJsonSerializerContext.Default.AccountClosedSuccessfully));", code);
+
+        // The Command event should NOT have a Fold case
+        Assert.DoesNotContain("case \"Account.Closed\":", code);
+    }
 }

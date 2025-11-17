@@ -485,14 +485,16 @@ public class GenerateAggregateCode
                              {
                                  var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
 
-                                 // Create event stream to read events
+                                 // Create event stream
                                  var eventStream = eventStreamFactory.Create(document);
 
-                                 // Read events up to version (null = all events)
+                                 // Create aggregate FIRST to register upcasters and event handlers
+                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
+
+                                 // Read events up to version WITH upcasting applied
                                  var events = await eventStream.ReadAsync(0, upToVersion);
 
-                                 // Create aggregate and fold events
-                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
+                                 // Fold events into the aggregate
                                  foreach (var e in events)
                                  {
                                      obj.Fold(e);
