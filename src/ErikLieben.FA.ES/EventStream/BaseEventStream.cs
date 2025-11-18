@@ -50,7 +50,7 @@ public abstract class BaseEventStream : IEventStream
     /// <summary>
     /// Gets the registered upcasters for event migration.
     /// </summary>
-    protected readonly List<IEventUpcaster> UpCasters = [];
+    protected readonly List<IUpcastEvent> UpCasters = [];
 
     /// <summary>
     /// Gets or sets the JSON type information for snapshot serialization.
@@ -146,7 +146,7 @@ public abstract class BaseEventStream : IEventStream
         return events;
     }
 
-    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IEventUpcaster upcast)
+    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IUpcastEvent upcast)
     {
         if (@event == null) {
             return;
@@ -247,14 +247,16 @@ public abstract class BaseEventStream : IEventStream
     }
 
     /// <summary>
-    /// Registers an upcaster for migrating events from old versions to new versions.
+    /// Registers an event upcast for migrating legacy event schemas to current versions.
+    /// Upcasts transform old event formats into new ones during event stream replay,
+    /// enabling backward compatibility and schema evolution.
     /// </summary>
-    /// <param name="upcaster">The upcaster to register.</param>
-    /// <exception cref="ArgumentNullException">Thrown when upcaster is null.</exception>
-    public void RegisterUpcaster(IEventUpcaster upcaster)
+    /// <param name="upcast">The event upcast to register.</param>
+    /// <exception cref="ArgumentNullException">Thrown when upcast is null.</exception>
+    public void RegisterUpcast(IUpcastEvent upcast)
     {
-        ArgumentNullException.ThrowIfNull(upcaster);
-        UpCasters.Add(upcaster);
+        ArgumentNullException.ThrowIfNull(upcast);
+        UpCasters.Add(upcast);
     }
 
     /// <summary>

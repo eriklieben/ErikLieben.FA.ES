@@ -72,7 +72,13 @@ public interface IEventStream
     void RegisterPostReadAction(IPostReadAction action);
 
 
-    void RegisterUpcaster(IEventUpcaster upcaster);
+    /// <summary>
+    /// Registers an event upcast for migrating legacy event schemas to current versions.
+    /// Upcasts transform old event formats into new ones during event stream replay,
+    /// enabling backward compatibility and schema evolution.
+    /// </summary>
+    /// <param name="upcast">The event upcast to register.</param>
+    void RegisterUpcast(IUpcastEvent upcast);
 
     /// <summary>
     /// Reads events from the stream within the specified range.
