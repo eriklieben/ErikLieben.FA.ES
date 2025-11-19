@@ -103,6 +103,9 @@ public class AnalyzeAggregates
         declaration.EventStreamBlobSettingsAttribute = AttributeExtractor.ExtractEventStreamBlobSettingsAttribute(classSymbol);
 
         AppendIdentifierTypeFromMetadata(declaration);
+
+        // Detect if user has defined their own partial factory
+        declaration.HasUserDefinedFactoryPartial = DetectUserDefinedFactoryPartial(declaration);
     }
 
 
@@ -203,5 +206,34 @@ public class AnalyzeAggregates
         }
         aggregate.IdentifierType = genericType.Name;
         aggregate.IdentifierTypeNamespace = genericType.Namespace;
+    }
+
+    private bool DetectUserDefinedFactoryPartial(AggregateDefinition aggregate)
+    {
+        var factoryName = $"{aggregate.IdentifierName}Factory";
+
+        // Search for all types with the factory name in the compilation
+        var factoryTypes = compilation.GetSymbolsWithName(factoryName, SymbolFilter.Type)
+            .OfType<INamedTypeSymbol>()
+            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+
+        foreach (var factoryType in factoryTypes)
+        {
+            // Check if any of the partial declarations are in non-generated files
+            var hasUserDefinedPartial = factoryType.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedPartial)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial factory for {aggregate.IdentifierName}");
+                return true;
+            }
+        }
+
+        return false;
     }
 }

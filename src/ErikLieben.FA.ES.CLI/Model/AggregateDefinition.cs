@@ -29,6 +29,12 @@ public record AggregateDefinition
     public bool IsPartialClass { get; init; }
 
     /// <summary>
+    /// Indicates whether the user has defined their own partial factory class.
+    /// When true, generated CreateAsync methods will be protected instead of public.
+    /// </summary>
+    public bool HasUserDefinedFactoryPartial { get; set; }
+
+    /// <summary>
     /// Settings extracted from [EventStreamType] attribute if present.
     /// </summary>
     public EventStreamTypeAttributeData? EventStreamTypeAttribute { get; set; }

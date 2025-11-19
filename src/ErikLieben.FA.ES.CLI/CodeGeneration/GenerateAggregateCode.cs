@@ -460,6 +460,7 @@ public class GenerateAggregateCode
                             }
 
 
+                             {{(aggregate.HasUserDefinedFactoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
                                  var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});

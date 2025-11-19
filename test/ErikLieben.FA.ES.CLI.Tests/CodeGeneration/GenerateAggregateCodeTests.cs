@@ -984,10 +984,10 @@ public class GenerateAggregateCodeTests
         Assert.Contains("foreach (var e in events)", code);
         Assert.Contains("obj.Fold(e);", code);
 
-        // Comment should indicate this creates event stream to read events
-        Assert.Contains("// Create event stream to read events", code);
-        Assert.Contains("// Read events up to version (null = all events)", code);
-        Assert.Contains("// Create aggregate and fold events", code);
+        // Comment should indicate this creates event stream and folds events
+        Assert.Contains("// Create event stream", code);
+        Assert.Contains("// Read events up to version WITH upcasting applied", code);
+        Assert.Contains("// Fold events into the aggregate", code);
     }
 
     [Fact]
@@ -1287,5 +1287,126 @@ public class GenerateAggregateCodeTests
 
         // The Command event should NOT have a Fold case
         Assert.DoesNotContain("case \"Account.Closed\":", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_EditorBrowsable_attribute_when_user_defined_factory_partial_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "WorkItem",
+            ObjectName = "workitem",
+            IdentifierType = "WorkItemId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedFactoryPartial = true, // User has defined their own partial factory
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>(),
+            FileLocations = new List<string> { "Demo\\Domain\\WorkItem.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "WorkItem.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should contain EditorBrowsable attribute before CreateAsync method
+        Assert.Contains("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+        Assert.Contains("public async Task<WorkItem> CreateAsync(WorkItemId id)", code);
+
+        // Verify the attribute appears right before the CreateAsync method
+        var editorBrowsableIndex = code.IndexOf("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]");
+        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id)");
+        Assert.True(editorBrowsableIndex < createAsyncIndex, "EditorBrowsable attribute should appear before CreateAsync method");
+    }
+
+    [Fact]
+    public async Task Generate_does_not_add_EditorBrowsable_attribute_when_no_user_defined_factory_partial()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Project",
+            ObjectName = "project",
+            IdentifierType = "ProjectId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedFactoryPartial = false, // No user-defined factory partial
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>(),
+            FileLocations = new List<string> { "Demo\\Domain\\Project.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Project.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should NOT contain EditorBrowsable attribute
+        Assert.DoesNotContain("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+
+        // But should still have the public CreateAsync method
+        Assert.Contains("public async Task<Project> CreateAsync(ProjectId id)", code);
     }
 }
