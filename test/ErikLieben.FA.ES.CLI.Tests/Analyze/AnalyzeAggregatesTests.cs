@@ -318,6 +318,158 @@ namespace App.Domain {
             Assert.Single(newCommand!.ProducesEvents);
             Assert.Equal("ProjectCompletedSuccessfully", newCommand.ProducesEvents.First().TypeName);
         }
+
+        [Fact]
+        public void Should_detect_user_defined_factory_partial()
+        {
+            // Arrange: Aggregate with a user-defined partial factory class
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ } } }
+namespace App.Domain {
+  public partial class UserProfile(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+  // User-defined partial factory in same namespace
+  public partial class UserProfileFactory {
+    public async Task<UserProfile> CreateWithEmailAsync(string email) { return null; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "UserProfile.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UserProfile");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.True(agg.HasUserDefinedFactoryPartial, "Should detect user-defined partial factory");
+        }
+
+        [Fact]
+        public void Should_not_detect_factory_partial_when_only_generated_exists()
+        {
+            // Arrange: Aggregate WITHOUT user-defined factory partial
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ Stream = s; } protected ErikLieben.FA.ES.IEventStream Stream { get; } } }
+namespace App.Domain {
+  public partial class Product(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.cs")),
+                // Simulate generated factory file
+                SyntaxFactory.ParseSyntaxTree("namespace App.Domain { public partial class ProductFactory { } }", new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.Generated.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Product");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.False(agg.HasUserDefinedFactoryPartial, "Should NOT detect factory partial when only generated file exists");
+        }
+
+        [Fact]
+        public void Should_detect_user_defined_repository_partial()
+        {
+            // Arrange: Aggregate with a user-defined partial repository class
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ } } }
+namespace App.Domain {
+  public partial class UserProfile(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+  // User-defined partial repository in same namespace
+  public partial class UserProfileRepository {
+    public async Task<UserProfile> GetByEmailAsync(string email) { return null; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "UserProfile.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UserProfile");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.True(agg.HasUserDefinedRepositoryPartial, "Should detect user-defined partial repository");
+        }
+
+        [Fact]
+        public void Should_not_detect_repository_partial_when_only_generated_exists()
+        {
+            // Arrange: Aggregate WITHOUT user-defined repository partial
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ Stream = s; } protected ErikLieben.FA.ES.IEventStream Stream { get; } } }
+namespace App.Domain {
+  public partial class Product(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.cs")),
+                // Simulate generated repository file
+                SyntaxFactory.ParseSyntaxTree("namespace App.Domain { public partial class ProductRepository { } }", new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.Generated.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Product");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.False(agg.HasUserDefinedRepositoryPartial, "Should NOT detect repository partial when only generated file exists");
+        }
     }
 
     private static (INamedTypeSymbol?, ClassDeclarationSyntax?, SemanticModel, CSharpCompilation?) GetFromCode(

@@ -35,6 +35,12 @@ public record AggregateDefinition
     public bool HasUserDefinedFactoryPartial { get; set; }
 
     /// <summary>
+    /// Indicates whether the user has defined their own partial repository class.
+    /// When true, generated repository methods will be hidden from IntelliSense.
+    /// </summary>
+    public bool HasUserDefinedRepositoryPartial { get; set; }
+
+    /// <summary>
     /// Settings extracted from [EventStreamType] attribute if present.
     /// </summary>
     public EventStreamTypeAttributeData? EventStreamTypeAttribute { get; set; }

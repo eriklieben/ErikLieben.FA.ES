@@ -621,6 +621,7 @@ public class GenerateAggregateCode
                                   this.objectIdProvider = objectIdProvider;
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<PagedResult<string>> GetObjectIdsAsync(
                                   string? continuationToken = null,
                                   int pageSize = 100,
@@ -636,6 +637,7 @@ public class GenerateAggregateCode
                                       cancellationToken);
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<{{aggregate.IdentifierName}}?> GetByIdAsync(
                                   {{aggregate.IdentifierType}} id,
                                   int? upToVersion = null,
@@ -651,6 +653,7 @@ public class GenerateAggregateCode
                                   }
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<({{aggregate.IdentifierName}}?, IObjectDocument?)> GetByIdWithDocumentAsync(
                                   {{aggregate.IdentifierType}} id,
                                   CancellationToken cancellationToken = default)
@@ -668,6 +671,7 @@ public class GenerateAggregateCode
                                   }
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTagAsync(
                                   string tag,
                                   CancellationToken cancellationToken = default)
@@ -685,6 +689,7 @@ public class GenerateAggregateCode
                                   return obj;
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTagAsync(
                                   string tag,
                                   CancellationToken cancellationToken = default)
@@ -704,6 +709,7 @@ public class GenerateAggregateCode
                                   return items;
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<bool> ExistsAsync(
                                   {{aggregate.IdentifierType}} id,
                                   CancellationToken cancellationToken = default)
@@ -714,6 +720,7 @@ public class GenerateAggregateCode
                                       cancellationToken);
                               }
 
+                              {{(aggregate.HasUserDefinedRepositoryPartial ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]" : "")}}
                               public async Task<long> CountAsync(CancellationToken cancellationToken = default)
                               {
                                   return await objectIdProvider.CountAsync(ObjectName, cancellationToken);

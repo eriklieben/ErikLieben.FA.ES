@@ -106,6 +106,9 @@ public class AnalyzeAggregates
 
         // Detect if user has defined their own partial factory
         declaration.HasUserDefinedFactoryPartial = DetectUserDefinedFactoryPartial(declaration);
+
+        // Detect if user has defined their own partial repository
+        declaration.HasUserDefinedRepositoryPartial = DetectUserDefinedRepositoryPartial(declaration);
     }
 
 
@@ -230,6 +233,35 @@ public class AnalyzeAggregates
             if (hasUserDefinedPartial)
             {
                 AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial factory for {aggregate.IdentifierName}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool DetectUserDefinedRepositoryPartial(AggregateDefinition aggregate)
+    {
+        var repositoryName = $"{aggregate.IdentifierName}Repository";
+
+        // Search for all types with the repository name in the compilation
+        var repositoryTypes = compilation.GetSymbolsWithName(repositoryName, SymbolFilter.Type)
+            .OfType<INamedTypeSymbol>()
+            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+
+        foreach (var repositoryType in repositoryTypes)
+        {
+            // Check if any of the partial declarations are in non-generated files
+            var hasUserDefinedPartial = repositoryType.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedPartial)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial repository for {aggregate.IdentifierName}");
                 return true;
             }
         }

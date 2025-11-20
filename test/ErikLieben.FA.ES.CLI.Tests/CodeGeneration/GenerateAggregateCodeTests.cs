@@ -1409,4 +1409,132 @@ public class GenerateAggregateCodeTests
         // But should still have the public CreateAsync method
         Assert.Contains("public async Task<Project> CreateAsync(ProjectId id)", code);
     }
+
+    [Fact]
+    public async Task Generate_adds_EditorBrowsable_attribute_to_repository_methods_when_user_defined_repository_partial_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "UserProfile",
+            ObjectName = "userprofile",
+            IdentifierType = "UserProfileId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedRepositoryPartial = true, // User has defined their own partial repository
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Email", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>(),
+            FileLocations = new List<string> { "Demo\\Domain\\UserProfile.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "UserProfile.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should contain EditorBrowsable attribute before repository methods
+        Assert.Contains("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+
+        // Verify repository methods are generated
+        Assert.Contains("public async Task<UserProfile?> GetByIdAsync(", code);
+        Assert.Contains("public async Task<UserProfile?> GetFirstByDocumentTagAsync(", code);
+
+        // Verify EditorBrowsable appears before repository methods
+        // Count the occurrences - there should be one for each repository method (7 total)
+        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Matches(code,
+            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
+        Assert.True(editorBrowsableCount >= 7, $"Should have at least 7 EditorBrowsable attributes for repository methods, found {editorBrowsableCount}");
+    }
+
+    [Fact]
+    public async Task Generate_does_not_add_EditorBrowsable_attribute_to_repository_when_no_user_defined_repository_partial()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "ProductId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedRepositoryPartial = false, // No user-defined repository partial
+            HasUserDefinedFactoryPartial = false, // No user-defined factory partial either
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>(),
+            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Product.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository methods should exist without EditorBrowsable
+        Assert.Contains("public async Task<Product?> GetByIdAsync(", code);
+
+        // EditorBrowsable should not appear at all since no partials exist
+        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Matches(code,
+            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
+        Assert.Equal(0, editorBrowsableCount);
+    }
 }
