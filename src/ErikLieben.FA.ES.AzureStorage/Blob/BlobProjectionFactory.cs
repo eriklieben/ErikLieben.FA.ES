@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.Projections;
 using Microsoft.Extensions.Azure;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Text.Json;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
@@ -110,6 +111,16 @@ public abstract class BlobProjectionFactory<T> where T : Projection
             var projection = LoadFromJson(json, documentFactory, eventStreamFactory);
             if (projection != null)
             {
+                // If external checkpoint is enabled, load it separately using the CheckpointFingerprint
+                if (HasExternalCheckpoint && !string.IsNullOrEmpty(projection.CheckpointFingerprint))
+                {
+                    var checkpoint = await LoadCheckpointAsync(projection.CheckpointFingerprint, cancellationToken);
+                    if (checkpoint != null)
+                    {
+                        projection.Checkpoint = checkpoint;
+                    }
+                }
+
                 return projection;
             }
         }
@@ -142,6 +153,12 @@ public abstract class BlobProjectionFactory<T> where T : Projection
             new BinaryData(bytes),
             overwrite: true,
             cancellationToken);
+
+        // If external checkpoint is enabled, save it separately
+        if (HasExternalCheckpoint)
+        {
+            await SaveCheckpointAsync(projection, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -201,5 +218,67 @@ public abstract class BlobProjectionFactory<T> where T : Projection
 
         var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
         return properties.Value.LastModified;
+    }
+
+    /// <summary>
+    /// Saves a checkpoint to external blob storage using the projection's CheckpointFingerprint.
+    /// </summary>
+    /// <param name="projection">The projection containing the checkpoint to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    protected virtual async Task SaveCheckpointAsync(
+        T projection,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(projection.CheckpointFingerprint))
+        {
+            throw new InvalidOperationException("CheckpointFingerprint must be set before saving external checkpoint.");
+        }
+
+        var checkpointBlobName = $"checkpoints/{typeof(T).Name}/{projection.CheckpointFingerprint}.json";
+
+        var containerClient = await GetContainerClientAsync();
+        var blobClient = containerClient.GetBlobClient(checkpointBlobName);
+
+        // Only save if it doesn't already exist (checkpoints are immutable)
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            var json = JsonSerializer.Serialize(projection.Checkpoint);
+            var bytes = Encoding.UTF8.GetBytes(json);
+
+            await blobClient.UploadAsync(
+                new BinaryData(bytes),
+                overwrite: false,
+                cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Loads a checkpoint from external blob storage using the projection's CheckpointFingerprint.
+    /// </summary>
+    /// <param name="checkpointFingerprint">The checkpoint fingerprint to load.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The checkpoint, or null if it doesn't exist.</returns>
+    protected virtual async Task<Checkpoint?> LoadCheckpointAsync(
+        string checkpointFingerprint,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(checkpointFingerprint))
+        {
+            return null;
+        }
+
+        var checkpointBlobName = $"checkpoints/{typeof(T).Name}/{checkpointFingerprint}.json";
+        var containerClient = await GetContainerClientAsync();
+        var blobClient = containerClient.GetBlobClient(checkpointBlobName);
+
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
+        var json = downloadResult.Value.Content.ToString();
+
+        return JsonSerializer.Deserialize<Checkpoint>(json);
     }
 }
