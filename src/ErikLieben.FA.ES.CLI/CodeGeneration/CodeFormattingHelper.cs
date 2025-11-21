@@ -5,11 +5,30 @@ using Microsoft.CodeAnalysis.Formatting;
 
 namespace ErikLieben.FA.ES.CLI.CodeGeneration;
 
+/// <summary>
+/// Provides code formatting utilities with Roslyn-based formatting and intelligent unused using directive removal.
+/// </summary>
 public static class CodeFormattingHelper
 {
     private static List<MetadataReference>? _cachedReferences;
     private static readonly object _lock = new object();
 
+    /// <summary>
+    /// Formats C# code using Roslyn formatting and removes unused using directives when the semantic model is complete.
+    /// </summary>
+    /// <param name="code">The C# code to format.</param>
+    /// <param name="projectDirectory">Optional project directory path for loading source files and NuGet packages to improve type resolution.</param>
+    /// <param name="cancelToken">Cancellation token for the operation.</param>
+    /// <returns>The formatted C# code with unused usings removed when possible.</returns>
+    /// <remarks>
+    /// This method performs the following operations:
+    /// 1. Formats the code using Roslyn's Formatter
+    /// 2. Loads metadata references from loaded assemblies, bin folder, and NuGet packages
+    /// 3. Includes all project source files in the compilation for complete type information
+    /// 4. Removes unused using directives only when all symbols can be resolved
+    /// 5. Removes consecutive empty lines
+    /// 6. Removes empty lines before closing braces
+    /// </remarks>
     public static string FormatCode(string code, string? projectDirectory = null, CancellationToken cancelToken = default)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
@@ -68,6 +87,12 @@ public static class CodeFormattingHelper
         return formattedCode;
     }
 
+    /// <summary>
+    /// Gets metadata references for Roslyn compilation, including loaded assemblies, bin folder DLLs, and NuGet packages.
+    /// Results are cached for performance across multiple calls.
+    /// </summary>
+    /// <param name="projectDirectory">Optional project directory for loading project-specific NuGet packages.</param>
+    /// <returns>List of metadata references for Roslyn compilation.</returns>
     private static List<MetadataReference> GetMetadataReferences(string? projectDirectory = null)
     {
         if (_cachedReferences != null)
@@ -123,6 +148,13 @@ public static class CodeFormattingHelper
         }
     }
 
+    /// <summary>
+    /// Loads NuGet package assemblies referenced by the project from the global NuGet cache.
+    /// Reads package information from the project's project.assets.json file.
+    /// </summary>
+    /// <param name="projectDirectory">The project directory containing the obj/project.assets.json file.</param>
+    /// <param name="references">List to add metadata references to.</param>
+    /// <param name="addedLocations">Set tracking already-added assembly locations to avoid duplicates.</param>
     private static void LoadNuGetPackagesFromProject(string? projectDirectory, List<MetadataReference> references, HashSet<string> addedLocations)
     {
         if (string.IsNullOrEmpty(projectDirectory) || !Directory.Exists(projectDirectory))
@@ -184,6 +216,12 @@ public static class CodeFormattingHelper
         }
     }
 
+    /// <summary>
+    /// Loads assemblies from a specific NuGet package version directory, selecting the most appropriate target framework.
+    /// </summary>
+    /// <param name="packageVersionDir">The NuGet package version directory path.</param>
+    /// <param name="references">List to add metadata references to.</param>
+    /// <param name="addedLocations">Set tracking already-added assembly locations to avoid duplicates.</param>
     private static void LoadPackageAssemblies(string packageVersionDir, List<MetadataReference> references, HashSet<string> addedLocations)
     {
         var libDir = Path.Combine(packageVersionDir, "lib");
@@ -219,6 +257,13 @@ public static class CodeFormattingHelper
         }
     }
 
+    /// <summary>
+    /// Attempts to add a metadata reference from the specified assembly location.
+    /// Silently skips assemblies that fail to load or are duplicates.
+    /// </summary>
+    /// <param name="location">The file path of the assembly.</param>
+    /// <param name="references">List to add the metadata reference to.</param>
+    /// <param name="addedLocations">Set tracking already-added assembly locations to prevent duplicates.</param>
     private static void TryAddReference(string location, List<MetadataReference> references, HashSet<string> addedLocations)
     {
         if (string.IsNullOrEmpty(location) || !addedLocations.Add(location))
@@ -234,6 +279,15 @@ public static class CodeFormattingHelper
         }
     }
 
+    /// <summary>
+    /// Determines if a using directive is actually used in the code by checking if any symbols from its namespace are referenced.
+    /// If any symbols in the file cannot be resolved, all using directives are kept to avoid removing needed ones.
+    /// </summary>
+    /// <param name="semanticModel">The semantic model for symbol resolution.</param>
+    /// <param name="root">The syntax tree root node.</param>
+    /// <param name="usingDirective">The using directive to check.</param>
+    /// <param name="cancelToken">Cancellation token.</param>
+    /// <returns>True if the using directive should be kept, false if it can be safely removed.</returns>
     private static bool IsUsingDirectiveUsed(SemanticModel semanticModel, SyntaxNode root, UsingDirectiveSyntax usingDirective, CancellationToken cancelToken)
     {
         var namespaceName = usingDirective.Name?.ToString();
@@ -298,6 +352,14 @@ public static class CodeFormattingHelper
         return false;
     }
 
+    /// <summary>
+    /// Checks if there are any unresolved symbols in the syntax tree.
+    /// Unresolved symbols indicate the semantic model is incomplete (missing assemblies, types from same project not yet compiled, etc.).
+    /// </summary>
+    /// <param name="semanticModel">The semantic model for symbol resolution.</param>
+    /// <param name="root">The syntax tree root node.</param>
+    /// <param name="cancelToken">Cancellation token.</param>
+    /// <returns>True if any symbols cannot be resolved, false if all symbols are resolved.</returns>
     private static bool HasUnresolvedSymbols(SemanticModel semanticModel, SyntaxNode root, CancellationToken cancelToken)
     {
         // Check identifiers
@@ -336,6 +398,11 @@ public static class CodeFormattingHelper
         return false;
     }
 
+    /// <summary>
+    /// Finds the project directory by walking up the directory tree from a file path until a .csproj file is found.
+    /// </summary>
+    /// <param name="filePath">The starting file path.</param>
+    /// <returns>The project directory path containing a .csproj file, or null if not found.</returns>
     public static string? FindProjectDirectory(string filePath)
     {
         var directory = Path.GetDirectoryName(filePath);
