@@ -94,6 +94,8 @@ public class GenerateProjectionCodeTests
         var code = await File.ReadAllTextAsync(generatedPath);
 
         // AAA Assert blocks verifying key pieces
+        // - pragma warning to suppress unnecessary using directives
+        Assert.Contains("#pragma warning disable IDE0005", code);
         // - fold switch with event case and When invocation
         Assert.Contains("switch (@event.EventType)", code);
         Assert.Contains("case \"FeatureFlag.Enabled\":", code);
@@ -458,8 +460,8 @@ public class GenerateProjectionCodeTests
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
 
-        // Factory constructor should still include IServiceProvider for consistency
-        Assert.Contains("IServiceProvider serviceProvider", code);
+        // Factory constructor should NOT include IServiceProvider when there are no custom dependencies
+        Assert.DoesNotContain("IServiceProvider serviceProvider", code);
 
         // New() method should NOT have any DI resolution code (no var statements)
         Assert.DoesNotContain("var ", code.Split("protected override SimpleProjection New()")[1].Split("return new SimpleProjection")[0]);
@@ -728,5 +730,55 @@ public class GenerateProjectionCodeTests
 
         // Should still have the static LoadFromJson method on the projection itself
         Assert.Contains("public static NonBlobProjection? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)", code);
+    }
+
+    [Fact]
+    public async Task Generate_checkpoint_deserialization_uses_null_coalescing_for_non_nullable_checkpoint()
+    {
+        // Arrange
+        var projection = new ProjectionDefinition
+        {
+            Name = "CheckpointProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
+                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new()
+                {
+                    Name = "Checkpoint",
+                    Type = "Checkpoint",
+                    Namespace = "ErikLieben.FA.ES",
+                    IsNullable = false
+                }
+            },
+            Events = new List<ProjectionEventDefinition>(),
+            BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
+            FileLocations = new List<string> { "Demo\\CheckpointProjection.cs" }
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "CheckpointProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Checkpoint deserialization should use null-coalescing operator to default to empty array
+        Assert.Contains("checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, CheckpointProjectionJsonSerializerContext.Default.Options) ?? [];", code);
     }
 }

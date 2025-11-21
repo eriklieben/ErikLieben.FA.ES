@@ -72,7 +72,10 @@ public class GenerateAggregateCode
     {
         var usings = new List<string>
         {
+            "System.Collections.Generic",
             "System.Text.Json.Serialization",
+            "System.Threading",
+            "System.Threading.Tasks",
             "ErikLieben.FA.ES",
             "ErikLieben.FA.ES.Processors",
             "ErikLieben.FA.ES.Aggregates",
@@ -352,6 +355,10 @@ public class GenerateAggregateCode
         var code = new StringBuilder();
         string codeGetById = "";
 
+        // Suppress IDE0005 (unnecessary using directive) for generated code
+        code.AppendLine("#pragma warning disable IDE0005");
+        code.AppendLine("");
+
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");
@@ -470,13 +477,13 @@ public class GenerateAggregateCode
                                  return obj;
                              }
 
-                             protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent) where T : class
+                             protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent, ActionMetadata? metadata = null) where T : class
                              {
                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
                             {{GenerateSettingsApplicationCode(aggregate)}}
                                 var eventStream = eventStreamFactory.Create(document);
                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
-                                await eventStream.Session(context => context.Append(firstEvent));
+                                await eventStream.Session(context => context.Append(firstEvent, metadata));
                                 await obj.Fold();
                                 return obj;
                              }

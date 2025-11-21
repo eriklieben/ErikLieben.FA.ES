@@ -145,6 +145,8 @@ public async Task Generate()
         }
 
         var code = $$"""
+                     #pragma warning disable IDE0005
+
                      using ErikLieben.FA.ES.Aggregates;
                      using Microsoft.Extensions.DependencyInjection;
                      using System.Text.Json.Serialization;

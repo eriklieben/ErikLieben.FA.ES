@@ -92,7 +92,10 @@ public class GenerateProjectionCode
     {
         var usings = new List<string>
         {
+            "System.Collections.Generic",
             "System.Text.Json.Serialization",
+            "System.Threading",
+            "System.Threading.Tasks",
             "ErikLieben.FA.ES",
             "ErikLieben.FA.ES.Projections",
             "ErikLieben.FA.ES.Documents",
@@ -401,16 +404,18 @@ public class GenerateProjectionCode
         usings.Add("Microsoft.Extensions.Azure");
         usings.Add("Azure.Storage.Blobs");
 
-        var newMethodBody = string.IsNullOrEmpty(get)
-            ? $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
-            : $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+        var needsServiceProvider = !string.IsNullOrEmpty(get);
+        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+
+        var newMethodBody = needsServiceProvider
+            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
 
         return $$"""
                  public class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
-                     IEventStreamFactory eventStreamFactory,
-                     IServiceProvider serviceProvider)
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
                      : BlobProjectionFactory<{{projection.Name}}>(
                          blobServiceClientFactory,
                          "{{projection.BlobProjection.Connection}}",
@@ -644,7 +649,16 @@ public class GenerateProjectionCode
             var fullTypeDef = BuildFullTypeDefinition(property);
 
             code.AppendLine($"                                        case \"{jsonPropertyName}\":");
-            code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options);");
+
+            if (property.Name == "Checkpoint")
+            {
+                code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options) ?? [];");
+            }
+            else
+            {
+                code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options);");
+            }
+
             code.AppendLine("                                            break;");
         }
 
@@ -728,6 +742,10 @@ public class GenerateProjectionCode
         string? path)
     {
         var code = new StringBuilder();
+
+        // Suppress IDE0005 (unnecessary using directive) for generated code
+        code.AppendLine("#pragma warning disable IDE0005");
+        code.AppendLine("");
 
         foreach (var namespaceName in usings.Distinct().Order())
         {

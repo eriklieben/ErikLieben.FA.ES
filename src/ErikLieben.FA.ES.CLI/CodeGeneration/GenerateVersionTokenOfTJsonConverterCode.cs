@@ -68,6 +68,11 @@ public class GenerateVersionTokenOfTJsonConverterCode
         usings.AddRange(versionTokens.Select(versionToken => versionToken.NamespaceOfType));
 
         var code = new StringBuilder();
+
+        // Suppress IDE0005 (unnecessary using directive) for generated code
+        code.AppendLine("#pragma warning disable IDE0005");
+        code.AppendLine("");
+
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");

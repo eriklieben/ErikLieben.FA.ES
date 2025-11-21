@@ -62,12 +62,14 @@ public class GenerateVersionTokenOfTCode
         var code = new StringBuilder();
 
         code.Append($$"""
+            #pragma warning disable IDE0005
+
             using System.Text.Json.Serialization;
             using ErikLieben.FA.ES;
             using ErikLieben.FA.ES.Documents;
             using ErikLieben.FA.ES.VersionTokenParts;
             using {{versionToken.NamespaceOfType}};
-            
+
             namespace {{versionToken.Namespace}};
             
             public partial record {{versionToken.Name}}

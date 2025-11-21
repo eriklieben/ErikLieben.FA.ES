@@ -133,6 +133,9 @@ public class GenerateAggregateCodeTests
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
 
+        // Pragma warning to suppress unnecessary using directives
+        Assert.Contains("#pragma warning disable IDE0005", code);
+
         // Class, interfaces
         Assert.Contains("namespace Demo.App.Domain;", code);
         Assert.Contains("public partial class Account : Aggregate, IBase, IAccount", code);
@@ -175,9 +178,9 @@ public class GenerateAggregateCodeTests
         Assert.Contains("var svc = serviceProvider.GetService(typeof(IService)) as IService;", code);
         Assert.Contains("return new Account(eventStream, svc!);", code);
 
-        // Async factory helpers, including generic CreateAsync<T>
+        // Async factory helpers, including generic CreateAsync<T> with ActionMetadata parameter
         Assert.Contains("public async Task<Account> CreateAsync(Guid id)", code);
-        Assert.Contains("protected async Task<Account> CreateAsync<T>(Guid id, T firstEvent) where T : class", code);
+        Assert.Contains("protected async Task<Account> CreateAsync<T>(Guid id, T firstEvent, ActionMetadata? metadata = null) where T : class", code);
         Assert.Contains("public async Task<(Account, IObjectDocument)> GetWithDocumentAsync(Guid id)", code);
     }
 
@@ -239,7 +242,10 @@ public class GenerateAggregateCodeTests
         var usings = GenerateAggregateCode.BuildUsings(aggregate);
 
         // Assert
+        Assert.Contains("System.Collections.Generic", usings);
         Assert.Contains("System.Text.Json.Serialization", usings);
+        Assert.Contains("System.Threading", usings);
+        Assert.Contains("System.Threading.Tasks", usings);
         Assert.Contains("ErikLieben.FA.ES", usings);
         Assert.Contains("ErikLieben.FA.ES.Processors", usings);
         Assert.Contains("ErikLieben.FA.ES.Aggregates", usings);
