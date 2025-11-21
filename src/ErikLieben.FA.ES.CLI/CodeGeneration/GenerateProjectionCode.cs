@@ -819,7 +819,8 @@ public class GenerateProjectionCode
         {
             Directory.CreateDirectory(directory);
         }
-        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
     private static void GenerateWhenMethods(

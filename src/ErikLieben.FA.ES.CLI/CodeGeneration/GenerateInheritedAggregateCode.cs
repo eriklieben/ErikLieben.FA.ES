@@ -80,7 +80,8 @@ public class GenerateInheritedAggregateCode
         var codeContent = GenerateCodeContent(aggregate, usings, diCode, ctorParams, commandMethodSignatures);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(codeContent));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(codeContent, projectDir));
     }
 
     private static List<string> BuildUsings(InheritedAggregateDefinition aggregate)

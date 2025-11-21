@@ -77,7 +77,8 @@ public class GenerateAggregateCode
         var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
     internal static List<string> BuildUsings(AggregateDefinition aggregate)
@@ -745,6 +746,4 @@ public class GenerateAggregateCode
 
         return code;
     }
-
-
 }

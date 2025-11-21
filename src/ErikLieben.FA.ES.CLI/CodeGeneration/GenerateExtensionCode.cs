@@ -212,7 +212,8 @@ public async Task Generate()
                      """;
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
     private static (StringBuilder, List<string>) GenerateJsonSerializers(ProjectDefinition project)
