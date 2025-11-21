@@ -3,6 +3,7 @@ using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -62,8 +63,6 @@ public class GenerateVersionTokenOfTCode
         var code = new StringBuilder();
 
         code.Append($$"""
-            #pragma warning disable IDE0005
-
             using System.Text.Json.Serialization;
             using ErikLieben.FA.ES;
             using ErikLieben.FA.ES.Documents;
@@ -127,21 +126,8 @@ public class GenerateVersionTokenOfTCode
             """);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
     }
 
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
-    }
 }

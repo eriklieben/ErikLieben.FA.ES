@@ -3,6 +3,7 @@ using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -60,12 +61,23 @@ public class GenerateAggregateCode
         var foldCode = GenerateFoldCode(aggregate, usings);
         var serializableCode = GenerateJsonSerializableCode(aggregate, usings);
         var (propertyCode, propertySnapshotCode) = GeneratePropertyCode(aggregate, serializableCode);
+
+        // Remove trailing newline from serializableCode to avoid blank line before JsonSourceGenerationOptions
+        if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\n')
+        {
+            serializableCode.Length--;
+            if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\r')
+            {
+                serializableCode.Length--;
+            }
+        }
+
         var (get, ctorInput) = GenerateConstructorParameters(aggregate);
         var setupCode = GenerateSetupCode(aggregate);
         var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
     }
 
     internal static List<string> BuildUsings(AggregateDefinition aggregate)
@@ -354,10 +366,6 @@ public class GenerateAggregateCode
     {
         var code = new StringBuilder();
         string codeGetById = "";
-
-        // Suppress IDE0005 (unnecessary using directive) for generated code
-        code.AppendLine("#pragma warning disable IDE0005");
-        code.AppendLine("");
 
         foreach (var namespaceName in usings.Order())
         {
@@ -738,18 +746,5 @@ public class GenerateAggregateCode
         return code;
     }
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
-    }
 
 }

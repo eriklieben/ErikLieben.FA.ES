@@ -5,6 +5,7 @@ using ErikLieben.FA.ES.CLI.Model;
 using ErikLieben.FA.ES.Projections;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -163,6 +164,17 @@ public class GenerateProjectionCode
         }
 
         serializableCode.AppendLine($"[JsonSerializable(typeof({projection.Name}))]");
+
+        // Remove trailing newline from serializableCode to avoid blank line before JsonSourceGenerationOptions
+        if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\n')
+        {
+            serializableCode.Length--;
+            if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\r')
+            {
+                serializableCode.Length--;
+            }
+        }
+
         return (serializableCode, newJsonSerializableCode);
     }
 
@@ -743,10 +755,6 @@ public class GenerateProjectionCode
     {
         var code = new StringBuilder();
 
-        // Suppress IDE0005 (unnecessary using directive) for generated code
-        code.AppendLine("#pragma warning disable IDE0005");
-        code.AppendLine("");
-
         foreach (var namespaceName in usings.Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
@@ -811,7 +819,7 @@ public class GenerateProjectionCode
         {
             Directory.CreateDirectory(directory);
         }
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
     }
 
     private static void GenerateWhenMethods(
@@ -1044,18 +1052,5 @@ public class GenerateProjectionCode
         }
     }
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
-    }
 
 }

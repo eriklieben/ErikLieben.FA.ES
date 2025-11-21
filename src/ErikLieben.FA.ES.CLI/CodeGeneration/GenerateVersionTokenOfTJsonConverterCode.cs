@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.CLI.Model;
 using ErikLieben.FA.ES.JsonConverters;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -69,10 +70,6 @@ public class GenerateVersionTokenOfTJsonConverterCode
 
         var code = new StringBuilder();
 
-        // Suppress IDE0005 (unnecessary using directive) for generated code
-        code.AppendLine("#pragma warning disable IDE0005");
-        code.AppendLine("");
-
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");
@@ -105,21 +102,8 @@ public class GenerateVersionTokenOfTJsonConverterCode
             """);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString()));
     }
 
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
-    }
 }

@@ -3,6 +3,7 @@ using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -79,7 +80,7 @@ public class GenerateInheritedAggregateCode
         var codeContent = GenerateCodeContent(aggregate, usings, diCode, ctorParams, commandMethodSignatures);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(codeContent));
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(codeContent));
     }
 
     private static List<string> BuildUsings(InheritedAggregateDefinition aggregate)
@@ -235,10 +236,6 @@ public class GenerateInheritedAggregateCode
     {
         var code = new StringBuilder();
 
-        // Suppress IDE0005 (unnecessary using directive) for generated code
-        code.AppendLine("#pragma warning disable IDE0005");
-        code.AppendLine("");
-
         foreach (var namespaceName in usings.Order())
         {
             code.AppendLine($"using {namespaceName};");
@@ -367,20 +364,6 @@ public class GenerateInheritedAggregateCode
                           """);
 
         return code.ToString();
-    }
-
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
     }
 
 }
