@@ -94,8 +94,9 @@ public class GenerateProjectionCodeTests
         var code = await File.ReadAllTextAsync(generatedPath);
 
         // AAA Assert blocks verifying key pieces
-        // - pragma warning to suppress unnecessary using directives
-        Assert.Contains("#pragma warning disable IDE0005", code);
+        // - Unused usings should be removed by CodeFormattingHelper
+        // - No pragma warning should be present as we use Roslyn-based unused using removal
+        Assert.DoesNotContain("#pragma warning disable IDE0005", code);
         // - fold switch with event case and When invocation
         Assert.Contains("switch (@event.EventType)", code);
         Assert.Contains("case \"FeatureFlag.Enabled\":", code);

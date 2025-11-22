@@ -133,8 +133,9 @@ public class GenerateAggregateCodeTests
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
 
-        // Pragma warning to suppress unnecessary using directives
-        Assert.Contains("#pragma warning disable IDE0005", code);
+        // Unused usings should be removed by CodeFormattingHelper
+        // No pragma warning should be present as we use Roslyn-based unused using removal
+        Assert.DoesNotContain("#pragma warning disable IDE0005", code);
 
         // Class, interfaces
         Assert.Contains("namespace Demo.App.Domain;", code);
@@ -1480,6 +1481,188 @@ public class GenerateAggregateCodeTests
         var editorBrowsableCount = System.Text.RegularExpressions.Regex.Matches(code,
             "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
         Assert.True(editorBrowsableCount >= 7, $"Should have at least 7 EditorBrowsable attributes for repository methods, found {editorBrowsableCount}");
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_aggregate_class()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "BlogPost",
+            ObjectName = "blogpost",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\BlogPost.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "BlogPost.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Aggregate class should have XML documentation
+        Assert.Contains("/// <summary>", code);
+        Assert.Contains("/// BlogPost aggregate root implementing event sourcing patterns.", code);
+        Assert.Contains("/// </summary>", code);
+
+        // Fold method should have XML documentation
+        Assert.Contains("/// Applies an event to the aggregate state by dispatching to the appropriate When method.", code);
+        Assert.Contains("/// <param name=\"event\">The event to apply to the aggregate.</param>", code);
+
+        // Factory should have XML documentation
+        Assert.Contains("/// Factory interface for creating BlogPost aggregate instances.", code);
+        Assert.Contains("/// Factory for creating and loading BlogPost aggregate instances from documents and event streams.", code);
+
+        // Repository should have XML documentation
+        Assert.Contains("/// Repository for querying and managing BlogPost aggregates.", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_factory_methods()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Article",
+            ObjectName = "article",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>(),
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Article.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Article.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // CreateAsync should have XML documentation
+        Assert.Contains("/// Creates a new Article aggregate with the specified identifier.", code);
+        Assert.Contains("/// <param name=\"id\">The identifier for the new aggregate.</param>", code);
+        Assert.Contains("/// <returns>A new Article instance.</returns>", code);
+
+        // Create(IEventStream) should have XML documentation
+        Assert.Contains("/// Creates a Article instance from an event stream.", code);
+        Assert.Contains("/// <param name=\"eventStream\">The event stream to create the aggregate from.</param>", code);
+
+        // Create(IObjectDocument) should have XML documentation
+        Assert.Contains("/// Creates a Article instance from an object document.", code);
+        Assert.Contains("/// <param name=\"document\">The object document to create the aggregate from.</param>", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_interfaces()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Comment",
+            ObjectName = "comment",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Text", Type = "String", Namespace = "System", IsNullable = false }
+            },
+            Events = new List<EventDefinition>(),
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                    ]
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Comment.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition> { aggregate }
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Comment.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Interface should have XML documentation
+        Assert.Contains("/// Interface defining the public state properties of Comment.", code);
+
+        // Snapshot record should have XML documentation
+        Assert.Contains("/// Snapshot record for persisting Comment aggregate state.", code);
+
+        // JSON serializer context should have XML documentation
+        Assert.Contains("/// JSON serializer context for Comment types.", code);
     }
 
     [Fact]

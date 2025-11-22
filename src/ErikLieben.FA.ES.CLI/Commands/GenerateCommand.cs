@@ -82,7 +82,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             settings.Path = FindSolutionFile();
             if (settings.Path == null)
             {
-                Console.WriteLine("No .sln file was supplied and no file was found in the current directory or its subdirectories.");
+                Console.WriteLine("No .sln or .slnx file was supplied and no file was found in the current directory or its subdirectories.");
                 return (false, null);
             }
 
@@ -166,10 +166,13 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var slnFiles = Directory.GetFiles(currentDirectory, "*.sln", SearchOption.AllDirectories);
+        var slnxFiles = Directory.GetFiles(currentDirectory, "*.slnx", SearchOption.AllDirectories);
 
-        if (slnFiles.Length > 0)
+        var allSolutionFiles = slnFiles.Concat(slnxFiles).ToArray();
+
+        if (allSolutionFiles.Length > 0)
         {
-            return slnFiles[0];
+            return allSolutionFiles[0];
         }
 
         return null;

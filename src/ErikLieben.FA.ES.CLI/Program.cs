@@ -13,7 +13,8 @@ app.Configure(config =>
          .AddCommand<GenerateCommand>("generate")
          .WithAlias("g")
          .WithDescription("Generate supporting code for ErikLieben.ES.FA")
-         .WithExample("generate", "Solution.sln");
+         .WithExample("generate", "Solution.sln")
+        .WithExample("generate", "Solution.slnx");
 
 });
 
