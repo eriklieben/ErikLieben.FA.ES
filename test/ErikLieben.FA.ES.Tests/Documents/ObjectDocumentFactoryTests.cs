@@ -699,4 +699,197 @@ namespace ErikLieben.FA.ES.Tests.Documents
             }
         }
     }
+
+    public class GetAsyncWithRegistry
+    {
+        [Fact]
+        public async Task Should_use_registry_to_resolve_storage_when_no_store_parameter_provided()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var registry = Substitute.For<IAggregateStorageRegistry>();
+            registry.GetStorageForAggregate("userprofile").Returns("UserDataStore");
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetAsync("userprofile", "123", "UserDataStore").Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                registry);
+
+            // Act
+            var result = await sut.GetAsync("userprofile", "123");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+            registry.Received(1).GetStorageForAggregate("userprofile");
+            await mockFactory.Received(1).GetAsync("userprofile", "123", "UserDataStore");
+        }
+
+        [Fact]
+        public async Task Should_not_use_registry_when_store_parameter_is_provided()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var registry = Substitute.For<IAggregateStorageRegistry>();
+            registry.GetStorageForAggregate("userprofile").Returns("UserDataStore");
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetAsync("userprofile", "123", "CustomStore").Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                registry);
+
+            // Act
+            var result = await sut.GetAsync("userprofile", "123", "CustomStore");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+            registry.DidNotReceive().GetStorageForAggregate(Arg.Any<string>());
+            await mockFactory.Received(1).GetAsync("userprofile", "123", "CustomStore");
+        }
+
+        [Fact]
+        public async Task Should_work_when_registry_is_null()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetAsync("userprofile", "123", Arg.Any<string?>()).Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                aggregateStorageRegistry: null);
+
+            // Act
+            var result = await sut.GetAsync("userprofile", "123");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+        }
+
+        [Fact]
+        public async Task Should_use_null_store_when_registry_returns_null()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var registry = Substitute.For<IAggregateStorageRegistry>();
+            registry.GetStorageForAggregate("project").Returns((string?)null);
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetAsync("project", "456", null).Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                registry);
+
+            // Act
+            var result = await sut.GetAsync("project", "456");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+            registry.Received(1).GetStorageForAggregate("project");
+            await mockFactory.Received(1).GetAsync("project", "456", null);
+        }
+    }
+
+    public class GetOrCreateAsyncWithRegistry
+    {
+        [Fact]
+        public async Task Should_use_registry_to_resolve_storage_when_no_store_parameter_provided()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var registry = Substitute.For<IAggregateStorageRegistry>();
+            registry.GetStorageForAggregate("userprofile").Returns("UserDataStore");
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetOrCreateAsync("userprofile", "123", "UserDataStore").Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                registry);
+
+            // Act
+            var result = await sut.GetOrCreateAsync("userprofile", "123");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+            registry.Received(1).GetStorageForAggregate("userprofile");
+            await mockFactory.Received(1).GetOrCreateAsync("userprofile", "123", "UserDataStore");
+        }
+
+        [Fact]
+        public async Task Should_not_use_registry_when_store_parameter_is_provided()
+        {
+            // Arrange
+            var objectDocumentFactories = new Dictionary<string, IObjectDocumentFactory>();
+            var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
+            var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
+
+            var registry = Substitute.For<IAggregateStorageRegistry>();
+            registry.GetStorageForAggregate("userprofile").Returns("UserDataStore");
+
+            var mockFactory = Substitute.For<IObjectDocumentFactory>();
+            var expectedDocument = Substitute.For<IObjectDocument>();
+            mockFactory.GetOrCreateAsync("userprofile", "123", "CustomStore").Returns(Task.FromResult(expectedDocument));
+
+            objectDocumentFactories.Add("teststore", mockFactory);
+
+            var sut = new ObjectDocumentFactory(
+                objectDocumentFactories,
+                documentTagDocumentFactory,
+                settings,
+                registry);
+
+            // Act
+            var result = await sut.GetOrCreateAsync("userprofile", "123", "CustomStore");
+
+            // Assert
+            Assert.Same(expectedDocument, result);
+            registry.DidNotReceive().GetStorageForAggregate(Arg.Any<string>());
+            await mockFactory.Received(1).GetOrCreateAsync("userprofile", "123", "CustomStore");
+        }
+    }
 }
