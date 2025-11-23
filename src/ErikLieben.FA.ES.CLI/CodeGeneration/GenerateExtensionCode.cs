@@ -78,6 +78,7 @@ public async Task Generate()
         var mappingCode = new StringBuilder();
 
         var (jsonSerializerCode, jsonNamespaces) = GenerateJsonSerializers(project);
+        var aggregateStorageRegistryCode = GenerateAggregateStorageRegistryCode(project);
 
         // Collect all aggregate-related namespaces
         var aggregateNamespaces = new HashSet<string>();
@@ -233,6 +234,10 @@ public async Task Generate()
                          public static IServiceCollection Configure{{projectName}}Factory(this IServiceCollection services)
                          {
                              {{projectName}}Factory.Register(services);
+
+                             // Register aggregate storage registry for cross-storage projections
+                             {{aggregateStorageRegistryCode}}
+
                              return services;
                          }
                      }
@@ -423,4 +428,77 @@ public async Task Generate()
 
     [GeneratedRegex(@"[^a-zA-Z0-9_]")]
     private static partial Regex ProjectNameRegex();
+
+    /// <summary>
+    /// Generates code for registering the aggregate storage registry based on EventStreamBlobSettings attributes.
+    /// </summary>
+    /// <param name="project">The project definition containing aggregates with storage settings.</param>
+    /// <returns>Generated code as a StringBuilder for registry initialization.</returns>
+    private static StringBuilder GenerateAggregateStorageRegistryCode(ProjectDefinition project)
+    {
+        var code = new StringBuilder();
+        var storageMap = new Dictionary<string, string>();
+
+        // Collect storage settings from all aggregates
+        foreach (var aggregate in project.Aggregates.Where(a => a.IsPartialClass))
+        {
+            if (aggregate.EventStreamBlobSettingsAttribute?.DataStore != null)
+            {
+                var aggregateName = aggregate.IdentifierName.ToLowerInvariant();
+                storageMap[aggregateName] = aggregate.EventStreamBlobSettingsAttribute.DataStore;
+            }
+        }
+
+        // Collect from inherited aggregates as well
+        foreach (var aggregate in project.InheritedAggregates)
+        {
+            if (aggregate.EventStreamBlobSettingsAttribute?.DataStore != null)
+            {
+                var aggregateName = aggregate.IdentifierName.ToLowerInvariant();
+                storageMap[aggregateName] = aggregate.EventStreamBlobSettingsAttribute.DataStore;
+            }
+        }
+
+        // Only register if there are storage mappings in this project
+        if (storageMap.Count > 0)
+        {
+            code.AppendLine("// Get or create aggregate storage registry");
+            code.AppendLine("var existingRegistry = services.FirstOrDefault(d => d.ServiceType == typeof(ErikLieben.FA.ES.Configuration.IAggregateStorageRegistry));");
+            code.AppendLine("if (existingRegistry != null)");
+            code.AppendLine("{");
+            code.AppendLine("    // Registry already exists - merge our mappings into the existing one");
+            code.AppendLine("    var descriptor = existingRegistry;");
+            code.AppendLine("    services.Remove(descriptor);");
+            code.AppendLine("    var existingMap = descriptor.ImplementationInstance is ErikLieben.FA.ES.Configuration.AggregateStorageRegistry reg");
+            code.AppendLine("        ? typeof(ErikLieben.FA.ES.Configuration.AggregateStorageRegistry)");
+            code.AppendLine("            .GetField(\"_storageMap\", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)");
+            code.AppendLine("            ?.GetValue(reg) as IReadOnlyDictionary<string, string> ?? new Dictionary<string, string>()");
+            code.AppendLine("        : new Dictionary<string, string>();");
+            code.AppendLine("    var mergedMap = new Dictionary<string, string>(existingMap);");
+
+            foreach (var (aggregateName, storage) in storageMap.OrderBy(kvp => kvp.Key))
+            {
+                code.AppendLine($"    mergedMap.TryAdd(\"{aggregateName}\", \"{storage}\");");
+            }
+
+            code.AppendLine("    services.AddSingleton<ErikLieben.FA.ES.Configuration.IAggregateStorageRegistry>(");
+            code.AppendLine("        new ErikLieben.FA.ES.Configuration.AggregateStorageRegistry(mergedMap));");
+            code.AppendLine("}");
+            code.AppendLine("else");
+            code.AppendLine("{");
+            code.AppendLine("    // No existing registry - create a new one");
+            code.AppendLine("    var storageMap = new Dictionary<string, string>");
+            code.AppendLine("    {");
+            foreach (var (aggregateName, storage) in storageMap.OrderBy(kvp => kvp.Key))
+            {
+                code.AppendLine($"        [\"{aggregateName}\"] = \"{storage}\",");
+            }
+            code.AppendLine("    };");
+            code.AppendLine("    services.AddSingleton<ErikLieben.FA.ES.Configuration.IAggregateStorageRegistry>(");
+            code.AppendLine("        new ErikLieben.FA.ES.Configuration.AggregateStorageRegistry(storageMap));");
+            code.AppendLine("}");
+        }
+
+        return code;
+    }
 }

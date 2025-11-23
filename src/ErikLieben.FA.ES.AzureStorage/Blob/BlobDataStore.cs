@@ -132,10 +132,22 @@ public class BlobDataStore : IDataStore
             };
             newDoc.Events.AddRange(events.Select(BlobJsonEvent.From)!);
             newDoc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
-            await blob.SaveEntityAsync(
-                newDoc,
-                BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
-                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+
+            try
+            {
+                await blob.SaveEntityAsync(
+                    newDoc,
+                    BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
+            {
+                var containerName = blob.BlobContainerName;
+                throw new BlobDocumentStoreContainerNotFoundException(
+                    $"The container by the name '{containerName}' is not found. " +
+                    $"Please create it or adjust the config setting: 'EventStream:Blob:DefaultDocumentContainerName'",
+                ex);
+            }
             return;
         }
 

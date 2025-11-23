@@ -110,20 +110,40 @@ public static class BlobExtensions
         var serialized = JsonSerializer.Serialize(@object, jsonTypeInfo);
         var bytes = Encoding.UTF8.GetBytes(serialized);
 
-        var info = await blobJson.UploadAsync(
-            new MemoryStream(bytes),
-            new BlobUploadOptions
-            {
-                HttpHeaders = new BlobHttpHeaders
+        try
+        {
+            var info = await blobJson.UploadAsync(
+                new MemoryStream(bytes),
+                new BlobUploadOptions
                 {
-                    ContentType = "application/json",
-                },
-                Conditions = requestOptions,
-                Tags = tags,
-                Metadata = metadata
-            });
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "application/json",
+                    },
+                    Conditions = requestOptions,
+                    Tags = tags,
+                    Metadata = metadata
+                });
 
-        return info.Value.ETag.ToString();
+            return info.Value.ETag.ToString();
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.ContainerNotFound)
+        {
+            // Extract container and blob information for better error messaging
+            var containerName = blobJson.BlobContainerName;
+            var blobName = blobJson.Name;
+            var accountName = blobJson.AccountName;
+            var uri = blobJson.Uri;
+
+            throw new RequestFailedException(
+                ex.Status,
+                $"Container '{containerName}' not found when trying to save blob '{blobName}'. " +
+                $"Storage Account: {accountName}, URI: {uri}. " +
+                $"Ensure the container exists or enable autoCreateContainer in your storage configuration. " +
+                $"Original error: {ex.Message}",
+                ex.ErrorCode,
+                ex);
+        }
     }
 
     /// <summary>
@@ -149,20 +169,40 @@ public static class BlobExtensions
         var bytes = Encoding.UTF8.GetBytes(serialized);
         var hash = ComputeSha256Hash(bytes, 0, bytes.Length);
 
-        var info = await blobClient.UploadAsync(
-            new MemoryStream(bytes),
-            new BlobUploadOptions
-            {
-                HttpHeaders = new BlobHttpHeaders
+        try
+        {
+            var info = await blobClient.UploadAsync(
+                new MemoryStream(bytes),
+                new BlobUploadOptions
                 {
-                    ContentType = "application/json",
-                },
-                Conditions = requestOptions,
-                Tags = tags,
-                Metadata = metadata
-            });
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "application/json",
+                    },
+                    Conditions = requestOptions,
+                    Tags = tags,
+                    Metadata = metadata
+                });
 
-        return (info.Value.ETag.ToString(), hash);
+            return (info.Value.ETag.ToString(), hash);
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.ContainerNotFound)
+        {
+            // Extract container and blob information for better error messaging
+            var containerName = blobClient.BlobContainerName;
+            var blobName = blobClient.Name;
+            var accountName = blobClient.AccountName;
+            var uri = blobClient.Uri;
+
+            throw new RequestFailedException(
+                ex.Status,
+                $"Container '{containerName}' not found when trying to save blob '{blobName}'. " +
+                $"Storage Account: {accountName}, URI: {uri}. " +
+                $"Ensure the container exists or enable autoCreateContainer in your storage configuration. " +
+                $"Original error: {ex.Message}",
+                ex.ErrorCode,
+                ex);
+        }
     }
 
     /// <summary>

@@ -13,6 +13,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     private readonly IDictionary<string, IObjectDocumentFactory> objectDocumentFactories;
     private readonly EventStreamDefaultTypeSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagDocumentFactory;
+    private readonly Configuration.IAggregateStorageRegistry? aggregateStorageRegistry;
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
 
     /// <summary>
@@ -21,10 +22,12 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentFactories">A keyed collection of underlying factories by store type.</param>
     /// <param name="documentTagDocumentFactory">The factory used to create document tag stores.</param>
     /// <param name="settings">Default type settings used when resolving factories.</param>
+    /// <param name="aggregateStorageRegistry">Optional registry mapping aggregate names to storage connections for cross-storage projections.</param>
     public ObjectDocumentFactory(
         IDictionary<string, IObjectDocumentFactory> objectDocumentFactories,
         IDocumentTagDocumentFactory documentTagDocumentFactory,
-        EventStreamDefaultTypeSettings settings)
+        EventStreamDefaultTypeSettings settings,
+        Configuration.IAggregateStorageRegistry? aggregateStorageRegistry = null)
     {
         ArgumentNullException.ThrowIfNull(objectDocumentFactories);
         ArgumentNullException.ThrowIfNull(settings);
@@ -33,6 +36,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         this.objectDocumentFactories = objectDocumentFactories;
         this.settings = settings;
         this.documentTagDocumentFactory = documentTagDocumentFactory;
+        this.aggregateStorageRegistry = aggregateStorageRegistry;
     }
 
     /// <summary>
@@ -47,10 +51,13 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
+        // Resolve storage account from registry if not explicitly provided
+        var targetStore = store ?? aggregateStorageRegistry?.GetStorageForAggregate(objectName);
+
         var factoryType = settings.DocumentType.ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            return objectDocumentFactory.GetAsync(objectName, objectId, store);
+            return objectDocumentFactory.GetAsync(objectName, objectId, targetStore);
         }
 
         throw new UnableToFindDocumentFactoryException(
@@ -72,10 +79,13 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
+        // Resolve storage account from registry if not explicitly provided
+        var targetStore = store ?? aggregateStorageRegistry?.GetStorageForAggregate(objectName);
+
         var factoryType = settings.DocumentType.ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out var objectDocumentFactory))
         {
-            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, store);
+            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, targetStore);
         }
 
         throw new UnableToFindDocumentFactoryException(
