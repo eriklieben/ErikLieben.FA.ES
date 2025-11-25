@@ -147,7 +147,8 @@ public class GenerateAggregateCode
         var foldCode = new StringBuilder();
         foreach (var @event in aggregate.Events)
         {
-            if (@event.ActivationType != "When")
+            // Skip events that come from Command methods (no When handler)
+            if (@event.ActivationType == "Command")
             {
                 continue;
             }
@@ -157,7 +158,12 @@ public class GenerateAggregateCode
                 usings.Add(@event.Namespace);
             }
 
-            if (@event.Parameters.Count > 1)
+            if (@event.Parameters.Count == 0)
+            {
+                // Method uses [When<TEvent>] attribute with no parameters
+                GenerateFoldCodeWithNoParameters(@event, foldCode);
+            }
+            else if (@event.Parameters.Count > 1)
             {
                 GenerateFoldCodeWithMultipleParameters(@event, foldCode);
             }
@@ -169,11 +175,20 @@ public class GenerateAggregateCode
         return foldCode;
     }
 
+    internal static void GenerateFoldCodeWithNoParameters(EventDefinition @event, StringBuilder foldCode)
+    {
+        foldCode.AppendLine($$"""
+                              case "{{@event.EventName}}":
+                                  {{@event.ActivationType}}();
+                              break;
+                              """);
+    }
+
     internal static void GenerateFoldCodeWithMultipleParameters(EventDefinition @event, StringBuilder foldCode)
     {
         foldCode.Append($$$"""
                                case "{{{@event.EventName}}}":
-                                    When(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
+                                    {{{@event.ActivationType}}}(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
                                """);
 
         foreach (var p in @event.Parameters.Skip(1))
@@ -203,7 +218,7 @@ public class GenerateAggregateCode
     {
         foldCode.AppendLine($$"""
                               case "{{@event.EventName}}":
-                                  When(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
+                                  {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
                               break;
                               """);
     }

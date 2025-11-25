@@ -1104,6 +1104,134 @@ public class GenerateAggregateCodeTests
     }
 
     [Fact]
+    public void GenerateFoldCode_generates_parameterless_call_for_attribute_based_when_methods()
+    {
+        // Arrange - Event with no parameters (uses [When<TEvent>] attribute)
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = new List<EventDefinition>
+            {
+                new()
+                {
+                    TypeName = "ProjectCompleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Completed",
+                    ActivationType = "WhenProjectCompleted", // Custom method name from attribute
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition>() // No parameters - uses [When<TEvent>] attribute
+                }
+            }
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Project.Completed\":", code);
+        Assert.Contains("WhenProjectCompleted();", code); // Should be parameterless call
+        Assert.DoesNotContain("JsonEvent.To", code); // Should NOT have JsonEvent.To
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_parameterless_call_with_standard_when_name()
+    {
+        // Arrange - Event with no parameters but standard "When" activation type
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = new List<EventDefinition>
+            {
+                new()
+                {
+                    TypeName = "ProjectDeleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Deleted",
+                    ActivationType = "WhenProjectDeleted",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition>() // No parameters
+                }
+            }
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Project.Deleted\":", code);
+        Assert.Contains("WhenProjectDeleted();", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_mixes_parameterless_and_parameterized_methods()
+    {
+        // Arrange - Mix of events: some with parameters, some without
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = new List<EventDefinition>
+            {
+                new()
+                {
+                    TypeName = "ProjectCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Created",
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition>
+                    {
+                        new() { Name = "e", Type = "ProjectCreated", Namespace = "Test.Events" }
+                    }
+                },
+                new()
+                {
+                    TypeName = "ProjectDeleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Deleted",
+                    ActivationType = "WhenProjectDeleted",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = new List<ParameterDefinition>() // No parameters - uses attribute
+                }
+            }
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+
+        // Parameterized event should use JsonEvent.To
+        Assert.Contains("case \"Project.Created\":", code);
+        Assert.Contains("When(JsonEvent.To(@event, ProjectCreatedJsonSerializerContext.Default.ProjectCreated));", code);
+
+        // Parameterless event should not use JsonEvent.To
+        Assert.Contains("case \"Project.Deleted\":", code);
+        Assert.Contains("WhenProjectDeleted();", code);
+    }
+
+    [Fact]
     public void GenerateFoldCode_skips_command_events_without_when_handlers()
     {
         // Arrange
