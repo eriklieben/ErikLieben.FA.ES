@@ -141,7 +141,7 @@ public async Task Generate()
         var allNamespaces = jsonNamespaces.Union(aggregateNamespaces).Distinct().Order();
 
         var ss = new StringBuilder();
-        foreach (var @namespace in allNamespaces)
+        foreach (var @namespace in allNamespaces.Where(n => !string.IsNullOrWhiteSpace(n)))
         {
             ss.AppendLine($"using {@namespace};");
         }

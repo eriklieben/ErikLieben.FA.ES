@@ -368,7 +368,7 @@ public class GenerateAggregateCode
         var code = new StringBuilder();
         string codeGetById = "";
 
-        foreach (var namespaceName in usings.Order())
+        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
         }

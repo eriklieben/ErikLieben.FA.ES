@@ -242,7 +242,7 @@ public abstract class BlobProjectionFactory<T> where T : Projection
         // Only save if it doesn't already exist (checkpoints are immutable)
         if (!await blobClient.ExistsAsync(cancellationToken))
         {
-            var json = JsonSerializer.Serialize(projection.Checkpoint);
+            var json = JsonSerializer.Serialize(projection.Checkpoint, CheckpointJsonContext.Default.Checkpoint);
             var bytes = Encoding.UTF8.GetBytes(json);
 
             await blobClient.UploadAsync(
@@ -279,6 +279,6 @@ public abstract class BlobProjectionFactory<T> where T : Projection
         var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
         var json = downloadResult.Value.Content.ToString();
 
-        return JsonSerializer.Deserialize<Checkpoint>(json);
+        return JsonSerializer.Deserialize(json, CheckpointJsonContext.Default.Checkpoint);
     }
 }

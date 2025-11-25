@@ -94,7 +94,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
 
         var code = new StringBuilder();
 
-        foreach (var namespaceName in usings.Order())
+        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
         }

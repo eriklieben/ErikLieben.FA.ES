@@ -188,10 +188,11 @@ public class GenerateProjectionCodeTests
         // Constructor selection -> LoadFromJson uses custom deserialization with proper constructor
         Assert.Contains("var instance = new Accounts(documentFactory, eventStreamFactory", code);
         Assert.Contains("isActive", code);  // isActive variable should be deserialized
-        // PostWhen mapping should call PostWhen(document, JsonEvent.ToEvent(@event, @event.EventType)); after switch
-        Assert.Contains("PostWhen(document, JsonEvent.ToEvent(@event, @event.EventType));", code);
-        // Since ActivationAwaitRequired = true, Fold method should be async and not return Task.CompletedTask directly
-        Assert.Contains("public override async Task Fold<T>(IEvent @event, IObjectDocument document", code);
+        // PostWhen mapping should call PostWhen with event after switch (using version token variant)
+        Assert.Contains("PostWhen(", code);
+        Assert.Contains("JsonEvent.ToEvent(@event, @event.EventType)", code);
+        // Since ActivationAwaitRequired = true, Fold method should be async and use VersionToken signature
+        Assert.Contains("public override async Task Fold<T>(IEvent @event, VersionToken versionToken", code);
         }
 
     [Fact]
@@ -309,11 +310,11 @@ public class GenerateProjectionCodeTests
 
         // WhenParameterValueFactories dictionary entry exists
         Assert.Contains("{\"Demo.App.Events.SomeType\", new SomeFactory()}", code);
-        // ExecutionContext creations present
-        Assert.Contains("ExecutionContext<AccountCreated", code); // generic context present
-        Assert.Contains("IExecutionContextWithData<", code); // WithData context present
-        // Default lookup for custom parameter
+        // Version token based fold uses parentContext for execution context parameters
+        Assert.Contains("parentContext", code);
+        // Default lookup for custom parameter uses versionToken
         Assert.Contains("GetWhenParameterValue<Demo.App.Events.SomeType, AccountCreated>(", code);
+        Assert.Contains("versionToken", code);
 
         // Complex generic property was rendered in interface
         Assert.Contains("public Dictionary<System.String", code);
