@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ErikLieben.FA.ES.Exceptions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests;
 

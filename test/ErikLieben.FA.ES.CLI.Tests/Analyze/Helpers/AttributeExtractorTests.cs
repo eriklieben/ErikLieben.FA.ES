@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
@@ -317,7 +320,7 @@ namespace App {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "TestAssembly",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -331,10 +334,10 @@ namespace App {
         return semanticModel.GetDeclaredSymbol(classDeclaration)!;
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

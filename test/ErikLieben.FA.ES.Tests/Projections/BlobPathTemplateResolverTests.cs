@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using ErikLieben.FA.ES.Projections;
+using Xunit;
+using System.Linq;
 
 namespace ErikLieben.FA.ES.Tests.Projections;
 

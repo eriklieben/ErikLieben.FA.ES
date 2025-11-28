@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -33,14 +34,10 @@ public class UnusedWhenEventParameterAnalyzer : DiagnosticAnalyzer
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Info,
         isEnabledByDefault: true, description: Description);
 
-    private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
-    private const string ProjectionFullName = "ErikLieben.FA.ES.Projections.Projection";
-    private const string RoutedProjectionFullName = "ErikLieben.FA.ES.Projections.RoutedProjection";
-
     /// <summary>
     /// Gets the diagnostics descriptors produced by this analyzer.
     /// </summary>
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     /// <summary>
     /// Registers analysis actions to detect When methods with unused event parameters.
@@ -67,7 +64,7 @@ public class UnusedWhenEventParameterAnalyzer : DiagnosticAnalyzer
             return;
 
         // Check if the containing type is an Aggregate or Projection
-        if (!IsInsideAggregateOrProjection(context))
+        if (!SymbolHelpers.IsInsideAggregateOrProjection(context))
             return;
 
         // Already has [When<TEvent>] attribute - skip
@@ -109,24 +106,6 @@ public class UnusedWhenEventParameterAnalyzer : DiagnosticAnalyzer
             parameterName,
             eventTypeName);
         context.ReportDiagnostic(diagnostic);
-    }
-
-    private static bool IsInsideAggregateOrProjection(SyntaxNodeAnalysisContext context)
-    {
-        var containingSymbol = context.ContainingSymbol;
-        var containingType = (containingSymbol as IMethodSymbol)?.ContainingType ?? containingSymbol?.ContainingType;
-        if (containingType == null)
-            return false;
-
-        for (var type = containingType; type != null; type = type.BaseType)
-        {
-            var typeName = type.ToDisplayString();
-            if (typeName == AggregateFullName ||
-                typeName == ProjectionFullName ||
-                typeName == RoutedProjectionFullName)
-                return true;
-        }
-        return false;
     }
 
     private static bool HasWhenAttribute(MethodDeclarationSyntax methodDecl)

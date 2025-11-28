@@ -61,7 +61,7 @@ public class BlobObjectIdProvider : IObjectIdProvider
             // Return empty result if container doesn't exist
             return new PagedResult<string>
             {
-                Items = Array.Empty<string>(),
+                Items = [],
                 PageSize = pageSize,
                 ContinuationToken = null
             };

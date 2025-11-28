@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.CLI.CodeGeneration;
 using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Xunit;
+using System.Linq;
 
 namespace ErikLieben.FA.ES.CLI.Tests.CodeGeneration;
 
@@ -17,7 +18,7 @@ public class GenerateAggregateCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -37,23 +38,25 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "svc", Type = "IService", Namespace = "Demo.App.Services", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                            { Name = "svc", Type = "IService", Namespace = "Demo.App.Services", IsNullable = false }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>
-            {
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events =
+            [
                 new()
                 {
                     TypeName = "UserCreated",
@@ -61,9 +64,8 @@ public class GenerateAggregateCodeTests
                     EventName = "User.Created",
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>
-                    {
-                        // Include a subtype to ensure JsonSerializable lines for subtypes exist (though Guid appears due to HACK)
+                    Properties =
+                    [
                         new PropertyDefinition
                         {
                             Name = "CustomerId",
@@ -75,17 +77,18 @@ public class GenerateAggregateCodeTests
                                 new PropertyGenericTypeDefinition(
                                     Name: "Guid",
                                     Namespace: "System",
-                                    GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                    SubTypes: new List<PropertyGenericTypeDefinition>())
+                                    GenericTypes: [],
+                                    SubTypes: [])
                             ]
                         }
-                    },
-                    Parameters = new List<ParameterDefinition>
-                    {
+                    ],
+                    Parameters =
+                    [
                         new() { Name = "e", Type = "UserCreated", Namespace = "Demo.App.Events" },
                         new() { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" }
-                    }
+                    ]
                 },
+
                 new()
                 {
                     TypeName = "FeatureFlagEnabled",
@@ -93,13 +96,10 @@ public class GenerateAggregateCodeTests
                     EventName = "FeatureFlag.Enabled",
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>(),
-                    Parameters = new List<ParameterDefinition>
-                    {
-                        new() { Name = "e", Type = "FeatureFlagEnabled", Namespace = "Demo.App.Events" }
-                    }
+                    Properties = [],
+                    Parameters = [new() { Name = "e", Type = "FeatureFlagEnabled", Namespace = "Demo.App.Events" }]
                 }
-            },
+            ],
             PostWhen = new PostWhenDeclaration
             {
                 Parameters =
@@ -108,7 +108,7 @@ public class GenerateAggregateCodeTests
                     new PostWhenParameterDeclaration { Name = "evt", Type = "IEvent", Namespace = "ErikLieben.FA.ES" },
                 }
             },
-            FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+            FileLocations = ["Demo\\Domain\\Account.cs"]
         };
 
         var project = new ProjectDefinition
@@ -116,7 +116,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -197,7 +197,7 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
         };
 
         var project = new ProjectDefinition
@@ -205,7 +205,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -232,11 +232,11 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Properties = new List<PropertyDefinition>
-            {
+            Properties =
+            [
                 new() { Name = "Value", Type = "CustomType", Namespace = "Custom.Namespace", IsNullable = false },
                 new() { Name = "Count", Type = "Int32", Namespace = "System", IsNullable = false }
-            }
+            ]
         };
 
         // Act
@@ -267,11 +267,11 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Properties = new List<PropertyDefinition>
-            {
+            Properties =
+            [
                 new() { Name = "Value1", Type = "String", Namespace = "System", IsNullable = false },
                 new() { Name = "Value2", Type = "Int32", Namespace = "System", IsNullable = false }
-            }
+            ]
         };
 
         // Act
@@ -405,8 +405,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "UserCreated",
@@ -415,9 +415,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition> { new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" } }
+                    Parameters = [new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" }]
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -442,11 +442,19 @@ public class GenerateAggregateCodeTests
             IdentifierType = "string",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
-                new() { TypeName = "Event1", Namespace = "Test.Events", EventName = "Event.One", ActivationType = "When", ActivationAwaitRequired = false, File = "" },
-                new() { TypeName = "Event2", Namespace = "Test.Events", EventName = "Event.Two", ActivationType = "When", ActivationAwaitRequired = false, File = "" }
-            }
+            Events =
+            [
+                new()
+                {
+                    TypeName = "Event1", Namespace = "Test.Events", EventName = "Event.One", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                },
+                new()
+                {
+                    TypeName = "Event2", Namespace = "Test.Events", EventName = "Event.Two", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                }
+            ]
         };
         var usings = new List<string>();
 
@@ -472,7 +480,7 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>()
+            Events = []
         };
         var usings = new List<string>();
 
@@ -496,11 +504,13 @@ public class GenerateAggregateCodeTests
             Type = "Dictionary",
             Namespace = "System.Collections.Generic",
             IsNullable = false,
-            GenericTypes = new List<PropertyGenericTypeDefinition>
-            {
-                new(Name: "String", Namespace: "System", GenericTypes: new List<PropertyGenericTypeDefinition>(), SubTypes: new List<PropertyGenericTypeDefinition>()),
-                new(Name: "Int32", Namespace: "System", GenericTypes: new List<PropertyGenericTypeDefinition>(), SubTypes: new List<PropertyGenericTypeDefinition>())
-            }
+            GenericTypes =
+            [
+                new(Name: "String", Namespace: "System", GenericTypes: [],
+                    SubTypes: []),
+                new(Name: "Int32", Namespace: "System", GenericTypes: [],
+                    SubTypes: [])
+            ]
         };
 
         // Act
@@ -521,17 +531,26 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
-                    Parameters = new List<ConstructorParameter>
-                    {
-                        new() { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new() { Name = "logger", Type = "ILogger", Namespace = "Microsoft.Extensions.Logging", IsNullable = false }
-                    }
+                    Parameters =
+                    [
+                        new()
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+
+                        new()
+                        {
+                            Name = "logger", Type = "ILogger", Namespace = "Microsoft.Extensions.Logging",
+                            IsNullable = false
+                        }
+                    ]
                 }
-            }
+            ]
         };
 
         // Act
@@ -554,11 +573,19 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
-                new() { TypeName = "Event1", EventName = "Event.One", Namespace = "Test.Events", ActivationType = "When", ActivationAwaitRequired = false, File = "" },
-                new() { TypeName = "Event2", EventName = "Event.Two", Namespace = "Test.Events", ActivationType = "When", ActivationAwaitRequired = false, File = "" }
-            }
+            Events =
+            [
+                new()
+                {
+                    TypeName = "Event1", EventName = "Event.One", Namespace = "Test.Events", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                },
+                new()
+                {
+                    TypeName = "Event2", EventName = "Event.Two", Namespace = "Test.Events", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                }
+            ]
         };
 
         // Act
@@ -584,7 +611,7 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>()
+            Events = []
         };
 
         // Act
@@ -652,19 +679,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Product.cs"]
         };
 
         var project = new ProjectDefinition
@@ -672,7 +703,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -708,19 +739,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Order.cs"]
         };
 
         var project = new ProjectDefinition
@@ -728,7 +763,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -788,19 +823,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Customer.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Customer.cs"]
         };
 
         var project = new ProjectDefinition
@@ -808,7 +847,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -849,19 +888,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Invoice.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Invoice.cs"]
         };
 
         var project = new ProjectDefinition
@@ -869,7 +912,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -900,19 +943,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\BlogPost.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\BlogPost.cs"]
         };
 
         var project = new ProjectDefinition
@@ -920,7 +967,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -950,19 +997,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Article.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Article.cs"]
         };
 
         var project = new ProjectDefinition
@@ -970,7 +1021,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1009,19 +1060,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Comment.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Comment.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1029,7 +1084,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1065,19 +1120,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Review.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Review.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1085,7 +1144,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1114,8 +1173,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "ProjectCompleted",
@@ -1124,9 +1183,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "WhenProjectCompleted", // Custom method name from attribute
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition>() // No parameters - uses [When<TEvent>] attribute
+                    Parameters = [] // No parameters - uses [When<TEvent>] attribute
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -1151,8 +1210,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "ProjectDeleted",
@@ -1161,9 +1220,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "WhenProjectDeleted",
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition>() // No parameters
+                    Parameters = [] // No parameters
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -1187,8 +1246,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "ProjectCreated",
@@ -1197,11 +1256,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition>
-                    {
-                        new() { Name = "e", Type = "ProjectCreated", Namespace = "Test.Events" }
-                    }
+                    Parameters = [new() { Name = "e", Type = "ProjectCreated", Namespace = "Test.Events" }]
                 },
+
                 new()
                 {
                     TypeName = "ProjectDeleted",
@@ -1210,9 +1267,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "WhenProjectDeleted",
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition>() // No parameters - uses attribute
+                    Parameters = [] // No parameters - uses attribute
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -1242,8 +1299,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "LegacyEventCompleted",
@@ -1252,8 +1309,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "Command", // From command, no When handler
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition>()
+                    Parameters = []
                 },
+
                 new()
                 {
                     TypeName = "UserCreated",
@@ -1262,9 +1320,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "When", // Has When handler
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition> { new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" } }
+                    Parameters = [new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" }]
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -1294,8 +1352,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "ProjectCompleted",
@@ -1305,6 +1363,7 @@ public class GenerateAggregateCodeTests
                     ActivationAwaitRequired = false,
                     File = ""
                 },
+
                 new()
                 {
                     TypeName = "ProjectCompletedSuccessfully",
@@ -1314,7 +1373,7 @@ public class GenerateAggregateCodeTests
                     ActivationAwaitRequired = false,
                     File = ""
                 }
-            }
+            ]
         };
 
         // Act
@@ -1345,20 +1404,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
-                    Parameters = [new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }]
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Status", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>
-            {
-                // Legacy event from deprecated command - should be registered but NOT have Fold case
+            ],
+            Properties = [new() { Name = "Status", Type = "String", Namespace = "System", IsNullable = false }],
+            Events =
+            [
                 new()
                 {
                     TypeName = "AccountClosed",
@@ -1366,9 +1428,10 @@ public class GenerateAggregateCodeTests
                     EventName = "Account.Closed",
                     ActivationType = "Command",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>()
+                    Properties = []
                 },
                 // New event with When handler - should be registered AND have Fold case
+
                 new()
                 {
                     TypeName = "AccountClosedSuccessfully",
@@ -1376,14 +1439,12 @@ public class GenerateAggregateCodeTests
                     EventName = "Account.ClosedSuccessfully",
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>(),
-                    Parameters = new List<ParameterDefinition>
-                    {
-                        new() { Name = "e", Type = "AccountClosedSuccessfully", Namespace = "Demo.App.Events" }
-                    }
+                    Properties = [],
+                    Parameters =
+                        [new() { Name = "e", Type = "AccountClosedSuccessfully", Namespace = "Demo.App.Events" }]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Account.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1391,7 +1452,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1437,22 +1498,23 @@ public class GenerateAggregateCodeTests
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
             HasUserDefinedFactoryPartial = true, // User has defined their own partial factory
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>(),
-            FileLocations = new List<string> { "Demo\\Domain\\WorkItem.cs" }
+            ],
+            Properties = [new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\WorkItem.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1460,7 +1522,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1481,8 +1543,8 @@ public class GenerateAggregateCodeTests
         Assert.Contains("public async Task<WorkItem> CreateAsync(WorkItemId id)", code);
 
         // Verify the attribute appears right before the CreateAsync method
-        var editorBrowsableIndex = code.IndexOf("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]");
-        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id)");
+        var editorBrowsableIndex = code.IndexOf("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", StringComparison.Ordinal);
+        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id)", StringComparison.Ordinal);
         Assert.True(editorBrowsableIndex < createAsyncIndex, "EditorBrowsable attribute should appear before CreateAsync method");
     }
 
@@ -1499,22 +1561,23 @@ public class GenerateAggregateCodeTests
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
             HasUserDefinedFactoryPartial = false, // No user-defined factory partial
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>(),
-            FileLocations = new List<string> { "Demo\\Domain\\Project.cs" }
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\Project.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1522,7 +1585,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1558,22 +1621,23 @@ public class GenerateAggregateCodeTests
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
             HasUserDefinedRepositoryPartial = true, // User has defined their own partial repository
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Email", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>(),
-            FileLocations = new List<string> { "Demo\\Domain\\UserProfile.cs" }
+            ],
+            Properties = [new() { Name = "Email", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\UserProfile.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1581,7 +1645,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1623,19 +1687,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\BlogPost.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\BlogPost.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1643,7 +1711,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1686,19 +1754,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Article.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Article.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1706,7 +1778,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1746,22 +1818,23 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Text", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>(),
-            Constructors = new List<ConstructorDefinition>
-            {
+            Properties = [new() { Name = "Text", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Comment.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Comment.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1769,7 +1842,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -1807,22 +1880,23 @@ public class GenerateAggregateCodeTests
             IsPartialClass = true,
             HasUserDefinedRepositoryPartial = false, // No user-defined repository partial
             HasUserDefinedFactoryPartial = false, // No user-defined factory partial either
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>(),
-            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\Product.cs"]
         };
 
         var project = new ProjectDefinition
@@ -1830,7 +1904,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);

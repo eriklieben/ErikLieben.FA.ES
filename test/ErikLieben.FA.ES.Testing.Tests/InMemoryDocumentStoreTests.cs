@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Testing.InMemory;
 using Xunit;
 

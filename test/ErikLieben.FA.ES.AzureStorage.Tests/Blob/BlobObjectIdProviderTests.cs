@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -5,6 +9,7 @@ using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -130,7 +135,7 @@ public class BlobObjectIdProviderTests
             containerClient.ExistsAsync(Arg.Any<CancellationToken>())
                 .Returns(Response.FromValue(true, Substitute.For<Response>()));
 
-            var mockAsyncPageable = CreateMockAsyncPageable(Array.Empty<BlobItem>(), null);
+            var mockAsyncPageable = CreateMockAsyncPageable([], null);
             containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
@@ -262,7 +267,7 @@ public class BlobObjectIdProviderTests
             var mockPageable = Substitute.For<AsyncPageable<BlobItem>>();
 
             mockPageable.AsPages(Arg.Any<string>(), Arg.Any<int?>())
-                .Returns(CreateAsyncEnumerable(new[] { page }));
+                .Returns(CreateAsyncEnumerable([page]));
 
             return mockPageable;
         }
@@ -514,7 +519,7 @@ public class BlobObjectIdProviderTests
             containerClient.ExistsAsync(Arg.Any<CancellationToken>())
                 .Returns(Response.FromValue(true, Substitute.For<Response>()));
 
-            var mockAsyncPageable = CreateMockAsyncEnumerable(Array.Empty<BlobItem>());
+            var mockAsyncPageable = CreateMockAsyncEnumerable([]);
             containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 

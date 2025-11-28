@@ -13,9 +13,9 @@ public record ParameterDefinition
 
     public bool IsGeneric => GenericTypes.Count > 0;
 
-    public List<ParameterGenericTypeDefinition> GenericTypes { get; init; } = new();
+    public List<ParameterGenericTypeDefinition> GenericTypes { get; init; } = [];
 
-    public List<ParameterGenericTypeDefinition> SubTypes { get; init; } = new();
+    public List<ParameterGenericTypeDefinition> SubTypes { get; init; } = [];
 }
 
 public record ParameterGenericTypeDefinition(

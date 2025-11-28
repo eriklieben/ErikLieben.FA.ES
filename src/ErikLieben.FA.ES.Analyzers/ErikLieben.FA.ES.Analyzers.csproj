@@ -39,6 +39,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ErikLieben.FA.ES.CodeAnalysis\ErikLieben.FA.ES.CodeAnalysis.csproj" PrivateAssets="all" />
+  </ItemGroup>
     <ItemGroup>
         <None Include="..\\..\\README.md" Pack="true" PackagePath="" />
         <None Include="..\\..\\LICENSE" Pack="true" PackagePath="" />
@@ -46,6 +49,7 @@
     <!-- Pack the analyzer assembly into the analyzers folder so the package has content -->
     <ItemGroup>
         <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" />
+        <None Include="$(OutputPath)ErikLieben.FA.ES.CodeAnalysis.dll" Pack="true" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
     <ItemGroup>
       <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />

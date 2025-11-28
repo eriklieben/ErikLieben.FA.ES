@@ -14,7 +14,7 @@ public record EventDefinition
 
     public required bool ActivationAwaitRequired { get; init; }
 
-    public List<ParameterDefinition> Parameters { get; init; } = new();
+    public List<ParameterDefinition> Parameters { get; init; } = [];
 
-    public List<PropertyDefinition> Properties { get; init; } = new();
+    public List<PropertyDefinition> Properties { get; init; } = [];
 }

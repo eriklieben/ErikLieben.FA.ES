@@ -12,7 +12,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// Base factory class for creating and managing projections stored in Azure Blob Storage.
 /// </summary>
 /// <typeparam name="T">The projection type that inherits from <see cref="Projection"/>.</typeparam>
-public abstract class BlobProjectionFactory<T> where T : Projection
+public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProjectionFactory where T : Projection
 {
     private readonly IAzureClientFactory<BlobServiceClient> _blobServiceClientFactory;
     private readonly string _connectionName;
@@ -280,5 +280,32 @@ public abstract class BlobProjectionFactory<T> where T : Projection
         var json = downloadResult.Value.Content.ToString();
 
         return JsonSerializer.Deserialize(json, CheckpointJsonContext.Default.Checkpoint);
+    }
+
+    /// <inheritdoc />
+    public Type ProjectionType => typeof(T);
+
+    /// <inheritdoc />
+    public async Task<Projection> GetOrCreateProjectionAsync(
+        IObjectDocumentFactory documentFactory,
+        IEventStreamFactory eventStreamFactory,
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await GetOrCreateAsync(documentFactory, eventStreamFactory, blobName, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task SaveProjectionAsync(
+        Projection projection,
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (projection is not T typedProjection)
+        {
+            throw new ArgumentException($"Projection must be of type {typeof(T).Name}", nameof(projection));
+        }
+
+        await SaveAsync(typedProjection, blobName, cancellationToken);
     }
 }

@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using ErikLieben.FA.ES.Configuration;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Configuration;
 

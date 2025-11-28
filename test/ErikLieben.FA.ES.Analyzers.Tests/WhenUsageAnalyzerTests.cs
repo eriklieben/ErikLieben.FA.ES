@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
 

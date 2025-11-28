@@ -53,7 +53,7 @@ public record AggregateDefinition
 
 public record PostWhenDeclaration
 {
-    public List<PostWhenParameterDeclaration> Parameters { get; init; } = new();
+    public List<PostWhenParameterDeclaration> Parameters { get; init; } = [];
 }
 
 public record PostWhenParameterDeclaration
@@ -86,11 +86,11 @@ public record InheritedAggregateDefinition
 
     public List<ConstructorDefinition> Constructors { get; init; } = [];
 
-    public List<CommandDefinition> Commands { get; init; } = new();
+    public List<CommandDefinition> Commands { get; init; } = [];
 
-    public List<PropertyDefinition> Properties { get; init; } = new();
+    public List<PropertyDefinition> Properties { get; init; } = [];
 
-    public List<string> FileLocations { get; init; } = new();
+    public List<string> FileLocations { get; init; } = [];
 
     public required string ParentInterface { get; init; } = string.Empty;
 

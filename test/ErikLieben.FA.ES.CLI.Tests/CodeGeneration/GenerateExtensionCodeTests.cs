@@ -18,7 +18,7 @@ public class GenerateExtensionCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -45,7 +45,7 @@ public class GenerateExtensionCodeTests
                     IdentifierTypeNamespace = "System",
                     Namespace = "Demo.App.Domain",
                     IsPartialClass = true,
-                    FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+                    FileLocations = ["Demo\\Domain\\Account.cs"]
                 }
             ],
             InheritedAggregates =
@@ -61,10 +61,10 @@ public class GenerateExtensionCodeTests
                     Namespace = "Demo.App.Domain",
                     ParentInterface = "Demo.App.Domain.IOrder",
                     ParentInterfaceNamespace = "Demo.App.Domain",
-                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
                 }
             ],
-            Projections = new List<ProjectionDefinition>()
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -113,8 +113,8 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Guid",
                         Namespace: "System",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                        GenericTypes: [],
+                        SubTypes: [])
                 ]
             }
         };
@@ -146,17 +146,17 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate },
-            Projections = new List<ProjectionDefinition>
-            {
+            Aggregates = [aggregate],
+            Projections =
+            [
                 new ProjectionDefinition
                 {
                     Name = "AccountsProjection",
                     Namespace = "Demo.App.Projections",
-                    Constructors = new List<ConstructorDefinition>(),
-                    Properties = new List<PropertyDefinition>(),
-                    Events = new List<ProjectionEventDefinition>
-                    {
+                    Constructors = [],
+                    Properties = [],
+                    Events =
+                    [
                         new ProjectionEventDefinition
                         {
                             TypeName = "FeatureFlagEnabled",
@@ -164,13 +164,13 @@ public class GenerateExtensionCodeTests
                             EventName = "FeatureFlag.Enabled",
                             ActivationType = "When",
                             ActivationAwaitRequired = false,
-                            Parameters = new List<ParameterDefinition>(),
-                            Properties = new List<PropertyDefinition>()
+                            Parameters = [],
+                            Properties = []
                         }
-                    },
-                    FileLocations = new List<string> { "Demo\\Projections\\AccountsProjection.cs" }
+                    ],
+                    FileLocations = ["Demo\\Projections\\AccountsProjection.cs"]
                 }
-            }
+            ]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -217,8 +217,8 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Guid",
                         Namespace: "System",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                        GenericTypes: [],
+                        SubTypes: [])
                 ],
                 // Add a complex subtype with its own generic arguments to exercise nested generics
                 SubTypes =
@@ -226,20 +226,21 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Dictionary",
                         Namespace: "System.Collections.Generic",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>
-                        {
+                        GenericTypes:
+                        [
                             new PropertyGenericTypeDefinition(
                                 Name: "String",
                                 Namespace: "System",
-                                GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                SubTypes: new List<PropertyGenericTypeDefinition>()),
+                                GenericTypes: [],
+                                SubTypes: []),
+
                             new PropertyGenericTypeDefinition(
                                 Name: "Int32",
                                 Namespace: "System",
-                                GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                SubTypes: new List<PropertyGenericTypeDefinition>())
-                        },
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                                GenericTypes: [],
+                                SubTypes: [])
+                        ],
+                        SubTypes: [])
                 ]
             }
         };
@@ -274,7 +275,7 @@ public class GenerateExtensionCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
         };
 
         var project = new ProjectDefinition
@@ -282,8 +283,8 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { partialAgg, nonPartialAgg },
-            Projections = new List<ProjectionDefinition>()
+            Aggregates = [partialAgg, nonPartialAgg],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -329,7 +330,7 @@ public class GenerateExtensionCodeTests
                     IdentifierTypeNamespace = "System",
                     Namespace = "Demo.App.Domain",
                     IsPartialClass = true,
-                    FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+                    FileLocations = ["Demo\\Domain\\Product.cs"]
                 },
                 new AggregateDefinition
                 {
@@ -339,11 +340,11 @@ public class GenerateExtensionCodeTests
                     IdentifierTypeNamespace = "System",
                     Namespace = "Demo.App.Domain",
                     IsPartialClass = true,
-                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
                 }
             ],
-            InheritedAggregates = new List<InheritedAggregateDefinition>(),
-            Projections = new List<ProjectionDefinition>()
+            InheritedAggregates = [],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -371,7 +372,7 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition>(),
+            Aggregates = [],
             InheritedAggregates =
             [
                 new InheritedAggregateDefinition
@@ -385,10 +386,10 @@ public class GenerateExtensionCodeTests
                     Namespace = "Demo.App.Domain",
                     ParentInterface = "Demo.App.Domain.IOrder",
                     ParentInterfaceNamespace = "Demo.App.Domain",
-                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
                 }
             ],
-            Projections = new List<ProjectionDefinition>()
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -418,7 +419,7 @@ public class GenerateExtensionCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+            FileLocations = ["Demo\\Domain\\Product.cs"]
         };
 
         var nonPartialAgg = new AggregateDefinition
@@ -429,7 +430,7 @@ public class GenerateExtensionCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
         };
 
         var project = new ProjectDefinition
@@ -437,9 +438,9 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { partialAgg, nonPartialAgg },
-            InheritedAggregates = new List<InheritedAggregateDefinition>(),
-            Projections = new List<ProjectionDefinition>()
+            Aggregates = [partialAgg, nonPartialAgg],
+            InheritedAggregates = [],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -480,11 +481,11 @@ public class GenerateExtensionCodeTests
                     IdentifierTypeNamespace = "System",
                     Namespace = "Demo.App.Domain.Aggregates",  // Different namespace from project
                     IsPartialClass = true,
-                    FileLocations = new List<string> { "Demo\\Domain\\Aggregates\\Product.cs" }
+                    FileLocations = ["Demo\\Domain\\Aggregates\\Product.cs"]
                 }
             ],
-            InheritedAggregates = new List<InheritedAggregateDefinition>(),
-            Projections = new List<ProjectionDefinition>()
+            InheritedAggregates = [],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);

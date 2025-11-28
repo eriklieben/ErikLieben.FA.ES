@@ -1,6 +1,11 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -14,6 +19,7 @@ using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -441,7 +447,7 @@ public class BlobDocumentStoreTests
                 ObjectId = objectId,
                 ObjectName = objectName,
                 Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -449,7 +455,7 @@ public class BlobDocumentStoreTests
             };
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { objectId });
+            documentTagStore.GetAsync(objectName, tag).Returns([objectId]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
@@ -495,7 +501,7 @@ public class BlobDocumentStoreTests
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(Array.Empty<string>());
+            documentTagStore.GetAsync(objectName, tag).Returns([]);
 
             // Act
             var result = await sut.GetFirstByDocumentByTagAsync(objectName, tag);
@@ -523,7 +529,7 @@ public class BlobDocumentStoreTests
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { string.Empty });
+            documentTagStore.GetAsync(objectName, tag).Returns([string.Empty]);
 
             // Act
             var result = await sut.GetFirstByDocumentByTagAsync(objectName, tag);
@@ -562,7 +568,7 @@ public class BlobDocumentStoreTests
                 ObjectId = objectId1,
                 ObjectName = objectName,
                 Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -573,7 +579,7 @@ public class BlobDocumentStoreTests
                 ObjectId = objectId2,
                 ObjectName = objectName,
                 Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -581,7 +587,7 @@ public class BlobDocumentStoreTests
             };
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { objectId1, objectId2 });
+            documentTagStore.GetAsync(objectName, tag).Returns([objectId1, objectId2]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
@@ -633,7 +639,7 @@ public class BlobDocumentStoreTests
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(defaultTypeSettings.DocumentTagType).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(Array.Empty<string>());
+            documentTagStore.GetAsync(objectName, tag).Returns([]);
 
             // Act
             var result = await sut.GetByDocumentByTagAsync(objectName, tag);
@@ -668,7 +674,7 @@ public class BlobDocumentStoreTests
             objectDocument.ObjectId.Returns(objectId);
             objectDocument.ObjectName.Returns(objectName);
             objectDocument.Active.Returns(new StreamInformation());
-            objectDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+            objectDocument.TerminatedStreams.Returns([]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());

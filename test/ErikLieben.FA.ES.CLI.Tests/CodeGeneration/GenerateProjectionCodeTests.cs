@@ -21,14 +21,14 @@ public class GenerateProjectionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Projections = new List<ProjectionDefinition> { projection }
+            Projections = [projection]
         };
 
         var solution = new SolutionDefinition
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -45,23 +45,31 @@ public class GenerateProjectionCodeTests
             Name = "FeatureFlags",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "IsEnabled", Type = "bool", Namespace = "System", IsNullable = false },
-            },
-            Events = new List<ProjectionEventDefinition>
-            {
+            ],
+            Properties =
+            [
+                new() { Name = "IsEnabled", Type = "bool", Namespace = "System", IsNullable = false }
+            ],
+            Events =
+            [
                 new()
                 {
                     ActivationType = "When",
@@ -69,17 +77,17 @@ public class GenerateProjectionCodeTests
                     EventName = "FeatureFlag.Enabled",
                     Namespace = "Demo.App.Events",
                     TypeName = "FeatureFlagEnabled",
-                    Properties = new List<PropertyDefinition>(),
-                    Parameters = new List<ParameterDefinition>
-                    {
+                    Properties = [],
+                    Parameters =
+                    [
                         new() { Name = "e", Type = "FeatureFlagEnabled", Namespace = "Demo.App.Events" },
                         new() { Name = "document", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" }
-                    },
-                    WhenParameterValueFactories = new List<WhenParameterValueFactory>(),
-                    WhenParameterDeclarations = new List<WhenParameterDeclaration>()
+                    ],
+                    WhenParameterValueFactories = [],
+                    WhenParameterDeclarations = []
                 }
-            },
-            FileLocations = new List<string> { "Demo\\FeatureFlags.cs" }
+            ],
+            FileLocations = ["Demo\\FeatureFlags.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -118,27 +126,41 @@ public class GenerateProjectionCodeTests
             Name = "Accounts",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = true,
-            Constructors = new List<ConstructorDefinition>
-            {
-                // Not matching dependencies (filtered out)
-                new() { Parameters = [ new ConstructorParameter { Name = "x", Type = "int", Namespace = "System", IsNullable = false } ] },
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "x", Type = "int", Namespace = "System", IsNullable = false }
+                    ]
+                },
                 // Best match: includes required factories and matches property by name
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "isActive", Type = "bool", Namespace = "System", IsNullable = false },
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                            { Name = "isActive", Type = "bool", Namespace = "System", IsNullable = false },
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "IsActive", Type = "bool", Namespace = "System", IsNullable = false },
-            },
-            Events = new List<ProjectionEventDefinition>
-            {
+            ],
+            Properties =
+            [
+                new() { Name = "IsActive", Type = "bool", Namespace = "System", IsNullable = false }
+            ],
+            Events =
+            [
                 new()
                 {
                     ActivationType = "When",
@@ -146,23 +168,24 @@ public class GenerateProjectionCodeTests
                     EventName = "Account.Created",
                     Namespace = "Demo.App.Events",
                     TypeName = "AccountCreated",
-                    Properties = new List<PropertyDefinition>(),
-                    Parameters = new List<ParameterDefinition>
-                    {
+                    Properties = [],
+                    Parameters =
+                    [
                         new() { Name = "ev", Type = "IEvent", Namespace = "ErikLieben.FA.ES" },
-                        new() { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" },
-                    },
-                    WhenParameterValueFactories = new List<WhenParameterValueFactory>
-                    {
+                        new() { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" }
+                    ],
+                    WhenParameterValueFactories =
+                    [
                         new()
                         {
-                            Type = new WhenParameterValueItem{ Type = "SomeFactory", Namespace = "" },
-                            ForType = new WhenParameterValueItem{ Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events" }
+                            Type = new WhenParameterValueItem { Type = "SomeFactory", Namespace = "" },
+                            ForType = new WhenParameterValueItem
+                                { Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events" }
                         }
-                    },
-                    WhenParameterDeclarations = new List<WhenParameterDeclaration>()
+                    ],
+                    WhenParameterDeclarations = []
                 }
-            },
+            ],
             PostWhen = new PostWhenDeclaration
             {
                 Parameters =
@@ -171,7 +194,7 @@ public class GenerateProjectionCodeTests
                     new PostWhenParameterDeclaration { Name = "evt", Type = "IEvent", Namespace = "ErikLieben.FA.ES" },
                 }
             },
-            FileLocations = new List<string> { "Demo\\Accounts.cs" }
+            FileLocations = ["Demo\\Accounts.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -204,20 +227,27 @@ public class GenerateProjectionCodeTests
             Name = "Advanced",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = true, // should result in [JsonIgnore]
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                // complex generic property to exercise Inner() with nested generics
+            ],
+            Properties =
+            [
                 new()
                 {
                     Name = "Lookup",
@@ -230,25 +260,25 @@ public class GenerateProjectionCodeTests
                         new PropertyGenericTypeDefinition(
                             Name: "String",
                             Namespace: "System",
-                            GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                            SubTypes: new List<PropertyGenericTypeDefinition>()),
+                            GenericTypes: [],
+                            SubTypes: []),
                         new PropertyGenericTypeDefinition(
                             Name: "List",
                             Namespace: "System.Collections.Generic",
-                            GenericTypes: new List<PropertyGenericTypeDefinition>
-                            {
+                            GenericTypes:
+                            [
                                 new PropertyGenericTypeDefinition(
                                     Name: "Guid",
                                     Namespace: "System",
-                                    GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                    SubTypes: new List<PropertyGenericTypeDefinition>())
-                            },
-                            SubTypes: new List<PropertyGenericTypeDefinition>())
+                                    GenericTypes: [],
+                                    SubTypes: [])
+                            ],
+                            SubTypes: [])
                     ]
                 }
-            },
-            Events = new List<ProjectionEventDefinition>
-            {
+            ],
+            Events =
+            [
                 new()
                 {
                     ActivationType = "When",
@@ -257,39 +287,74 @@ public class GenerateProjectionCodeTests
                     Namespace = "Demo.App.Events",
                     TypeName = "AccountCreated",
                     // Add a property ending with Identifier to trigger Guid serializable path building
-                    Properties = new List<PropertyDefinition>
-                    {
-                        new() { Name = "UserIdentifier", Type = "SomethingIdentifier", Namespace = "Demo.App.Shared", IsNullable = false }
-                    },
-                    Parameters = new List<ParameterDefinition>
-                    {
+                    Properties =
+                    [
+                        new()
+                        {
+                            Name = "UserIdentifier", Type = "SomethingIdentifier", Namespace = "Demo.App.Shared",
+                            IsNullable = false
+                        }
+                    ],
+                    Parameters =
+                    [
                         new() { Name = "e", Type = "AccountCreated", Namespace = "Demo.App.Events" },
                         // extra parameters that will be provided by whenLookups
                         new() { Name = "ctx", Type = "IExecutionContext", Namespace = "ErikLieben.FA.ES.Projections" },
-                        new() { Name = "ctxEvt", Type = "IExecutionContextWithEvent", Namespace = "ErikLieben.FA.ES.Projections" },
-                        new() { Name = "ctxData", Type = "IExecutionContextWithData", Namespace = "ErikLieben.FA.ES.Projections" },
+                        new()
+                        {
+                            Name = "ctxEvt", Type = "IExecutionContextWithEvent",
+                            Namespace = "ErikLieben.FA.ES.Projections"
+                        },
+
+                        new()
+                        {
+                            Name = "ctxData", Type = "IExecutionContextWithData",
+                            Namespace = "ErikLieben.FA.ES.Projections"
+                        },
+
                         new() { Name = "custom", Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events" }
-                    },
-                    WhenParameterValueFactories = new List<WhenParameterValueFactory>
-                    {
+                    ],
+                    WhenParameterValueFactories =
+                    [
                         new()
                         {
                             Type = new WhenParameterValueItem { Type = "SomeFactory", Namespace = "" },
-                            ForType = new WhenParameterValueItem { Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events" }
+                            ForType = new WhenParameterValueItem
+                                { Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events" }
                         }
-                    },
-                    WhenParameterDeclarations = new List<WhenParameterDeclaration>
-                    {
-                        new() { Name = "ctx", Type = "IExecutionContext", Namespace = "ErikLieben.FA.ES.Projections", GenericArguments = new List<GenericArgument>() },
-                        new() { Name = "ctxEvt", Type = "IExecutionContextWithEvent", Namespace = "ErikLieben.FA.ES.Projections", GenericArguments = new List<GenericArgument>() },
-                        new() { Name = "ctxData", Type = "IExecutionContextWithData", Namespace = "ErikLieben.FA.ES.Projections", GenericArguments = new List<GenericArgument>{ new GenericArgument{ Type = "System.String", Namespace = "System" } } },
-                        new() { Name = "custom", Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events", GenericArguments = new List<GenericArgument>() }
-                    }
+                    ],
+                    WhenParameterDeclarations =
+                    [
+                        new()
+                        {
+                            Name = "ctx", Type = "IExecutionContext", Namespace = "ErikLieben.FA.ES.Projections",
+                            GenericArguments = []
+                        },
+
+                        new()
+                        {
+                            Name = "ctxEvt", Type = "IExecutionContextWithEvent",
+                            Namespace = "ErikLieben.FA.ES.Projections", GenericArguments = []
+                        },
+
+                        new()
+                        {
+                            Name = "ctxData", Type = "IExecutionContextWithData",
+                            Namespace = "ErikLieben.FA.ES.Projections",
+                            GenericArguments = [new GenericArgument { Type = "System.String", Namespace = "System" }]
+                        },
+
+                        new()
+                        {
+                            Name = "custom", Type = "Demo.App.Events.SomeType", Namespace = "Demo.App.Events",
+                            GenericArguments = []
+                        }
+                    ]
                 }
-            },
+            ],
             // Signal that a user-implemented PostWhenAll exists -> generator must NOT add dummy override
             HasPostWhenAllMethod = true,
-            FileLocations = new List<string> { "Demo\\Advanced.cs" }
+            FileLocations = ["Demo\\Advanced.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -329,17 +394,29 @@ public class GenerateProjectionCodeTests
             Name = "Blobbed",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
-                new() { Parameters = [
-                    new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                    new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                ]}
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                    ]
+                }
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "cont", Connection = "conn" },
-            FileLocations = new List<string> { "Demo\\Blobbed.cs" }
+            FileLocations = ["Demo\\Blobbed.cs"]
         };
         var (solution, outDir) = BuildSolution(projection);
         var sut = new GenerateProjectionCode(solution, new Config(), outDir);
@@ -374,32 +451,52 @@ public class GenerateProjectionCodeTests
             Name = "ProjectionWithDependencies",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
-                // Constructor without custom dependencies - should be ignored
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
                     ]
                 },
                 // Constructor with custom dependencies - should be selected
+
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "taskItemFactory", Type = "ITaskItemFactory", Namespace = "Demo.App.Factories", IsNullable = false },
-                        new ConstructorParameter { Name = "projectFactory", Type = "IProjectFactory", Namespace = "Demo.App.Factories", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "taskItemFactory", Type = "ITaskItemFactory", Namespace = "Demo.App.Factories",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "projectFactory", Type = "IProjectFactory", Namespace = "Demo.App.Factories",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
-            FileLocations = new List<string> { "Demo\\ProjectionWithDependencies.cs" }
+            FileLocations = ["Demo\\ProjectionWithDependencies.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -434,21 +531,29 @@ public class GenerateProjectionCodeTests
             Name = "SimpleProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
-            FileLocations = new List<string> { "Demo\\SimpleProjection.cs" }
+            FileLocations = ["Demo\\SimpleProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -481,10 +586,9 @@ public class GenerateProjectionCodeTests
             Name = "LibraryProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>(),
-            Properties = new List<PropertyDefinition>
-            {
-                // Simple property
+            Constructors = [],
+            Properties =
+            [
                 new PropertyDefinition
                 {
                     Name = "QuestionnaireId",
@@ -493,25 +597,26 @@ public class GenerateProjectionCodeTests
                     IsNullable = false
                 },
                 // Generic collection property with complex type
+
                 new PropertyDefinition
                 {
                     Name = "Questions",
                     Type = "List",
                     Namespace = "System.Collections.Generic",
                     IsNullable = true,
-                    GenericTypes = new List<PropertyGenericTypeDefinition>
-                    {
+                    GenericTypes =
+                    [
                         new PropertyGenericTypeDefinition(
                             Name: "QuestionItem",
                             Namespace: "Demo.App.Model",
-                            GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                            SubTypes: new List<PropertyGenericTypeDefinition>()
+                            GenericTypes: [],
+                            SubTypes: []
                         )
-                    }
+                    ]
                 }
-            },
-            Events = new List<ProjectionEventDefinition>(),
-            FileLocations = new List<string> { "Demo\\LibraryProjection.cs" }
+            ],
+            Events = [],
+            FileLocations = ["Demo\\LibraryProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -547,38 +652,36 @@ public class GenerateProjectionCodeTests
             Name = "ComplexProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>(),
-            Properties = new List<PropertyDefinition>
-            {
-                // Property with nested complex types (SubTypes)
+            Constructors = [],
+            Properties =
+            [
                 new PropertyDefinition
                 {
                     Name = "Items",
                     Type = "List",
                     Namespace = "System.Collections.Generic",
                     IsNullable = true,
-                    GenericTypes = new List<PropertyGenericTypeDefinition>
-                    {
+                    GenericTypes =
+                    [
                         new PropertyGenericTypeDefinition(
                             Name: "ItemWithText",
                             Namespace: "Demo.App.Model",
-                            GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                            SubTypes: new List<PropertyGenericTypeDefinition>
-                            {
-                                // Nested type within ItemWithText
+                            GenericTypes: [],
+                            SubTypes:
+                            [
                                 new PropertyGenericTypeDefinition(
                                     Name: "TextItem",
                                     Namespace: "Demo.App.Model",
-                                    GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                    SubTypes: new List<PropertyGenericTypeDefinition>()
+                                    GenericTypes: [],
+                                    SubTypes: []
                                 )
-                            }
+                            ]
                         )
-                    }
+                    ]
                 }
-            },
-            Events = new List<ProjectionEventDefinition>(),
-            FileLocations = new List<string> { "Demo\\ComplexProjection.cs" }
+            ],
+            Events = [],
+            FileLocations = ["Demo\\ComplexProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -611,21 +714,29 @@ public class GenerateProjectionCodeTests
             Name = "TestProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
-            FileLocations = new List<string> { "Demo\\TestProjection.cs" }
+            FileLocations = ["Demo\\TestProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -655,21 +766,29 @@ public class GenerateProjectionCodeTests
             Name = "MyCustomProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = true,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "my-container", Connection = "MyConnection" },
-            FileLocations = new List<string> { "Demo\\MyCustomProjection.cs" }
+            FileLocations = ["Demo\\MyCustomProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -699,21 +818,29 @@ public class GenerateProjectionCodeTests
             Name = "NonBlobProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>(),
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Properties = [],
+            Events = [],
             BlobProjection = null, // No blob projection
-            FileLocations = new List<string> { "Demo\\NonBlobProjection.cs" }
+            FileLocations = ["Demo\\NonBlobProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);
@@ -743,19 +870,27 @@ public class GenerateProjectionCodeTests
             Name = "CheckpointProjection",
             Namespace = "Demo.App.Projections",
             ExternalCheckpoint = false,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
-                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
+            ],
+            Properties =
+            [
                 new()
                 {
                     Name = "Checkpoint",
@@ -763,10 +898,10 @@ public class GenerateProjectionCodeTests
                     Namespace = "ErikLieben.FA.ES",
                     IsNullable = false
                 }
-            },
-            Events = new List<ProjectionEventDefinition>(),
+            ],
+            Events = [],
             BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
-            FileLocations = new List<string> { "Demo\\CheckpointProjection.cs" }
+            FileLocations = ["Demo\\CheckpointProjection.cs"]
         };
 
         var (solution, outDir) = BuildSolution(projection);

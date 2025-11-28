@@ -1,7 +1,10 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Text;
 using System.Text.Json;
 using ErikLieben.FA.ES.JsonConverters;
 using ErikLieben.FA.ES.VersionTokenParts;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.JsonConverters
 {

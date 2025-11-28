@@ -1,5 +1,9 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;
@@ -9,6 +13,7 @@ using ErikLieben.FA.ES.Notifications;
 using ErikLieben.FA.ES.Processors;
 using ErikLieben.FA.ES.Upcasting;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.EventStream
 {
@@ -175,7 +180,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
 
                 var upCaster = Substitute.For<IUpcastEvent>();
                 upCaster.CanUpcast(originalEvent).Returns(true);
-                upCaster.UpCast(originalEvent).Returns(new[] { upcastedEvent });
+                upCaster.UpCast(originalEvent).Returns([upcastedEvent]);
 
                 var sut = new TestEventStream(document, dependencies);
                 sut.RegisterUpcast(upCaster);
@@ -640,7 +645,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var document = Substitute.For<IObjectDocumentWithMethods>();
                 var active = Substitute.For<StreamInformation>();
                 document.Active.Returns(active);
-                active.SnapShots = new List<StreamSnapShot>();
+                active.SnapShots = [];
 
                 var dependencies = Substitute.For<IStreamDependencies>();
                 var options = new JsonSerializerOptions();

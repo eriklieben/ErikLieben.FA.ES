@@ -90,10 +90,11 @@ public abstract class RoutedProjection : Projection
     /// <summary>
     /// Folds event into routed projections using document-based signature.
     /// </summary>
+    [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     public override async Task Fold<T>(
         IEvent @event,
         IObjectDocument document,
-        T data = null!,
+        T? data = null,
         IExecutionContext? context = null) where T : class
     {
         // Create version token and delegate to VersionToken overload
@@ -109,7 +110,7 @@ public abstract class RoutedProjection : Projection
     public override async Task Fold<T>(
         IEvent @event,
         VersionToken versionToken,
-        T data = null!,
+        T? data = null,
         IExecutionContext? context = null) where T : class
     {
         // Get document reference (lightweight - just metadata)
@@ -417,6 +418,6 @@ public abstract class RoutedProjection : Projection
         public IEvent Event { get; set; } = null!;
         public IObjectDocument Document { get; set; } = null!;
         public VersionToken VersionToken { get; set; }
-        public List<RouteTarget> RouteTargets { get; } = new();
+        public List<RouteTarget> RouteTargets { get; } = [];
     }
 }

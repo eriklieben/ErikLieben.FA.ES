@@ -1,7 +1,11 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.VersionTokenParts;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Projections
 {
@@ -654,7 +658,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 eventStreamFactory.Create(document1).Returns(eventStream1);
                 // ToLatestVersion() uses ReadAsync(startIdx, null, false) - returns IReadOnlyCollection<IEvent>
                 eventStream1.ReadAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<bool>())
-                    .Returns(Array.Empty<IEvent>());
+                    .Returns([]);
 
                 // Setup for the second token
                 var document2 = Substitute.For<IObjectDocument>();
@@ -665,7 +669,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 eventStreamFactory.Create(document2).Returns(eventStream2);
                 // ToLatestVersion() uses ReadAsync(startIdx, null, false) - returns IReadOnlyCollection<IEvent>
                 eventStream2.ReadAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<bool>())
-                    .Returns(Array.Empty<IEvent>());
+                    .Returns([]);
 
                 // Act
                 await sut.UpdateToLatestVersion(context);
@@ -885,6 +889,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
             {
             }
 
+            [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
             public override async Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
                 IExecutionContext? context = null) where T : class
             {

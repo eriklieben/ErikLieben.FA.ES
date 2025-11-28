@@ -18,5 +18,5 @@ public record RoutedProjectionDefinition : ProjectionDefinition
     /// <summary>
     /// Set of destination type names that have [ProjectionWithExternalCheckpoint] attribute.
     /// </summary>
-    public HashSet<string> DestinationsWithExternalCheckpoint { get; set; } = new();
+    public HashSet<string> DestinationsWithExternalCheckpoint { get; set; } = [];
 }

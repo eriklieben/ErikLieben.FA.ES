@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Testing.InMemory;
+﻿using System.Threading.Tasks;
+using ErikLieben.FA.ES.Testing.InMemory;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Testing.Tests;

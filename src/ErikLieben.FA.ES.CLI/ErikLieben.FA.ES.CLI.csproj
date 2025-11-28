@@ -46,6 +46,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+      <ProjectReference Include="..\ErikLieben.FA.ES.CodeAnalysis\ErikLieben.FA.ES.CodeAnalysis.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Include="..\\..\\README.md" Pack="true" PackagePath="" />

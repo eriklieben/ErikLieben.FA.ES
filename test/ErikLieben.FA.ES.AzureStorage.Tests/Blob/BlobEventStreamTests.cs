@@ -1,7 +1,9 @@
-﻿using ErikLieben.FA.ES.AzureStorage.Blob;
+﻿using System;
+using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
 {

@@ -1,6 +1,8 @@
 ﻿using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
+using static ErikLieben.FA.ES.CodeAnalysis.TypeConstants;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Spectre.Console;
 
@@ -78,8 +80,8 @@ public class AnalyzeAggregates
                     File = commandEvent.File,
                     ActivationType = "Command", // Mark as coming from a command, not a When method
                     ActivationAwaitRequired = false, // Event registration doesn't require await
-                    Parameters = new List<ParameterDefinition>(), // Commands don't have When parameters
-                    Properties = new List<PropertyDefinition>() // Will be populated from event type
+                    Parameters = [], // Commands don't have When parameters
+                    Properties = [] // Will be populated from event type
                 };
 
                 // Only add if not already in the events list
@@ -140,14 +142,6 @@ public class AnalyzeAggregates
         return existing.Type == newItem.Type && existing.Namespace == newItem.Namespace;
     }
 
-    private static readonly List<string> StreamInterfaces =
-    [
-        "IAsyncPostCommitAction",
-        "IPostAppendAction",
-        "IPostReadAction",
-        "IPreAppendAction",
-        "IPreReadAction"
-    ];
 
     private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
     {
@@ -160,9 +154,10 @@ public class AnalyzeAggregates
                 Namespace = RoslynHelper.GetFullNamespace(typeArgument),
                 Type = RoslynHelper.GetFullTypeName(typeArgument),
                 StreamActionInterfaces = typeArgument.AllInterfaces
-                    .Where(i => StreamInterfaces.Contains(i.Name))
+                    .Where(i => StreamActionInterfaceNames.Contains(i.Name))
                     .Select(i => i.Name)
-                    .ToList()
+                    .ToList(),
+                RegistrationType = "Attribute"
             })
             .ToList();
     }

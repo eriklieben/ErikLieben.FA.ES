@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -30,12 +31,10 @@ public class NonPartialAggregateAnalyzer : DiagnosticAnalyzer
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning,
         isEnabledByDefault: true, description: Description);
 
-    private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
-
     /// <summary>
     /// Gets the diagnostics descriptors produced by this analyzer.
     /// </summary>
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     /// <summary>
     /// Registers analysis actions to detect Aggregate-derived classes that are not declared as partial.
@@ -54,7 +53,7 @@ public class NonPartialAggregateAnalyzer : DiagnosticAnalyzer
             return;
 
         // Only consider non-partial classes
-        if (classDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
+        if (SymbolHelpers.IsPartialClass(classDecl))
             return;
 
         // Resolve the symbol and check base types
@@ -62,14 +61,10 @@ public class NonPartialAggregateAnalyzer : DiagnosticAnalyzer
         if (symbol is null)
             return;
 
-        for (var type = symbol.BaseType; type != null; type = type.BaseType)
+        if (SymbolHelpers.IsAggregateType(symbol))
         {
-            if (type.ToDisplayString() == AggregateFullName)
-            {
-                var diagnostic = Diagnostic.Create(Rule, classDecl.Identifier.GetLocation(), symbol.Name);
-                context.ReportDiagnostic(diagnostic);
-                break;
-            }
+            var diagnostic = Diagnostic.Create(Rule, classDecl.Identifier.GetLocation(), symbol.Name);
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }

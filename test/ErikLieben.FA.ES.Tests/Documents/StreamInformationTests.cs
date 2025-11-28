@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System.Collections.Generic;
+using ErikLieben.FA.ES.Documents;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Documents
 {
@@ -342,7 +344,7 @@ namespace ErikLieben.FA.ES.Tests.Documents
                     DocumentTagConnectionName = "document-tag-connection",
                     StreamTagConnectionName = "stream-tag-connection",
                     SnapShotConnectionName = "snapshot-connection",
-                    SnapShots = new List<StreamSnapShot>()
+                    SnapShots = []
                 };
 
                 // Act

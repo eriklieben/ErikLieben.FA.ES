@@ -112,7 +112,7 @@ public class AnalyzeProjectionsTests
             var syntaxTree = CSharpSyntaxTree.ParseText(code, path: "C\\\\Repo\\\\App\\\\Projections\\\\P.cs");
             var compilation = CSharpCompilation.Create(
                 assemblyName: "ErikLieben.FA.ES.Framework",
-                syntaxTrees: new[] { syntaxTree },
+                syntaxTrees: [syntaxTree],
                 references: References,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -199,7 +199,7 @@ namespace App.Projections {
 
         var compilation = CSharpCompilation.Create(
             testAssembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -214,18 +214,19 @@ namespace App.Projections {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "Dummy",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
         return (compilation.GetSemanticModel(syntaxTree), compilation);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

@@ -1,6 +1,8 @@
+using System;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Projections;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Projections;
 

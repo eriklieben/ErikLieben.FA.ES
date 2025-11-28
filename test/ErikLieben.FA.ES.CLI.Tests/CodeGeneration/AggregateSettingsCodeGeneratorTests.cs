@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using ErikLieben.FA.ES.CLI.CodeGeneration;
 using ErikLieben.FA.ES.CLI.Model;
 using Xunit;

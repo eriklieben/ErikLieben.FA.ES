@@ -1,4 +1,7 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Testing.InMemory;
 using ErikLieben.FA.ES.Testing.InMemory.Model;
 using Xunit;
@@ -81,7 +84,7 @@ public class InMemoryDocumentTagStoreTests
         // Pre-populate the private Tags dictionary under the document id
         var field = typeof(InMemoryDocumentTagStore).GetField("Tags", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         var dict = (Dictionary<string, List<string>>)field!.GetValue(store)!;
-        dict[doc.ObjectId] = new List<string> { "existing" };
+        dict[doc.ObjectId] = ["existing"];
 
         // Act
         await store.SetAsync(doc, "new-tag"); // should add

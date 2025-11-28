@@ -86,6 +86,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="data">Optional auxiliary data passed to the fold operation; may be null.</param>
     /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous fold operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     public virtual Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
         IExecutionContext? parentContext = null)
         where T : class
@@ -103,6 +104,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The projection object document.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken) instead. This overload will be removed in a future major version.")]
     public Task Fold(IEvent @event, IObjectDocument document)
     {
         return Fold<object>(@event, document, null!, null!);
@@ -115,6 +117,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="document">The projection object document.</param>
     /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     protected Task Fold(IEvent @event, IObjectDocument document, IExecutionContext? parentContext)
     {
         return Fold<object>(@event, document, null!, parentContext);
@@ -199,6 +202,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="document">The current projection object document.</param>
     /// <param name="event">The current event being processed.</param>
     /// <returns>The created parameter value or null when no matching factory exists.</returns>
+    [Obsolete("Use GetWhenParameterValue<T, Te>(string, VersionToken, IEvent) instead. This overload will be removed in a future major version.")]
     protected T? GetWhenParameterValue<T, Te>(string forType, IObjectDocument document, IEvent @event)
         where Te : class where T : class
     {

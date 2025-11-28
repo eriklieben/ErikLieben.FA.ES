@@ -1,6 +1,8 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using System;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Hosting;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.WebJobs.Isolated.Extensions
 {

@@ -30,7 +30,7 @@ public class DeserializeBlobEventStreamDocument() : BlobEventStreamDocument(stri
     /// <summary>
     /// Gets or sets the list of terminated streams.
     /// </summary>
-    public new List<TerminatedStream> TerminatedStreams { get; set; } = new List<TerminatedStream>();
+    public new List<TerminatedStream> TerminatedStreams { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the schema version used to serialize the document.

@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using Xunit;
+
 namespace ErikLieben.FA.ES.Tests;
 
 public class PagedResultTests

@@ -1,5 +1,7 @@
+using System;
 using ErikLieben.FA.ES.Documents;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests;
 

@@ -1,9 +1,13 @@
-﻿using ErikLieben.FA.ES.CLI.Analyze.Helpers;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Runtime.InteropServices;
+using Xunit;
 
 namespace ErikLieben.FA.ES.CLI.Tests.Analyze.Helpers;
 
@@ -28,7 +32,7 @@ public class CommandHelperTests
             "c\\repo\\MyAggregate.cs");
         var compilation = CSharpCompilation.Create(
             assembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );

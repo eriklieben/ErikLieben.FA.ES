@@ -101,7 +101,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag, documentTagStore, store))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>

@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Linq;
 using ErikLieben.FA.ES.CLI.CodeGeneration;
 using Xunit;
 
@@ -130,7 +133,7 @@ public class CodeFormattingHelperTests
 
         // Assert
         // Empty lines before closing braces should be removed
-        var lines = result.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        var lines = result.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
         for (int i = 1; i < lines.Length; i++)
         {
             if (lines[i].Trim() == "}")

@@ -22,7 +22,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
     /// Gets the diagnostic IDs that this provider can fix.
     /// </summary>
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
-        ImmutableArray.Create(UnusedWhenEventParameterAnalyzer.DiagnosticId);
+        [UnusedWhenEventParameterAnalyzer.DiagnosticId];
 
     /// <summary>
     /// Gets the fix all provider for this code fix.

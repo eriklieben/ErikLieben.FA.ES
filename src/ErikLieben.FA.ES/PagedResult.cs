@@ -9,7 +9,7 @@ public class PagedResult<T>
     /// <summary>
     /// The items in the current page.
     /// </summary>
-    public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
+    public IReadOnlyList<T> Items { get; init; } = [];
 
     /// <summary>
     /// The number of items requested for this page.

@@ -10,17 +10,30 @@ using Spectre.Console;
 
 namespace ErikLieben.FA.ES.CLI.Analyze;
 
-public class Analyze(Config config, IAnsiConsole console)
+public class Analyze(Config config, IAnsiConsole? console = null)
 {
     private readonly Config config = config;
+    private readonly bool _silent = console == null;
+
+    /// <summary>
+    /// Progress callback for silent mode. Parameters: current, total, message
+    /// </summary>
+    public Action<int, int, string>? OnProgress { get; set; }
 
     public async Task<(SolutionDefinition, string)> AnalyzeAsync(string solutionPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(solutionPath);
 
-        console.MarkupLine($"Code generator version: [yellow]{GetGeneratorVersion()}[/]");
+        if (!_silent)
+        {
+            console!.MarkupLine($"Code generator version: [yellow]{GetGeneratorVersion()}[/]");
+        }
         var workspace = MSBuildWorkspace.Create();
-        console.MarkupLine($"Loading solution: [gray42]{solutionPath}[/]");
+        if (!_silent)
+        {
+            console!.MarkupLine($"Loading solution: [gray42]{solutionPath}[/]");
+        }
+        OnProgress?.Invoke(0, 100, "Loading solution...");
 
         var solution = await workspace.OpenSolutionAsync(solutionPath);
         var solutionDefinition = new SolutionDefinition
@@ -37,47 +50,202 @@ public class Analyze(Config config, IAnsiConsole console)
         var maxConcurrency = Environment.ProcessorCount;
         var semaphore = new SemaphoreSlim(maxConcurrency);
 
-        await AnsiConsole.Progress()
-            .Columns(
-                new TaskDescriptionColumn(),
-                new ProgressBarColumn(),
-                new PercentageColumn(),
-                new SpinnerColumn())
-            .StartAsync(async ctx =>
-            {
-                var taskbar = ctx.AddTask("[yellow]Analyzing projects[/]", maxValue: await CountClassDeclarationsAsync(solution));
-                var stopwatch = Stopwatch.StartNew();
-                taskbar.StartTask();
-
-                var failed = false;
-                var projectTasks = solution.Projects.Select(async project =>
+        if (_silent)
+        {
+            // Silent mode - no progress bar UI
+            await AnalyzeSilentAsync(solution, solutionDefinition, solutionRootPath, maxConcurrency, semaphore);
+        }
+        else
+        {
+            // Interactive mode with progress bar
+            await AnsiConsole.Progress()
+                .Columns(
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new SpinnerColumn())
+                .StartAsync(async ctx =>
                 {
-                    await semaphore.WaitAsync();
-                    try
+                    var taskbar = ctx.AddTask("[yellow]Analyzing projects[/]", maxValue: await CountClassDeclarationsAsync(solution));
+                    var stopwatch = Stopwatch.StartNew();
+                    taskbar.StartTask();
+
+                    var failed = false;
+                    var projectTasks = solution.Projects.Select(async project =>
                     {
-                        await ProcessProjectAsync(project, solutionDefinition, solutionRootPath, maxConcurrency, taskbar);
-                    }
-                    catch (Exception ex)
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            await ProcessProjectAsync(project, solutionDefinition, solutionRootPath, maxConcurrency, taskbar);
+                        }
+                        catch (Exception ex)
+                        {
+                            HandleProjectFailure(project, ex, taskbar, stopwatch);
+                            failed = true;
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+
+                    await Task.WhenAll(projectTasks);
+
+                    if (!failed)
                     {
-                        HandleProjectFailure(project, ex, taskbar, stopwatch);
-                        failed = true;
-                    }
-                    finally
-                    {
-                        semaphore.Release();
+                        stopwatch.Stop();
+                        taskbar.Description = $"[green]Analyze Completed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
+                        taskbar.StopTask();
                     }
                 });
-
-                await Task.WhenAll(projectTasks);
-
-                if (!failed)
-                {
-                    stopwatch.Stop();
-                    taskbar.Description = $"[green]Analyze Completed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
-                    taskbar.StopTask();
-                }
-            });
+        }
         return (solutionDefinition, solutionRootPath);
+    }
+
+    private async Task AnalyzeSilentAsync(
+        Solution solution,
+        SolutionDefinition solutionDefinition,
+        string solutionRootPath,
+        int maxConcurrency,
+        SemaphoreSlim semaphore)
+    {
+        // Use project count as progress instead of counting all classes upfront (which is slow)
+        var totalProjects = solution.Projects.Count();
+        var processedProjects = 0;
+
+        var projectTasks = solution.Projects.Select(async project =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                OnProgress?.Invoke(processedProjects, totalProjects, $"Analyzing {project.Name}...");
+                await ProcessProjectSilentAsync(project, solutionDefinition, solutionRootPath, maxConcurrency,
+                    () => { }); // No per-class progress needed
+                Interlocked.Increment(ref processedProjects);
+                OnProgress?.Invoke(processedProjects, totalProjects, $"Analyzed {project.Name}");
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(projectTasks);
+        OnProgress?.Invoke(totalProjects, totalProjects, "Analysis complete");
+    }
+
+    private async Task ProcessProjectSilentAsync(
+        Project project,
+        SolutionDefinition solutionDefinition,
+        string solutionRootPath,
+        int maxConcurrency,
+        Action incrementProgress)
+    {
+        var compilation = await project.GetCompilationAsync();
+        if (compilation == null)
+        {
+            return;
+        }
+
+        var projectDefinition = new ProjectDefinition
+        {
+            Name = project.Name,
+            FileLocation = project.FilePath?.Replace(solutionRootPath, string.Empty) ?? string.Empty,
+            Namespace = project.DefaultNamespace ?? string.Empty,
+        };
+
+        await ProcessSyntaxTreesSilentAsync(compilation, projectDefinition, solutionRootPath, maxConcurrency, incrementProgress);
+
+        if (HasRelevantDefinitions(projectDefinition))
+        {
+            solutionDefinition.Projects.Add(projectDefinition);
+        }
+    }
+
+    private static async Task ProcessSyntaxTreesSilentAsync(
+        Compilation compilation,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        int maxConcurrency,
+        Action incrementProgress)
+    {
+        var innerSemaphore = new SemaphoreSlim(maxConcurrency);
+        var syntaxTreeTasks = compilation.SyntaxTrees.Select(async syntaxTree =>
+        {
+            await innerSemaphore.WaitAsync();
+            try
+            {
+                var semanticModel = compilation.GetSemanticModel(syntaxTree);
+                var root = await syntaxTree.GetRootAsync();
+
+                var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
+                ProcessClassDeclarationsSilent(classDeclarations, semanticModel, compilation, projectDefinition, solutionRootPath, incrementProgress);
+
+                var recordDeclarations = root.DescendantNodes().OfType<RecordDeclarationSyntax>().ToList();
+                ProcessRecordDeclarationsSilent(recordDeclarations, semanticModel, projectDefinition, solutionRootPath, incrementProgress);
+            }
+            finally
+            {
+                innerSemaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(syntaxTreeTasks);
+    }
+
+    private static void ProcessClassDeclarationsSilent(
+        List<ClassDeclarationSyntax> classDeclarations,
+        SemanticModel semanticModel,
+        Compilation compilation,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        Action incrementProgress)
+    {
+        foreach (var classDeclaration in classDeclarations)
+        {
+            if (!TryGetUserDefinedClassSymbol(classDeclaration, semanticModel, out var classSymbol))
+            {
+                incrementProgress();
+                continue;
+            }
+
+            new AnalyzeAggregates(classSymbol, classDeclaration, semanticModel, compilation, solutionRootPath)
+                .Run(projectDefinition.Aggregates);
+
+            new AnalyzeManualStreamActions(classDeclaration, semanticModel)
+                .Run(projectDefinition.Aggregates);
+
+            new AnalyzeInheritedAggregates(classSymbol, semanticModel, solutionRootPath)
+                .Run(projectDefinition.InheritedAggregates);
+
+            new AnalyzeProjections(classSymbol, semanticModel, compilation, solutionRootPath)
+                .Run(projectDefinition.Projections);
+
+            new AnalyzeVersionTokenOfTJsonConverter(classSymbol, solutionRootPath)
+                .Run(projectDefinition.VersionTokenJsonConverterDefinitions);
+
+            incrementProgress();
+        }
+    }
+
+    private static void ProcessRecordDeclarationsSilent(
+        List<RecordDeclarationSyntax> recordDeclarations,
+        SemanticModel semanticModel,
+        ProjectDefinition projectDefinition,
+        string solutionRootPath,
+        Action incrementProgress)
+    {
+        foreach (var recordDeclaration in recordDeclarations)
+        {
+            if (!TryGetUserDefinedRecordSymbol(recordDeclaration, semanticModel, out var recordSymbol))
+            {
+                incrementProgress();
+                continue;
+            }
+
+            new AnalyzeVersionTokenOfT(recordSymbol, solutionRootPath)
+                .Run(projectDefinition.VersionTokens);
+        }
     }
 
     private async Task ProcessProjectAsync(
@@ -87,17 +255,18 @@ public class Analyze(Config config, IAnsiConsole console)
         int maxConcurrency,
         ProgressTask taskbar)
     {
-        console.MarkupLine($"Loading project: [gray54]{project.FilePath}[/]");
+        var con = console!;
+        con.MarkupLine($"Loading project: [gray54]{project.FilePath}[/]");
         var compilation = await project.GetCompilationAsync();
         if (compilation == null)
         {
-            console.MarkupLine($"[red]Failed to compile project:[/] {project.Name}");
+            con.MarkupLine($"[red]Failed to compile project:[/] {project.Name}");
             return;
         }
 
         if (config.Es.EnableDiagnostics)
         {
-            LogCompilationIssues(compilation, console);
+            LogCompilationIssues(compilation, con);
         }
 
         var projectDefinition = new ProjectDefinition
@@ -171,6 +340,9 @@ public class Analyze(Config config, IAnsiConsole console)
             }
 
             new AnalyzeAggregates(classSymbol, classDeclaration, semanticModel, compilation, solutionRootPath)
+                .Run(projectDefinition.Aggregates);
+
+            new AnalyzeManualStreamActions(classDeclaration, semanticModel)
                 .Run(projectDefinition.Aggregates);
 
             new AnalyzeInheritedAggregates(classSymbol, semanticModel, solutionRootPath)
@@ -260,9 +432,10 @@ public class Analyze(Config config, IAnsiConsole console)
 
     private void HandleProjectFailure(Project project, Exception ex, ProgressTask taskbar, Stopwatch stopwatch)
     {
-        console.MarkupLine($"[red]Failed to analyze project:[/] {project.Name}");
-        console.MarkupLine($"[red]Exception:[/] {ex.Message}");
-        console.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");
+        var con = console!;
+        con.MarkupLine($"[red]Failed to analyze project:[/] {project.Name}");
+        con.MarkupLine($"[red]Exception:[/] {ex.Message}");
+        con.MarkupLine($"[red]Stack trace:[/] [white dim]{ex.StackTrace}[/]");
         stopwatch.Stop();
         taskbar.Description = $"[red]Analyze Failed[/][white dim] - Total time: {stopwatch.Elapsed:hh\\:mm\\:ss}[/]";
         taskbar.Value(0);

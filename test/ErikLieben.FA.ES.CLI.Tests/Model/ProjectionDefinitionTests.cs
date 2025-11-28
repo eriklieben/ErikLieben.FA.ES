@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using ErikLieben.FA.ES.CLI.Model;
+using Xunit;
 
 namespace ErikLieben.FA.ES.CLI.Tests.Model;
 
@@ -91,7 +93,7 @@ public class ProjectionDefinitionTests
                 {
                     ["TranslationProjection"] = "translations/{language}.json"
                 },
-                DestinationsWithExternalCheckpoint = new HashSet<string> { "TranslationProjection" }
+                DestinationsWithExternalCheckpoint = ["TranslationProjection"]
             };
 
             // Assert

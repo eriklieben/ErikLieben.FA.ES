@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.AzureStorage.Exceptions;
+﻿using System;
+using ErikLieben.FA.ES.AzureStorage.Exceptions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
 {

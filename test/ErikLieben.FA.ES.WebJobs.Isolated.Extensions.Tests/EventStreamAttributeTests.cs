@@ -1,6 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Description;
+using Xunit;
 
 namespace ErikLieben.FA.ES.WebJobs.Isolated.Extensions
 {

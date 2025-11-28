@@ -1,10 +1,15 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 using ErikLieben.FA.ES.Notifications;
 using ErikLieben.FA.ES.Tests.Action;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.EventStream
 {
@@ -572,7 +577,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = CreateSut(dependencies);
                 var streamIdentifier = "test-stream";
 
-                dependencies.Document.TerminatedStreams.Returns(new List<TerminatedStream>());
+                dependencies.Document.TerminatedStreams.Returns([]);
 
                 // Act
                 var result = await sut.IsTerminatedASync(streamIdentifier);
@@ -604,9 +609,9 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 // Arrange
                 var dependencies = CreateDependencies();
                 var streamId = "stream-123";
-                dependencies.Document.TerminatedStreams.Returns(new List<TerminatedStream> {
+                dependencies.Document.TerminatedStreams.Returns([
                     new TerminatedStream { StreamIdentifier = "other-stream" }
-                });
+                ]);
                 var sut = CreateSut(dependencies);
 
                 // Act

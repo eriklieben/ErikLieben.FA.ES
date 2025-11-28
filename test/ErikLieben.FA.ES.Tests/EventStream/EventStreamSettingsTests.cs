@@ -1,4 +1,5 @@
 ﻿using ErikLieben.FA.ES.EventStream;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.EventStream;
 

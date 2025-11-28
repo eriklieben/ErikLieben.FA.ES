@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization.Metadata;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES.Processors;
 using ErikLieben.FA.ES.Testing.InMemory;
 using ErikLieben.FA.ES.Documents;
