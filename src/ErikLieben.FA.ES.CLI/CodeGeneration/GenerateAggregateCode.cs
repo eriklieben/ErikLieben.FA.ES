@@ -100,6 +100,11 @@ public class GenerateAggregateCode
             .Where(p => !usings.Contains(p.Namespace))
             .Select(p => p.Namespace));
 
+        // Add upcaster namespaces
+        usings.AddRange(aggregate.Upcasters
+            .Where(u => !usings.Contains(u.Namespace))
+            .Select(u => u.Namespace));
+
         return usings;
     }
 
@@ -145,34 +150,101 @@ public class GenerateAggregateCode
     internal static StringBuilder GenerateFoldCode(AggregateDefinition aggregate, List<string> usings)
     {
         var foldCode = new StringBuilder();
-        foreach (var @event in aggregate.Events)
+
+        // Group events by EventName to handle multiple schema versions
+        var eventsByName = aggregate.Events
+            .Where(e => e.ActivationType != "Command") // Skip events from Command methods
+            .GroupBy(e => e.EventName)
+            .ToList();
+
+        foreach (var eventGroup in eventsByName)
         {
-            // Skip events that come from Command methods (no When handler)
-            if (@event.ActivationType == "Command")
+            var events = eventGroup.OrderBy(e => e.SchemaVersion).ToList();
+
+            foreach (var @event in events)
             {
-                continue;
+                if (!usings.Contains(@event.Namespace))
+                {
+                    usings.Add(@event.Namespace);
+                }
             }
 
-            if (!usings.Contains(@event.Namespace))
+            if (events.Count == 1)
             {
-                usings.Add(@event.Namespace);
-            }
-
-            if (@event.Parameters.Count == 0)
-            {
-                // Method uses [When<TEvent>] attribute with no parameters
-                GenerateFoldCodeWithNoParameters(@event, foldCode);
-            }
-            else if (@event.Parameters.Count > 1)
-            {
-                GenerateFoldCodeWithMultipleParameters(@event, foldCode);
+                // Single version - generate simple case
+                var @event = events[0];
+                if (@event.Parameters.Count == 0)
+                {
+                    GenerateFoldCodeWithNoParameters(@event, foldCode);
+                }
+                else if (@event.Parameters.Count > 1)
+                {
+                    GenerateFoldCodeWithMultipleParameters(@event, foldCode);
+                }
+                else
+                {
+                    GenerateFoldCodeWithSingleParameter(@event, foldCode);
+                }
             }
             else
             {
-                GenerateFoldCodeWithSingleParameter(@event, foldCode);
+                // Multiple versions - generate schema version dispatch
+                GenerateFoldCodeWithSchemaVersionDispatch(events, foldCode);
             }
         }
         return foldCode;
+    }
+
+    internal static void GenerateFoldCodeWithSchemaVersionDispatch(List<EventDefinition> events, StringBuilder foldCode)
+    {
+        var eventName = events[0].EventName;
+        foldCode.AppendLine($$"""
+                              case "{{eventName}}":
+                          """);
+
+        for (int i = 0; i < events.Count; i++)
+        {
+            var @event = events[i];
+            var isLast = i == events.Count - 1;
+            var condition = isLast ? "else" : (i == 0 ? $"if (@event.SchemaVersion == {@event.SchemaVersion})" : $"else if (@event.SchemaVersion == {@event.SchemaVersion})");
+
+            if (@event.Parameters.Count == 0)
+            {
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}();
+                                      """);
+            }
+            else if (@event.Parameters.Count > 1)
+            {
+                var paramBuilder = new StringBuilder();
+                foreach (var p in @event.Parameters.Skip(1))
+                {
+                    switch (p.Type)
+                    {
+                        case "IObjectDocument":
+                            paramBuilder.Append($", Stream.Document");
+                            break;
+                        case "IEvent":
+                            paramBuilder.Append($", @event");
+                            break;
+                    }
+                }
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}){{paramBuilder}});
+                                      """);
+            }
+            else
+            {
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
+                                      """);
+            }
+        }
+
+        foldCode.AppendLine("    break;");
     }
 
     internal static void GenerateFoldCodeWithNoParameters(EventDefinition @event, StringBuilder foldCode)
@@ -318,10 +390,30 @@ public class GenerateAggregateCode
         var setupCode = new StringBuilder();
         foreach (var usedEvent in aggregate.Events)
         {
+            if (usedEvent.SchemaVersion == 1)
+            {
+                setupCode.AppendLine($$"""
+                     Stream.RegisterEvent<{{usedEvent.TypeName}}>(
+                         "{{usedEvent.EventName}}",
+                         {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 """);
+            }
+            else
+            {
+                setupCode.AppendLine($$"""
+                     Stream.RegisterEvent<{{usedEvent.TypeName}}>(
+                         "{{usedEvent.EventName}}",
+                         {{usedEvent.SchemaVersion}},
+                         {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 """);
+            }
+        }
+
+        // Register upcasters
+        foreach (var upcaster in aggregate.Upcasters)
+        {
             setupCode.AppendLine($$"""
-                 Stream.RegisterEvent<{{usedEvent.TypeName}}>(
-                     "{{usedEvent.EventName}}",
-                     {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 Stream.RegisterUpcast(new {{upcaster.TypeName}}());
              """);
         }
 

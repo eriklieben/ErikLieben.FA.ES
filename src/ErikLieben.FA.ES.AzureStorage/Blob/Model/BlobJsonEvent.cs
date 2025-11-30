@@ -58,7 +58,8 @@ public record BlobJsonEvent : JsonEvent
             ActionMetadata = jsonEvent.ActionMetadata,
             Metadata = jsonEvent.Metadata,
             EventType = jsonEvent.EventType,
-            EventVersion = jsonEvent.EventVersion
+            EventVersion = jsonEvent.EventVersion,
+            SchemaVersion = jsonEvent.SchemaVersion
         };
     }
 }

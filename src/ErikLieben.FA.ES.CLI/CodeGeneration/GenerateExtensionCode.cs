@@ -266,10 +266,13 @@ public async Task Generate()
 
     private static List<EventDefinition> CollectDistinctEvents(ProjectDefinition project)
     {
+        // Use TypeName for distinction since multiple event types can share the same EventName
+        // but have different schema versions (e.g., MemberJoinedProjectV1 and MemberJoinedProject
+        // both using EventName "Project.MemberJoined")
         return project.Aggregates
             .SelectMany(agg => agg.Events)
             .Concat(project.Projections.SelectMany(proj => proj.Events))
-            .DistinctBy(e => e.EventName)
+            .DistinctBy(e => e.TypeName)
             .ToList();
     }
 

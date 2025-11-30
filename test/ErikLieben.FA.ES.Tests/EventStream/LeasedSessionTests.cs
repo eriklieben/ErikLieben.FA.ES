@@ -357,6 +357,44 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 Assert.Equal("{\"Id\":2,\"Name\":\"Transformed\"}", sut.Buffer[0].Payload);
                 preAppendAction.Received(1).PreAppend(Arg.Any<TestPayload>(), Arg.Any<JsonEvent>(), Arg.Any<IObjectDocument>());
             }
+
+            [Fact]
+            public void Should_set_schema_version_from_registry()
+            {
+                // Arrange
+                var dependencies = CreateDependencies();
+                var sut = CreateSut(dependencies);
+                var payload = new TestPayload { Id = 1, Name = "Test" };
+
+                // Register with schema version 2
+                dependencies.EventTypeRegistry.Add(typeof(TestPayload), "TestEvent", 2, TestJsonSerializerContext.Default.TestPayload);
+
+                // Act
+                var result = sut.Append(payload);
+
+                // Assert
+                Assert.Single(sut.Buffer);
+                Assert.Equal(2, sut.Buffer[0].SchemaVersion);
+            }
+
+            [Fact]
+            public void Should_default_to_schema_version_1_when_not_specified()
+            {
+                // Arrange
+                var dependencies = CreateDependencies();
+                var sut = CreateSut(dependencies);
+                var payload = new TestPayload { Id = 1, Name = "Test" };
+
+                // Register without explicit schema version (defaults to 1)
+                dependencies.EventTypeRegistry.Add(typeof(TestPayload), "TestEvent", TestJsonSerializerContext.Default.TestPayload);
+
+                // Act
+                var result = sut.Append(payload);
+
+                // Assert
+                Assert.Single(sut.Buffer);
+                Assert.Equal(1, sut.Buffer[0].SchemaVersion);
+            }
         }
 
         public class CommitAsync

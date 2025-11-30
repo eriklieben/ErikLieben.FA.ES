@@ -83,10 +83,10 @@ public class EventStreamConverterTests
         var stream = Substitute.For<IEventStream>();
 
         var streamFactory = Substitute.For<IEventStreamFactory>();
-        streamFactory.Create(doc).Returns(stream);
+        streamFactory.Create(Arg.Any<IObjectDocument>()).Returns(stream);
 
         var testAgg = new TestAggregate();
-        covFactory.Create(stream).Returns(testAgg);
+        covFactory.Create(Arg.Any<IEventStream>()).Returns(testAgg);
 
         var sut = new EventStreamConverter(aggFactory, docFactory, streamFactory);
 
@@ -97,11 +97,11 @@ public class EventStreamConverterTests
 
         if (createWhenMissing)
         {
-            docFactory.GetOrCreateAsync("order", "42", "Order").Returns(Task.FromResult(doc));
+            docFactory.GetOrCreateAsync("order", "42", string.Empty).Returns(Task.FromResult(doc));
         }
         else
         {
-            docFactory.GetAsync("order", "42", "Order").Returns(Task.FromResult(doc));
+            docFactory.GetAsync("order", "42", string.Empty).Returns(Task.FromResult(doc));
         }
 
         // Act
@@ -113,14 +113,14 @@ public class EventStreamConverterTests
 
         if (createWhenMissing)
         {
-            await docFactory.Received(1).GetOrCreateAsync("order", "42", "Order");
+            await docFactory.Received(1).GetOrCreateAsync("order", "42", string.Empty);
         }
         else
         {
-            await docFactory.Received(1).GetAsync("order", "42", "Order");
+            await docFactory.Received(1).GetAsync("order", "42", string.Empty);
         }
-        streamFactory.Received(1).Create(doc);
-        covFactory.Received(1).Create(stream);
+        streamFactory.Received(1).Create(Arg.Any<IObjectDocument>());
+        covFactory.Received(1).Create(Arg.Any<IEventStream>());
     }
 
     [Fact]

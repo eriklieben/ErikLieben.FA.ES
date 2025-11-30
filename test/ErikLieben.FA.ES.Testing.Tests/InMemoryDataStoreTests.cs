@@ -17,6 +17,7 @@ public class InMemoryDataStoreTests
     {
         public string EventType { get; set; } = "Test";
         public int EventVersion { get; set; }
+        public int SchemaVersion { get; set; } = 1;
         public string? ExternalSequencer { get; } = string.Empty;
         public ActionMetadata? ActionMetadata { get; } = new();
         public Dictionary<string, string> Metadata { get; } = new();

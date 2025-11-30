@@ -33,6 +33,33 @@ public record JsonEvent : IEvent, IJsonEventWithoutPayload
     public required int EventVersion { get; set; }
 
     /// <summary>
+    /// Gets or sets the schema version of the event payload.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to 1 when not specified or when value is 0 in storage.
+    /// Values of 1 are not persisted to save storage space.
+    /// Use this to track breaking changes in the event's data structure over time.
+    /// </remarks>
+    [JsonIgnore]
+    public int SchemaVersion
+    {
+        get => _schemaVersion == 0 ? 1 : _schemaVersion;
+        set => _schemaVersion = value == 1 ? 0 : value;
+    }
+
+    /// <summary>
+    /// Internal property for JSON serialization. Stores 0 for version 1 (not persisted) and actual value for version 2+.
+    /// </summary>
+    [JsonPropertyName("schemaVersion")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int SchemaVersionForSerialization
+    {
+        get => _schemaVersion;
+        set => _schemaVersion = value;
+    }
+    private int _schemaVersion;
+
+    /// <summary>
     /// Gets or sets the external sequencer identifier for event ordering across streams.
     /// </summary>
     [JsonPropertyName("exseq")]
@@ -94,6 +121,7 @@ public record JsonEvent : IEvent, IJsonEventWithoutPayload
         {
             EventType = @event.EventType,
             EventVersion = @event.EventVersion,
+            SchemaVersion = @event.SchemaVersion,
             ExternalSequencer = @event.ExternalSequencer,
             Data = data,
             Payload = @event.Payload,
@@ -124,6 +152,7 @@ public record JsonEvent : IEvent, IJsonEventWithoutPayload
         {
             EventType = @event.EventType,
             EventVersion = @event.EventVersion,
+            SchemaVersion = @event.SchemaVersion,
             ExternalSequencer = @event.ExternalSequencer,
             Data = obj,
             Payload = @event.Payload,

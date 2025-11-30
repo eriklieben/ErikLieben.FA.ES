@@ -21,6 +21,11 @@ public interface IJsonEventWithoutPayload
     int EventVersion { get; set; }
 
     /// <summary>
+    /// Gets or sets the schema version of the event payload. Defaults to 1 when not specified.
+    /// </summary>
+    int SchemaVersion { get; set; }
+
+    /// <summary>
     /// Gets or sets the external sequencer identifier when the event is sequenced by an external system; otherwise null.
     /// </summary>
     string? ExternalSequencer { get; set; }

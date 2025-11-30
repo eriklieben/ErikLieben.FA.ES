@@ -67,6 +67,9 @@ public class ProjectionConverterTests
         public Task SaveAsync(TestProjection projection, string? blobName = null, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
+        public Task SaveProjectionAsync(Projection projection, string? blobName = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
         public Task<bool> ExistsAsync(string? blobName = null, CancellationToken cancellationToken = default)
             => Task.FromResult(true);
 
@@ -223,6 +226,9 @@ public class ProjectionConverterTests
         }
 
         public Task SaveAsync(TestProjection projection, string? blobName = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task SaveProjectionAsync(Projection projection, string? blobName = null, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         public Task<bool> ExistsAsync(string? blobName = null, CancellationToken cancellationToken = default)

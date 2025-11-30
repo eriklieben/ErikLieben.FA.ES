@@ -1928,4 +1928,362 @@ public class GenerateAggregateCodeTests
             "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
         Assert.Equal(0, editorBrowsableCount);
     }
+
+    [Fact]
+    public void GenerateFoldCode_generates_simple_case_for_single_schema_version()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreated", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Order.Created\":", code);
+        // Single version should NOT have schema version dispatch
+        Assert.DoesNotContain("@event.SchemaVersion", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_schema_version_dispatch_for_multiple_versions()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenOrderCreatedV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV1", Namespace = "Test.Events" }]
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenOrderCreatedV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV2", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Order.Created\":", code);
+        Assert.Contains("@event.SchemaVersion == 1", code);
+        // Last version uses 'else' without SchemaVersion check
+        Assert.Contains("else", code);
+        Assert.Contains("WhenOrderCreatedV1", code);
+        Assert.Contains("WhenOrderCreatedV2", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_else_for_latest_version()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV1", Namespace = "Test.Events" }]
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV2", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        // First version gets 'if', second (last) version gets 'else'
+        Assert.Contains("if (@event.SchemaVersion == 1)", code);
+        Assert.Contains("else", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_handles_parameterless_when_methods_with_multiple_versions()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenOrderCreatedV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // Parameterless
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenOrderCreatedV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // Parameterless
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("WhenOrderCreatedV1();", code);
+        Assert.Contains("WhenOrderCreatedV2();", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_schema_version_for_version_greater_than_1()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("RegisterEvent<OrderCreatedV2>", code);
+        Assert.Contains("\"Order.Created\"", code);
+        Assert.Contains("2,", code); // schema version parameter
+    }
+
+    [Fact]
+    public void GenerateSetupCode_omits_schema_version_for_version_1()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("RegisterEvent<OrderCreated>", code);
+        Assert.Contains("\"Order.Created\"", code);
+        // Should NOT contain schema version for v1
+        var lines = code.Split('\n').Where(l => l.Contains("RegisterEvent")).ToList();
+        Assert.Single(lines);
+        // The line should have 2 arguments only (event name + json type info)
+        Assert.DoesNotContain(", 1,", lines[0]);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_RegisterUpcast_for_upcasters()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV1ToV2Upcaster());", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_multiple_upcaster_registrations()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                },
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV2ToV3Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV1ToV2Upcaster());", code);
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV2ToV3Upcaster());", code);
+    }
+
+    [Fact]
+    public void BuildUsings_includes_upcaster_namespaces()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var usings = GenerateAggregateCode.BuildUsings(aggregate);
+
+        // Assert
+        Assert.Contains("Test.Upcasters", usings);
+    }
 }

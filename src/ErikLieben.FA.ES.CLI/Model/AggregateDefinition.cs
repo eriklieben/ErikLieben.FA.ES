@@ -26,6 +26,11 @@ public record AggregateDefinition
 
     public List<StreamActionDefinition> StreamActions { get; init; } = [];
 
+    /// <summary>
+    /// Upcasters to register, extracted from [UseUpcaster] attributes.
+    /// </summary>
+    public List<UpcasterDefinition> Upcasters { get; init; } = [];
+
     public bool IsPartialClass { get; init; }
 
     /// <summary>

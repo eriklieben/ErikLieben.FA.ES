@@ -78,6 +78,7 @@ public class AnalyzeAggregates
                     TypeName = commandEvent.TypeName,
                     Namespace = commandEvent.Namespace,
                     File = commandEvent.File,
+                    SchemaVersion = commandEvent.SchemaVersion,
                     ActivationType = "Command", // Mark as coming from a command, not a When method
                     ActivationAwaitRequired = false, // Event registration doesn't require await
                     Parameters = [], // Commands don't have When parameters
@@ -103,6 +104,11 @@ public class AnalyzeAggregates
         // Extract attribute-based settings
         declaration.EventStreamTypeAttribute = AttributeExtractor.ExtractEventStreamTypeAttribute(classSymbol);
         declaration.EventStreamBlobSettingsAttribute = AttributeExtractor.ExtractEventStreamBlobSettingsAttribute(classSymbol);
+
+        // Extract upcasters
+        var newUpcasters = AttributeExtractor.ExtractUseUpcasterAttributes(classSymbol)
+            .Where(u => declaration.Upcasters.All(existing => existing.TypeName != u.TypeName || existing.Namespace != u.Namespace));
+        declaration.Upcasters.AddRange(newUpcasters);
 
         AppendIdentifierTypeFromMetadata(declaration);
 
@@ -146,7 +152,8 @@ public class AnalyzeAggregates
     private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
     {
         return parameterTypeSymbol.GetAttributes()
-            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 })
+            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 } &&
+                       a.AttributeClass.Name != "UseUpcasterAttribute") // Exclude upcaster attributes
             .SelectMany(attribute => attribute.AttributeClass!.TypeArguments)
             .Where(typeArgument => typeArgument.TypeKind != TypeKind.Error)
             .Select(typeArgument => new StreamActionDefinition

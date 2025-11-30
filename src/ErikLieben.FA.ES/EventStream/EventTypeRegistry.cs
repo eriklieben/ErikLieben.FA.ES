@@ -8,8 +8,16 @@ namespace ErikLieben.FA.ES.EventStream;
 /// </summary>
 /// <param name="Type">The CLR type of the event.</param>
 /// <param name="EventName">The name used to identify the event in storage.</param>
+/// <param name="SchemaVersion">The schema version of the event. Defaults to 1.</param>
 /// <param name="JsonTypeInfo">The JSON type information for serialization/deserialization.</param>
-public record EventTypeInfo(Type Type, string EventName, JsonTypeInfo JsonTypeInfo);
+public record EventTypeInfo(Type Type, string EventName, int SchemaVersion, JsonTypeInfo JsonTypeInfo);
+
+/// <summary>
+/// Represents a key for looking up event types by name and schema version.
+/// </summary>
+/// <param name="EventName">The name used to identify the event in storage.</param>
+/// <param name="SchemaVersion">The schema version of the event.</param>
+public readonly record struct EventTypeKey(string EventName, int SchemaVersion);
 
 /// <summary>
 /// Registry for managing event type mappings between CLR types, event names, and JSON type information.
@@ -22,33 +30,47 @@ public class EventTypeRegistry
     // Mutable dictionaries used during registration phase
     private Dictionary<Type, EventTypeInfo?>? byTypeMutable = new();
     private Dictionary<string, EventTypeInfo?>? byNameMutable = new();
+    private Dictionary<EventTypeKey, EventTypeInfo?>? byNameAndVersionMutable = new();
     private Dictionary<JsonTypeInfo, EventTypeInfo?>? byJsonTypeInfoMutable = new();
 
     // Frozen dictionaries used after freeze for optimized lookups
     private FrozenDictionary<Type, EventTypeInfo?>? byTypeFrozen;
     private FrozenDictionary<string, EventTypeInfo?>? byNameFrozen;
+    private FrozenDictionary<EventTypeKey, EventTypeInfo?>? byNameAndVersionFrozen;
     private FrozenDictionary<JsonTypeInfo, EventTypeInfo?>? byJsonTypeInfoFrozen;
 
     private bool isFrozen = false;
 
     /// <summary>
-    /// Registers an event type with its associated metadata.
+    /// Registers an event type with its associated metadata and schema version 1.
     /// </summary>
     /// <param name="type">The CLR type of the event.</param>
     /// <param name="eventName">The name used to identify the event in storage.</param>
     /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
     /// <exception cref="InvalidOperationException">Thrown when attempting to add to a frozen registry.</exception>
     public void Add(Type type, string eventName, JsonTypeInfo jsonTypeInfo)
+        => Add(type, eventName, 1, jsonTypeInfo);
+
+    /// <summary>
+    /// Registers an event type with its associated metadata and schema version.
+    /// </summary>
+    /// <param name="type">The CLR type of the event.</param>
+    /// <param name="eventName">The name used to identify the event in storage.</param>
+    /// <param name="schemaVersion">The schema version of the event.</param>
+    /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
+    /// <exception cref="InvalidOperationException">Thrown when attempting to add to a frozen registry.</exception>
+    public void Add(Type type, string eventName, int schemaVersion, JsonTypeInfo jsonTypeInfo)
     {
         if (isFrozen)
         {
             throw new InvalidOperationException("Cannot add event types to a frozen registry. Call Add before calling Freeze().");
         }
 
-        var info = new EventTypeInfo(type, eventName, jsonTypeInfo);
+        var info = new EventTypeInfo(type, eventName, schemaVersion, jsonTypeInfo);
         events.Add(info);
         byTypeMutable![type] = info;
         byNameMutable![eventName] = info;
+        byNameAndVersionMutable![new EventTypeKey(eventName, schemaVersion)] = info;
         byJsonTypeInfoMutable![jsonTypeInfo] = info;
     }
 
@@ -66,11 +88,13 @@ public class EventTypeRegistry
 
         byTypeFrozen = byTypeMutable!.ToFrozenDictionary();
         byNameFrozen = byNameMutable!.ToFrozenDictionary();
+        byNameAndVersionFrozen = byNameAndVersionMutable!.ToFrozenDictionary();
         byJsonTypeInfoFrozen = byJsonTypeInfoMutable!.ToFrozenDictionary();
 
         // Release mutable dictionaries to free memory
         byTypeMutable = null;
         byNameMutable = null;
+        byNameAndVersionMutable = null;
         byJsonTypeInfoMutable = null;
 
         isFrozen = true;
@@ -117,6 +141,33 @@ public class EventTypeRegistry
     /// <returns>True if the event name was found; otherwise, false.</returns>
     public bool TryGetByName(string eventName, out EventTypeInfo? info) =>
         isFrozen ? byNameFrozen!.TryGetValue(eventName, out info) : byNameMutable!.TryGetValue(eventName, out info);
+
+    /// <summary>
+    /// Gets event type information by event name and schema version.
+    /// </summary>
+    /// <param name="eventName">The event name to look up.</param>
+    /// <param name="schemaVersion">The schema version to look up.</param>
+    /// <returns>The event type information.</returns>
+    public EventTypeInfo? GetByNameAndVersion(string eventName, int schemaVersion)
+    {
+        var key = new EventTypeKey(eventName, schemaVersion);
+        return isFrozen ? byNameAndVersionFrozen![key] : byNameAndVersionMutable![key];
+    }
+
+    /// <summary>
+    /// Tries to get event type information by event name and schema version.
+    /// </summary>
+    /// <param name="eventName">The event name to look up.</param>
+    /// <param name="schemaVersion">The schema version to look up.</param>
+    /// <param name="info">When this method returns, contains the event type information if found; otherwise, null.</param>
+    /// <returns>True if the event was found; otherwise, false.</returns>
+    public bool TryGetByNameAndVersion(string eventName, int schemaVersion, out EventTypeInfo? info)
+    {
+        var key = new EventTypeKey(eventName, schemaVersion);
+        return isFrozen
+            ? byNameAndVersionFrozen!.TryGetValue(key, out info)
+            : byNameAndVersionMutable!.TryGetValue(key, out info);
+    }
 
     /// <summary>
     /// Tries to get event type information by JSON type information.

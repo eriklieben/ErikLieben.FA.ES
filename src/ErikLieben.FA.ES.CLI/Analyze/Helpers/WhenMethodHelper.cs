@@ -74,6 +74,7 @@ internal static class WhenMethodHelper
                 ActivationType = whenMethod.Name,
                 ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
                 EventName = eventName,
+                SchemaVersion = AttributeExtractor.ExtractEventVersionAttribute(parameterTypeSymbol),
                 Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
                 File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
                 TypeName = typeName,

@@ -13,8 +13,8 @@ public class FunctionsEventStoreExtensionsTests
 
         services.ConfigureEventStoreBindings();
 
-        // Verify converters are registered (they are internal, so we check via service descriptors)
-        Assert.Contains(services, sd => sd.ServiceType.Name == "EventStreamConverter");
-        Assert.Contains(services, sd => sd.ServiceType.Name == "ProjectionConverter");
+        // Verify converters are registered (they are registered as IInputConverter with implementation types)
+        Assert.Contains(services, sd => sd.ImplementationType?.Name == "EventStreamConverter");
+        Assert.Contains(services, sd => sd.ImplementationType?.Name == "ProjectionConverter");
     }
 }

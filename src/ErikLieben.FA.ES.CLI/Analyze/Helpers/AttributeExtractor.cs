@@ -106,4 +106,57 @@ public static class AttributeExtractor
 
         return data;
     }
+
+    /// <summary>
+    /// Extracts the schema version from [EventVersion] attribute on an event type.
+    /// Returns 1 (default) if the attribute is not present.
+    /// </summary>
+    public static int ExtractEventVersionAttribute(INamedTypeSymbol eventSymbol)
+    {
+        var attribute = eventSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == "EventVersionAttribute");
+
+        if (attribute == null)
+            return 1; // Default schema version
+
+        // [EventVersion(2)] - single int constructor argument
+        if (attribute.ConstructorArguments.Length == 1 &&
+            attribute.ConstructorArguments[0].Value is int version)
+        {
+            return version;
+        }
+
+        return 1; // Default if parsing fails
+    }
+
+    /// <summary>
+    /// Extracts [UseUpcaster&lt;T&gt;] attributes from an aggregate class.
+    /// Returns a list of upcaster definitions to register.
+    /// </summary>
+    public static List<UpcasterDefinition> ExtractUseUpcasterAttributes(INamedTypeSymbol aggregateSymbol)
+    {
+        var upcasters = new List<UpcasterDefinition>();
+
+        // Look for generic UseUpcasterAttribute<T> - the name will be "UseUpcasterAttribute" with TypeArguments
+        var attributes = aggregateSymbol.GetAttributes()
+            .Where(a => a.AttributeClass?.Name == "UseUpcasterAttribute" &&
+                       a.AttributeClass.IsGenericType);
+
+        foreach (var attribute in attributes)
+        {
+            // [UseUpcaster<MyUpcaster>] - generic type argument
+            var attributeClass = attribute.AttributeClass;
+            if (attributeClass?.TypeArguments.Length == 1 &&
+                attributeClass.TypeArguments[0] is INamedTypeSymbol upcasterType)
+            {
+                upcasters.Add(new UpcasterDefinition
+                {
+                    TypeName = upcasterType.Name,
+                    Namespace = upcasterType.ContainingNamespace.ToDisplayString()
+                });
+            }
+        }
+
+        return upcasters;
+    }
 }

@@ -298,6 +298,9 @@ internal class RoslynHelper(
                 Namespace = SymbolHelpers.GetFullNamespace(symbolInfo.Symbol!),
                 File = GetFilePaths(symbolInfo.Symbol!).FirstOrDefault() ?? string.Empty,
                 TypeName = SymbolHelpers.GetFullTypeName(typeInfo.Type!),
+                SchemaVersion = typeInfo.Type is INamedTypeSymbol namedType
+                    ? AttributeExtractor.ExtractEventVersionAttribute(namedType)
+                    : 1,
             });
         }
 

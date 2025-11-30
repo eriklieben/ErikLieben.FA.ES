@@ -106,6 +106,7 @@ public class LeasedSession : ILeasedSession
         {
             EventType = eventName,
             EventVersion = version,
+            SchemaVersion = eventTypeInfo.SchemaVersion,
             Payload = JsonSerializer.Serialize(payload, eventTypeInfo.JsonTypeInfo),
             ActionMetadata = actionMetadata ?? new ActionMetadata(),
             ExternalSequencer = externalSequencer,
