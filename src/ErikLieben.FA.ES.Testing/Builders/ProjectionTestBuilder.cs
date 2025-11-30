@@ -1,6 +1,9 @@
+using System.Text.Json;
 using ErikLieben.FA.ES.Aggregates;
+using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.Testing.Assertions;
+using ErikLieben.FA.ES.Testing.InMemory;
 
 namespace ErikLieben.FA.ES.Testing.Builders;
 
@@ -151,6 +154,90 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
     }
 
     /// <summary>
+    /// Sets up events for a specific object stream using domain event objects.
+    /// This overload automatically wraps domain events as JsonEvent instances.
+    /// </summary>
+    /// <param name="objectName">The logical name/scope of the object.</param>
+    /// <param name="objectId">The identifier of the object instance.</param>
+    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
+    public ProjectionTestBuilder<TProjection> GivenEvents(
+        string objectName,
+        string objectId,
+        params object[] domainEvents)
+    {
+        ArgumentNullException.ThrowIfNull(objectName);
+        ArgumentNullException.ThrowIfNull(objectId);
+        ArgumentNullException.ThrowIfNull(domainEvents);
+
+        var events = WrapDomainEvents(domainEvents);
+        _givenEventStreams.Add((objectName, objectId, events));
+        return this;
+    }
+
+    /// <summary>
+    /// Sets up events for a specific object stream using aggregate type and domain event objects.
+    /// This overload automatically wraps domain events as JsonEvent instances.
+    /// </summary>
+    /// <typeparam name="TAggregate">The aggregate type implementing ITestableAggregate.</typeparam>
+    /// <param name="objectId">The identifier of the object instance.</param>
+    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
+    public ProjectionTestBuilder<TProjection> Given<TAggregate>(
+        string objectId,
+        params object[] domainEvents)
+        where TAggregate : ITestableAggregate<TAggregate>
+    {
+        ArgumentNullException.ThrowIfNull(objectId);
+        ArgumentNullException.ThrowIfNull(domainEvents);
+
+        var events = WrapDomainEvents(domainEvents);
+        _givenEventStreams.Add((TAggregate.ObjectName, objectId, events));
+        return this;
+    }
+
+    /// <summary>
+    /// Wraps domain event objects as JsonEvent instances.
+    /// </summary>
+    private static IEvent[] WrapDomainEvents(object[] domainEvents)
+    {
+        var events = new IEvent[domainEvents.Length];
+        for (var i = 0; i < domainEvents.Length; i++)
+        {
+            events[i] = WrapDomainEvent(domainEvents[i], i);
+        }
+        return events;
+    }
+
+    /// <summary>
+    /// Wraps a domain event object as a JsonEvent.
+    /// </summary>
+    private static JsonEvent WrapDomainEvent(object domainEvent, int version)
+    {
+        var eventType = domainEvent.GetType();
+        var eventNameAttribute = eventType.GetCustomAttributes(typeof(EventNameAttribute), false)
+            .FirstOrDefault() as EventNameAttribute;
+
+        if (eventNameAttribute == null)
+        {
+            throw new InvalidOperationException(
+                $"Domain event '{eventType.Name}' must have an [EventName] attribute. " +
+                $"Add [EventName(\"{eventType.Name}\")] to the event class.");
+        }
+
+        var payload = JsonSerializer.Serialize(domainEvent, eventType);
+
+        return new JsonEvent
+        {
+            EventType = eventNameAttribute.Name,
+            EventVersion = version,
+            Payload = payload
+        };
+    }
+
+    /// <summary>
     /// Updates the projection to the latest version for all tracked streams.
     /// </summary>
     /// <returns>The builder instance for method chaining.</returns>
@@ -159,20 +246,21 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
         // Apply all given events to their respective streams
         foreach (var (objectName, objectId, events) in _givenEventStreams)
         {
-            var stream = await _context.GetEventStreamFor(objectName, objectId);
+            // Get or create document for this stream
+            var document = await _context.DocumentFactory.GetOrCreateAsync(objectName, objectId);
 
-            await stream.Session(ctx =>
+            if (events.Length > 0)
             {
-                foreach (var @event in events)
-                {
-                    ctx.Append(@event);
-                }
-            });
+                // Update document version to match events
+                document.Active.CurrentStreamVersion = events.Max(e => e.EventVersion);
 
-            // Update projection to this stream's version
-            var document = await _context.DocumentFactory.GetAsync(objectName, objectId);
-            var versionToken = new VersionToken(events.Last(), document);
-            await _projection.UpdateToVersion(versionToken.ToLatestVersion());
+                // Add events directly to the in-memory data store (bypasses type registry)
+                await _context.DataStore.AppendAsync(document, [.. events]);
+
+                // Update projection to this stream's version
+                var versionToken = new VersionToken(events.Last(), document);
+                await _projection.UpdateToVersion(versionToken.ToLatestVersion());
+            }
         }
 
         return this;
