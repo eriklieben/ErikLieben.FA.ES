@@ -44,6 +44,7 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+	  <ProjectReference Include="..\ErikLieben.FA.ES.EventStreamManagement\ErikLieben.FA.ES.EventStreamManagement.csproj" />
 	</ItemGroup>
     <ItemGroup>
         <None Include="..\\..\\README.md" Pack="true" PackagePath="" />

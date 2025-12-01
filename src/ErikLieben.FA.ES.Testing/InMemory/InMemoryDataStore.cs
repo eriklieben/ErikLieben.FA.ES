@@ -38,6 +38,20 @@ public class InMemoryDataStore : IDataStore
     }
 
     /// <summary>
+    /// Appends the specified events to the in-memory event stream for the given document.
+    /// The preserveTimestamp parameter is ignored for in-memory storage as events are stored as-is.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="preserveTimestamp">Ignored for in-memory storage.</param>
+    /// <param name="events">The events to append in order.</param>
+    /// <returns>A completed task.</returns>
+    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    {
+        // In-memory storage doesn't modify timestamps, so just delegate to the regular method
+        return AppendAsync(document, events);
+    }
+
+    /// <summary>
     /// Reads events for the specified document from in-memory storage.
     /// </summary>
     /// <param name="document">The document whose events are read.</param>

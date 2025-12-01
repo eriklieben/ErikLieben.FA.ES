@@ -334,6 +334,12 @@ public class GenerateAggregateCode
 
         foreach (var property in aggregate.Properties)
         {
+            // Skip ObjectName - it's a static member on the aggregate class, not an instance property
+            if (property.Name == "ObjectName")
+            {
+                continue;
+            }
+
             var type = BuildPropertyType(property);
             propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
             propertySnapshotCode.AppendLine($"public required {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
@@ -429,25 +435,6 @@ public class GenerateAggregateCode
     }
 
     /// <summary>
-    /// Generates the body of the ParseId method based on the identifier type.
-    /// </summary>
-    internal static string GenerateParseIdBody(AggregateDefinition aggregate)
-    {
-        // Handle common identifier types
-        return aggregate.IdentifierType switch
-        {
-            "Guid" => "Guid.Parse(id)",
-            "int" => "int.Parse(id)",
-            "long" => "long.Parse(id)",
-            // For custom types, assume they have a constructor that takes a string or Guid
-            _ when aggregate.IdentifierType.EndsWith("Id") =>
-                // Try to generate a smart parse based on common patterns
-                $"new {aggregate.IdentifierType}(Guid.Parse(id))",
-            _ => $"new {aggregate.IdentifierType}(id)"
-        };
-    }
-
-    /// <summary>
     /// Gets the DocumentStore value from the EventStreamBlobSettings attribute, or null if not configured.
     /// </summary>
     internal static string? GetDocumentStoreFromAttribute(AggregateDefinition aggregate)
@@ -509,7 +496,7 @@ public class GenerateAggregateCode
             : $"ITestableAggregate<{aggregate.IdentifierName}, {aggregate.IdentifierType}>";
 
         // Generate Create method (required by ITestableAggregate)
-        var createMethod = $$"""
+        var testableAggregateMethods = $$"""
 
                               /// <summary>
                               /// Creates a new instance of the aggregate from an event stream (AOT-friendly factory).
@@ -517,27 +504,6 @@ public class GenerateAggregateCode
                               /// <param name="stream">The event stream for the aggregate.</param>
                               /// <returns>A new instance of the aggregate.</returns>
                               public static {{aggregate.IdentifierName}} Create(IEventStream stream) => new {{aggregate.IdentifierName}}(stream);
-                """;
-
-        // Generate ParseId and FormatId methods for strongly-typed identifiers
-        var testableAggregateMethods = aggregate.IdentifierType == "string"
-            ? createMethod
-            : $$"""
-                {{createMethod}}
-
-                              /// <summary>
-                              /// Parses a string identifier into the strongly-typed identifier.
-                              /// </summary>
-                              /// <param name="id">The string representation of the identifier.</param>
-                              /// <returns>The strongly-typed identifier.</returns>
-                              public static {{aggregate.IdentifierType}} ParseId(string id) => {{GenerateParseIdBody(aggregate)}};
-
-                              /// <summary>
-                              /// Formats the strongly-typed identifier as a string.
-                              /// </summary>
-                              /// <param name="id">The strongly-typed identifier.</param>
-                              /// <returns>The string representation of the identifier.</returns>
-                              public static string FormatId({{aggregate.IdentifierType}} id) => id.ToString()!;
                 """;
 
         code.AppendLine($$"""

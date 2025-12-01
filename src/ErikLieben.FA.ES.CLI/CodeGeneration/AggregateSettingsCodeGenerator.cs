@@ -42,7 +42,10 @@ internal static class AggregateSettingsCodeGenerator
             assignments.Add($"document.Active.StreamConnectionName = \"{attribute.DataStore}\";");
         }
         if (attribute.DocumentStore != null)
+        {
             assignments.Add($"document.Active.DocumentStore = \"{attribute.DocumentStore}\";");
+            assignments.Add($"document.Active.DocumentConnectionName = \"{attribute.DocumentStore}\";");
+        }
         if (attribute.DocumentTagStore != null)
         {
             assignments.Add($"document.Active.DocumentTagStore = \"{attribute.DocumentTagStore}\";");

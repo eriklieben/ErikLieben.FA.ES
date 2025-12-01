@@ -8,6 +8,12 @@ namespace ErikLieben.FA.ES;
 public interface IDocumentTagDocumentFactory
 {
     /// <summary>
+    /// Creates a document tag store using the default tag type from settings.
+    /// </summary>
+    /// <returns>An <see cref="IDocumentTagStore"/> instance using the default configuration.</returns>
+    IDocumentTagStore CreateDocumentTagStore();
+
+    /// <summary>
     /// Creates a document tag store using the tag configuration of the specified document.
     /// </summary>
     /// <param name="document">The object document whose tag configuration determines which store to create.</param>
@@ -20,4 +26,17 @@ public interface IDocumentTagDocumentFactory
     /// <param name="type">The tag provider type key used to resolve the underlying store implementation.</param>
     /// <returns>An <see cref="IDocumentTagStore"/> instance for the requested provider type.</returns>
     IDocumentTagStore CreateDocumentTagStore(string type);
+
+    /// <summary>
+    /// Creates a stream tag store using the default stream tag type from settings.
+    /// </summary>
+    /// <returns>An <see cref="IDocumentTagStore"/> instance for stream tags.</returns>
+    IDocumentTagStore CreateStreamTagStore();
+
+    /// <summary>
+    /// Creates a stream tag store using the stream tag configuration of the specified document.
+    /// </summary>
+    /// <param name="document">The object document whose stream tag configuration determines which store to create.</param>
+    /// <returns>An <see cref="IDocumentTagStore"/> instance for stream tags.</returns>
+    IDocumentTagStore CreateStreamTagStore(IObjectDocument document);
 }

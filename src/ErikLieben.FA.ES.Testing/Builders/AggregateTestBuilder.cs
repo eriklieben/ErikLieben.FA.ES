@@ -338,7 +338,7 @@ public static class AggregateTestBuilder
     {
         return AggregateTestBuilder<TAggregate>.For(
             TAggregate.ObjectName,
-            TAggregate.FormatId(objectId),
+            objectId!.ToString()!,
             context,
             TAggregate.Create);
     }
@@ -383,7 +383,7 @@ public static class AggregateTestBuilder
     {
         return AggregateTestBuilder<TAggregate>.For(
             TAggregate.ObjectName,
-            TAggregate.FormatId(objectId),
+            objectId!.ToString()!,
             context,
             aggregateFactory);
     }

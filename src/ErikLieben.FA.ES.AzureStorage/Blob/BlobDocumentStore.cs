@@ -23,6 +23,7 @@ public class BlobDocumentStore : IBlobDocumentStore
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamBlobSettings blobSettings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
+    private readonly EventStreamDefaultTypeSettings typeSettings;
 
     /// <summary>
 /// Initializes a new instance of the <see cref="BlobDocumentStore"/> class.
@@ -30,19 +31,23 @@ public class BlobDocumentStore : IBlobDocumentStore
 /// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
 /// <param name="documentTagStoreFactory">The factory used to access document tag storage.</param>
 /// <param name="blobSettings">The blob storage settings used for containers and chunking.</param>
+/// <param name="typeSettings">The default type settings for streams, documents, and tags.</param>
 /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
 public BlobDocumentStore(
         IAzureClientFactory<BlobServiceClient> clientFactory,
         IDocumentTagDocumentFactory documentTagStoreFactory,
-        EventStreamBlobSettings blobSettings)
+        EventStreamBlobSettings blobSettings,
+        EventStreamDefaultTypeSettings typeSettings)
     {
         ArgumentNullException.ThrowIfNull(clientFactory);
         ArgumentNullException.ThrowIfNull(blobSettings);
         ArgumentNullException.ThrowIfNull(documentTagStoreFactory);
+        ArgumentNullException.ThrowIfNull(typeSettings);
 
         this.clientFactory = clientFactory;
         this.blobSettings = blobSettings;
         this.documentTagStoreFactory = documentTagStoreFactory;
+        this.typeSettings = typeSettings;
     }
 
     /// <summary>
@@ -78,12 +83,20 @@ public BlobDocumentStore(
                             DocumentTagConnectionName = blobSettings.DefaultDocumentTagStore,
                             StreamTagConnectionName = blobSettings.DefaultDocumentTagStore,
                             StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
-                            StreamType = "blob",
-                            DocumentTagType = "blob",
+                            // Use type settings instead of hardcoded values
+                            StreamType = typeSettings.StreamType,
+                            DocumentType = typeSettings.DocumentType,
+                            DocumentTagType = typeSettings.DocumentTagType,
+                            EventStreamTagType = typeSettings.EventStreamTagType,
+                            DocumentRefType = typeSettings.DocumentRefType,
                             CurrentStreamVersion = -1,
-                            // Initialize store settings from the target store
+                            // Initialize store settings from the target store and blob settings
                             DocumentStore = targetStore,
+                            DocumentConnectionName = targetStore,
                             DataStore = targetStore,
+                            DocumentTagStore = blobSettings.DefaultDocumentTagStore,
+                            StreamTagStore = blobSettings.DefaultDocumentTagStore,
+                            SnapShotStore = blobSettings.DefaultSnapShotStore,
                             ChunkSettings = blobSettings.EnableStreamChunks
                                 ? new StreamChunkSettings
                                 {
@@ -253,7 +266,7 @@ public async Task<IObjectDocument> GetAsync(
         var documentPath = $"{document.ObjectName}/{document.ObjectId}.json";
 
         // Use document-specific store if configured, otherwise fall back to default
-        var documentStore = GetDocumentStore(document);
+        var documentStore = GetDocumentConnectionName(document);
         var blob = CreateBlobClient(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         var blobDoc = BlobEventStreamDocument.From(document);
@@ -308,14 +321,25 @@ public async Task<IObjectDocument> GetAsync(
     }
 
     /// <summary>
-    /// Gets the document store name from the document's active stream, falling back to the default if not configured.
+    /// Gets the document connection name from the document's active stream, falling back to the default if not configured.
     /// </summary>
-    /// <param name="document">The document to retrieve the store setting from.</param>
-    /// <returns>The configured store name or the default document store.</returns>
-    private string GetDocumentStore(IObjectDocument document)
+    /// <param name="document">The document to retrieve the connection name from.</param>
+    /// <returns>The configured connection name or the default document store.</returns>
+    private string GetDocumentConnectionName(IObjectDocument document)
     {
-        return !string.IsNullOrWhiteSpace(document.Active.DocumentStore)
-            ? document.Active.DocumentStore
-            : blobSettings.DefaultDocumentStore;
+        // Use DocumentStore, falling back to deprecated DocumentConnectionName for backwards compatibility
+        if (!string.IsNullOrWhiteSpace(document.Active.DocumentStore))
+        {
+            return document.Active.DocumentStore;
+        }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (!string.IsNullOrWhiteSpace(document.Active.DocumentConnectionName))
+        {
+            return document.Active.DocumentConnectionName;
+        }
+#pragma warning restore CS0618
+
+        return blobSettings.DefaultDocumentStore;
     }
 }

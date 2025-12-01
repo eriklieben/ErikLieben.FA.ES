@@ -126,7 +126,13 @@ public BlobDocumentTagStore(
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.DocumentTagConnectionName);
+        // Use DocumentTagStore, falling back to deprecated DocumentTagConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.DocumentTagStore)
+            ? objectDocument.Active.DocumentTagStore
+            : objectDocument.Active.DocumentTagConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (autoCreateContainer)

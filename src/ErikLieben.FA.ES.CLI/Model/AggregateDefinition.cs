@@ -10,6 +10,11 @@ public record AggregateDefinition
 
     public required string IdentifierTypeNamespace { get; set; }
 
+    /// <summary>
+    /// The inner/underlying type of a strongly-typed ID (e.g., "Guid" for StronglyTypedId&lt;Guid&gt;, "string" for StronglyTypedId&lt;string&gt;).
+    /// </summary>
+    public string? IdentifierInnerType { get; set; }
+
     public required string Namespace { get; init; }
 
     public List<ConstructorDefinition> Constructors { get; init; } = [];

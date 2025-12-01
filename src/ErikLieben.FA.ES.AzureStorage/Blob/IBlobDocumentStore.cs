@@ -5,34 +5,10 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
 /// <summary>
 /// Defines operations for creating, retrieving, tagging, and saving object documents backed by Azure Blob Storage.
+/// Extends the base <see cref="IDocumentStore"/> interface with Azure Blob specific tag operations.
 /// </summary>
-public interface IBlobDocumentStore
+public interface IBlobDocumentStore : IDocumentStore
 {
-    /// <summary>
-    /// Creates a new object document with default stream metadata if it does not already exist.
-    /// </summary>
-    /// <param name="name">The object type/name used to determine the container and path.</param>
-    /// <param name="objectId">The identifier of the object to create.</param>
-    /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
-    /// <returns>The created or existing <see cref="IObjectDocument"/> instance.</returns>
-    [return: MaybeNull]
-    Task<IObjectDocument> CreateAsync(
-        string name,
-        string objectId,
-        string? store = null);
-
-    /// <summary>
-    /// Retrieves an existing object document from storage.
-    /// </summary>
-    /// <param name="name">The object type/name used to determine the container and path.</param>
-    /// <param name="objectId">The identifier of the object to retrieve.</param>
-    /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
-    /// <returns>The requested <see cref="IObjectDocument"/>.</returns>
-    Task<IObjectDocument> GetAsync(
-        string name,
-        string objectId,
-        string? store = null);
-
     /// <summary>
     /// Gets the first document that is associated with the specified document tag.
     /// </summary>
@@ -52,11 +28,4 @@ public interface IBlobDocumentStore
     /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
     Task<IEnumerable<IObjectDocument>> GetByDocumentByTagAsync(string objectName, string tag, string? documentTagStore = null, string? store = null);
-
-    /// <summary>
-    /// Persists the specified object document to storage.
-    /// </summary>
-    /// <param name="document">The document to save.</param>
-    /// <returns>A task that represents the asynchronous save operation.</returns>
-    Task SetAsync(IObjectDocument document);
 }

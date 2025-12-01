@@ -131,7 +131,7 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
         ArgumentNullException.ThrowIfNull(objectId);
         ArgumentNullException.ThrowIfNull(events);
 
-        _givenEventStreams.Add((TAggregate.ObjectName, TAggregate.FormatId(objectId), events));
+        _givenEventStreams.Add((TAggregate.ObjectName, objectId.ToString()!, events));
         return this;
     }
 

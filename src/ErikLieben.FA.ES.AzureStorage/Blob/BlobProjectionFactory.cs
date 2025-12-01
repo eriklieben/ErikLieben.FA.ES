@@ -154,8 +154,9 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
             overwrite: true,
             cancellationToken);
 
-        // If external checkpoint is enabled, save it separately
-        if (HasExternalCheckpoint)
+        // If external checkpoint is enabled and fingerprint is set, save it separately
+        // (fingerprint is only set after events have been processed)
+        if (HasExternalCheckpoint && !string.IsNullOrEmpty(projection.CheckpointFingerprint))
         {
             await SaveCheckpointAsync(projection, cancellationToken);
         }
@@ -229,9 +230,10 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         T projection,
         CancellationToken cancellationToken = default)
     {
+        // Skip saving if no checkpoint fingerprint (no events processed yet)
         if (string.IsNullOrEmpty(projection.CheckpointFingerprint))
         {
-            throw new InvalidOperationException("CheckpointFingerprint must be set before saving external checkpoint.");
+            return;
         }
 
         var checkpointBlobName = $"checkpoints/{typeof(T).Name}/{projection.CheckpointFingerprint}.json";
