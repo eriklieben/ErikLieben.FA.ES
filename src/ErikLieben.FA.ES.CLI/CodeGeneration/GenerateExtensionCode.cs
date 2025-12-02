@@ -79,6 +79,7 @@ public async Task Generate()
 
         var (jsonSerializerCode, jsonNamespaces) = GenerateJsonSerializers(project);
         var aggregateStorageRegistryCode = GenerateAggregateStorageRegistryCode(project);
+        var projectionRegistrationCode = GenerateProjectionRegistrationCode(project);
 
         // Collect all aggregate-related namespaces
         var aggregateNamespaces = new HashSet<string>();
@@ -137,6 +138,15 @@ public async Task Generate()
                 $"Type agg when agg == typeof({declaration.IdentifierName}) => typeof(IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>),");
         }
 
+        // Collect projection namespaces
+        foreach (var projection in project.Projections.Where(p => p.BlobProjection != null))
+        {
+            if (!string.IsNullOrWhiteSpace(projection.Namespace))
+            {
+                aggregateNamespaces.Add(projection.Namespace);
+            }
+        }
+
         // Merge aggregate namespaces with JSON serializer namespaces
         var allNamespaces = jsonNamespaces.Union(aggregateNamespaces).Distinct().Order();
 
@@ -147,6 +157,7 @@ public async Task Generate()
         }
 
         var code = $$"""
+                     using ErikLieben.FA.ES;
                      using ErikLieben.FA.ES.Aggregates;
                      using Microsoft.Extensions.DependencyInjection;
                      using System.Text.Json.Serialization;
@@ -237,6 +248,9 @@ public async Task Generate()
 
                              // Register aggregate storage registry for cross-storage projections
                              {{aggregateStorageRegistryCode}}
+
+                             // Register projection factories and projections
+                             {{projectionRegistrationCode}}
 
                              return services;
                          }
@@ -500,6 +514,51 @@ public async Task Generate()
             code.AppendLine("    services.AddSingleton<ErikLieben.FA.ES.Configuration.IAggregateStorageRegistry>(");
             code.AppendLine("        new ErikLieben.FA.ES.Configuration.AggregateStorageRegistry(storageMap));");
             code.AppendLine("}");
+        }
+
+        return code;
+    }
+
+    /// <summary>
+    /// Generates code for registering projection factories and projection singletons.
+    /// </summary>
+    /// <param name="project">The project definition containing projections.</param>
+    /// <returns>Generated code as a StringBuilder for projection registration.</returns>
+    private static StringBuilder GenerateProjectionRegistrationCode(ProjectDefinition project)
+    {
+        var code = new StringBuilder();
+        var projectionsWithBlob = project.Projections.Where(p => p.BlobProjection != null).ToList();
+
+        if (projectionsWithBlob.Count == 0)
+        {
+            return code;
+        }
+
+        code.AppendLine("// Register projection factories");
+        foreach (var projection in projectionsWithBlob)
+        {
+            code.AppendLine($"services.AddSingleton<{projection.Namespace}.{projection.Name}Factory>();");
+        }
+
+        code.AppendLine();
+        code.AppendLine("// Register projection singletons (loaded from blob storage or created new)");
+        foreach (var projection in projectionsWithBlob)
+        {
+            code.AppendLine($"services.AddSingleton<{projection.Namespace}.{projection.Name}>(sp =>");
+            code.AppendLine("{");
+            code.AppendLine($"    var factory = sp.GetRequiredService<{projection.Namespace}.{projection.Name}Factory>();");
+            code.AppendLine("    var docFactory = sp.GetRequiredService<IObjectDocumentFactory>();");
+            code.AppendLine("    var streamFactory = sp.GetRequiredService<IEventStreamFactory>();");
+            code.AppendLine();
+            code.AppendLine("    try");
+            code.AppendLine("    {");
+            code.AppendLine("        return factory.GetOrCreateAsync(docFactory, streamFactory).GetAwaiter().GetResult();");
+            code.AppendLine("    }");
+            code.AppendLine("    catch");
+            code.AppendLine("    {");
+            code.AppendLine($"        return new {projection.Namespace}.{projection.Name}(docFactory, streamFactory);");
+            code.AppendLine("    }");
+            code.AppendLine("});");
         }
 
         return code;

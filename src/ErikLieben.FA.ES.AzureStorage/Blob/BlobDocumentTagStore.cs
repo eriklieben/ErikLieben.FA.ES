@@ -62,11 +62,20 @@ public BlobDocumentTagStore(
                 Tag = tag,
                 ObjectIds = [document.ObjectId]
             };
-            await blob.SaveEntityAsync(
-                newDoc,
-                BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
-                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
-            return;
+
+            try
+            {
+                await blob.SaveEntityAsync(
+                    newDoc,
+                    BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+                return;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                // Blob was created between ExistsAsync check and SaveEntityAsync call
+                // Fall through to update logic below
+            }
         }
 
         var properties = await blob.GetPropertiesAsync();

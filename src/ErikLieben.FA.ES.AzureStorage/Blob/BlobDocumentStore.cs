@@ -11,7 +11,7 @@ using System.Text;
 using System.Text.Json;
 using ErikLieben.FA.ES.AzureStorage.Blob.Model;
 using ErikLieben.FA.ES.Configuration;
-using BlobEventStreamDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobEventStreamDocumentContext;
+using SerializeBlobEventStreamDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.SerializeBlobEventStreamDocumentContext;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
@@ -72,46 +72,44 @@ public BlobDocumentStore(
         {
             if (!await blob.ExistsAsync())
             {
-                await blob.SaveEntityAsync(
-                    new BlobEventStreamDocument(
-                        objectId,
-                        name,
-                        new StreamInformation
-                        {
-                            StreamConnectionName = targetStore,
-                            SnapShotConnectionName = blobSettings.DefaultSnapShotStore,
-                            DocumentTagConnectionName = blobSettings.DefaultDocumentTagStore,
-                            StreamTagConnectionName = blobSettings.DefaultDocumentTagStore,
-                            StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
-                            // Use type settings instead of hardcoded values
-                            StreamType = typeSettings.StreamType,
-                            DocumentType = typeSettings.DocumentType,
-                            DocumentTagType = typeSettings.DocumentTagType,
-                            EventStreamTagType = typeSettings.EventStreamTagType,
-                            DocumentRefType = typeSettings.DocumentRefType,
-                            CurrentStreamVersion = -1,
-                            // Initialize store settings from the target store and blob settings
-                            DocumentStore = targetStore,
-                            DocumentConnectionName = targetStore,
-                            DataStore = targetStore,
-                            DocumentTagStore = blobSettings.DefaultDocumentTagStore,
-                            StreamTagStore = blobSettings.DefaultDocumentTagStore,
-                            SnapShotStore = blobSettings.DefaultSnapShotStore,
-                            ChunkSettings = blobSettings.EnableStreamChunks
-                                ? new StreamChunkSettings
-                                {
-                                    EnableChunks = blobSettings.EnableStreamChunks,
-                                    ChunkSize = blobSettings.DefaultChunkSize,
-                                }
-                                : null,
-                            StreamChunks = blobSettings.EnableStreamChunks
-                                ?
-                                [
-                                    new(chunkIdentifier: 0, firstEventVersion: 0, lastEventVersion: -1)
-                                ]
-                                : []
-                        }, []),
-                BlobEventStreamDocumentContext.Default.BlobEventStreamDocument);
+                // Create new document using SerializeBlobEventStreamDocument to exclude legacy properties
+                var newDocument = new SerializeBlobEventStreamDocument
+                {
+                    ObjectId = objectId,
+                    ObjectName = name,
+                    TerminatedStreams = [],
+                    Active = new SerializeStreamInformation
+                    {
+                        StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
+                        // Use type settings instead of hardcoded values
+                        StreamType = typeSettings.StreamType,
+                        DocumentType = typeSettings.DocumentType,
+                        DocumentTagType = typeSettings.DocumentTagType,
+                        EventStreamTagType = typeSettings.EventStreamTagType,
+                        DocumentRefType = typeSettings.DocumentRefType,
+                        CurrentStreamVersion = -1,
+                        // Initialize store settings from the target store and blob settings (new *Store properties only)
+                        DocumentStore = targetStore,
+                        DataStore = targetStore,
+                        DocumentTagStore = blobSettings.DefaultDocumentTagStore,
+                        StreamTagStore = blobSettings.DefaultDocumentTagStore,
+                        SnapShotStore = blobSettings.DefaultSnapShotStore,
+                        ChunkSettings = blobSettings.EnableStreamChunks
+                            ? new StreamChunkSettings
+                            {
+                                EnableChunks = blobSettings.EnableStreamChunks,
+                                ChunkSize = blobSettings.DefaultChunkSize,
+                            }
+                            : null,
+                        StreamChunks = blobSettings.EnableStreamChunks
+                            ?
+                            [
+                                new(chunkIdentifier: 0, firstEventVersion: 0, lastEventVersion: -1)
+                            ]
+                            : []
+                    }
+                };
+                await blob.SaveEntityAsync(newDocument, SerializeBlobEventStreamDocumentContext.Default.SerializeBlobEventStreamDocument);
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
@@ -145,15 +143,8 @@ public BlobDocumentStore(
 
     private static BlobEventStreamDocument ToBlobEventStreamDocument(DeserializeBlobEventStreamDocument doc)
     {
-        return new BlobEventStreamDocument(
-            doc.ObjectId,
-            doc.ObjectName,
-            doc.Active,
-            doc.TerminatedStreams,
-            doc.SchemaVersion,
-            doc.Hash,
-            doc.PrevHash,
-            doc.DocumentPath);
+        // Use the conversion method which handles migration of legacy *ConnectionName to *Store
+        return doc.ToBlobEventStreamDocument();
     }
 
     /// <summary>
@@ -269,8 +260,9 @@ public async Task<IObjectDocument> GetAsync(
         var documentStore = GetDocumentConnectionName(document);
         var blob = CreateBlobClient(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
-        var blobDoc = BlobEventStreamDocument.From(document);
-        ArgumentNullException.ThrowIfNull(blobDoc);
+        // Use SerializeBlobEventStreamDocument to exclude legacy *ConnectionName properties
+        var serializeDoc = SerializeBlobEventStreamDocument.From(document);
+        ArgumentNullException.ThrowIfNull(serializeDoc);
 
         // Try to get properties, but handle the case where blob doesn't exist yet
         ETag? etag = null;
@@ -286,10 +278,10 @@ public async Task<IObjectDocument> GetAsync(
             etag = null;
         }
 
-        var (_, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
+        var (_, hash) = await blob.SaveEntityAsync(serializeDoc, SerializeBlobEventStreamDocumentContext.Default.SerializeBlobEventStreamDocument,
             new BlobRequestConditions { IfMatch = etag });
 
-        document.SetHash(hash,blobDoc.Hash);
+        document.SetHash(hash, document.Hash);
     }
 
     private BlobClient CreateBlobClient(

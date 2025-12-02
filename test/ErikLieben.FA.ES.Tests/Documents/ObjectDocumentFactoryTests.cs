@@ -601,6 +601,8 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var document = Substitute.For<IObjectDocument>();
+                var streamInfo = new StreamInformation { DocumentType = "TestStore" };
+                document.Active.Returns(streamInfo);
 
                 objectDocumentFactories.Add("teststore", mockFactory);
 
@@ -626,6 +628,8 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var document = Substitute.For<IObjectDocument>();
+                var streamInfo = new StreamInformation { DocumentType = "TestStore" };
+                document.Active.Returns(streamInfo);
 
                 objectDocumentFactories.Add("teststore", mockFactory);
 
@@ -651,6 +655,8 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 var mockFactory = Substitute.For<IObjectDocumentFactory>();
                 var document = Substitute.For<IObjectDocument>();
+                var streamInfo = new StreamInformation { DocumentType = "DefaultStore" };
+                document.Active.Returns(streamInfo);
 
                 objectDocumentFactories.Add("defaultstore", mockFactory);
 
@@ -690,6 +696,8 @@ namespace ErikLieben.FA.ES.Tests.Documents
                 var documentTagDocumentFactory = Substitute.For<IDocumentTagDocumentFactory>();
                 var settings = new EventStreamDefaultTypeSettings { DocumentType = "TestStore" };
                 var document = Substitute.For<IObjectDocument>();
+                var streamInfo = new StreamInformation { DocumentType = "TestStore" };
+                document.Active.Returns(streamInfo);
 
                 var sut = new ObjectDocumentFactory(
                     objectDocumentFactories,

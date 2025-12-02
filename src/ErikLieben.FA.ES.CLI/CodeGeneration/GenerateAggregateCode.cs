@@ -443,6 +443,14 @@ public class GenerateAggregateCode
     }
 
     /// <summary>
+    /// Gets the DocumentType value from the EventStreamType attribute, or null if not configured.
+    /// </summary>
+    internal static string? GetDocumentTypeFromAttribute(AggregateDefinition aggregate)
+    {
+        return aggregate.EventStreamTypeAttribute?.DocumentType;
+    }
+
+    /// <summary>
     /// Gets the DocumentTagStore value from the EventStreamBlobSettings attribute, or null if not configured.
     /// </summary>
     internal static string? GetDocumentTagStoreFromAttribute(AggregateDefinition aggregate)
@@ -672,7 +680,7 @@ public class GenerateAggregateCode
                              /// <returns>A new {{aggregate.IdentifierName}} instance.</returns>
                              public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), {{(GetDocumentStoreFromAttribute(aggregate) != null ? $"\"{GetDocumentStoreFromAttribute(aggregate)}\"" : "null")}}, {{(GetDocumentTypeFromAttribute(aggregate) != null ? $"\"{GetDocumentTypeFromAttribute(aggregate)}\"" : "null")}});
                              {{GenerateSettingsApplicationCode(aggregate)}}
                                  var obj = Create(document);
                                  await obj.Fold();
@@ -689,7 +697,7 @@ public class GenerateAggregateCode
                              /// <returns>A new {{aggregate.IdentifierName}} instance with the event applied.</returns>
                              protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent, ActionMetadata? metadata = null) where T : class
                              {
-                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), {{(GetDocumentStoreFromAttribute(aggregate) != null ? $"\"{GetDocumentStoreFromAttribute(aggregate)}\"" : "null")}}, {{(GetDocumentTypeFromAttribute(aggregate) != null ? $"\"{GetDocumentTypeFromAttribute(aggregate)}\"" : "null")}});
                             {{GenerateSettingsApplicationCode(aggregate)}}
                                 var eventStream = eventStreamFactory.Create(document);
                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
@@ -707,7 +715,7 @@ public class GenerateAggregateCode
                              [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetByIdAsync instead. This method will be removed in a future version.")]
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id, int? upToVersion = null)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{(GetDocumentStoreFromAttribute(aggregate) != null ? $"\"{GetDocumentStoreFromAttribute(aggregate)}\"" : "null")}}, {{(GetDocumentTypeFromAttribute(aggregate) != null ? $"\"{GetDocumentTypeFromAttribute(aggregate)}\"" : "null")}});
 
                                  // Create event stream
                                  var eventStream = eventStreamFactory.Create(document);
@@ -735,7 +743,7 @@ public class GenerateAggregateCode
                              [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetByIdWithDocumentAsync instead. This method will be removed in a future version.")]
                              public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{(GetDocumentStoreFromAttribute(aggregate) != null ? $"\"{GetDocumentStoreFromAttribute(aggregate)}\"" : "null")}}, {{(GetDocumentTypeFromAttribute(aggregate) != null ? $"\"{GetDocumentTypeFromAttribute(aggregate)}\"" : "null")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return (obj, document);
@@ -910,7 +918,7 @@ public class GenerateAggregateCode
                               {
                                   try
                                   {
-                                      var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
+                                      var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{(GetDocumentStoreFromAttribute(aggregate) != null ? $"\"{GetDocumentStoreFromAttribute(aggregate)}\"" : "null")}}, {{(GetDocumentTypeFromAttribute(aggregate) != null ? $"\"{GetDocumentTypeFromAttribute(aggregate)}\"" : "null")}});
                                       var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
                                       await obj.Fold();
                                       return (obj, document);

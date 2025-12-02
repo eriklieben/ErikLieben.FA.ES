@@ -35,6 +35,22 @@ public static class AttributeExtractor
             };
         }
 
+        // Handle positional arguments constructor
+        // Example: [EventStreamType("table", "table")] or [EventStreamType("blob", "cosmos", "table")]
+        // Order: streamType, documentType, documentTagType, eventStreamTagType, documentRefType
+        if (attribute.ConstructorArguments.Length > 1)
+        {
+            var args = attribute.ConstructorArguments;
+            return new EventStreamTypeAttributeData
+            {
+                StreamType = args.Length > 0 ? args[0].Value as string : null,
+                DocumentType = args.Length > 1 ? args[1].Value as string : null,
+                DocumentTagType = args.Length > 2 ? args[2].Value as string : null,
+                EventStreamTagType = args.Length > 3 ? args[3].Value as string : null,
+                DocumentRefType = args.Length > 4 ? args[4].Value as string : null
+            };
+        }
+
         // Handle named arguments constructor
         // Example: [EventStreamType(streamType: "blob", documentType: "cosmos")]
         var data = new EventStreamTypeAttributeData();

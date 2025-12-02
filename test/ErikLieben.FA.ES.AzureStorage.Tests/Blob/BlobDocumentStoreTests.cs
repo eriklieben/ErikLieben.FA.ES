@@ -477,7 +477,7 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
                 TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
@@ -598,7 +598,7 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId1,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
                 TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
@@ -609,7 +609,7 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId2,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
                 TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
