@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using ErikLieben.FA.ES.CLI.Commands;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -27,6 +27,14 @@ app.Configure(config =>
          .WithDescription("Watch for file changes and automatically regenerate code")
          .WithExample("watch", "Solution.sln")
          .WithExample("watch", "--verbose");
+
+     config
+         .AddCommand<UpdateCommand>("update")
+         .WithAlias("u")
+         .WithDescription("Update ErikLieben.FA.ES packages and migrate code for breaking changes")
+         .WithExample("update")
+         .WithExample("update", "--version 2.0.0")
+         .WithExample("update", "--dry-run");
 });
 
 await app.RunAsync(args);
