@@ -1,3 +1,44 @@
+## [1.4.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.1...1.4.0-preview.1) (2025-12-06)
+
+### 🐛 Bug fixes
+
+* add xml comments to generated code ([8d1a348](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d1a348e1e57d412bb9b5e9edab60d5cd5c26c2c))
+* all full using generation based on semantic model ([e3e714e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e3e714ecf50def428f34709ccefdc163f73624ef))
+* build ([50308ce](https://github.com/eriklieben/ErikLieben.FA.ES/commit/50308ce92bdf082e8624d2386983b0f757cc17d9))
+* cosmosdb fixes ([46eb567](https://github.com/eriklieben/ErikLieben.FA.ES/commit/46eb567c8fd69554f8c4595947146f52ff0cc553))
+* forgot sln file mods ([a2b7d80](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a2b7d80f3db4ff8665ac9cd1254543f03ee0e4bd))
+* make sure CLI took generates registration for commands, even if there is no when method ([5e1de39](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5e1de39d0ba0b73f7d990c84b6e05096f629246c))
+* performance improvements ([c614b4e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/c614b4e8f717152b85671327ab3243df701c0862))
+* performance improvements using span ([e02daef](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e02daef6bec13f42185d76750a69b510944c1a2e))
+* registry of aggregates and storage for correct retrieval ([76c5073](https://github.com/eriklieben/ErikLieben.FA.ES/commit/76c50735cd97f7516a3ddcc50c99b4a0a4d52c52))
+* try better code generation/ using lookup ([a1ece07](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a1ece0754803654367c77aafa6434136a7a60810))
+
+### ✨ New features
+
+* add azure storage table provider ([f47427f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f47427f08dd1cf65949cbb38c5bcbd7ea5026765))
+* add code migrator ([62f637f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/62f637fbb82623bbe054765992e9a9f2f41f16ce))
+* add ErikLieben.FA.ES.AspNetCore.MinimalApis ([44c0cc9](https://github.com/eriklieben/ErikLieben.FA.ES/commit/44c0cc9cf042a2428d23c23485eb44c21a34ba42))
+* add repository generation for retrieval of objects ([2fd70da](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2fd70da4ad99a663f36a20cded92e824674880fe))
+* add schemaVersion back to events and add Upcast Attribute for Aggregates ([be7e428](https://github.com/eriklieben/ErikLieben.FA.ES/commit/be7e428ad052b17cbcfc89037e7f957976f0efd3))
+* add vnext release workflow for preview packages ([11a3946](https://github.com/eriklieben/ErikLieben.FA.ES/commit/11a39467caec256f14c3ee2508f8c8ca44ac460d))
+* added RoutedProjection & CLI generation, WhenAttribute ([ffd016a](https://github.com/eriklieben/ErikLieben.FA.ES/commit/ffd016a9174059b4d60aca1a053690d33c55222d))
+* allow [When<EventObject>] private void WhenEventObject() {} on Aggregates and add Analyzer and Codefix for it ([caaa7ef](https://github.com/eriklieben/ErikLieben.FA.ES/commit/caaa7ef99032d5e39e597dd6f30c711e41a35022))
+* Allow loading and saving of projections with external checkpoint ([ef5f0ba](https://github.com/eriklieben/ErikLieben.FA.ES/commit/ef5f0ba17dec1923e16fda95c508c81429c2b040))
+* don't create container for blobprojections if autocreate:false, allow GetAsync with max version ([7f83b51](https://github.com/eriklieben/ErikLieben.FA.ES/commit/7f83b51fca98d8e244ee4e2f798d5190033d3ad4))
+* hide CreateAsync when user makes a partial factory class, you probably want to use the partial class methods ([ad235ea](https://github.com/eriklieben/ErikLieben.FA.ES/commit/ad235eabb1e00c1d937003ac3b8b41f7a31beb8e))
+* improve code generation with metadata support ([a4b0231](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a4b02315e7f089b27816df02dfd9e1d9539b2433))
+* improve projection code ([ab92772](https://github.com/eriklieben/ErikLieben.FA.ES/commit/ab92772d28d9ace3a5f6a5d0b9ad2e16f760310a))
+* improve testing setup ([8fa74ad](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8fa74ade41d23fa4b143ec275984fff01d7be00a))
+* improve testing setup ([bd7c146](https://github.com/eriklieben/ErikLieben.FA.ES/commit/bd7c1467a3f500465477ca1cb0f020ec669ca8f4))
+* partial eventstream management & doc fixes ([f8096f4](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f8096f4c79d01db16668f3cb67019c366525c4ed))
+* rename *Upcaster to *Upcast ([c9ef713](https://github.com/eriklieben/ErikLieben.FA.ES/commit/c9ef713de7d64a70bd11402e72cc3271cf2c7917))
+* repository generation with partial implementation ([b074f7d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b074f7db1bac6a82d21addf6104420944c664c35))
+* upgrade Roslyn to 5.0 and add .slnx solution file support ([63d0c2b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/63d0c2b66cb1c689522a4496b6f19b74b4dc757d))
+
+### 🧪 (Unit)test cases adjusted
+
+* extend test coverage for aggregate/storage provider ([fd3ecf7](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fd3ecf730673b1a8581d00c30fb52aef18189bd4))
+
 ## [1.3.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.0...v1.3.1) (2025-11-03)
 
 ### 🐛 Bug fixes
