@@ -2,8 +2,15 @@ const path = require('node:path');
 
 module.exports = {
   branches: [
-    "main"
+    "main",
+    {
+      name: "vnext",
+      prerelease: "preview",
+      channel: "preview"
+    }
   ],
+  // Override version for vnext branch to target 2.0.0 previews
+  tagFormat: "${version}",
   plugins: [
     [
       '@semantic-release/commit-analyzer',
@@ -109,7 +116,6 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        "verifyReleaseCmd": "echo '##vso[task.setvariable variable=PackageVersion]${nextRelease.version}'",
         "prepareCmd": "pwsh -File ./build-packages.ps1 -PackageVersion ${nextRelease.version}"
       }
     ],

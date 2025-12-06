@@ -1,0 +1,63 @@
+name: vnext Release
+
+on:
+  push:
+    branches:
+      - vnext
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write  # Required for NuGet Trusted Publishing OIDC
+
+jobs:
+  vnext-release:
+    name: vnext Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-restore
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+      - name: NuGet Trusted Publishing Login
+        if: success()
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_TEST_USER }}
+          nuget-server: https://apiint.nugettest.org
+
+      - name: Push to NuGet Test Server
+        if: success()
+        run: |
+          for package in release-artifacts/*.nupkg; do
+            if [ -f "$package" ]; then
+              echo "Pushing $package to NuGet Test Server..."
+              dotnet nuget push "$package" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://apiint.nugettest.org/v3/index.json --skip-duplicate
+            fi
+          done
