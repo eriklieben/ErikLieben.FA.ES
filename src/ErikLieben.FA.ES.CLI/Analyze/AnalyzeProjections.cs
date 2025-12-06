@@ -63,6 +63,17 @@ public class AnalyzeProjections
                 Connection = connectionValue ?? string.Empty,
             };
         }
+
+        var (isCosmosDbProjection, cosmosContainer, cosmosConnection, partitionKeyPath) = CheckCosmosDbJsonProjection(classSymbol);
+        if (isCosmosDbProjection)
+        {
+            projectionDefinition.CosmosDbProjection = new CosmosDbProjectionDefinition
+            {
+                Container = cosmosContainer ?? string.Empty,
+                Connection = cosmosConnection ?? string.Empty,
+                PartitionKeyPath = partitionKeyPath ?? "/projectionName",
+            };
+        }
     }
 
     private ProjectionDefinition FindOrCreateProjection(List<ProjectionDefinition> projections)
@@ -171,6 +182,26 @@ public class AnalyzeProjections
             .FirstOrDefault(kvp => kvp.Key == "Connection").Value.Value as string;
         return (true, projectionsValue, connectionValue);
 
+    }
+
+    private static (bool, string?, string?, string?) CheckCosmosDbJsonProjection(INamedTypeSymbol classSymbol)
+    {
+        var attributes = classSymbol.GetAttributes();
+
+        var cosmosDbAttribute = attributes.FirstOrDefault(a =>
+            a.AttributeClass?.Name == "CosmosDbJsonProjectionAttribute");
+
+        if (cosmosDbAttribute == null)
+        {
+            return (false, null, null, null);
+        }
+
+        var containerValue = cosmosDbAttribute.ConstructorArguments.FirstOrDefault().Value as string;
+        var connectionValue = cosmosDbAttribute.NamedArguments
+            .FirstOrDefault(kvp => kvp.Key == "Connection").Value.Value as string;
+        var partitionKeyPath = cosmosDbAttribute.NamedArguments
+            .FirstOrDefault(kvp => kvp.Key == "PartitionKeyPath").Value.Value as string;
+        return (true, containerValue, connectionValue, partitionKeyPath);
     }
 
     private static bool InheritsFromRoutedProjection(INamedTypeSymbol? type)

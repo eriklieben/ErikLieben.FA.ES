@@ -75,6 +75,11 @@ public class GenerateProjectionCode
         var (propertyCode, _) = GeneratePropertyCode(projection);
         var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
         var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput);
+        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput);
+        // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
+        var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
+            ? jsonBlobFactoryCode
+            : cosmosDbFactoryCode;
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings);
@@ -88,7 +93,7 @@ public class GenerateProjectionCode
 
         var codeComponents = new ProjectionCodeComponents(
             foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
-            jsonBlobFactoryCode, propertyCode, serializableCode, deserializationCode, createDestinationInstanceCode,
+            combinedFactoryCode, propertyCode, serializableCode, deserializationCode, createDestinationInstanceCode,
             routedProjectionSerializationCode);
 
         await AssembleAndWriteCode(projection, usings, codeComponents, path);
@@ -446,6 +451,68 @@ public class GenerateProjectionCode
                          blobServiceClientFactory,
                          "{{projection.BlobProjection.Connection}}",
                          "{{projection.BlobProjection.Container}}")
+                 {
+                     /// <summary>
+                     /// Gets a value indicating whether this projection uses an external checkpoint mechanism.
+                     /// </summary>
+                     protected override bool HasExternalCheckpoint => {{projection.ExternalCheckpoint.ToString().ToLowerInvariant()}};
+
+                     /// <summary>
+                     /// Creates a new instance of {{projection.Name}} projection.
+                     /// </summary>
+                     /// <returns>A new {{projection.Name}} instance.</returns>
+                     protected override {{projection.Name}} New()
+                     {
+                         {{newMethodBody}}
+                     }
+
+                     /// <summary>
+                     /// Loads a {{projection.Name}} instance from JSON with complete state restoration.
+                     /// </summary>
+                     /// <param name="json">The JSON string containing the serialized projection state.</param>
+                     /// <param name="documentFactory">Factory for managing object documents.</param>
+                     /// <param name="eventStreamFactory">Factory for creating event streams.</param>
+                     /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
+                     protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                     {
+                         return {{projection.Name}}.LoadFromJson(json, documentFactory, eventStreamFactory);
+                     }
+                 }
+                """;
+    }
+
+    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    {
+        if (projection.CosmosDbProjection == null)
+        {
+            return string.Empty;
+        }
+
+        usings.Add("ErikLieben.FA.ES.CosmosDb");
+        usings.Add("ErikLieben.FA.ES.CosmosDb.Configuration");
+        usings.Add("Microsoft.Azure.Cosmos");
+
+        var needsServiceProvider = !string.IsNullOrEmpty(get);
+        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+
+        var newMethodBody = needsServiceProvider
+            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+
+        return $$"""
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} CosmosDB-based projections.
+                 /// </summary>
+                 public class {{projection.Name}}Factory(
+                     CosmosClient cosmosClient,
+                     EventStreamCosmosDbSettings settings,
+                     IObjectDocumentFactory objectDocumentFactory,
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
+                     : CosmosDbProjectionFactory<{{projection.Name}}>(
+                         cosmosClient,
+                         settings,
+                         "{{projection.CosmosDbProjection.Container}}",
+                         "{{projection.CosmosDbProjection.PartitionKeyPath}}")
                  {
                      /// <summary>
                      /// Gets a value indicating whether this projection uses an external checkpoint mechanism.

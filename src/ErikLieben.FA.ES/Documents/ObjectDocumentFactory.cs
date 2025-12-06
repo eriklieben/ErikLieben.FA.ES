@@ -159,9 +159,17 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
             factoryType = settings.DocumentType.ToLowerInvariant();
         }
 
+        Console.WriteLine($"[COMPOSITE-FACTORY] SetAsync: factoryType={factoryType}, DocumentType={document.Active.DocumentType}, StreamId={document.Active.StreamIdentifier}");
+        Console.WriteLine($"[COMPOSITE-FACTORY] Available factories: {string.Join(", ", objectDocumentFactories.Keys)}");
+
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
+            Console.WriteLine($"[COMPOSITE-FACTORY] Routing to factory: {objectDocumentFactory.GetType().Name}");
             await objectDocumentFactory.SetAsync(document, store);
+        }
+        else
+        {
+            Console.WriteLine($"[COMPOSITE-FACTORY] ERROR: No factory found for type '{factoryType}'!");
         }
     }
 }

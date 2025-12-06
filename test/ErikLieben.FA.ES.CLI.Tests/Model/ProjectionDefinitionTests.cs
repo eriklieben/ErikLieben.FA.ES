@@ -141,4 +141,125 @@ public class ProjectionDefinitionTests
             Assert.Equal(3, definition.DestinationPathTemplates.Count);
         }
     }
+
+    public class CosmosDbProjectionDefinitionTests
+    {
+        [Fact]
+        public void Should_have_required_container_property()
+        {
+            // Arrange & Act
+            var definition = new CosmosDbProjectionDefinition
+            {
+                Container = "projections",
+                Connection = "cosmosdb"
+            };
+
+            // Assert
+            Assert.Equal("projections", definition.Container);
+            Assert.Equal("cosmosdb", definition.Connection);
+        }
+
+        [Fact]
+        public void Should_have_default_partition_key_path()
+        {
+            // Arrange & Act
+            var definition = new CosmosDbProjectionDefinition
+            {
+                Container = "projections",
+                Connection = "cosmosdb"
+            };
+
+            // Assert
+            Assert.Equal("/projectionName", definition.PartitionKeyPath);
+        }
+
+        [Fact]
+        public void Should_allow_custom_partition_key_path()
+        {
+            // Arrange & Act
+            var definition = new CosmosDbProjectionDefinition
+            {
+                Container = "projections",
+                Connection = "cosmosdb",
+                PartitionKeyPath = "/customKey"
+            };
+
+            // Assert
+            Assert.Equal("/customKey", definition.PartitionKeyPath);
+        }
+    }
+
+    public class ProjectionDefinitionCosmosDbPropertyTests
+    {
+        [Fact]
+        public void Should_have_null_cosmosdb_projection_by_default()
+        {
+            // Arrange & Act
+            var definition = new ProjectionDefinition
+            {
+                Name = "Test",
+                Namespace = "Test.Namespace"
+            };
+
+            // Assert
+            Assert.Null(definition.CosmosDbProjection);
+        }
+
+        [Fact]
+        public void Should_allow_setting_cosmosdb_projection()
+        {
+            // Arrange & Act
+            var definition = new ProjectionDefinition
+            {
+                Name = "Test",
+                Namespace = "Test.Namespace",
+                CosmosDbProjection = new CosmosDbProjectionDefinition
+                {
+                    Container = "projections",
+                    Connection = "cosmosdb",
+                    PartitionKeyPath = "/id"
+                }
+            };
+
+            // Assert
+            Assert.NotNull(definition.CosmosDbProjection);
+            Assert.Equal("projections", definition.CosmosDbProjection.Container);
+            Assert.Equal("cosmosdb", definition.CosmosDbProjection.Connection);
+            Assert.Equal("/id", definition.CosmosDbProjection.PartitionKeyPath);
+        }
+
+        [Fact]
+        public void Should_allow_blob_and_cosmosdb_to_be_mutually_exclusive()
+        {
+            // Arrange
+            var blobDefinition = new ProjectionDefinition
+            {
+                Name = "BlobProjection",
+                Namespace = "Test.Namespace",
+                BlobProjection = new BlobProjectionDefinition
+                {
+                    Container = "container",
+                    Connection = "blob"
+                }
+            };
+
+            var cosmosDefinition = new ProjectionDefinition
+            {
+                Name = "CosmosDbProjection",
+                Namespace = "Test.Namespace",
+                CosmosDbProjection = new CosmosDbProjectionDefinition
+                {
+                    Container = "projections",
+                    Connection = "cosmosdb"
+                }
+            };
+
+            // Assert
+            Assert.NotNull(blobDefinition.BlobProjection);
+            Assert.Null(blobDefinition.CosmosDbProjection);
+
+            Assert.Null(cosmosDefinition.BlobProjection);
+            Assert.NotNull(cosmosDefinition.CosmosDbProjection);
+        }
+    }
 }
