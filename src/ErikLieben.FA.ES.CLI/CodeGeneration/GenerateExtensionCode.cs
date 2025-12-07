@@ -77,7 +77,7 @@ public async Task Generate()
         var registerCode = new StringBuilder();
         var mappingCode = new StringBuilder();
 
-        var (jsonSerializerCode, jsonNamespaces) = GenerateJsonSerializers(project);
+        var (jsonSerializerCode, jsonNamespaces) = GenerateJsonSerializers(project, version);
         var aggregateStorageRegistryCode = GenerateAggregateStorageRegistryCode(project);
         var projectionRegistrationCode = GenerateProjectionRegistrationCode(project);
 

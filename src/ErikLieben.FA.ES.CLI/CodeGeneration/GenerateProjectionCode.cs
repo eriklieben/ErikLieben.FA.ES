@@ -70,21 +70,21 @@ public class GenerateProjectionCode
     private async Task GenerateProjection(ProjectionDefinition projection, string? path)
     {
         var usings = InitializeUsings(projection);
-        var version = solution.Generator?.Version ?? "1.0.0";
+        var generatorVersion = solution.Generator?.Version ?? "1.0.0";
         var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
         var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
-        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput);
-        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput);
+        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, generatorVersion);
+        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput, generatorVersion);
         // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
         var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
             ? jsonBlobFactoryCode
             : cosmosDbFactoryCode;
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
-        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, version);
-        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, version);
+        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, generatorVersion);
+        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, generatorVersion);
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
@@ -97,7 +97,7 @@ public class GenerateProjectionCode
             combinedFactoryCode, propertyCode, serializableCode, deserializationCode, createDestinationInstanceCode,
             routedProjectionSerializationCode);
 
-        await AssembleAndWriteCode(projection, usings, codeComponents, path);
+        await AssembleAndWriteCode(projection, usings, codeComponents, path, generatorVersion);
     }
 
     private static List<string> InitializeUsings(ProjectionDefinition projection)
@@ -418,7 +418,7 @@ public class GenerateProjectionCode
         return (getBuilder.ToString(), ctorInputBuilder.ToString());
     }
 
-    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
     {
         if (projection.BlobProjection == null)
         {
@@ -432,7 +432,7 @@ public class GenerateProjectionCode
         // Check if this is a routed projection
         if (projection is RoutedProjectionDefinition routedProjection && routedProjection.IsRoutedProjection)
         {
-            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, ctorInput);
+            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, ctorInput, version);
         }
 
         var needsServiceProvider = !string.IsNullOrEmpty(get);
@@ -481,7 +481,7 @@ public class GenerateProjectionCode
                 """;
     }
 
-    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
     {
         if (projection.CosmosDbProjection == null)
         {
@@ -543,7 +543,7 @@ public class GenerateProjectionCode
                 """;
     }
 
-    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
     {
         usings.Add("ErikLieben.FA.ES.Projections");
         usings.Add("System.Text");
@@ -861,7 +861,7 @@ public class GenerateProjectionCode
         return postWhenStringBuilder.ToString();
     }
 
-    private string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings)
+    private static string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings, string version)
     {
         if (projection.HasPostWhenAllMethod)
         {

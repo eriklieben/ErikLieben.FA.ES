@@ -41,12 +41,11 @@
       },
       "Spectre.Console.Testing": {
         "type": "Direct",
-        "requested": "[0.53.0, )",
-        "resolved": "0.53.0",
-        "contentHash": "UhgCazrtIDeG8iAZIDJC236//DwPIZa8W6B5zoM1AJ6eV8Zg4wheI2OAC8nU7HkYuuSM2zHijztusSDT30VGQg==",
+        "requested": "[0.54.0, )",
+        "resolved": "0.54.0",
+        "contentHash": "9QjSrRH+scy66ppmOLDiSno0Uh1ISJL18FqmTQDFNvK/oNI1DaI30cy2Uj6v0gxLZghtc/eKTwXtPpe0KKfHXw==",
         "dependencies": {
-          "Spectre.Console": "0.53.0",
-          "Spectre.Console.Cli": "0.53.0"
+          "Spectre.Console": "0.54.0"
         }
       },
       "xunit": {
@@ -348,8 +347,8 @@
       },
       "Spectre.Console": {
         "type": "Transitive",
-        "resolved": "0.53.0",
-        "contentHash": "m2iv8Egfywp7FaNLKCmCFHbSf36D4ctzZKvlAK9NXMyGLh6L+CnrZWK8o+LOYsoAS1jtoHn0W1BT0W8vuq/FUw=="
+        "resolved": "0.54.0",
+        "contentHash": "StDXCFayfy0yB1xzUHT2tgEpV1/HFTiS4JgsAQS49EYTfMixSwwucaQs/bIOCwXjWwIQTMuxjUIxcB5XsJkFJA=="
       },
       "Spectre.Console.Cli": {
         "type": "Transitive",
@@ -437,11 +436,6 @@
         "resolved": "9.0.0",
         "contentHash": "qd01+AqPhbAG14KtdtIqFk+cxHQFZ/oqRSCoxU1F+Q6Kv0cl726sl7RzU9yLFGd4BUOKdN4XojXF0pQf/R6YeA=="
       },
-      "System.Formats.Asn1": {
-        "type": "Transitive",
-        "resolved": "9.0.10",
-        "contentHash": "RWiTJ02zR2+jGjNje7dbH0iI/D1JPHax+8ET5Y7vHVf/yeYY5eUPP8f8KbcbI3iisNs6x1yfAEB2H57mQ7hPIQ=="
-      },
       "System.Formats.Nrbf": {
         "type": "Transitive",
         "resolved": "9.0.0",
@@ -502,11 +496,6 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "OZIsVplFGaVY90G2SbpgU7EnCoOO5pw1t4ic21dBF3/1omrJFpAGoNAVpPyMVOC90/hvgkGG3VFqR13YgZMQfg=="
-      },
-      "System.Text.Json": {
-        "type": "Transitive",
-        "resolved": "9.0.10",
-        "contentHash": "XM02ZBnzxk7Ti6l9YRy8Bp639wANqJzJzw4W4VYiCh+HXY9hBOWkGB4k89OLP/s/RxgM02P4a/mWcJTgFiLf1Q=="
       },
       "System.Threading.Channels": {
         "type": "Transitive",
@@ -575,9 +564,7 @@
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "[5.0.0, )",
           "Pastel": "[7.0.1, )",
           "Spectre.Console": "[0.53.0, )",
-          "Spectre.Console.Cli": "[0.53.0, )",
-          "System.Formats.Asn1": "[9.0.10, )",
-          "System.Text.Json": "[9.0.10, )"
+          "Spectre.Console.Cli": "[0.53.0, )"
         }
       },
       "eriklieben.fa.es.codeanalysis": {

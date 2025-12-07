@@ -77,7 +77,7 @@ public class GenerateVersionTokenOfTCode
     /// - Extension methods for converting ObjectMetadata to version tokens
     /// - Proper using directives and namespace declarations
     /// </remarks>
-    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path)
+    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, string version)
     {
         if (!versionToken.IsPartialClass)
         {

@@ -76,7 +76,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
     /// <remarks>
     /// The generated code includes a generic Read method that uses a switch expression to instantiate the appropriate version token type based on the generic type parameter.
     /// </remarks>
-    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens)
+    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens, string version)
     {
         if (!versionTokenJsonConverter.IsPartialClass)
         {
