@@ -1,3 +1,9 @@
+## [2.0.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.0...2.0.0-preview.1) (2025-12-07)
+
+### 🐛 Bug fixes
+
+* publish nuget package as preview to prod nuget.org ([7b57e12](https://github.com/eriklieben/ErikLieben.FA.ES/commit/7b57e129142cdc1ecefff58ec21b129e32a23bbd))
+
 ## [1.4.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.4.0-preview.1) (2025-12-07)
 
 ### ✨ New features
