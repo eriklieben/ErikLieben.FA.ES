@@ -218,5 +218,5 @@ jobs:
           echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- [SonarCloud](https://sonarcloud.io/project/overview?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
+          echo "- [SonarCloud](https://sonarcloud.io/summary/new_code?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
           echo "- [Snyk Dashboard](https://app.snyk.io)" >> $GITHUB_STEP_SUMMARY
