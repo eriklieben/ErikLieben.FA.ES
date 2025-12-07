@@ -216,8 +216,10 @@ public class GenerateInheritedAggregateCodeTests
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
 
-        // ICustomer interface should include generic param signature
-        Assert.Contains("bool Activate(IList<System.Guid> ids)", code);
+        // ICustomer interface should include generic param signature with short name
+        Assert.Contains("bool Activate(IList<Guid> ids)", code);
+        // Verify the namespace for Guid is included in usings
+        Assert.Contains("using System;", code);
 
         // Async retrieval methods should be present
         Assert.Contains("public async Task<Customer> CreateAsync(Guid id)", code);
@@ -225,5 +227,163 @@ public class GenerateInheritedAggregateCodeTests
         Assert.Contains("public async Task<(Customer, IObjectDocument)> GetWithDocumentAsync(Guid id)", code);
         Assert.Contains("public async Task<Customer?> GetFirstByDocumentTag(string tag)", code);
         Assert.Contains("public async Task<IEnumerable<Customer>> GetAllByDocumentTag(string tag)", code);
+    }
+
+    [Fact]
+    public async Task Generate_correctly_handles_multiple_generic_parameters()
+    {
+        // Arrange
+        var inherited = new InheritedAggregateDefinition
+        {
+            InheritedIdentifierName = "CatalogBase",
+            InheritedNamespace = "Demo.App.Domain",
+            IdentifierName = "Catalog",
+            ObjectName = "Catalog",
+            IdentifierType = "string",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            ParentInterface = "ICatalogBase",
+            ParentInterfaceNamespace = "Demo.App.Domain",
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters = [new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }]
+                }
+            },
+            Commands = new List<CommandDefinition>
+            {
+                // Test Dictionary<string, int> to ensure multiple generics are handled with comma separation
+                new()
+                {
+                    ReturnType = new CommandReturnType { Namespace = "System.Threading.Tasks", Type = "Task" },
+                    CommandName = "UpdateMetrics",
+                    RequiresAwait = true,
+                    Parameters = new List<CommandParameter>
+                    {
+                        new()
+                        {
+                            Name = "metrics",
+                            Type = "Dictionary<string, int>",
+                            Namespace = "System.Collections.Generic",
+                            IsGeneric = true,
+                            GenericTypes = new List<PropertyGenericTypeDefinition>
+                            {
+                                new PropertyGenericTypeDefinition(Name: "String", Namespace: "System", GenericTypes: new(), SubTypes: new()),
+                                new PropertyGenericTypeDefinition(Name: "Int32", Namespace: "System", GenericTypes: new(), SubTypes: new())
+                            }
+                        }
+                    }
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Catalog.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition>(),
+            InheritedAggregates = new List<InheritedAggregateDefinition> { inherited },
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateInheritedAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Catalog.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should use short names for generic types with comma separator
+        Assert.Contains("Task UpdateMetrics(Dictionary<String, Int32> metrics)", code);
+        // Verify System namespace is in usings for the generic types
+        Assert.Contains("using System;", code);
+        Assert.Contains("using System.Collections.Generic;", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_generic_type_namespaces_to_usings()
+    {
+        // Arrange
+        var inherited = new InheritedAggregateDefinition
+        {
+            InheritedIdentifierName = "ProductBase",
+            InheritedNamespace = "Demo.App.Domain",
+            IdentifierName = "Product",
+            ObjectName = "Product",
+            IdentifierType = "string",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            ParentInterface = "IProductBase",
+            ParentInterfaceNamespace = "Demo.App.Domain",
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters = [new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false }]
+                }
+            },
+            Commands = new List<CommandDefinition>
+            {
+                // Custom type from another namespace to test using statement generation
+                new()
+                {
+                    ReturnType = new CommandReturnType { Namespace = "System.Threading.Tasks", Type = "Task" },
+                    CommandName = "AssignCategories",
+                    RequiresAwait = true,
+                    Parameters = new List<CommandParameter>
+                    {
+                        new()
+                        {
+                            Name = "categories",
+                            Type = "IEnumerable<CategoryId>",
+                            Namespace = "System.Collections.Generic",
+                            IsGeneric = true,
+                            GenericTypes = new List<PropertyGenericTypeDefinition>
+                            {
+                                new PropertyGenericTypeDefinition(Name: "CategoryId", Namespace: "Demo.App.ValueObjects", GenericTypes: new(), SubTypes: new())
+                            }
+                        }
+                    }
+                }
+            },
+            FileLocations = new List<string> { "Demo\\Domain\\Product.cs" }
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = new List<AggregateDefinition>(),
+            InheritedAggregates = new List<InheritedAggregateDefinition> { inherited },
+            Projections = new List<ProjectionDefinition>()
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateInheritedAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Product.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should use short name for custom type
+        Assert.Contains("Task AssignCategories(IEnumerable<CategoryId> categories)", code);
+        // Verify the custom type's namespace is added to usings
+        Assert.Contains("using Demo.App.ValueObjects;", code);
     }
 }

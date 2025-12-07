@@ -154,4 +154,87 @@ public class CommandHelperTests
         // Assert
         Assert.Empty(commands);
     }
+
+    [Fact]
+    public void Should_handle_array_parameters_correctly()
+    {
+        // Arrange
+        var (classSymbol, semanticModel, _) = GetClassSymbol(
+            """
+            using ErikLieben.FA.ES;
+            using ErikLieben.FA.ES.Processors;
+            using System.Threading.Tasks;
+
+            namespace TestDomain;
+
+            public record ItemsAdded(string[] Names);
+
+            public class MyAggregate(IEventStream stream) : Aggregate(stream)
+            {
+                public async Task AddItems(string[] items)
+                {
+                    await Stream.Session(ctx => ctx.Append(new ItemsAdded(items)));
+                }
+            }
+            """,
+            assembly: "TestArrayAsm"
+        );
+        Assert.NotNull(classSymbol);
+        var roslyn = new RoslynHelper(semanticModel, "c:\\repo\\");
+
+        // Act
+        var commands = CommandHelper.GetCommandMethods(classSymbol!, roslyn);
+
+        // Assert
+        var cmd = Assert.Single(commands);
+        Assert.Equal("AddItems", cmd.CommandName);
+
+        // Parameters should include array notation
+        var param = Assert.Single(cmd.Parameters);
+        Assert.Equal("items", param.Name);
+        Assert.Equal("String[]", param.Type);
+        // Array types don't have their own namespace - it's empty
+        Assert.Equal(string.Empty, param.Namespace);
+    }
+
+    [Fact]
+    public void Should_handle_generic_parameters_with_arrays()
+    {
+        // Arrange
+        var (classSymbol, semanticModel, _) = GetClassSymbol(
+            """
+            using ErikLieben.FA.ES;
+            using ErikLieben.FA.ES.Processors;
+            using System.Threading.Tasks;
+            using System.Collections.Generic;
+
+            namespace TestDomain;
+
+            public record DataProcessed(List<string[]> Data);
+
+            public class MyAggregate(IEventStream stream) : Aggregate(stream)
+            {
+                public async Task ProcessData(List<string[]> data)
+                {
+                    await Stream.Session(ctx => ctx.Append(new DataProcessed(data)));
+                }
+            }
+            """,
+            assembly: "TestGenericArrayAsm"
+        );
+        Assert.NotNull(classSymbol);
+        var roslyn = new RoslynHelper(semanticModel, "c:\\repo\\");
+
+        // Act
+        var commands = CommandHelper.GetCommandMethods(classSymbol!, roslyn);
+
+        // Assert
+        var cmd = Assert.Single(commands);
+        Assert.Equal("ProcessData", cmd.CommandName);
+
+        // Parameters should include full generic type with array notation
+        var param = Assert.Single(cmd.Parameters);
+        Assert.Equal("data", param.Name);
+        Assert.Equal("List<String[]>", param.Type);
+    }
 }

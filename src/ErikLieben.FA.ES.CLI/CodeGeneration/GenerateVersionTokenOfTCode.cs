@@ -58,7 +58,7 @@ public class GenerateVersionTokenOfTCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionToken, path);
+                await GenerateVersionToken(versionToken, path, solution.Generator?.Version ?? "1.0.0");
             }
 
             // Generate json

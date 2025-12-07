@@ -648,7 +648,7 @@ public class GenerateAggregateCodeTests
         // Act
         var result = GenerateAggregateCode.AssembleAggregateCode(
             aggregate, usings, postWhenCode, foldCode, serializableCode,
-            propertyCode, propertySnapshotCode, get, ctorInput, setupCode);
+            propertyCode, propertySnapshotCode, get, ctorInput, setupCode, "1.0.0");
 
         // Assert
         var code = result.ToString();

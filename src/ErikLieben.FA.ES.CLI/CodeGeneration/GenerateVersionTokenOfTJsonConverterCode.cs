@@ -59,7 +59,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens);
+                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens, solution.Generator?.Version ?? "1.0.0");
             }
 
             // Generate json
@@ -88,7 +88,9 @@ public class GenerateVersionTokenOfTJsonConverterCode
         var usings = new List<string>
         {
             "System.Text.Json",
-            "ErikLieben.FA.ES"
+            "ErikLieben.FA.ES",
+            "System.CodeDom.Compiler",
+            "System.Diagnostics.CodeAnalysis"
         };
         usings.AddRange(versionTokens.Select(versionToken => versionToken.NamespaceOfType));
 

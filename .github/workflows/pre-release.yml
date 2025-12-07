@@ -29,44 +29,44 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 'lts/*'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props') }}
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Cache npm
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
           restore-keys: ${{ runner.os }}-npm-
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Restore dependencies
         run: dotnet restore
@@ -82,6 +82,8 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Generate coverage report
+        env:
+          REPORTGENERATOR_LICENSE: ${{ secrets.REPORTGENERATOR_LICENSE }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
@@ -89,17 +91,17 @@ jobs:
             -targetdir:"coverage/report" \
             -reporttypes:"HtmlInline_AzurePipelines;Cobertura;MarkdownSummaryGithub" \
             -title:"ErikLieben.FA.ES Coverage Report" \
-            -license:${{ secrets.REPORTGENERATOR_LICENSE }}
+            -license:"$REPORTGENERATOR_LICENSE"
 
       - name: Upload coverage for SonarCloud
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-data
           path: coverage/**/coverage.opencover.xml
           retention-days: 1
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
           path: coverage/report
@@ -128,7 +130,7 @@ jobs:
 
       - name: Upload release artifacts
         if: steps.check-packages.outputs.has-packages == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-artifacts
           path: release-artifacts/
@@ -145,30 +147,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Setup Java (for SonarCloud)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props') }}
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Cache SonarCloud packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -181,7 +183,7 @@ jobs:
         run: dotnet restore
 
       - name: Download coverage data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: coverage-data
           path: coverage
@@ -193,7 +195,7 @@ jobs:
           dotnet sonarscanner begin \
             /k:"eriklieben_ErikLieben.FA.ES" \
             /o:"eriklieben" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml"
 
@@ -203,7 +205,7 @@ jobs:
       - name: End SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   # Snyk security scanning (runs in parallel with sonarcloud)
   snyk:
@@ -216,15 +218,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props') }}
@@ -234,7 +236,7 @@ jobs:
         run: dotnet restore
 
       - name: Setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # master
 
       - name: Snyk Open Source (dependency vulnerabilities)
         env:
@@ -269,23 +271,23 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-artifacts
           path: release-artifacts
@@ -296,19 +298,19 @@ jobs:
           dotnet CycloneDX ErikLieben.FA.ES.sln --output release-artifacts --filename sbom.json --json
 
       - name: Generate build attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
           subject-path: 'release-artifacts/*.nupkg'
 
       - name: Generate SBOM attestations
         if: hashFiles('release-artifacts/sbom.json') != ''
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2
         with:
           subject-path: 'release-artifacts/*.nupkg'
           sbom-path: 'release-artifacts/sbom.json'
 
       - name: NuGet Trusted Publishing Login
-        uses: NuGet/login@v1
+        uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1
         id: nuget-login
         with:
           user: ${{ secrets.NUGET_TEST_USER }}

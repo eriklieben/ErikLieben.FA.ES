@@ -412,6 +412,13 @@ internal class RoslynHelper(
 
     internal static string GetFullTypeNameIncludingGenerics(ITypeSymbol typeSymbol)
     {
+        // Handle array types
+        if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
+        {
+            var elementType = GetFullTypeNameIncludingGenerics(arrayTypeSymbol.ElementType);
+            return $"{elementType}[]";
+        }
+
         var containingType = typeSymbol.ContainingType;
 
         // Resolve the containing type if the symbol is nested

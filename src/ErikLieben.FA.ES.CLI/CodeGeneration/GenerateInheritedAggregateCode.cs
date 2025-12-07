@@ -59,7 +59,7 @@ public class GenerateInheritedAggregateCode
 
                 try
                 {
-                    await GenerateAggregate(aggregate, path);
+                    await GenerateAggregate(aggregate, path, solution.Generator?.Version ?? "1.0.0");
                 }
                 catch (Exception e)
                 {
@@ -72,12 +72,12 @@ public class GenerateInheritedAggregateCode
         }
     }
 
-    private static async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path)
+    private static async Task GenerateAggregate(InheritedAggregateDefinition aggregate, string? path, string version)
     {
         var usings = BuildUsings(aggregate);
         var (diCode, ctorParams) = BuildConstructorDependencyCode(aggregate);
         var commandMethodSignatures = BuildCommandMethodSignatures(aggregate, usings);
-        var codeContent = GenerateCodeContent(aggregate, usings, diCode, ctorParams, commandMethodSignatures);
+        var codeContent = GenerateCodeContent(aggregate, usings, diCode, ctorParams, commandMethodSignatures, version);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
         var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
@@ -93,12 +93,21 @@ public class GenerateInheritedAggregateCode
             "ErikLieben.FA.ES.Processors",
             "ErikLieben.FA.ES.Aggregates",
             "ErikLieben.FA.ES.Documents",
-            "System.Diagnostics.CodeAnalysis"
+            "System.Diagnostics.CodeAnalysis",
+            "System.CodeDom.Compiler"
         };
 
         if (!string.IsNullOrWhiteSpace(aggregate.ParentInterfaceNamespace))
         {
             usings.Add(aggregate.ParentInterfaceNamespace);
+        }
+
+        // Add identifier type namespace if it's not a built-in type
+        if (aggregate.IdentifierType != "string" &&
+            !string.IsNullOrWhiteSpace(aggregate.IdentifierTypeNamespace) &&
+            !usings.Contains(aggregate.IdentifierTypeNamespace))
+        {
+            usings.Add(aggregate.IdentifierTypeNamespace);
         }
 
         return usings;
@@ -177,12 +186,24 @@ public class GenerateInheritedAggregateCode
 
         foreach (var param in cmdMethod.Parameters)
         {
-            if (!usings.Contains(param.Namespace))
+            if (!string.IsNullOrWhiteSpace(param.Namespace) && !usings.Contains(param.Namespace))
             {
                 usings.Add(param.Namespace);
             }
 
-            textBuilder.Append(BuildParameterSignature(param));
+            // Add namespaces for generic types
+            if (param.IsGeneric && param.GenericTypes != null)
+            {
+                foreach (var genericType in param.GenericTypes)
+                {
+                    if (!string.IsNullOrWhiteSpace(genericType.Namespace) && !usings.Contains(genericType.Namespace))
+                    {
+                        usings.Add(genericType.Namespace);
+                    }
+                }
+            }
+
+            textBuilder.Append(BuildParameterSignature(param, usings));
             textBuilder.Append(", ");
         }
 
@@ -195,30 +216,41 @@ public class GenerateInheritedAggregateCode
         return text;
     }
 
-    private static string BuildParameterSignature(CommandParameter param)
+    private static string BuildParameterSignature(CommandParameter param, List<string> usings)
     {
         if (param.IsGeneric && param.GenericTypes != null)
         {
-            return BuildGenericParameterSignature(param);
+            return BuildGenericParameterSignature(param, usings);
         }
 
         return $"{param.Type} {param.Name}";
     }
 
-    private static string BuildGenericParameterSignature(CommandParameter param)
+    private static string BuildGenericParameterSignature(CommandParameter param, List<string> usings)
     {
         var builder = new StringBuilder();
-        builder.Append(param.Type);
+
+        // Extract base type name without generic parameters
+        // e.g., "IEnumerable<QuestionIdentifier>" -> "IEnumerable"
+        var baseTypeName = param.Type;
+        var genericStartIndex = baseTypeName.IndexOf('<');
+        if (genericStartIndex > 0)
+        {
+            baseTypeName = baseTypeName.Substring(0, genericStartIndex);
+        }
+
+        builder.Append(baseTypeName);
         builder.Append('<');
 
         for (int i = 0; i < param.GenericTypes!.Count; i++)
         {
             var generic = param.GenericTypes[i];
-            builder.Append(generic.Namespace).Append('.').Append(generic.Name);
+            // Use short name only, since we've added the namespace to usings
+            builder.Append(generic.Name);
 
             if (i < param.GenericTypes.Count - 1)
             {
-                builder.Append(',');
+                builder.Append(", ");
             }
         }
 
@@ -233,7 +265,8 @@ public class GenerateInheritedAggregateCode
         List<string> usings,
         string diCode,
         string ctorParams,
-        string commandMethodSignatures)
+        string commandMethodSignatures,
+        string version)
     {
         var code = new StringBuilder();
 
@@ -260,9 +293,8 @@ public class GenerateInheritedAggregateCode
                           }
 
                           //<auto-generated />
-                          /// <summary>
-                          /// Factory for creating and loading {{aggregate.IdentifierName}} aggregate instances from documents and event streams.
-                          /// </summary>
+                          [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                          [ExcludeFromCodeCoverage]
                           public class {{aggregate.IdentifierName}}Factory : I{{aggregate.IdentifierName}}Factory
                           {
                             private readonly IEventStreamFactory eventStreamFactory;
@@ -356,7 +388,7 @@ public class GenerateInheritedAggregateCode
                              /// <returns>The loaded {{aggregate.IdentifierName}} instance.</returns>
                              public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return obj;
@@ -369,7 +401,7 @@ public class GenerateInheritedAggregateCode
                              /// <returns>A tuple containing the loaded {{aggregate.IdentifierName}} instance and its document.</returns>
                              public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return (obj, document);
@@ -382,7 +414,7 @@ public class GenerateInheritedAggregateCode
                             /// <returns>The first matching {{aggregate.IdentifierName}} instance, or null if not found.</returns>
                             public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag)
                             {
-                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentTagStoreFromAttribute(aggregate)}\\\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}});
+                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentTagStoreFromAttribute(aggregate)}\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}});
                                 if (document == null)
                                 {
                                     return null;
@@ -399,12 +431,13 @@ public class GenerateInheritedAggregateCode
                             /// <returns>A collection of all matching {{aggregate.IdentifierName}} instances.</returns>
                             public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
                             {
-                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentTagStoreFromAttribute(aggregate)}\\\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \\\"{GetDocumentStoreFromAttribute(aggregate)}\\\"" : "")}}));
+                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentTagStoreFromAttribute(aggregate)}\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? $", \"{GetDocumentStoreFromAttribute(aggregate)}\"" : "")}}));
                                 var items = new List<{{aggregate.IdentifierName}}>();
                                 foreach (var document in documents)
                                 {
                                     var obj = Create(document);
                                     await obj.Fold();
+                                    items.Add(obj);
                                 }
                                 return items;
                             }

@@ -60,7 +60,7 @@ public async Task Generate()
 
             try
             {
-                await GenerateExtension(project, path);
+                await GenerateExtension(project, path, solution.Generator?.Version ?? "1.0.0");
             }
             catch (Exception)
             {
@@ -70,7 +70,7 @@ public async Task Generate()
         }
     }
 
-    private static async Task GenerateExtension(ProjectDefinition project, string path)
+    private static async Task GenerateExtension(ProjectDefinition project, string path, string version)
     {
         var projectName = ProjectNameRegex().Replace(project.Name, string.Empty);
 
@@ -264,7 +264,7 @@ public async Task Generate()
         await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
-    private static (StringBuilder, List<string>) GenerateJsonSerializers(ProjectDefinition project)
+    private static (StringBuilder, List<string>) GenerateJsonSerializers(ProjectDefinition project, string version)
     {
         var events = CollectDistinctEvents(project);
         var nameSpaceUsings = new List<string>();
@@ -272,7 +272,7 @@ public async Task Generate()
 
         foreach (var eventDefinition in events)
         {
-            ProcessEventDefinition(eventDefinition, nameSpaceUsings, jsonSerializerCode);
+            ProcessEventDefinition(eventDefinition, nameSpaceUsings, jsonSerializerCode, version);
         }
 
         return (jsonSerializerCode, nameSpaceUsings);
@@ -293,7 +293,8 @@ public async Task Generate()
     private static void ProcessEventDefinition(
         EventDefinition eventDefinition,
         List<string> nameSpaceUsings,
-        StringBuilder jsonSerializerCode)
+        StringBuilder jsonSerializerCode,
+        string version)
     {
         var jsonSerializerCodeList = new List<string>();
 
@@ -303,7 +304,7 @@ public async Task Generate()
         ProcessEventProperties(eventDefinition, nameSpaceUsings, jsonSerializerCodeList);
         ProcessEventParameters(eventDefinition, nameSpaceUsings, jsonSerializerCodeList);
 
-        AppendSerializerContext(eventDefinition, jsonSerializerCodeList, jsonSerializerCode);
+        AppendSerializerContext(eventDefinition, jsonSerializerCodeList, jsonSerializerCode, version);
     }
 
     private static void ProcessEventProperties(
@@ -421,7 +422,8 @@ public async Task Generate()
     private static void AppendSerializerContext(
         EventDefinition eventDefinition,
         List<string> jsonSerializerCodeList,
-        StringBuilder jsonSerializerCode)
+        StringBuilder jsonSerializerCode,
+        string version)
     {
         var filteredSerializers = jsonSerializerCodeList
             .Distinct()

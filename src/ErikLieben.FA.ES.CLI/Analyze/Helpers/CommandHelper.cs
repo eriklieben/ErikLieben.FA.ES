@@ -42,7 +42,7 @@ internal static class CommandHelper
         {
             var name = parameterSymbol.Name;
             var typeSymbol = parameterSymbol.Type;
-            var typeName = typeSymbol?.Name ?? string.Empty;
+            var typeName = typeSymbol != null ? RoslynHelper.GetFullTypeNameIncludingGenerics(typeSymbol) : string.Empty;
             var fullNamespace = RoslynHelper.GetFullNamespace(typeSymbol!);
             var genericTypes = typeSymbol is INamedTypeSymbol { IsGenericType: true } namedType
                 ? namedType.TypeArguments
