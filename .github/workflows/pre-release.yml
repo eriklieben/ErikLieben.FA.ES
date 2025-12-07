@@ -1,9 +1,13 @@
 name: vnext Release
 
 on:
-  push:
-    branches:
-      - vnext
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run without publishing packages (test run)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: vnext-release
@@ -257,12 +261,12 @@ jobs:
         run: snyk monitor --file=ErikLieben.FA.ES.sln || true
         continue-on-error: true
 
-  # Publish to NuGet.org (only if packages were created)
+  # Publish to NuGet.org (only if packages were created and not a dry run)
   publish:
     name: Publish to NuGet.org
     runs-on: ubuntu-latest
     needs: build
-    if: needs.build.outputs.has-packages == 'true'
+    if: needs.build.outputs.has-packages == 'true' && inputs.dry_run != true
 
     permissions:
       contents: write
