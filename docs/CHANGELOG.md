@@ -1,3 +1,9 @@
+## [1.4.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.1...1.4.0-preview.1) (2025-12-07)
+
+### ✨ New features
+
+* combined changes for v2 ([159acf3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/159acf3de8acc75c92587e17aca3f671cd082e83))
+
 ## [2.0.0-preview.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.6...2.0.0-preview.7) (2025-12-07)
 
 ### 🐛 Bug fixes
