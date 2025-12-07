@@ -65,13 +65,17 @@ jobs:
 
       - name: Generate Job Summary
         if: always()
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          JOB_STATUS: ${{ job.status }}
         run: |
           echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Build & Test" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.head_ref }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target:** ${{ github.base_ref }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** $HEAD_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** $BASE_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> Coverage report and security analysis require approval and run in a separate job." >> $GITHUB_STEP_SUMMARY
 
@@ -132,16 +136,19 @@ jobs:
       - name: Begin SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           dotnet sonarscanner begin \
             /k:"eriklieben_ErikLieben.FA.ES" \
             /o:"eriklieben" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
-            /d:sonar.pullrequest.key=${{ github.event.pull_request.number }} \
-            /d:sonar.pullrequest.branch=${{ github.head_ref }} \
-            /d:sonar.pullrequest.base=${{ github.base_ref }}
+            /d:sonar.pullrequest.key="$PR_NUMBER" \
+            /d:sonar.pullrequest.branch="$HEAD_REF" \
+            /d:sonar.pullrequest.base="$BASE_REF"
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
@@ -149,10 +156,12 @@ jobs:
       - name: End SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
       # Coverage Report Generation (requires license)
       - name: Generate coverage report
+        env:
+          REPORTGENERATOR_LICENSE: ${{ secrets.REPORTGENERATOR_LICENSE }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
@@ -160,7 +169,7 @@ jobs:
             -targetdir:"coverage/report" \
             -reporttypes:"HtmlInline_AzurePipelines;Cobertura;MarkdownSummaryGithub" \
             -title:"ErikLieben.FA.ES Coverage Report" \
-            -license:${{ secrets.REPORTGENERATOR_LICENSE }}
+            -license:"$REPORTGENERATOR_LICENSE"
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -174,7 +183,7 @@ jobs:
 
       # Snyk Security Scanning (results visible in Snyk dashboard)
       - name: Setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # master
 
       - name: Snyk Open Source (dependency vulnerabilities)
         env:
@@ -196,14 +205,18 @@ jobs:
 
       - name: Generate Job Summary
         if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          JOB_STATUS: ${{ job.status }}
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Security Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** ${{ github.head_ref }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR:** #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** $HEAD_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- [SonarCloud](https://sonarcloud.io/project/overview?id=eriklieben_ErikLieben.FA.ES&pullRequest=${{ github.event.pull_request.number }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [SonarCloud](https://sonarcloud.io/project/overview?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
           echo "- [Snyk Dashboard](https://app.snyk.io)" >> $GITHUB_STEP_SUMMARY

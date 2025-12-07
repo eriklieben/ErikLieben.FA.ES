@@ -64,7 +64,7 @@ jobs:
           restore-keys: ${{ runner.os }}-npm-
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Restore dependencies
         run: dotnet restore
@@ -80,6 +80,8 @@ jobs:
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: Generate coverage report
+        env:
+          REPORTGENERATOR_LICENSE: ${{ secrets.REPORTGENERATOR_LICENSE }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           reportgenerator \
@@ -87,7 +89,7 @@ jobs:
             -targetdir:"coverage/report" \
             -reporttypes:"HtmlInline_AzurePipelines;Cobertura;MarkdownSummaryGithub" \
             -title:"ErikLieben.FA.ES Coverage Report" \
-            -license:${{ secrets.REPORTGENERATOR_LICENSE }}
+            -license:"$REPORTGENERATOR_LICENSE"
 
       - name: Upload coverage for SonarCloud
         uses: actions/upload-artifact@v4
@@ -191,7 +193,7 @@ jobs:
           dotnet sonarscanner begin \
             /k:"eriklieben_ErikLieben.FA.ES" \
             /o:"eriklieben" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml"
 
@@ -201,7 +203,7 @@ jobs:
       - name: End SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
   # Snyk security scanning (runs in parallel with sonarcloud)
   snyk:
@@ -232,7 +234,7 @@ jobs:
         run: dotnet restore
 
       - name: Setup Snyk
-        uses: snyk/actions/setup@master
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # master
 
       - name: Snyk Open Source (dependency vulnerabilities)
         env:
