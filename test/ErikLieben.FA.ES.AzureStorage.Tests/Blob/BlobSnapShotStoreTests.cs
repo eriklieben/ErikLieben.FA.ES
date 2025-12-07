@@ -1,5 +1,8 @@
-﻿using System.Text;
+﻿using System;
+using System.IO;
+using System.Text;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -12,6 +15,7 @@ using ErikLieben.FA.ES.Processors;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
 {

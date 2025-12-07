@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,13 +32,10 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning,
         isEnabledByDefault: true, description: Description);
 
-    private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
-    private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
-
     /// <summary>
     /// Gets the diagnostics descriptors produced by this analyzer.
     /// </summary>
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     /// <summary>
     /// Registers analysis actions to detect discouraged When(...) usage inside Aggregate stream sessions.
@@ -79,11 +77,11 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
             return;
 
         // 1) Only trigger for methods contained in a type that inherits ErikLieben.FA.ES.Processors.Aggregate
-        if (!IsInsideAggregateType(context))
+        if (!SymbolHelpers.IsInsideAggregateType(context))
             return;
 
         // 2) Only trigger when used inside a Stream.Session(...) call
-        if (!IsInsideStreamSession(context.SemanticModel, invocation))
+        if (!SymbolHelpers.IsInsideStreamSession(context.SemanticModel, invocation))
             return;
 
         // Tailor message: if someone used When(...).Data() then hint about removing .Data()
@@ -92,62 +90,6 @@ public class WhenUsageAnalyzer : DiagnosticAnalyzer
 
         var diagnostic = Diagnostic.Create(Rule, invokedName.GetLocation(), suffix);
         context.ReportDiagnostic(diagnostic);
-    }
-
-    private static bool IsInsideAggregateType(SyntaxNodeAnalysisContext context)
-    {
-        // context.ContainingSymbol is usually the method/prop/etc. Get containing type and walk base types
-        var containingSymbol = context.ContainingSymbol;
-        var containingType = (containingSymbol as IMethodSymbol)?.ContainingType ?? containingSymbol?.ContainingType;
-        if (containingType == null)
-            return false;
-
-        for (var type = containingType; type != null; type = type.BaseType)
-        {
-            if (type.ToDisplayString() == AggregateFullName)
-                return true;
-        }
-        return false;
-    }
-
-    private static bool IsInsideStreamSession(SemanticModel model, InvocationExpressionSyntax whenInvocation)
-    {
-        // Walk up the syntax tree looking for an invocation whose target method is named "Session"
-        // and whose containing type implements ErikLieben.FA.ES.IEventStream
-        foreach (var ancestor in whenInvocation.Ancestors())
-        {
-            if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
-                break;
-
-            // Combine checks to reduce nesting (S1066)
-            if (ancestor is InvocationExpressionSyntax inv && GetMemberName(inv) == "Session")
-            {
-                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
-                if (IsEventStreamSession(symbol))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    private static string? GetMemberName(InvocationExpressionSyntax invocation)
-    {
-        return invocation.Expression switch
-        {
-            IdentifierNameSyntax id => id.Identifier.ValueText,
-            MemberAccessExpressionSyntax { Name: IdentifierNameSyntax name } => name.Identifier.ValueText,
-            _ => null
-        };
-    }
-
-    private static bool IsEventStreamSession(IMethodSymbol? method)
-    {
-        var type = method?.ContainingType;
-        if (type == null)
-            return false;
-        if (type.ToDisplayString() == IEventStreamFullName)
-            return true;
-        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 
     private static bool IsChainedWithData(InvocationExpressionSyntax whenInvocation)

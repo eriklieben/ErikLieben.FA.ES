@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.CLI.CodeGeneration;
 using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Xunit;
+using System.Linq;
 
 namespace ErikLieben.FA.ES.CLI.Tests.CodeGeneration;
 
@@ -17,7 +18,7 @@ public class GenerateAggregateCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -37,23 +38,25 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = true,
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "svc", Type = "IService", Namespace = "Demo.App.Services", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                            { Name = "svc", Type = "IService", Namespace = "Demo.App.Services", IsNullable = false }
                     ]
                 }
-            },
-            Properties = new List<PropertyDefinition>
-            {
-                new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }
-            },
-            Events = new List<EventDefinition>
-            {
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events =
+            [
                 new()
                 {
                     TypeName = "UserCreated",
@@ -61,9 +64,8 @@ public class GenerateAggregateCodeTests
                     EventName = "User.Created",
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>
-                    {
-                        // Include a subtype to ensure JsonSerializable lines for subtypes exist (though Guid appears due to HACK)
+                    Properties =
+                    [
                         new PropertyDefinition
                         {
                             Name = "CustomerId",
@@ -75,17 +77,18 @@ public class GenerateAggregateCodeTests
                                 new PropertyGenericTypeDefinition(
                                     Name: "Guid",
                                     Namespace: "System",
-                                    GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                    SubTypes: new List<PropertyGenericTypeDefinition>())
+                                    GenericTypes: [],
+                                    SubTypes: [])
                             ]
                         }
-                    },
-                    Parameters = new List<ParameterDefinition>
-                    {
+                    ],
+                    Parameters =
+                    [
                         new() { Name = "e", Type = "UserCreated", Namespace = "Demo.App.Events" },
                         new() { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" }
-                    }
+                    ]
                 },
+
                 new()
                 {
                     TypeName = "FeatureFlagEnabled",
@@ -93,13 +96,10 @@ public class GenerateAggregateCodeTests
                     EventName = "FeatureFlag.Enabled",
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
-                    Properties = new List<PropertyDefinition>(),
-                    Parameters = new List<ParameterDefinition>
-                    {
-                        new() { Name = "e", Type = "FeatureFlagEnabled", Namespace = "Demo.App.Events" }
-                    }
+                    Properties = [],
+                    Parameters = [new() { Name = "e", Type = "FeatureFlagEnabled", Namespace = "Demo.App.Events" }]
                 }
-            },
+            ],
             PostWhen = new PostWhenDeclaration
             {
                 Parameters =
@@ -108,7 +108,7 @@ public class GenerateAggregateCodeTests
                     new PostWhenParameterDeclaration { Name = "evt", Type = "IEvent", Namespace = "ErikLieben.FA.ES" },
                 }
             },
-            FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+            FileLocations = ["Demo\\Domain\\Account.cs"]
         };
 
         var project = new ProjectDefinition
@@ -116,7 +116,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -132,6 +132,10 @@ public class GenerateAggregateCodeTests
         var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Account.Generated.cs");
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Unused usings should be removed by CodeFormattingHelper
+        // No pragma warning should be present as we use Roslyn-based unused using removal
+        Assert.DoesNotContain("#pragma warning disable IDE0005", code);
 
         // Class, interfaces
         Assert.Contains("namespace Demo.App.Domain;", code);
@@ -175,9 +179,9 @@ public class GenerateAggregateCodeTests
         Assert.Contains("var svc = serviceProvider.GetService(typeof(IService)) as IService;", code);
         Assert.Contains("return new Account(eventStream, svc!);", code);
 
-        // Async factory helpers, including generic CreateAsync<T>
+        // Async factory helpers, including generic CreateAsync<T> with ActionMetadata parameter
         Assert.Contains("public async Task<Account> CreateAsync(Guid id)", code);
-        Assert.Contains("protected async Task<Account> CreateAsync<T>(Guid id, T firstEvent) where T : class", code);
+        Assert.Contains("protected async Task<Account> CreateAsync<T>(Guid id, T firstEvent, ActionMetadata? metadata = null) where T : class", code);
         Assert.Contains("public async Task<(Account, IObjectDocument)> GetWithDocumentAsync(Guid id)", code);
     }
 
@@ -193,7 +197,7 @@ public class GenerateAggregateCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
         };
 
         var project = new ProjectDefinition
@@ -201,7 +205,7 @@ public class GenerateAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate }
+            Aggregates = [aggregate]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -228,18 +232,21 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Properties = new List<PropertyDefinition>
-            {
+            Properties =
+            [
                 new() { Name = "Value", Type = "CustomType", Namespace = "Custom.Namespace", IsNullable = false },
                 new() { Name = "Count", Type = "Int32", Namespace = "System", IsNullable = false }
-            }
+            ]
         };
 
         // Act
         var usings = GenerateAggregateCode.BuildUsings(aggregate);
 
         // Assert
+        Assert.Contains("System.Collections.Generic", usings);
         Assert.Contains("System.Text.Json.Serialization", usings);
+        Assert.Contains("System.Threading", usings);
+        Assert.Contains("System.Threading.Tasks", usings);
         Assert.Contains("ErikLieben.FA.ES", usings);
         Assert.Contains("ErikLieben.FA.ES.Processors", usings);
         Assert.Contains("ErikLieben.FA.ES.Aggregates", usings);
@@ -260,11 +267,11 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Properties = new List<PropertyDefinition>
-            {
+            Properties =
+            [
                 new() { Name = "Value1", Type = "String", Namespace = "System", IsNullable = false },
                 new() { Name = "Value2", Type = "Int32", Namespace = "System", IsNullable = false }
-            }
+            ]
         };
 
         // Act
@@ -398,8 +405,8 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
+            Events =
+            [
                 new()
                 {
                     TypeName = "UserCreated",
@@ -408,9 +415,9 @@ public class GenerateAggregateCodeTests
                     ActivationType = "When",
                     ActivationAwaitRequired = false,
                     File = "",
-                    Parameters = new List<ParameterDefinition> { new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" } }
+                    Parameters = [new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" }]
                 }
-            }
+            ]
         };
         var usings = new List<string>();
 
@@ -435,11 +442,19 @@ public class GenerateAggregateCodeTests
             IdentifierType = "string",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
-                new() { TypeName = "Event1", Namespace = "Test.Events", EventName = "Event.One", ActivationType = "When", ActivationAwaitRequired = false, File = "" },
-                new() { TypeName = "Event2", Namespace = "Test.Events", EventName = "Event.Two", ActivationType = "When", ActivationAwaitRequired = false, File = "" }
-            }
+            Events =
+            [
+                new()
+                {
+                    TypeName = "Event1", Namespace = "Test.Events", EventName = "Event.One", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                },
+                new()
+                {
+                    TypeName = "Event2", Namespace = "Test.Events", EventName = "Event.Two", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                }
+            ]
         };
         var usings = new List<string>();
 
@@ -465,7 +480,7 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>()
+            Events = []
         };
         var usings = new List<string>();
 
@@ -489,11 +504,13 @@ public class GenerateAggregateCodeTests
             Type = "Dictionary",
             Namespace = "System.Collections.Generic",
             IsNullable = false,
-            GenericTypes = new List<PropertyGenericTypeDefinition>
-            {
-                new(Name: "String", Namespace: "System", GenericTypes: new List<PropertyGenericTypeDefinition>(), SubTypes: new List<PropertyGenericTypeDefinition>()),
-                new(Name: "Int32", Namespace: "System", GenericTypes: new List<PropertyGenericTypeDefinition>(), SubTypes: new List<PropertyGenericTypeDefinition>())
-            }
+            GenericTypes =
+            [
+                new(Name: "String", Namespace: "System", GenericTypes: [],
+                    SubTypes: []),
+                new(Name: "Int32", Namespace: "System", GenericTypes: [],
+                    SubTypes: [])
+            ]
         };
 
         // Act
@@ -514,17 +531,26 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
-                    Parameters = new List<ConstructorParameter>
-                    {
-                        new() { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new() { Name = "logger", Type = "ILogger", Namespace = "Microsoft.Extensions.Logging", IsNullable = false }
-                    }
+                    Parameters =
+                    [
+                        new()
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+
+                        new()
+                        {
+                            Name = "logger", Type = "ILogger", Namespace = "Microsoft.Extensions.Logging",
+                            IsNullable = false
+                        }
+                    ]
                 }
-            }
+            ]
         };
 
         // Act
@@ -547,11 +573,19 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>
-            {
-                new() { TypeName = "Event1", EventName = "Event.One", Namespace = "Test.Events", ActivationType = "When", ActivationAwaitRequired = false, File = "" },
-                new() { TypeName = "Event2", EventName = "Event.Two", Namespace = "Test.Events", ActivationType = "When", ActivationAwaitRequired = false, File = "" }
-            }
+            Events =
+            [
+                new()
+                {
+                    TypeName = "Event1", EventName = "Event.One", Namespace = "Test.Events", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                },
+                new()
+                {
+                    TypeName = "Event2", EventName = "Event.Two", Namespace = "Test.Events", ActivationType = "When",
+                    ActivationAwaitRequired = false, File = ""
+                }
+            ]
         };
 
         // Act
@@ -577,7 +611,7 @@ public class GenerateAggregateCodeTests
             IdentifierType = "Guid",
             IdentifierTypeNamespace = "System",
             Namespace = "Test",
-            Events = new List<EventDefinition>()
+            Events = []
         };
 
         // Act
@@ -631,5 +665,1625 @@ public class GenerateAggregateCodeTests
         Assert.Contains("public static string ObjectName => \"TestObject\";", code);
         Assert.Contains("var svc = serviceProvider.GetService(typeof(IService)) as IService;", code);
         Assert.Contains("return new TestAggregate(eventStream, svc!);", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_repository_interface()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Product.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Product.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository interface
+        Assert.Contains("public partial interface IProductRepository", code);
+        Assert.Contains("Task<PagedResult<string>> GetObjectIdsAsync(", code);
+        Assert.Contains("string? continuationToken", code);
+        Assert.Contains("int pageSize", code);
+        Assert.Contains("Task<Product?> GetByIdAsync(", code);
+        Assert.Contains("Task<bool> ExistsAsync(", code);
+        Assert.Contains("Task<long> CountAsync(", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_repository_implementation()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Order.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Order.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository class
+        Assert.Contains("public partial class OrderRepository : IOrderRepository", code);
+        Assert.Contains("private readonly IOrderFactory orderFactory;", code);
+        Assert.Contains("private readonly IObjectDocumentFactory objectDocumentFactory;", code);
+        Assert.Contains("private readonly IObjectIdProvider objectIdProvider;", code);
+
+        // Repository constructor
+        Assert.Contains("public OrderRepository(", code);
+        Assert.Contains("IOrderFactory orderFactory,", code);
+        Assert.Contains("IObjectDocumentFactory objectDocumentFactory,", code);
+        Assert.Contains("IObjectIdProvider objectIdProvider)", code);
+
+        // GetObjectIdsAsync implementation
+        Assert.Contains("public async Task<PagedResult<string>> GetObjectIdsAsync(", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);", code);
+        Assert.Contains("return await objectIdProvider.GetObjectIdsAsync(", code);
+        Assert.Contains("ObjectName,", code);
+
+        // GetByIdAsync implementation
+        Assert.Contains("public async Task<Order?> GetByIdAsync(", code);
+        Assert.Contains("var obj = orderFactory.Create(document);", code);
+        Assert.Contains("await obj.Fold();", code);
+        Assert.Contains("return obj;", code);
+
+        // ExistsAsync implementation
+        Assert.Contains("public async Task<bool> ExistsAsync(", code);
+        Assert.Contains("objectIdProvider.ExistsAsync", code);
+
+        // CountAsync implementation
+        Assert.Contains("public async Task<long> CountAsync(", code);
+        Assert.Contains("objectIdProvider.CountAsync", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_obsolete_attributes_to_factory_query_methods()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Customer",
+            ObjectName = "customer",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Customer.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Customer.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // GetAsync with Obsolete
+        Assert.Contains("[Obsolete", code);
+        Assert.Contains("Use ICustomerRepository.GetByIdAsync instead", code);
+        Assert.Contains("GetAsync", code);
+
+        // GetWithDocumentAsync with Obsolete
+        Assert.Contains("GetWithDocumentAsync", code);
+
+        // GetFirstByDocumentTag with Obsolete
+        Assert.Contains("GetFirstByDocumentTag", code);
+
+        // GetAllByDocumentTag with Obsolete
+        Assert.Contains("GetAllByDocumentTag", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_validates_page_size_bounds()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Invoice",
+            ObjectName = "invoice",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Invoice.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Invoice.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Page size validation
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);", code);
+        Assert.Contains("ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);", code);
+    }
+
+    [Fact]
+    public async Task Generate_factory_GetAsync_includes_upToVersion_parameter()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "BlogPost",
+            ObjectName = "blogpost",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\BlogPost.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "BlogPost.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Factory GetAsync should have upToVersion parameter
+        Assert.Contains("public async Task<BlogPost> GetAsync(Guid id, int? upToVersion = null)", code);
+    }
+
+    [Fact]
+    public async Task Generate_factory_GetAsync_uses_ReadAsync_with_upToVersion()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Article",
+            ObjectName = "article",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Article.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Article.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Factory GetAsync should use ReadAsync with upToVersion
+        Assert.Contains("var events = await eventStream.ReadAsync(0, upToVersion);", code);
+
+        // Should manually fold each event
+        Assert.Contains("foreach (var e in events)", code);
+        Assert.Contains("obj.Fold(e);", code);
+
+        // Comment should indicate this creates event stream and folds events
+        Assert.Contains("// Create event stream", code);
+        Assert.Contains("// Read events up to version WITH upcasting applied", code);
+        Assert.Contains("// Fold events into the aggregate", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_GetByIdAsync_includes_upToVersion_parameter()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Comment",
+            ObjectName = "comment",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Comment.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Comment.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository interface should have upToVersion parameter with XML docs
+        Assert.Contains("/// <param name=\"upToVersion\">Optional: The maximum event version to fold. If null, loads to current state.</param>", code);
+        Assert.Contains("Task<Comment?> GetByIdAsync(", code);
+        Assert.Contains("int? upToVersion = null,", code);
+
+        // Repository implementation should have upToVersion parameter
+        Assert.Contains("public async Task<Comment?> GetByIdAsync(", code);
+        Assert.Contains("int? upToVersion = null,", code);
+    }
+
+    [Fact]
+    public async Task Generate_repository_GetByIdAsync_delegates_to_factory_with_upToVersion()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Review",
+            ObjectName = "review",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Review.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Review.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository GetByIdAsync should delegate to factory with upToVersion
+        Assert.Contains("return await reviewFactory.GetAsync(id, upToVersion);", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_parameterless_call_for_attribute_based_when_methods()
+    {
+        // Arrange - Event with no parameters (uses [When<TEvent>] attribute)
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "ProjectCompleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Completed",
+                    ActivationType = "WhenProjectCompleted", // Custom method name from attribute
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // No parameters - uses [When<TEvent>] attribute
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Project.Completed\":", code);
+        Assert.Contains("WhenProjectCompleted();", code); // Should be parameterless call
+        Assert.DoesNotContain("JsonEvent.To", code); // Should NOT have JsonEvent.To
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_parameterless_call_with_standard_when_name()
+    {
+        // Arrange - Event with no parameters but standard "When" activation type
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "ProjectDeleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Deleted",
+                    ActivationType = "WhenProjectDeleted",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // No parameters
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Project.Deleted\":", code);
+        Assert.Contains("WhenProjectDeleted();", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_mixes_parameterless_and_parameterized_methods()
+    {
+        // Arrange - Mix of events: some with parameters, some without
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "ProjectCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Created",
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "ProjectCreated", Namespace = "Test.Events" }]
+                },
+
+                new()
+                {
+                    TypeName = "ProjectDeleted",
+                    Namespace = "Test.Events",
+                    EventName = "Project.Deleted",
+                    ActivationType = "WhenProjectDeleted",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // No parameters - uses attribute
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+
+        // Parameterized event should use JsonEvent.To
+        Assert.Contains("case \"Project.Created\":", code);
+        Assert.Contains("When(JsonEvent.To(@event, ProjectCreatedJsonSerializerContext.Default.ProjectCreated));", code);
+
+        // Parameterless event should not use JsonEvent.To
+        Assert.Contains("case \"Project.Deleted\":", code);
+        Assert.Contains("WhenProjectDeleted();", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_skips_command_events_without_when_handlers()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "LegacyEventCompleted",
+                    Namespace = "Test.Events",
+                    EventName = "Legacy.Completed",
+                    ActivationType = "Command", // From command, no When handler
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = []
+                },
+
+                new()
+                {
+                    TypeName = "UserCreated",
+                    Namespace = "Test.Events",
+                    EventName = "User.Created",
+                    ActivationType = "When", // Has When handler
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "UserCreated", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+
+        // Should include the When event
+        Assert.Contains("case \"User.Created\":", code);
+        Assert.Contains("UserCreated", code);
+
+        // Should NOT include the Command event
+        Assert.DoesNotContain("case \"Legacy.Completed\":", code);
+        Assert.DoesNotContain("LegacyEventCompleted", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_registers_command_events_without_when_handlers()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "TestAggregate",
+            ObjectName = "TestAggregate",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "ProjectCompleted",
+                    EventName = "Project.Completed",
+                    Namespace = "Test.Events",
+                    ActivationType = "Command", // From obsolete command, no When handler
+                    ActivationAwaitRequired = false,
+                    File = ""
+                },
+
+                new()
+                {
+                    TypeName = "ProjectCompletedSuccessfully",
+                    EventName = "Project.CompletedSuccessfully",
+                    Namespace = "Test.Events",
+                    ActivationType = "When", // Has When handler
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+
+        // Both events should be registered, regardless of ActivationType
+        Assert.Contains("Stream.RegisterEvent<ProjectCompleted>", code);
+        Assert.Contains("\"Project.Completed\"", code);
+        Assert.Contains("ProjectCompletedJsonSerializerContext.Default.ProjectCompleted", code);
+
+        Assert.Contains("Stream.RegisterEvent<ProjectCompletedSuccessfully>", code);
+        Assert.Contains("\"Project.CompletedSuccessfully\"", code);
+        Assert.Contains("ProjectCompletedSuccessfullyJsonSerializerContext.Default.ProjectCompletedSuccessfully", code);
+    }
+
+    [Fact]
+    public async Task Generate_registers_command_events_but_skips_fold_cases()
+    {
+        // Arrange - Simulating an aggregate with a legacy event (from command) and a new event (with When)
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Account",
+            ObjectName = "Account",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [new() { Name = "Status", Type = "String", Namespace = "System", IsNullable = false }],
+            Events =
+            [
+                new()
+                {
+                    TypeName = "AccountClosed",
+                    Namespace = "Demo.App.Events",
+                    EventName = "Account.Closed",
+                    ActivationType = "Command",
+                    ActivationAwaitRequired = false,
+                    Properties = []
+                },
+                // New event with When handler - should be registered AND have Fold case
+
+                new()
+                {
+                    TypeName = "AccountClosedSuccessfully",
+                    Namespace = "Demo.App.Events",
+                    EventName = "Account.ClosedSuccessfully",
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    Properties = [],
+                    Parameters =
+                        [new() { Name = "e", Type = "AccountClosedSuccessfully", Namespace = "Demo.App.Events" }]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Account.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Account.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // BOTH events should be registered in GeneratedSetup
+        Assert.Contains("Stream.RegisterEvent<AccountClosed>(", code);
+        Assert.Contains("\"Account.Closed\"", code);
+        Assert.Contains("AccountClosedJsonSerializerContext.Default.AccountClosed", code);
+
+        Assert.Contains("Stream.RegisterEvent<AccountClosedSuccessfully>(", code);
+        Assert.Contains("\"Account.ClosedSuccessfully\"", code);
+        Assert.Contains("AccountClosedSuccessfullyJsonSerializerContext.Default.AccountClosedSuccessfully", code);
+
+        // Only the When event should have a Fold case
+        Assert.Contains("case \"Account.ClosedSuccessfully\":", code);
+        Assert.Contains("When(JsonEvent.To(@event, AccountClosedSuccessfullyJsonSerializerContext.Default.AccountClosedSuccessfully));", code);
+
+        // The Command event should NOT have a Fold case
+        Assert.DoesNotContain("case \"Account.Closed\":", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_EditorBrowsable_attribute_when_user_defined_factory_partial_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "WorkItem",
+            ObjectName = "workitem",
+            IdentifierType = "WorkItemId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedFactoryPartial = true, // User has defined their own partial factory
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\WorkItem.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "WorkItem.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should contain EditorBrowsable attribute before CreateAsync method
+        Assert.Contains("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+        Assert.Contains("public async Task<WorkItem> CreateAsync(WorkItemId id)", code);
+
+        // Verify the attribute appears right before the CreateAsync method
+        var editorBrowsableIndex = code.IndexOf("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", StringComparison.Ordinal);
+        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id)", StringComparison.Ordinal);
+        Assert.True(editorBrowsableIndex < createAsyncIndex, "EditorBrowsable attribute should appear before CreateAsync method");
+    }
+
+    [Fact]
+    public async Task Generate_does_not_add_EditorBrowsable_attribute_when_no_user_defined_factory_partial()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Project",
+            ObjectName = "project",
+            IdentifierType = "ProjectId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedFactoryPartial = false, // No user-defined factory partial
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\Project.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Project.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should NOT contain EditorBrowsable attribute
+        Assert.DoesNotContain("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+
+        // But should still have the public CreateAsync method
+        Assert.Contains("public async Task<Project> CreateAsync(ProjectId id)", code);
+    }
+
+    [Fact]
+    public async Task Generate_adds_EditorBrowsable_attribute_to_repository_methods_when_user_defined_repository_partial_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "UserProfile",
+            ObjectName = "userprofile",
+            IdentifierType = "UserProfileId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedRepositoryPartial = true, // User has defined their own partial repository
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [new() { Name = "Email", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\UserProfile.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "UserProfile.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Should contain EditorBrowsable attribute before repository methods
+        Assert.Contains("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
+
+        // Verify repository methods are generated
+        Assert.Contains("public async Task<UserProfile?> GetByIdAsync(", code);
+        Assert.Contains("public async Task<UserProfile?> GetFirstByDocumentTagAsync(", code);
+
+        // Verify EditorBrowsable appears before repository methods
+        // Count the occurrences - there should be one for each repository method (7 total)
+        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Matches(code,
+            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
+        Assert.True(editorBrowsableCount >= 7, $"Should have at least 7 EditorBrowsable attributes for repository methods, found {editorBrowsableCount}");
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_aggregate_class()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "BlogPost",
+            ObjectName = "blogpost",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\BlogPost.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "BlogPost.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Aggregate class should have XML documentation
+        Assert.Contains("/// <summary>", code);
+        Assert.Contains("/// BlogPost aggregate root implementing event sourcing patterns.", code);
+        Assert.Contains("/// </summary>", code);
+
+        // Fold method should have XML documentation
+        Assert.Contains("/// Applies an event to the aggregate state by dispatching to the appropriate When method.", code);
+        Assert.Contains("/// <param name=\"event\">The event to apply to the aggregate.</param>", code);
+
+        // Factory should have XML documentation
+        Assert.Contains("/// Factory interface for creating BlogPost aggregate instances.", code);
+        Assert.Contains("/// Factory for creating and loading BlogPost aggregate instances from documents and event streams.", code);
+
+        // Repository should have XML documentation
+        Assert.Contains("/// Repository for querying and managing BlogPost aggregates.", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_factory_methods()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Article",
+            ObjectName = "article",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Article.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Article.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // CreateAsync should have XML documentation
+        Assert.Contains("/// Creates a new Article aggregate with the specified identifier.", code);
+        Assert.Contains("/// <param name=\"id\">The identifier for the new aggregate.</param>", code);
+        Assert.Contains("/// <returns>A new Article instance.</returns>", code);
+
+        // Create(IEventStream) should have XML documentation
+        Assert.Contains("/// Creates a Article instance from an event stream.", code);
+        Assert.Contains("/// <param name=\"eventStream\">The event stream to create the aggregate from.</param>", code);
+
+        // Create(IObjectDocument) should have XML documentation
+        Assert.Contains("/// Creates a Article instance from an object document.", code);
+        Assert.Contains("/// <param name=\"document\">The object document to create the aggregate from.</param>", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_xml_documentation_for_interfaces()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Comment",
+            ObjectName = "comment",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Properties = [new() { Name = "Text", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            FileLocations = ["Demo\\Domain\\Comment.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Comment.Generated.cs");
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Interface should have XML documentation
+        Assert.Contains("/// Interface defining the public state properties of Comment.", code);
+
+        // Snapshot record should have XML documentation
+        Assert.Contains("/// Snapshot record for persisting Comment aggregate state.", code);
+
+        // JSON serializer context should have XML documentation
+        Assert.Contains("/// JSON serializer context for Comment types.", code);
+    }
+
+    [Fact]
+    public async Task Generate_does_not_add_EditorBrowsable_attribute_to_repository_when_no_user_defined_repository_partial()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "ProductId",
+            IdentifierTypeNamespace = "Demo.App.ValueObjects",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            HasUserDefinedRepositoryPartial = false, // No user-defined repository partial
+            HasUserDefinedFactoryPartial = false, // No user-defined factory partial either
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [new() { Name = "Name", Type = "String", Namespace = "System", IsNullable = false }],
+            Events = [],
+            FileLocations = ["Demo\\Domain\\Product.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate]
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        Directory.CreateDirectory(Path.Combine(outDir, "Demo", "Domain"));
+
+        var sut = new GenerateAggregateCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Product.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository methods should exist without EditorBrowsable
+        Assert.Contains("public async Task<Product?> GetByIdAsync(", code);
+
+        // EditorBrowsable should not appear at all since no partials exist
+        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Matches(code,
+            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]").Count;
+        Assert.Equal(0, editorBrowsableCount);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_simple_case_for_single_schema_version()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreated", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Order.Created\":", code);
+        // Single version should NOT have schema version dispatch
+        Assert.DoesNotContain("@event.SchemaVersion", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_schema_version_dispatch_for_multiple_versions()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenOrderCreatedV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV1", Namespace = "Test.Events" }]
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenOrderCreatedV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV2", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("case \"Order.Created\":", code);
+        Assert.Contains("@event.SchemaVersion == 1", code);
+        // Last version uses 'else' without SchemaVersion check
+        Assert.Contains("else", code);
+        Assert.Contains("WhenOrderCreatedV1", code);
+        Assert.Contains("WhenOrderCreatedV2", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_generates_else_for_latest_version()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV1", Namespace = "Test.Events" }]
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [new() { Name = "e", Type = "OrderCreatedV2", Namespace = "Test.Events" }]
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        // First version gets 'if', second (last) version gets 'else'
+        Assert.Contains("if (@event.SchemaVersion == 1)", code);
+        Assert.Contains("else", code);
+    }
+
+    [Fact]
+    public void GenerateFoldCode_handles_parameterless_when_methods_with_multiple_versions()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV1",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "WhenOrderCreatedV1",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // Parameterless
+                },
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "WhenOrderCreatedV2",
+                    ActivationAwaitRequired = false,
+                    File = "",
+                    Parameters = [] // Parameterless
+                }
+            ]
+        };
+        var usings = new List<string>();
+
+        // Act
+        var result = GenerateAggregateCode.GenerateFoldCode(aggregate, usings);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("WhenOrderCreatedV1();", code);
+        Assert.Contains("WhenOrderCreatedV2();", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_schema_version_for_version_greater_than_1()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreatedV2",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 2,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("RegisterEvent<OrderCreatedV2>", code);
+        Assert.Contains("\"Order.Created\"", code);
+        Assert.Contains("2,", code); // schema version parameter
+    }
+
+    [Fact]
+    public void GenerateSetupCode_omits_schema_version_for_version_1()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events =
+            [
+                new()
+                {
+                    TypeName = "OrderCreated",
+                    Namespace = "Test.Events",
+                    EventName = "Order.Created",
+                    SchemaVersion = 1,
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    File = ""
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("RegisterEvent<OrderCreated>", code);
+        Assert.Contains("\"Order.Created\"", code);
+        // Should NOT contain schema version for v1
+        var lines = code.Split('\n').Where(l => l.Contains("RegisterEvent")).ToList();
+        Assert.Single(lines);
+        // The line should have 2 arguments only (event name + json type info)
+        Assert.DoesNotContain(", 1,", lines[0]);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_RegisterUpcast_for_upcasters()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV1ToV2Upcaster());", code);
+    }
+
+    [Fact]
+    public void GenerateSetupCode_generates_multiple_upcaster_registrations()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                },
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV2ToV3Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSetupCode(aggregate);
+
+        // Assert
+        var code = result.ToString();
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV1ToV2Upcaster());", code);
+        Assert.Contains("Stream.RegisterUpcast(new OrderCreatedV2ToV3Upcaster());", code);
+    }
+
+    [Fact]
+    public void BuildUsings_includes_upcaster_namespaces()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Order",
+            ObjectName = "Order",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Events = [],
+            Upcasters =
+            [
+                new UpcasterDefinition
+                {
+                    TypeName = "OrderCreatedV1ToV2Upcaster",
+                    Namespace = "Test.Upcasters"
+                }
+            ]
+        };
+
+        // Act
+        var usings = GenerateAggregateCode.BuildUsings(aggregate);
+
+        // Assert
+        Assert.Contains("Test.Upcasters", usings);
     }
 }

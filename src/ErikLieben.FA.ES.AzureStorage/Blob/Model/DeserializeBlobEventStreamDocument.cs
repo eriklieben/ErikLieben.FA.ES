@@ -4,48 +4,68 @@ using ErikLieben.FA.ES.Documents;
 namespace ErikLieben.FA.ES.AzureStorage.Blob.Model;
 
 /// <summary>
-/// Represents a mutable version of <see cref="BlobEventStreamDocument"/> used exclusively for JSON deserialization.
+/// Represents a mutable document used exclusively for JSON deserialization.
+/// Uses <see cref="DeserializeStreamInformation"/> to read both legacy *ConnectionName
+/// and new *Store properties for automatic migration support.
 /// </summary>
-/// <remarks>
-/// The base <see cref="BlobEventStreamDocument"/> exposes init-only or non-nullable members. This type provides
-/// settable properties to allow the System.Text.Json source generator to materialize instances from storage.
-/// </remarks>
-public class DeserializeBlobEventStreamDocument() : BlobEventStreamDocument(string.Empty, string.Empty, new StreamInformation(), [])
+public class DeserializeBlobEventStreamDocument
 {
     /// <summary>
     /// Gets or sets the object identifier of the event stream document.
     /// </summary>
-    public new string ObjectId { get; set; } = string.Empty;
+    public string ObjectId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the object name for the event stream document.
     /// </summary>
-    public new string ObjectName { get; set; } = string.Empty;
+    public string ObjectName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the active stream information.
+    /// Gets or sets the active stream information (deserialization format with legacy support).
     /// </summary>
-    public new StreamInformation Active { get; set; } = null!;
+    public DeserializeStreamInformation Active { get; set; } = new();
 
     /// <summary>
     /// Gets or sets the list of terminated streams.
     /// </summary>
-    public new List<TerminatedStream> TerminatedStreams { get; set; } = new List<TerminatedStream>();
+    public List<TerminatedStream> TerminatedStreams { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the schema version used to serialize the document.
     /// </summary>
-    public new string? SchemaVersion { get; set; }
+    public string? SchemaVersion { get; set; }
 
     /// <summary>
     /// Gets or sets the integrity hash of the document contents.
     /// </summary>
-    public new string? Hash { get; set; }
+    public string? Hash { get; set; }
 
     /// <summary>
     /// Gets or sets the previous document hash.
     /// </summary>
-    public new string? PrevHash { get; set; }
+    public string? PrevHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the blob path of the materialized document (set programmatically after loading, not from JSON).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string? DocumentPath { get; set; }
+
+    /// <summary>
+    /// Converts this deserialization document to a <see cref="BlobEventStreamDocument"/>,
+    /// migrating legacy *ConnectionName values to new *Store properties.
+    /// </summary>
+    public BlobEventStreamDocument ToBlobEventStreamDocument()
+    {
+        return new BlobEventStreamDocument(
+            ObjectId,
+            ObjectName,
+            Active.ToStreamInformation(),
+            TerminatedStreams,
+            SchemaVersion,
+            Hash,
+            PrevHash);
+    }
 }
 
 [JsonSourceGenerationOptions(

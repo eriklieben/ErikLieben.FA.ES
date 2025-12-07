@@ -96,7 +96,13 @@ public class BlobStreamTagStore : IDocumentTagStore
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.StreamConnectionName);
+        // Use DataStore, falling back to deprecated StreamConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.DataStore)
+            ? objectDocument.Active.DataStore
+            : objectDocument.Active.StreamConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (autoCreateContainer)

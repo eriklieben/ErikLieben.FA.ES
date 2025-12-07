@@ -20,6 +20,7 @@ public interface IStreamInformation
     /// <summary>
     /// Gets or sets the connection name used for document tagging operations.
     /// </summary>
+    [Obsolete("Use DocumentTagStore instead. This property will be removed in a future version.")]
     string DocumentTagConnectionName { get; set; }
 
     /// <summary>
@@ -30,6 +31,7 @@ public interface IStreamInformation
     /// <summary>
     /// Gets or sets the connection name used for snapshot persistence.
     /// </summary>
+    [Obsolete("Use SnapShotStore instead. This property will be removed in a future version.")]
     string SnapShotConnectionName { get; set; }
 
     /// <summary>
@@ -50,6 +52,7 @@ public interface IStreamInformation
     /// <summary>
     /// Gets or sets the connection name used to access the event stream backend.
     /// </summary>
+    [Obsolete("Use DataStore instead. This property will be removed in a future version.")]
     string StreamConnectionName { get; set; }
 
     /// <summary>
@@ -60,6 +63,7 @@ public interface IStreamInformation
     /// <summary>
     /// Gets or sets the connection name used for stream tags.
     /// </summary>
+    [Obsolete("Use StreamTagStore instead. This property will be removed in a future version.")]
     string StreamTagConnectionName { get; set; }
 
     /// <summary>
@@ -91,6 +95,12 @@ public interface IStreamInformation
     /// Gets or sets the named connection for document storage.
     /// </summary>
     string DocumentStore { get; set; }
+
+    /// <summary>
+    /// Gets or sets the connection name used for document persistence.
+    /// </summary>
+    [Obsolete("Use DocumentStore instead. This property will be removed in a future version.")]
+    string DocumentConnectionName { get; set; }
 
     /// <summary>
     /// Gets or sets the named connection for document tag storage.

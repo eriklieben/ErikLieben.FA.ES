@@ -66,15 +66,34 @@ public record ObjectIdentifier : IComparable<ObjectIdentifier>, IComparable
     public ObjectIdentifier(string objectIdentifierString)
     {
         ArgumentNullException.ThrowIfNull(objectIdentifierString);
-        var parts = objectIdentifierString.Split("__").Where((s) => !string.IsNullOrWhiteSpace(s)).ToArray();
-        if (parts.Length != 2)
+
+        ReadOnlySpan<char> span = objectIdentifierString.AsSpan().Trim();
+        int separatorIdx = span.IndexOf("__");
+
+        if (separatorIdx == -1)
         {
             throw new ArgumentException(
                 $"IdentifierString must consist out if 2 parts split by __, current token is '{objectIdentifierString}'");
         }
 
-        ObjectName = parts[0];
-        ObjectId = parts[1];
+        ReadOnlySpan<char> firstPart = span[..separatorIdx].Trim();
+        ReadOnlySpan<char> secondPart = span[(separatorIdx + 2)..].Trim();
+
+        if (firstPart.IsEmpty || secondPart.IsEmpty)
+        {
+            throw new ArgumentException(
+                $"IdentifierString must consist out if 2 parts split by __, current token is '{objectIdentifierString}'");
+        }
+
+        // Ensure there are no additional separators (should be exactly 2 parts)
+        if (secondPart.Contains("__", StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"IdentifierString must consist out if 2 parts split by __, current token is '{objectIdentifierString}'");
+        }
+
+        ObjectName = firstPart.ToString();
+        ObjectId = secondPart.ToString();
     }
 
     /// <summary>

@@ -89,7 +89,7 @@ public class StreamActionEventStream(IEventStream eventStream)
     /// <returns>A task representing the asynchronous session operation.</returns>
     public new async Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose)
     {
-        var session = new StreamActionLeasedSession(GetSession(new List<IAction>()));
+        var session = new StreamActionLeasedSession(GetSession([]));
         context(session);
         await session.CommitAsync();
     }

@@ -106,6 +106,7 @@ public class LeasedSession : ILeasedSession
         {
             EventType = eventName,
             EventVersion = version,
+            SchemaVersion = eventTypeInfo.SchemaVersion,
             Payload = JsonSerializer.Serialize(payload, eventTypeInfo.JsonTypeInfo),
             ActionMetadata = actionMetadata ?? new ActionMetadata(),
             ExternalSequencer = externalSequencer,
@@ -183,8 +184,10 @@ public class LeasedSession : ILeasedSession
             int chunkIdentifier = GetCurrentChunkIdentifier();
             var availableSpaceInCurrentPartition = DeterminateAvailableSpaceInChunk(rowsPerPartition, ref latestEventIndex);
 
-            var eventsToAdd = Buffer.Take(availableSpaceInCurrentPartition).ToList();
-            Buffer = Buffer.Except(eventsToAdd).ToList();
+            // Ensure we don't try to take more events than available in the buffer
+            var eventsToTake = Math.Min(availableSpaceInCurrentPartition, Buffer.Count);
+            var eventsToAdd = Buffer.GetRange(0, eventsToTake);
+            Buffer.RemoveRange(0, eventsToTake);
 
             if (eventsToAdd.Count > 0)
             {

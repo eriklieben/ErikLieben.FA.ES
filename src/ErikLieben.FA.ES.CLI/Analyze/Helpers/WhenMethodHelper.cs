@@ -11,17 +11,44 @@ internal static class WhenMethodHelper
         Compilation compilation,
         RoslynHelper roslyn)
     {
+        // Get methods named "When"
         var whenMethods = symbol.GetMembers("When")
             .OfType<IMethodSymbol>()
             .ToList();
 
+        // Get methods with [When<TEvent>] attribute
+        var attributeBasedMethods = symbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => HasWhenAttribute(m))
+            .ToList();
+
+        // Combine both approaches
+        var allWhenMethods = whenMethods.Concat(attributeBasedMethods)
+            .Distinct(SymbolEqualityComparer.Default)
+            .OfType<IMethodSymbol>()
+            .ToList();
+
         var items = new List<ProjectionEventDefinition>();
-        foreach (var whenMethod in whenMethods)
+        foreach (var whenMethod in allWhenMethods)
         {
-            var parameter = whenMethod.Parameters.FirstOrDefault();
-            if (parameter?.Type is not INamedTypeSymbol parameterTypeSymbol)
+            // Try to get event type from attribute first
+            var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
+
+            INamedTypeSymbol? parameterTypeSymbol = null;
+            if (eventTypeFromAttribute != null)
             {
-                continue;
+                // Use event type from attribute
+                parameterTypeSymbol = eventTypeFromAttribute;
+            }
+            else
+            {
+                // Fall back to parameter-based detection
+                var parameter = whenMethod.Parameters.FirstOrDefault();
+                if (parameter?.Type is not INamedTypeSymbol typeSymbol)
+                {
+                    continue;
+                }
+                parameterTypeSymbol = typeSymbol;
             }
 
             if (parameterTypeSymbol.Name == "IExecutionContextWithEvent")
@@ -30,7 +57,11 @@ internal static class WhenMethodHelper
             }
 
             var eventName = RoslynHelper.GetEventName(parameterTypeSymbol);
-            var extra = whenMethod.Parameters.Skip(1).ToList();
+
+            // Determine if first parameter is the event or if we're using attribute-based detection
+            var hasEventParameter = eventTypeFromAttribute == null;
+            var skipCount = hasEventParameter ? 1 : 0;
+            var extra = whenMethod.Parameters.Skip(skipCount).ToList();
 
             var typeName = parameterTypeSymbol.Name;
             if (parameterTypeSymbol.TypeArguments.Length is > 0 and 1)
@@ -43,6 +74,7 @@ internal static class WhenMethodHelper
                 ActivationType = whenMethod.Name,
                 ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
                 EventName = eventName,
+                SchemaVersion = AttributeExtractor.ExtractEventVersionAttribute(parameterTypeSymbol),
                 Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
                 File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
                 TypeName = typeName,
@@ -57,11 +89,39 @@ internal static class WhenMethodHelper
                     Namespace = RoslynHelper.GetFullNamespace(p.Type),
                     GenericArguments = p.Type is INamedTypeSymbol namedType
                         ? RoslynHelper.GetGenericArguments(namedType)
-                        : []
+                        : [],
+                    IsExecutionContext = IsExecutionContextType(p.Type)
                 }).ToList(),
             });
         }
         return items;
+    }
+
+    /// <summary>
+    /// Checks if a method has the [When&lt;TEvent&gt;] attribute.
+    /// </summary>
+    private static bool HasWhenAttribute(IMethodSymbol methodSymbol)
+    {
+        return methodSymbol.GetAttributes()
+            .Any(a => a.AttributeClass != null &&
+                     a.AttributeClass.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Attributes.WhenAttribute<TEvent>");
+    }
+
+    /// <summary>
+    /// Extracts the event type from the [When&lt;TEvent&gt;] attribute if present.
+    /// </summary>
+    private static INamedTypeSymbol? GetEventTypeFromWhenAttribute(IMethodSymbol methodSymbol)
+    {
+        var whenAttribute = methodSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass != null &&
+                                a.AttributeClass.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Attributes.WhenAttribute<TEvent>");
+
+        if (whenAttribute?.AttributeClass is INamedTypeSymbol { TypeArguments.Length: 1 } namedSymbol)
+        {
+            return namedSymbol.TypeArguments[0] as INamedTypeSymbol;
+        }
+
+        return null;
     }
 
 
@@ -113,6 +173,29 @@ internal static class WhenMethodHelper
                  }))
              .ToList();
      }
+
+    /// <summary>
+    /// Checks if a type symbol is or implements IExecutionContext.
+    /// </summary>
+    private static bool IsExecutionContextType(ITypeSymbol typeSymbol)
+    {
+        // Check if it's exactly IExecutionContext or starts with IExecutionContext (covers IExecutionContextWithData etc.)
+        var typeName = typeSymbol.Name;
+        if (typeName.StartsWith("IExecutionContext"))
+        {
+            return true;
+        }
+
+        // Check if it implements IExecutionContext
+        if (typeSymbol is INamedTypeSymbol namedType)
+        {
+            return namedType.AllInterfaces.Any(i =>
+                i.Name == "IExecutionContext" ||
+                i.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.IExecutionContext");
+        }
+
+        return false;
+    }
 
     private static bool IsAwaitable(IMethodSymbol methodSymbol, Compilation compilation)
     {

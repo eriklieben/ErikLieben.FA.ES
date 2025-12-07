@@ -10,6 +10,11 @@ public record AggregateDefinition
 
     public required string IdentifierTypeNamespace { get; set; }
 
+    /// <summary>
+    /// The inner/underlying type of a strongly-typed ID (e.g., "Guid" for StronglyTypedId&lt;Guid&gt;, "string" for StronglyTypedId&lt;string&gt;).
+    /// </summary>
+    public string? IdentifierInnerType { get; set; }
+
     public required string Namespace { get; init; }
 
     public List<ConstructorDefinition> Constructors { get; init; } = [];
@@ -26,7 +31,24 @@ public record AggregateDefinition
 
     public List<StreamActionDefinition> StreamActions { get; init; } = [];
 
+    /// <summary>
+    /// Upcasters to register, extracted from [UseUpcaster] attributes.
+    /// </summary>
+    public List<UpcasterDefinition> Upcasters { get; init; } = [];
+
     public bool IsPartialClass { get; init; }
+
+    /// <summary>
+    /// Indicates whether the user has defined their own partial factory class.
+    /// When true, generated CreateAsync methods will be protected instead of public.
+    /// </summary>
+    public bool HasUserDefinedFactoryPartial { get; set; }
+
+    /// <summary>
+    /// Indicates whether the user has defined their own partial repository class.
+    /// When true, generated repository methods will be hidden from IntelliSense.
+    /// </summary>
+    public bool HasUserDefinedRepositoryPartial { get; set; }
 
     /// <summary>
     /// Settings extracted from [EventStreamType] attribute if present.
@@ -41,7 +63,7 @@ public record AggregateDefinition
 
 public record PostWhenDeclaration
 {
-    public List<PostWhenParameterDeclaration> Parameters { get; init; } = new();
+    public List<PostWhenParameterDeclaration> Parameters { get; init; } = [];
 }
 
 public record PostWhenParameterDeclaration
@@ -74,11 +96,11 @@ public record InheritedAggregateDefinition
 
     public List<ConstructorDefinition> Constructors { get; init; } = [];
 
-    public List<CommandDefinition> Commands { get; init; } = new();
+    public List<CommandDefinition> Commands { get; init; } = [];
 
-    public List<PropertyDefinition> Properties { get; init; } = new();
+    public List<PropertyDefinition> Properties { get; init; } = [];
 
-    public List<string> FileLocations { get; init; } = new();
+    public List<string> FileLocations { get; init; } = [];
 
     public required string ParentInterface { get; init; } = string.Empty;
 

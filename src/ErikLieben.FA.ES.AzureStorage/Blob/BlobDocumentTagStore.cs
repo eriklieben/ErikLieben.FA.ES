@@ -62,11 +62,20 @@ public BlobDocumentTagStore(
                 Tag = tag,
                 ObjectIds = [document.ObjectId]
             };
-            await blob.SaveEntityAsync(
-                newDoc,
-                BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
-                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
-            return;
+
+            try
+            {
+                await blob.SaveEntityAsync(
+                    newDoc,
+                    BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+                return;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                // Blob was created between ExistsAsync check and SaveEntityAsync call
+                // Fall through to update logic below
+            }
         }
 
         var properties = await blob.GetPropertiesAsync();
@@ -126,7 +135,13 @@ public BlobDocumentTagStore(
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.DocumentTagConnectionName);
+        // Use DocumentTagStore, falling back to deprecated DocumentTagConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.DocumentTagStore)
+            ? objectDocument.Active.DocumentTagStore
+            : objectDocument.Active.DocumentTagConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (autoCreateContainer)

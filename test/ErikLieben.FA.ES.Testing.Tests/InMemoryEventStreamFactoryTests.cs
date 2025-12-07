@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Aggregates;
+﻿using System;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Testing.InMemory.Model;
 using ErikLieben.FA.ES.Processors;

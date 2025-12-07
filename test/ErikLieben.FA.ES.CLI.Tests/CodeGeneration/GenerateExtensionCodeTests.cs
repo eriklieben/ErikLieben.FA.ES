@@ -18,7 +18,7 @@ public class GenerateExtensionCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -45,7 +45,7 @@ public class GenerateExtensionCodeTests
                     IdentifierTypeNamespace = "System",
                     Namespace = "Demo.App.Domain",
                     IsPartialClass = true,
-                    FileLocations = new List<string> { "Demo\\Domain\\Account.cs" }
+                    FileLocations = ["Demo\\Domain\\Account.cs"]
                 }
             ],
             InheritedAggregates =
@@ -61,10 +61,10 @@ public class GenerateExtensionCodeTests
                     Namespace = "Demo.App.Domain",
                     ParentInterface = "Demo.App.Domain.IOrder",
                     ParentInterfaceNamespace = "Demo.App.Domain",
-                    FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
                 }
             ],
-            Projections = new List<ProjectionDefinition>()
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -113,8 +113,8 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Guid",
                         Namespace: "System",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                        GenericTypes: [],
+                        SubTypes: [])
                 ]
             }
         };
@@ -146,17 +146,17 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { aggregate },
-            Projections = new List<ProjectionDefinition>
-            {
+            Aggregates = [aggregate],
+            Projections =
+            [
                 new ProjectionDefinition
                 {
                     Name = "AccountsProjection",
                     Namespace = "Demo.App.Projections",
-                    Constructors = new List<ConstructorDefinition>(),
-                    Properties = new List<PropertyDefinition>(),
-                    Events = new List<ProjectionEventDefinition>
-                    {
+                    Constructors = [],
+                    Properties = [],
+                    Events =
+                    [
                         new ProjectionEventDefinition
                         {
                             TypeName = "FeatureFlagEnabled",
@@ -164,13 +164,13 @@ public class GenerateExtensionCodeTests
                             EventName = "FeatureFlag.Enabled",
                             ActivationType = "When",
                             ActivationAwaitRequired = false,
-                            Parameters = new List<ParameterDefinition>(),
-                            Properties = new List<PropertyDefinition>()
+                            Parameters = [],
+                            Properties = []
                         }
-                    },
-                    FileLocations = new List<string> { "Demo\\Projections\\AccountsProjection.cs" }
+                    ],
+                    FileLocations = ["Demo\\Projections\\AccountsProjection.cs"]
                 }
-            }
+            ]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -217,8 +217,8 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Guid",
                         Namespace: "System",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                        GenericTypes: [],
+                        SubTypes: [])
                 ],
                 // Add a complex subtype with its own generic arguments to exercise nested generics
                 SubTypes =
@@ -226,20 +226,21 @@ public class GenerateExtensionCodeTests
                     new PropertyGenericTypeDefinition(
                         Name: "Dictionary",
                         Namespace: "System.Collections.Generic",
-                        GenericTypes: new List<PropertyGenericTypeDefinition>
-                        {
+                        GenericTypes:
+                        [
                             new PropertyGenericTypeDefinition(
                                 Name: "String",
                                 Namespace: "System",
-                                GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                SubTypes: new List<PropertyGenericTypeDefinition>()),
+                                GenericTypes: [],
+                                SubTypes: []),
+
                             new PropertyGenericTypeDefinition(
                                 Name: "Int32",
                                 Namespace: "System",
-                                GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                SubTypes: new List<PropertyGenericTypeDefinition>())
-                        },
-                        SubTypes: new List<PropertyGenericTypeDefinition>())
+                                GenericTypes: [],
+                                SubTypes: [])
+                        ],
+                        SubTypes: [])
                 ]
             }
         };
@@ -274,7 +275,7 @@ public class GenerateExtensionCodeTests
             IdentifierTypeNamespace = "System",
             Namespace = "Demo.App.Domain",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Domain\\Temp.cs" }
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
         };
 
         var project = new ProjectDefinition
@@ -282,8 +283,8 @@ public class GenerateExtensionCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition> { partialAgg, nonPartialAgg },
-            Projections = new List<ProjectionDefinition>()
+            Aggregates = [partialAgg, nonPartialAgg],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -308,5 +309,197 @@ public class GenerateExtensionCodeTests
 
         // Subtypes and nested generics should be serialized
         Assert.Contains("[JsonSerializable(typeof(Dictionary<String, Int32>))]", code);
+    }
+
+    [Fact]
+    public async Task Generate_registers_repository_interfaces_and_implementations()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates =
+            [
+                new AggregateDefinition
+                {
+                    IdentifierName = "Product",
+                    ObjectName = "product",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    IsPartialClass = true,
+                    FileLocations = ["Demo\\Domain\\Product.cs"]
+                },
+                new AggregateDefinition
+                {
+                    IdentifierName = "Order",
+                    ObjectName = "order",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    IsPartialClass = true,
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
+                }
+            ],
+            InheritedAggregates = [],
+            Projections = []
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository registrations with AddScoped
+        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
+        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+    }
+
+    [Fact]
+    public async Task Generate_registers_repositories_for_inherited_aggregates()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [],
+            InheritedAggregates =
+            [
+                new InheritedAggregateDefinition
+                {
+                    InheritedIdentifierName = "OrderBase",
+                    InheritedNamespace = "Demo.App.Domain",
+                    IdentifierName = "Order",
+                    ObjectName = "order",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain",
+                    ParentInterface = "Demo.App.Domain.IOrder",
+                    ParentInterfaceNamespace = "Demo.App.Domain",
+                    FileLocations = ["Demo\\Domain\\Order.cs"]
+                }
+            ],
+            Projections = []
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository registration for inherited aggregate
+        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+    }
+
+    [Fact]
+    public async Task Generate_does_not_register_repositories_for_non_partial_aggregates()
+    {
+        // Arrange
+        var partialAgg = new AggregateDefinition
+        {
+            IdentifierName = "Product",
+            ObjectName = "product",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            FileLocations = ["Demo\\Domain\\Product.cs"]
+        };
+
+        var nonPartialAgg = new AggregateDefinition
+        {
+            IdentifierName = "Temp",
+            ObjectName = "temp",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = false,
+            FileLocations = ["Demo\\Domain\\Temp.cs"]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [partialAgg, nonPartialAgg],
+            InheritedAggregates = [],
+            Projections = []
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Repository for partial aggregate should be registered
+        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
+
+        // Repository for non-partial aggregate should NOT be registered
+        Assert.DoesNotContain("ITempRepository", code);
+        Assert.DoesNotContain("TempRepository", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_aggregate_namespaces_in_using_statements()
+    {
+        // Arrange
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates =
+            [
+                new AggregateDefinition
+                {
+                    IdentifierName = "Product",
+                    ObjectName = "product",
+                    IdentifierType = "Guid",
+                    IdentifierTypeNamespace = "System",
+                    Namespace = "Demo.App.Domain.Aggregates",  // Different namespace from project
+                    IsPartialClass = true,
+                    FileLocations = ["Demo\\Domain\\Aggregates\\Product.cs"]
+                }
+            ],
+            InheritedAggregates = [],
+            Projections = []
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Aggregate namespace should be included in using statements
+        Assert.Contains("using Demo.App.Domain.Aggregates;", code);
     }
 }

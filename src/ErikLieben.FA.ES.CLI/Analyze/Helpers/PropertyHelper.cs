@@ -45,12 +45,9 @@ internal static class PropertyHelper
                     GenericTypes = genericTypes,
                     SubTypes = collectedTypes
                         .Where(t => t.Name != namedTypeSymbol.Name)
-                        .Select(t =>
-                            new PropertyGenericTypeDefinition(
-                                RoslynHelper.GetFullTypeNameIncludingGenerics(t),
-                                RoslynHelper.GetFullNamespace(t),
-                                [],
-                                []))
+                        .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+                        .Where(t => t != null)
+                        .Select(t => t!)
                         .ToList(),
                 };
             })
@@ -101,12 +98,9 @@ internal static class PropertyHelper
                         GenericTypes = genericTypes,
                         SubTypes = collectedTypes
                             .Where(t => t.Name != namedTypeSymbol.Name)
-                            .Select(t =>
-                                new PropertyGenericTypeDefinition(
-                                    RoslynHelper.GetFullTypeNameIncludingGenerics(t),
-                                    RoslynHelper.GetFullNamespace(t),
-                                    [],
-                                    []))
+                            .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+                            .Where(t => t != null)
+                            .Select(t => t!)
                             .ToList(),
                     };
                 })
@@ -136,14 +130,35 @@ internal static class PropertyHelper
 
         return typeArguments
             .Where<ITypeSymbol>(t => t.TypeKind != TypeKind.Error)
-            .Select(t =>
-            {
-                return new PropertyGenericTypeDefinition(
-                    RoslynHelper.GetFullTypeName(t),
-                    RoslynHelper.GetFullNamespace(t),
-                    GetGenericTypes((t as INamedTypeSymbol)?.TypeArguments),
-                    []
-                );
-            }).ToList();
+            .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+            .Where(t => t != null)
+            .Select(t => t!)
+            .ToList();
+    }
+
+    private static PropertyGenericTypeDefinition? ConvertToPropertyGenericTypeDefinition(INamedTypeSymbol? typeSymbol)
+    {
+        if (typeSymbol == null)
+            return null;
+
+        // Recursively collect nested types
+        HashSet<ITypeSymbol> collectedTypes = [];
+        TypeCollector.GetAllTypesInClass(typeSymbol, collectedTypes);
+
+        var genericTypes = GetGenericTypes(typeSymbol.TypeArguments);
+
+        var subTypes = collectedTypes
+            .Where(t => t.Name != typeSymbol.Name)
+            .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+            .Where(t => t != null)
+            .Select(t => t!)
+            .ToList();
+
+        return new PropertyGenericTypeDefinition(
+            RoslynHelper.GetFullTypeNameIncludingGenerics(typeSymbol),
+            RoslynHelper.GetFullNamespace(typeSymbol),
+            genericTypes,
+            subTypes
+        );
     }
 }

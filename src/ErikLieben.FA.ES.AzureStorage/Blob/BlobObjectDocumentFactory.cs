@@ -29,7 +29,7 @@ public BlobObjectDocumentFactory(
         EventStreamDefaultTypeSettings settings,
         EventStreamBlobSettings blobSettings)
     {
-        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings);
+        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings, settings);
     }
 
     /// <summary>
@@ -49,8 +49,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
@@ -74,8 +75,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
@@ -101,7 +103,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>
@@ -134,7 +136,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag, documentTagStore, store))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>
@@ -142,8 +144,9 @@ public BlobObjectDocumentFactory(
     /// </summary>
     /// <param name="document">The object document to save.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null)
+    public Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(SetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfNull(document);

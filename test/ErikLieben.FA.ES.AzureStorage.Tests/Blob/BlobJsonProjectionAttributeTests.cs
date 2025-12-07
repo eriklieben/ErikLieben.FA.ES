@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.AzureStorage.Blob;
+﻿using System;
+using ErikLieben.FA.ES.AzureStorage.Blob;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
 {

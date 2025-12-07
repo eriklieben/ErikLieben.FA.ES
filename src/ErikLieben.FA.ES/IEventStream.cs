@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.Notifications;
 using ErikLieben.FA.ES.Processors;
 using System.Text.Json.Serialization.Metadata;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Upcasting;
 
 namespace ErikLieben.FA.ES;
 
@@ -33,12 +34,26 @@ public interface IEventStream
     public EventTypeRegistry EventTypeRegistry { get; }
 
     /// <summary>
-    /// Registers an event type and its JSON metadata under a logical name.
+    /// Gets the registry for AOT-friendly event upcasters that transform events between schema versions.
+    /// </summary>
+    public EventUpcasterRegistry EventUpcasterRegistry { get; }
+
+    /// <summary>
+    /// Registers an event type and its JSON metadata under a logical name with schema version 1.
     /// </summary>
     /// <typeparam name="T">The CLR type of the event payload.</typeparam>
     /// <param name="eventName">The logical event name to use in the stream.</param>
     /// <param name="jsonTypeInfo">The source-generated JSON type info for <typeparamref name="T"/>.</param>
     void RegisterEvent<T>(string eventName, JsonTypeInfo<T> jsonTypeInfo);
+
+    /// <summary>
+    /// Registers an event type and its JSON metadata under a logical name with the specified schema version.
+    /// </summary>
+    /// <typeparam name="T">The CLR type of the event payload.</typeparam>
+    /// <param name="eventName">The logical event name to use in the stream.</param>
+    /// <param name="schemaVersion">The schema version of the event.</param>
+    /// <param name="jsonTypeInfo">The source-generated JSON type info for <typeparamref name="T"/>.</param>
+    void RegisterEvent<T>(string eventName, int schemaVersion, JsonTypeInfo<T> jsonTypeInfo);
 
     /// <summary>
     /// Registers a command/action that can append events to the stream.
@@ -69,6 +84,29 @@ public interface IEventStream
     /// </summary>
     /// <param name="action">The post-read action to register.</param>
     void RegisterPostReadAction(IPostReadAction action);
+
+
+    /// <summary>
+    /// Registers an event upcast for migrating legacy event schemas to current versions.
+    /// Upcasts transform old event formats into new ones during event stream replay,
+    /// enabling backward compatibility and schema evolution.
+    /// </summary>
+    /// <param name="upcast">The event upcast to register.</param>
+    void RegisterUpcast(IUpcastEvent upcast);
+
+    /// <summary>
+    /// Registers an upcaster function for transforming events from one schema version to another.
+    /// This is an AOT-friendly alternative to <see cref="RegisterUpcast(IUpcastEvent)"/>.
+    /// </summary>
+    /// <typeparam name="TFrom">The source event type.</typeparam>
+    /// <typeparam name="TTo">The target event type.</typeparam>
+    /// <param name="eventName">The event name (must match the stored event type).</param>
+    /// <param name="fromVersion">The source schema version to upcast from.</param>
+    /// <param name="toVersion">The target schema version to upcast to.</param>
+    /// <param name="upcast">The function that transforms the event.</param>
+    void RegisterUpcaster<TFrom, TTo>(string eventName, int fromVersion, int toVersion, Func<TFrom, TTo> upcast)
+        where TFrom : class
+        where TTo : class;
 
     /// <summary>
     /// Reads events from the stream within the specified range.

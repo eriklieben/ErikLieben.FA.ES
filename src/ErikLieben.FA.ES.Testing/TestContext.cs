@@ -1,6 +1,8 @@
 using System.Text.Json;
+using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Testing.InMemory;
+using ErikLieben.FA.ES.Testing.Time;
 
 namespace ErikLieben.FA.ES.Testing;
 
@@ -33,10 +35,12 @@ public class TestAssertionException : Exception
 /// <param name="documentFactory">The object document factory used to create or retrieve documents under test.</param>
 /// <param name="eventStreamFactory">The event stream factory used to create streams for folding and appending events.</param>
 /// <param name="dataStore">The in-memory data store that captures appended events for verification.</param>
+/// <param name="testClock">Optional test clock for time-dependent testing.</param>
 public class TestContext(
     IObjectDocumentFactory documentFactory,
     IEventStreamFactory eventStreamFactory,
-    InMemoryDataStore dataStore)
+    InMemoryDataStore dataStore,
+    ITestClock? testClock = null)
 {
     /// <summary>
     /// Gets the captured events grouped by stream identifier and version from the in-memory data store.
@@ -52,21 +56,45 @@ public class TestContext(
     /// Gets the event stream factory used to create streams for reading and appending events in tests.
     /// </summary>
     public IEventStreamFactory EventStreamFactory => eventStreamFactory;
+
     /// <summary>
     /// Gets the object document factory used to create or retrieve documents under test.
     /// </summary>
     public IObjectDocumentFactory DocumentFactory => documentFactory;
 
     /// <summary>
-/// Retrieves or creates the object document and returns its event stream for testing.
-/// </summary>
-/// <param name="objectName">The object name (scope) used for the document.</param>
-/// <param name="objectId">The identifier of the object.</param>
-/// <returns>The event stream associated with the requested object.</returns>
-public async Task<IEventStream> GetEventStreamFor(string objectName, string objectId)
+    /// Gets the test clock for controlling time in tests.
+    /// </summary>
+    public ITestClock? TestClock => testClock;
+
+    /// <summary>
+    /// Gets the in-memory data store for direct access to stored events.
+    /// </summary>
+    internal InMemoryDataStore DataStore => dataStore;
+
+    /// <summary>
+    /// Retrieves or creates the object document and returns its event stream for testing.
+    /// </summary>
+    /// <param name="objectName">The object name (scope) used for the document.</param>
+    /// <param name="objectId">The identifier of the object.</param>
+    /// <returns>The event stream associated with the requested object.</returns>
+    public async Task<IEventStream> GetEventStreamFor(string objectName, string objectId)
     {
         var document = await documentFactory.GetOrCreateAsync(objectName, objectId);
         return eventStreamFactory.Create(document);
+    }
+
+    /// <summary>
+    /// Retrieves or creates the object document and returns its event stream for testing.
+    /// Uses the static ObjectName from the aggregate type (AOT-friendly).
+    /// </summary>
+    /// <typeparam name="TAggregate">The aggregate type implementing ITestableAggregate.</typeparam>
+    /// <param name="objectId">The identifier of the object.</param>
+    /// <returns>The event stream associated with the requested object.</returns>
+    public Task<IEventStream> GetEventStreamFor<TAggregate>(string objectId)
+        where TAggregate : ITestableAggregate<TAggregate>
+    {
+        return GetEventStreamFor(TAggregate.ObjectName, objectId);
     }
 }
 
@@ -77,13 +105,13 @@ public async Task<IEventStream> GetEventStreamFor(string objectName, string obje
 public class AssertionExtension(TestContext context)
 {
     /// <summary>
-/// Asserts that an object with the specified name and identifier exists in the in-memory event store.
-/// </summary>
-/// <param name="objectName">The logical name/scope of the object.</param>
-/// <param name="objectId">The identifier of the object.</param>
-/// <returns>An <see cref="EventAssertionExtension"/> to chain event-level assertions.</returns>
-/// <exception cref="TestAssertionException">Thrown when the object is not found in the in-memory store.</exception>
-public EventAssertionExtension ShouldHaveObject(string objectName, string objectId)
+    /// Asserts that an object with the specified name and identifier exists in the in-memory event store.
+    /// </summary>
+    /// <param name="objectName">The logical name/scope of the object.</param>
+    /// <param name="objectId">The identifier of the object.</param>
+    /// <returns>An <see cref="EventAssertionExtension"/> to chain event-level assertions.</returns>
+    /// <exception cref="TestAssertionException">Thrown when the object is not found in the in-memory store.</exception>
+    public EventAssertionExtension ShouldHaveObject(string objectName, string objectId)
     {
         var key = InMemoryDataStore.GetStoreKey(objectName, objectId);
         if (!context.Events.TryGetValue(key, out var events) || events == null)
@@ -91,6 +119,20 @@ public EventAssertionExtension ShouldHaveObject(string objectName, string object
             throw new TestAssertionException($"Object {key} does not exist.");
         }
         return new EventAssertionExtension(events);
+    }
+
+    /// <summary>
+    /// Asserts that an object of the specified aggregate type exists in the in-memory event store.
+    /// Uses the static ObjectName from the aggregate type (AOT-friendly).
+    /// </summary>
+    /// <typeparam name="TAggregate">The aggregate type implementing ITestableAggregate.</typeparam>
+    /// <param name="objectId">The identifier of the object.</param>
+    /// <returns>An <see cref="EventAssertionExtension"/> to chain event-level assertions.</returns>
+    /// <exception cref="TestAssertionException">Thrown when the object is not found in the in-memory store.</exception>
+    public EventAssertionExtension ShouldHaveObject<TAggregate>(string objectId)
+        where TAggregate : ITestableAggregate<TAggregate>
+    {
+        return ShouldHaveObject(TAggregate.ObjectName, objectId);
     }
 }
 

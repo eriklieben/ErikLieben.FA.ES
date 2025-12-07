@@ -1,8 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ErikLieben.FA.ES.CLI.CodeGeneration;
+using ErikLieben.FA.ES.CLI.Abstractions;
 using ErikLieben.FA.ES.CLI.Configuration;
+using ErikLieben.FA.ES.CLI.Generation;
+using ErikLieben.FA.ES.CLI.IO;
+using ErikLieben.FA.ES.CLI.Logging;
+using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.Win32;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -26,6 +30,8 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         // Resolve solution path
         var solutionPathResult = ResolveSolutionPath(settings);
         if (!solutionPathResult.Success)
@@ -35,20 +41,41 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         var fullPath = Path.GetFullPath(settings.Path!);
         var folderPath = Path.GetDirectoryName(fullPath)!;
+        var solutionName = Path.GetFileName(fullPath);
+
+        // Header
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Rule($"[grey]EL.FA.ES[/]  [yellow bold]GENERATE[/]  [orchid]{Markup.Escape(solutionName)}[/]").RuleStyle("dim").Centered());
+        AnsiConsole.WriteLine();
 
         // Load configuration
         var config = await LoadConfigAsync(folderPath, cancellationToken);
 
-        // Analyze solution
-        var analyzer = new Analyze.Analyze(config, AnsiConsole.Console);
-        (var def, string solutionPath) = await analyzer.AnalyzeAsync(settings.Path!);
+        // Create logger and code writer using new architecture
+        var logger = new ConsoleActivityLogger(AnsiConsole.Console, verbose: false);
+        var codeWriter = new FileSystemCodeWriter(logger, skipUnchanged: true);
+        var performanceTracker = new PerformanceTracker();
+
+        // Create orchestrator with all generators
+        var orchestrator = GenerationOrchestrator.CreateDefault(
+            logger,
+            codeWriter,
+            config,
+            performanceTracker: performanceTracker,
+            parallelGeneration: false); // Sequential for progress display
+
+        // Run generation
+        var result = await orchestrator.GenerateAsync(settings.Path!, cancellationToken);
 
         // Temp for testing
-        await Setup.Setup.Initialize(solutionPath);
+        await Setup.Setup.Initialize(folderPath);
+
+        // Display summary
+        DisplayAnalysisSummary(result.Solution);
 
         // Save analyzed data
         var analyzeDir = Path.Combine(folderPath, ".elfa");
-        var (analyzePath, hasChanges) = await SaveAnalyzeDataWithBackupAsync(analyzeDir, def, cancellationToken);
+        var (analyzePath, hasChanges) = await SaveAnalyzeDataWithBackupAsync(analyzeDir, result.Solution, cancellationToken);
 
         // Show diff if requested and changes exist
         if (hasChanges && settings.WithDiff)
@@ -56,15 +83,44 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             await ShowDiffInVSCodeIfNeededAsync(analyzePath, cancellationToken);
         }
 
-        // Generate code
-        await new GenerateAggregateCode(def, config, solutionPath).Generate();
-        await new GenerateProjectionCode(def, config, solutionPath).Generate();
-        await new GenerateInheritedAggregateCode(def, config, solutionPath).Generate();
-        await new GenerateExtensionCode(def, config, solutionPath).Generate();
-        await new GenerateVersionTokenOfTCode(def, config, solutionPath).Generate();
-        await new GenerateVersionTokenOfTJsonConverterCode(def, config, solutionPath).Generate();
+        stopwatch.Stop();
+
+        // Final summary
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Rule("[green]Generation Complete[/]").RuleStyle("green dim"));
+
+        var metrics = performanceTracker.GetMetrics();
+        AnsiConsole.MarkupLine($"[dim]Analysis:[/] [white]{result.AnalysisDuration.TotalSeconds:F2}s[/]");
+        AnsiConsole.MarkupLine($"[dim]Generation:[/] [white]{result.GenerationDuration.TotalSeconds:F2}s[/]");
+        AnsiConsole.MarkupLine($"[dim]Files:[/] [white]{result.GeneratedFiles.Count}[/] ([green]{result.GeneratedFiles.Count - result.FilesSkipped} written[/], [dim]{result.FilesSkipped} unchanged[/])");
+        AnsiConsole.MarkupLine($"[dim]Total time:[/] [white]{stopwatch.Elapsed.TotalSeconds:F2}s[/]");
+        AnsiConsole.WriteLine();
 
         return 0;
+    }
+
+    private static void DisplayAnalysisSummary(SolutionDefinition def)
+    {
+        var aggregateCount = def.Projects.Sum(p => p.Aggregates.Count);
+        var inheritedCount = def.Projects.Sum(p => p.InheritedAggregates.Count);
+        var projectionCount = def.Projects.Sum(p => p.Projections.Count);
+        var eventCount = def.Projects.Sum(p =>
+            p.Aggregates.Sum(a => a.Events.Count) + p.Projections.Sum(pr => pr.Events.Count));
+
+        AnsiConsole.WriteLine();
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .BorderColor(Color.Grey)
+            .AddColumn(new TableColumn("[bold]Entity Type[/]").Centered())
+            .AddColumn(new TableColumn("[bold]Count[/]").Centered());
+
+        table.AddRow("[green]Aggregates[/]", $"[bold]{aggregateCount}[/]");
+        table.AddRow("[cyan1]Inherited Aggregates[/]", $"[bold]{inheritedCount}[/]");
+        table.AddRow("[yellow]Projections[/]", $"[bold]{projectionCount}[/]");
+        table.AddRow("[magenta]Events[/]", $"[bold]{eventCount}[/]");
+
+        AnsiConsole.Write(Align.Center(table));
     }
 
     private static (bool Success, string? Path) ResolveSolutionPath(Settings settings)
@@ -73,7 +129,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         // Allow unit tests to skip the hardcoded debug path by setting ELFA_SKIP_DEBUG_PATH=1
         if (Environment.GetEnvironmentVariable("ELFA_SKIP_DEBUG_PATH") != "1" && string.IsNullOrEmpty(settings.Path))
         {
-            settings.Path = @"D:\CLAUDE\TEST\ErikLieben.FA.ES\demo\DemoApp.Solution.sln";
+            settings.Path = @"D:\ErikLieben.FA.ES\demo\TaskFlow.sln";
         }
 #endif
 
@@ -82,7 +138,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             settings.Path = FindSolutionFile();
             if (settings.Path == null)
             {
-                Console.WriteLine("No .sln file was supplied and no file was found in the current directory or its subdirectories.");
+                Console.WriteLine("No .sln or .slnx file was supplied and no file was found in the current directory or its subdirectories.");
                 return (false, null);
             }
 
@@ -166,10 +222,13 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var slnFiles = Directory.GetFiles(currentDirectory, "*.sln", SearchOption.AllDirectories);
+        var slnxFiles = Directory.GetFiles(currentDirectory, "*.slnx", SearchOption.AllDirectories);
 
-        if (slnFiles.Length > 0)
+        var allSolutionFiles = slnFiles.Concat(slnxFiles).ToArray();
+
+        if (allSolutionFiles.Length > 0)
         {
-            return slnFiles[0];
+            return allSolutionFiles[0];
         }
 
         return null;
@@ -178,11 +237,12 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     private static string? FindInCommonLocations()
     {
         // Common locations for user and system installations
-        string[] commonPaths = {
+        string[] commonPaths =
+        [
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Microsoft VS Code\Code.exe"),
             @"C:\\Program Files\\Microsoft VS Code\\Code.exe",
             @"C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe"
-        };
+        ];
 
         return commonPaths.FirstOrDefault(p => File.Exists(p));
     }

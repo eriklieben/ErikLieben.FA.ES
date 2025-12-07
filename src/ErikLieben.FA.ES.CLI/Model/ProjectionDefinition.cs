@@ -19,6 +19,8 @@ public record ProjectionDefinition
 
     public BlobProjectionDefinition? BlobProjection { get; set; }
 
+    public CosmosDbProjectionDefinition? CosmosDbProjection { get; set; }
+
     public PostWhenDeclaration? PostWhen { get; set; }
 
     public bool HasPostWhenAllMethod { get; set; }

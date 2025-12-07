@@ -112,7 +112,7 @@ public class AnalyzeProjectionsTests
             var syntaxTree = CSharpSyntaxTree.ParseText(code, path: "C\\\\Repo\\\\App\\\\Projections\\\\P.cs");
             var compilation = CSharpCompilation.Create(
                 assemblyName: "ErikLieben.FA.ES.Framework",
-                syntaxTrees: new[] { syntaxTree },
+                syntaxTrees: [syntaxTree],
                 references: References,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -186,6 +186,101 @@ namespace App.Projections {
             Assert.NotNull(p.PostWhen);
             Assert.True(p.HasPostWhenAllMethod);
         }
+
+        [Fact]
+        public void Should_collect_projection_with_cosmosdb_projection_attribute()
+        {
+            // Arrange: Define Projection base, CosmosDbJsonProjection attribute, and projection class
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} }
+namespace ErikLieben.FA.ES.Documents { public interface IObjectDocument {} }
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { public virtual Task PostWhenAll() => Task.CompletedTask; } }
+public class ProjectionWithExternalCheckpointAttribute : System.Attribute {}
+public class CosmosDbJsonProjectionAttribute : System.Attribute {
+    public CosmosDbJsonProjectionAttribute(string container) { Container = container; }
+    public string Container { get; }
+    public string Connection { get; set; }
+    public string PartitionKeyPath { get; set; } = ""/projectionName"";
+}
+namespace App.Events { public class UserCreated : ErikLieben.FA.ES.IEvent {} }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections; using ErikLieben.FA.ES; using ErikLieben.FA.ES.Documents; using App.Events;
+    [ProjectionWithExternalCheckpoint]
+    [CosmosDbJsonProjection(""projections"", Connection=""cosmosdb"", PartitionKeyPath=""/customKey"")]
+    public class SprintDashboard : Projection {
+        public string Name { get; private set; }
+        public SprintDashboard() { }
+        public void When(UserCreated e, IObjectDocument document) { }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\SprintDashboard.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.Equal("SprintDashboard", p.Name);
+            Assert.Equal("App.Projections", p.Namespace);
+            Assert.True(p.ExternalCheckpoint);
+
+            // Verify CosmosDB projection settings
+            Assert.NotNull(p.CosmosDbProjection);
+            Assert.Equal("projections", p.CosmosDbProjection!.Container);
+            Assert.Equal("cosmosdb", p.CosmosDbProjection!.Connection);
+            Assert.Equal("/customKey", p.CosmosDbProjection!.PartitionKeyPath);
+
+            // BlobProjection should be null
+            Assert.Null(p.BlobProjection);
+        }
+
+        [Fact]
+        public void Should_use_default_partition_key_path_when_not_specified()
+        {
+            // Arrange: Define Projection base with CosmosDbJsonProjection without custom partition key
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} }
+namespace ErikLieben.FA.ES.Documents { public interface IObjectDocument {} }
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+public class CosmosDbJsonProjectionAttribute : System.Attribute {
+    public CosmosDbJsonProjectionAttribute(string container) { Container = container; }
+    public string Container { get; }
+    public string Connection { get; set; }
+    public string PartitionKeyPath { get; set; } = ""/projectionName"";
+}
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    [CosmosDbJsonProjection(""my-container"", Connection=""myconn"")]
+    public class SimpleProjection : Projection { }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\SimpleProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.NotNull(p.CosmosDbProjection);
+            Assert.Equal("my-container", p.CosmosDbProjection!.Container);
+            Assert.Equal("myconn", p.CosmosDbProjection!.Connection);
+            Assert.Equal("/projectionName", p.CosmosDbProjection!.PartitionKeyPath);
+        }
     }
 
     private static (INamedTypeSymbol?, ClassDeclarationSyntax?, SemanticModel, CSharpCompilation?) GetFromCode(
@@ -199,7 +294,7 @@ namespace App.Projections {
 
         var compilation = CSharpCompilation.Create(
             testAssembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -214,18 +309,19 @@ namespace App.Projections {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "Dummy",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
         return (compilation.GetSemanticModel(syntaxTree), compilation);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

@@ -16,6 +16,15 @@ public interface IDataStore
     Task AppendAsync(IObjectDocument document, params IEvent[] events);
 
     /// <summary>
+    /// Appends the specified events to the event stream for the given document, optionally preserving original timestamps.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="preserveTimestamp">When true, preserves the original timestamp from events (useful for migrations). Default is false.</param>
+    /// <param name="events">The events to append in order; must contain at least one event.</param>
+    /// <returns>A task that represents the asynchronous append operation.</returns>
+    Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events);
+
+    /// <summary>
     /// Reads events for the specified document.
     /// </summary>
     /// <param name="document">The document whose events are read.</param>

@@ -17,7 +17,7 @@ public class GenerateVersionTokenOfTCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -36,7 +36,7 @@ public class GenerateVersionTokenOfTCodeTests
             GenericType = "Guid",
             NamespaceOfType = "System",
             IsPartialClass = true,
-            FileLocations = new List<string> { "Demo\\Tokens\\OrderVersion.cs" }
+            FileLocations = ["Demo\\Tokens\\OrderVersion.cs"]
         };
 
         var project = new ProjectDefinition
@@ -44,7 +44,7 @@ public class GenerateVersionTokenOfTCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            VersionTokens = new List<VersionTokenDefinition> { token }
+            VersionTokens = [token]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -91,7 +91,7 @@ public class GenerateVersionTokenOfTCodeTests
             GenericType = "Guid",
             NamespaceOfType = "System",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Tokens\\AccountVersion.cs" }
+            FileLocations = ["Demo\\Tokens\\AccountVersion.cs"]
         };
 
         var project = new ProjectDefinition
@@ -99,7 +99,7 @@ public class GenerateVersionTokenOfTCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            VersionTokens = new List<VersionTokenDefinition> { token }
+            VersionTokens = [token]
         };
 
         var (solution, outDir) = BuildSolution(project);

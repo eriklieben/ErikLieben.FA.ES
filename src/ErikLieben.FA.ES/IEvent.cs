@@ -27,6 +27,15 @@ public interface IEvent
     int EventVersion { get; }
 
     /// <summary>
+    /// Gets the schema version of the event payload. Defaults to 1 when not specified.
+    /// </summary>
+    /// <remarks>
+    /// The schema version indicates the version of the event's data structure,
+    /// allowing for schema evolution tracking separate from the event name.
+    /// </remarks>
+    int SchemaVersion { get; }
+
+    /// <summary>
     /// Gets the external sequencer identifier when the event is sequenced by an external system; otherwise null.
     /// </summary>
     string? ExternalSequencer { get; }

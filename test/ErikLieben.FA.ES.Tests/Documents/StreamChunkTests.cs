@@ -1,5 +1,7 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using ErikLieben.FA.ES.Documents;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Documents
 {
@@ -159,9 +161,9 @@ namespace ErikLieben.FA.ES.Tests.Documents
 
                 // Assert
                 // Check that id appears before first, and first appears before last
-                int idPos = json.IndexOf("\"id\"");
-                int firstPos = json.IndexOf("\"first\"");
-                int lastPos = json.IndexOf("\"last\"");
+                int idPos = json.IndexOf("\"id\"", StringComparison.Ordinal);
+                int firstPos = json.IndexOf("\"first\"", StringComparison.Ordinal);
+                int lastPos = json.IndexOf("\"last\"", StringComparison.Ordinal);
 
                 Assert.True(idPos < firstPos);
                 Assert.True(firstPos < lastPos);

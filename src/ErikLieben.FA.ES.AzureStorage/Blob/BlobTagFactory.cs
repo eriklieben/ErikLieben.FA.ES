@@ -71,7 +71,16 @@ public class BlobTagFactory : IDocumentTagDocumentFactory
     public IDocumentTagStore CreateStreamTagStore(IObjectDocument document)
     {
         ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(document.Active.DocumentTagType);
-        return new BlobDocumentTagStore(clientFactory, settings.EventStreamTagType, blobSettings.DefaultDocumentTagStore, blobSettings.AutoCreateContainer);
+        ArgumentNullException.ThrowIfNull(document.Active.EventStreamTagType);
+        return new BlobStreamTagStore(clientFactory, blobSettings.DefaultDocumentTagStore, blobSettings.AutoCreateContainer);
+    }
+
+    /// <summary>
+    /// Creates a stream tag store using the default stream tag type from settings.
+    /// </summary>
+    /// <returns>An <see cref="IDocumentTagStore"/> for stream tags.</returns>
+    public IDocumentTagStore CreateStreamTagStore()
+    {
+        return new BlobStreamTagStore(clientFactory, blobSettings.DefaultDocumentTagStore, blobSettings.AutoCreateContainer);
     }
 }

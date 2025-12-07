@@ -33,11 +33,12 @@ public record BlobJsonEvent : JsonEvent
     }
 
     /// <summary>
-    /// Creates a <see cref="BlobJsonEvent"/> from a generic <see cref="IEvent"/>, copying metadata and setting a UTC timestamp.
+    /// Creates a <see cref="BlobJsonEvent"/> from a generic <see cref="IEvent"/>, copying metadata and timestamp.
     /// </summary>
     /// <param name="event">The source event instance.</param>
+    /// <param name="preserveTimestamp">When true and the source is a BlobJsonEvent, preserves the original timestamp. Default is false (uses current UTC time).</param>
     /// <returns>A new <see cref="BlobJsonEvent"/> or the same instance when already of this type; null when conversion is not possible.</returns>
-    public new static BlobJsonEvent? From(IEvent @event)
+    public new static BlobJsonEvent? From(IEvent @event, bool preserveTimestamp = false)
     {
         var jsonEvent = @event as JsonEvent;
 
@@ -48,7 +49,11 @@ public record BlobJsonEvent : JsonEvent
 
         if (jsonEvent is BlobJsonEvent blobJsonEvent)
         {
-            return blobJsonEvent with { Timestamp = DateTimeOffset.UtcNow };
+            // When preserveTimestamp is true, keep the original timestamp (useful for migrations)
+            // Otherwise, set a new timestamp (normal append behavior)
+            return preserveTimestamp
+                ? blobJsonEvent
+                : blobJsonEvent with { Timestamp = DateTimeOffset.UtcNow };
         }
 
         return new BlobJsonEvent
@@ -58,7 +63,8 @@ public record BlobJsonEvent : JsonEvent
             ActionMetadata = jsonEvent.ActionMetadata,
             Metadata = jsonEvent.Metadata,
             EventType = jsonEvent.EventType,
-            EventVersion = jsonEvent.EventVersion
+            EventVersion = jsonEvent.EventVersion,
+            SchemaVersion = jsonEvent.SchemaVersion
         };
     }
 }

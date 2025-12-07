@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Xunit;
 
 namespace ErikLieben.FA.ES.CLI.Tests.Analyze;
 
@@ -128,7 +129,7 @@ EndGlobal
                 // Assert
                 Assert.Equal("App", solutionDef.SolutionName);
                 Assert.Empty(solutionDef.Projects);
-                Assert.True(rootPath.Replace('\\','/').EndsWith("/" + new DirectoryInfo(root).Name));
+                Assert.EndsWith("/" + new DirectoryInfo(root).Name, rootPath.Replace('\\','/'));
             }
             finally
             {
@@ -156,7 +157,7 @@ EndGlobal
             // Reflect CountClassDeclarationsAsync (static method)
             var mi = typeof(CLI.Analyze.Analyze).GetMethod("CountClassDeclarationsAsync", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
-            var task = (Task<int>)mi!.Invoke(null, new object[] { solution })!;
+            var task = (Task<int>)mi!.Invoke(null, [solution])!;
             var result = await task;
 
             // Assert
@@ -168,7 +169,7 @@ EndGlobal
         {
             // Arrange: create a compilation with a syntax error
             var tree = CSharpSyntaxTree.ParseText("public class {");
-            var compilation = CSharpCompilation.Create("Err", new[] { tree }, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var compilation = CSharpCompilation.Create("Err", [tree], options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var console = new TestConsole();
 
             // Reflect LogCompilationIssues
@@ -176,7 +177,7 @@ EndGlobal
             Assert.NotNull(mi);
 
             // Act & Assert: should not throw
-            mi!.Invoke(null, new object[] { compilation, console });
+            mi!.Invoke(null, [compilation, console]);
         }
 
         [Fact]
@@ -184,7 +185,7 @@ EndGlobal
         {
             var mi = typeof(CLI.Analyze.Analyze).GetMethod("GetGeneratorVersion", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
-            var version = (string?)mi!.Invoke(null, Array.Empty<object>());
+            var version = (string?)mi!.Invoke(null, []);
             Assert.NotNull(version);
         }
     }

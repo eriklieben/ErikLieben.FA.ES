@@ -94,7 +94,13 @@ public class BlobSnapShotStore(
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.SnapShotConnectionName);
+        // Use SnapShotStore, falling back to deprecated SnapShotConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.SnapShotStore)
+            ? objectDocument.Active.SnapShotStore
+            : objectDocument.Active.SnapShotConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (settings.AutoCreateContainer)

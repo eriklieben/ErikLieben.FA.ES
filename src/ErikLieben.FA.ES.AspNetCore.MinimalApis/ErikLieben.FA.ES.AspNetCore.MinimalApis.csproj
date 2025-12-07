@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <DebugType>portable</DebugType>
+        <IsAotCompatible>true</IsAotCompatible>
+
+        <!-- NuGet package metadata -->
+        <PackageId>ErikLieben.FA.ES.AspNetCore.MinimalApis</PackageId>
+        <PackageVersion Condition="'$(PackageVersion)' == '' and '$(Version)' != ''">$(Version)</PackageVersion>
+        <Title>ErikLieben.FA.ES.AspNetCore.MinimalApis</Title>
+        <Authors>Erik Lieben</Authors>
+        <Company>Erik Lieben</Company>
+        <Description>ASP.NET Core Minimal APIs integration for the ErikLieben.FA.ES Event Sourcing toolkit. Provides parameter binding for aggregates and projections.</Description>
+        <PackageTags>eventsourcing;aot;dotnet;csharp;minimalapi;aspnetcore</PackageTags>
+        <RepositoryUrl>https://github.com/eriklieben/ErikLieben.FA.ES</RepositoryUrl>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
+        <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
+        <GenerateAssemblyInformationalVersionAttribute>true</GenerateAssemblyInformationalVersionAttribute>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!-- Symbol package settings -->
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="ErikLieben.FA.ES.AspNetCore.MinimalApis.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="" />
+        <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+    </ItemGroup>
+</Project>

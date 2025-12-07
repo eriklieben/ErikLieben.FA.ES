@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ErikLieben.FA.ES.Exceptions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests;
 
@@ -131,6 +134,126 @@ public class JsonEventTests
 
             // Assert
             Assert.NotNull(result);
+        }
+    }
+
+    public class SchemaVersionTests
+    {
+        [Fact]
+        public void Should_default_to_1_when_not_set()
+        {
+            // Arrange & Act
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1 };
+
+            // Assert
+            Assert.Equal(1, jsonEvent.SchemaVersion);
+        }
+
+        [Fact]
+        public void Should_return_1_when_internal_value_is_0()
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1 };
+            jsonEvent.SchemaVersionForSerialization = 0;
+
+            // Act & Assert
+            Assert.Equal(1, jsonEvent.SchemaVersion);
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(100)]
+        public void Should_return_actual_value_for_versions_greater_than_1(int version)
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1, SchemaVersion = version };
+
+            // Act & Assert
+            Assert.Equal(version, jsonEvent.SchemaVersion);
+        }
+
+        [Fact]
+        public void Should_store_0_internally_when_setting_version_1()
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1 };
+
+            // Act
+            jsonEvent.SchemaVersion = 1;
+
+            // Assert
+            Assert.Equal(0, jsonEvent.SchemaVersionForSerialization);
+        }
+
+        [Theory]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(100)]
+        public void Should_store_actual_value_internally_for_versions_greater_than_1(int version)
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1 };
+
+            // Act
+            jsonEvent.SchemaVersion = version;
+
+            // Assert
+            Assert.Equal(version, jsonEvent.SchemaVersionForSerialization);
+        }
+
+        [Fact]
+        public void Should_not_serialize_schema_version_when_version_is_1()
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1, SchemaVersion = 1 };
+
+            // Act
+            var json = System.Text.Json.JsonSerializer.Serialize(jsonEvent);
+
+            // Assert
+            Assert.DoesNotContain("schemaVersion", json);
+        }
+
+        [Fact]
+        public void Should_serialize_schema_version_when_version_is_greater_than_1()
+        {
+            // Arrange
+            var jsonEvent = new JsonEvent { Payload = "{}", EventType = "Test", EventVersion = 1, SchemaVersion = 2 };
+
+            // Act
+            var json = System.Text.Json.JsonSerializer.Serialize(jsonEvent);
+
+            // Assert
+            Assert.Contains("\"schemaVersion\":2", json);
+        }
+
+        [Fact]
+        public void Should_deserialize_schema_version_1_when_not_present_in_json()
+        {
+            // Arrange - note: "type" is the JSON property name for EventType
+            var json = """{"payload":"{}","type":"Test","version":1}""";
+
+            // Act
+            var jsonEvent = System.Text.Json.JsonSerializer.Deserialize<JsonEvent>(json);
+
+            // Assert
+            Assert.NotNull(jsonEvent);
+            Assert.Equal(1, jsonEvent.SchemaVersion);
+        }
+
+        [Fact]
+        public void Should_deserialize_schema_version_when_present_in_json()
+        {
+            // Arrange - note: "type" is the JSON property name for EventType
+            var json = """{"payload":"{}","type":"Test","version":1,"schemaVersion":3}""";
+
+            // Act
+            var jsonEvent = System.Text.Json.JsonSerializer.Deserialize<JsonEvent>(json);
+
+            // Assert
+            Assert.NotNull(jsonEvent);
+            Assert.Equal(3, jsonEvent.SchemaVersion);
         }
     }
 

@@ -17,6 +17,7 @@ public interface IProjectionBase
     /// <param name="data">Optional auxiliary data; may be null.</param>
     /// <param name="context">Optional execution context; may be null.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold<T>(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null, IExecutionContext? context = null)
         where T: class;
 
@@ -26,6 +27,7 @@ public interface IProjectionBase
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The projection object document.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken) instead. This overload will be removed in a future major version.")]
     Task Fold(IEvent @event, IObjectDocument document);
 
     /// <summary>

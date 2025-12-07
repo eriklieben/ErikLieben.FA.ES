@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
@@ -312,12 +315,229 @@ namespace App {
         }
     }
 
+    public class ExtractUseUpcasterAttributes
+    {
+        [Fact]
+        public void Should_return_empty_list_when_no_attribute_present()
+        {
+            // Arrange
+            var code = @"
+namespace App { public class TestClass { } }
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractUseUpcasterAttributes(symbol);
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Should_extract_single_upcaster_type_from_generic_attribute()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Upcasting { public interface IUpcastEvent { } }
+namespace ErikLieben.FA.ES.Attributes {
+    public class UseUpcasterAttribute<T> : System.Attribute where T : ErikLieben.FA.ES.Upcasting.IUpcastEvent, new() { }
+}
+namespace App.Upcasters {
+    public class OrderV1ToV2Upcaster : ErikLieben.FA.ES.Upcasting.IUpcastEvent { }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.UseUpcaster<App.Upcasters.OrderV1ToV2Upcaster>]
+    public class Order { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractUseUpcasterAttributes(symbol);
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("OrderV1ToV2Upcaster", result[0].TypeName);
+            Assert.Equal("App.Upcasters", result[0].Namespace);
+        }
+
+        [Fact]
+        public void Should_extract_multiple_upcaster_types_from_generic_attributes()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Upcasting { public interface IUpcastEvent { } }
+namespace ErikLieben.FA.ES.Attributes {
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+    public class UseUpcasterAttribute<T> : System.Attribute where T : ErikLieben.FA.ES.Upcasting.IUpcastEvent, new() { }
+}
+namespace App.Upcasters {
+    public class OrderV1ToV2Upcaster : ErikLieben.FA.ES.Upcasting.IUpcastEvent { }
+    public class OrderV2ToV3Upcaster : ErikLieben.FA.ES.Upcasting.IUpcastEvent { }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.UseUpcaster<App.Upcasters.OrderV1ToV2Upcaster>]
+    [ErikLieben.FA.ES.Attributes.UseUpcaster<App.Upcasters.OrderV2ToV3Upcaster>]
+    public class Order { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractUseUpcasterAttributes(symbol);
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, u => u.TypeName == "OrderV1ToV2Upcaster");
+            Assert.Contains(result, u => u.TypeName == "OrderV2ToV3Upcaster");
+        }
+    }
+
+    public class ExtractEventVersionAttribute
+    {
+        [Fact]
+        public void Should_return_1_when_attribute_not_present()
+        {
+            // Arrange
+            var code = @"
+namespace App { public record TestEvent(string Name); }
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_extract_version_from_constructor_argument()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class EventVersionAttribute : System.Attribute {
+        public EventVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.EventVersion(2)]
+    public record TestEvent(string Name);
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void Should_extract_version_3()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class EventVersionAttribute : System.Attribute {
+        public EventVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.EventVersion(3)]
+    public record TestEvent(string Name);
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(3, result);
+        }
+
+        [Fact]
+        public void Should_return_1_when_attribute_has_no_constructor_arguments()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class EventVersionAttribute : System.Attribute {
+        public EventVersionAttribute() { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.EventVersion]
+    public record TestEvent(string Name);
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_return_1_when_constructor_argument_is_not_int()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class EventVersionAttribute : System.Attribute {
+        public EventVersionAttribute(string version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.EventVersion(""v2"")]
+    public record TestEvent(string Name);
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_work_with_struct_events()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class EventVersionAttribute : System.Attribute {
+        public EventVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.EventVersion(5)]
+    public struct TestEvent { public string Name; }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractEventVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(5, result);
+        }
+    }
+
     private static INamedTypeSymbol GetTypeSymbol(string code)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "TestAssembly",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -325,16 +545,16 @@ namespace App {
         var semanticModel = compilation.GetSemanticModel(syntaxTree);
         var classDeclaration = syntaxTree.GetRoot()
             .DescendantNodes()
-            .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax>()
+            .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax>()
             .Last();
 
         return semanticModel.GetDeclaredSymbol(classDeclaration)!;
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

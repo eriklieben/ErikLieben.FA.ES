@@ -1,6 +1,7 @@
 ﻿using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.EventStream;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.EventStream
 {

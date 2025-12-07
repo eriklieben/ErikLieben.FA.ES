@@ -21,6 +21,18 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore
     }
 
     /// <summary>
+    /// Appends the specified events to the event stream for the given document, optionally preserving timestamps.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="preserveTimestamp">When true, preserves the original timestamp from events (useful for migrations).</param>
+    /// <param name="events">The events to append in order.</param>
+    /// <returns>A task that represents the asynchronous append operation.</returns>
+    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    {
+        return datastore.AppendAsync(document, preserveTimestamp, events);
+    }
+
+    /// <summary>
     /// Reads events for the specified document by delegating to the underlying store.
     /// </summary>
     /// <param name="document">The document whose events are read.</param>

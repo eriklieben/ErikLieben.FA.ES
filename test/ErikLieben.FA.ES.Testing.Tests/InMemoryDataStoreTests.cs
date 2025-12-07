@@ -1,4 +1,8 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Testing.InMemory.Model;
@@ -13,6 +17,7 @@ public class InMemoryDataStoreTests
     {
         public string EventType { get; set; } = "Test";
         public int EventVersion { get; set; }
+        public int SchemaVersion { get; set; } = 1;
         public string? ExternalSequencer { get; } = string.Empty;
         public ActionMetadata? ActionMetadata { get; } = new();
         public Dictionary<string, string> Metadata { get; } = new();

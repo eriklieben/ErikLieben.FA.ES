@@ -11,7 +11,7 @@ public record SolutionDefinition
     public GeneratorInformation? Generator { get; init; }
     
     [JsonPropertyOrder(3)]
-    public List<ProjectDefinition> Projects { get; init; } = new();
+    public List<ProjectDefinition> Projects { get; init; } = [];
 }
 
 public record GeneratorInformation

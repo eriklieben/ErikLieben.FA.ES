@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Linq;
+using System.Runtime.InteropServices;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -27,7 +28,7 @@ public class WhenMethodHelperTests
         var tree = string.IsNullOrWhiteSpace(path)
             ? CSharpSyntaxTree.ParseText(code, parseOptions)
             : SyntaxFactory.ParseSyntaxTree(code, parseOptions, path);
-        var compilation = CSharpCompilation.Create(assemblyName, new[] { tree }, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var compilation = CSharpCompilation.Create(assemblyName, [tree], References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var model = compilation.GetSemanticModel(tree);
         return (compilation, model, tree);
     }

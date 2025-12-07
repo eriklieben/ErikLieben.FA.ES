@@ -47,8 +47,9 @@ public interface IAggregateFactory<T> : IAggregateCovarianceFactory<T> where T :
     /// Gets an existing aggregate by identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="upToVersion">Optional: The maximum event version to fold (inclusive). If null, loads all events to current state.</param>
     /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetAsync(string id);
+    Task<T> GetAsync(string id, int? upToVersion = null);
 
     /// <summary>
     /// Gets the first aggregate tagged with the specified document tag.
@@ -90,8 +91,9 @@ public interface IAggregateFactory<T,TId> : IAggregateCovarianceFactory<T> where
     /// Gets an existing aggregate by identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="upToVersion">Optional: The maximum event version to fold (inclusive). If null, loads all events to current state.</param>
     /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetAsync(TId id);
+    Task<T> GetAsync(TId id, int? upToVersion = null);
 
     /// <summary>
     /// Gets the first aggregate tagged with the specified document tag.

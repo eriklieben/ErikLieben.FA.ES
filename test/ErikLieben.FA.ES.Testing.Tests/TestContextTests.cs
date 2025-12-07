@@ -1,8 +1,12 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Testing;
 using ErikLieben.FA.ES.Testing.InMemory;
+using ErikLieben.FA.ES.Testing.Time;
 using ErikLieben.FA.ES.Processors;
 using Xunit;
 
@@ -146,5 +150,49 @@ public class TestContextTests
         Assert.NotNull(exception);
         Assert.Equal("Test message", exception.Message);
         Assert.Same(innerException, exception.InnerException);
+    }
+
+    [Fact]
+    public void TestClock_property_should_return_null_when_not_provided()
+    {
+        // Arrange
+        var ctx = CreateContext();
+
+        // Assert
+        Assert.Null(ctx.TestClock);
+    }
+
+    [Fact]
+    public void TestClock_property_should_return_provided_clock()
+    {
+        // Arrange
+        var testClock = new TestClock(new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero));
+        var provider = new SimpleServiceProvider();
+        var ctx = TestSetup.GetContext(provider, testClock, _ => typeof(DummyFactory));
+
+        // Assert
+        Assert.NotNull(ctx.TestClock);
+        Assert.Same(testClock, ctx.TestClock);
+        Assert.Equal(new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero), ctx.TestClock.UtcNow);
+    }
+
+    [Fact]
+    public void DocumentFactory_property_should_return_factory()
+    {
+        // Arrange
+        var ctx = CreateContext();
+
+        // Assert
+        Assert.NotNull(ctx.DocumentFactory);
+    }
+
+    [Fact]
+    public void EventStreamFactory_property_should_return_factory()
+    {
+        // Arrange
+        var ctx = CreateContext();
+
+        // Assert
+        Assert.NotNull(ctx.EventStreamFactory);
     }
 }

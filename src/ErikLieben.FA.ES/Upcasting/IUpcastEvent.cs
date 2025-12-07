@@ -3,7 +3,7 @@
 /// <summary>
 /// Interface for event upcasters that migrate events from old versions to new versions.
 /// </summary>
-public interface IEventUpcaster
+public interface IUpcastEvent
 {
     /// <summary>
     /// Determines whether the upcaster can handle the specified event.

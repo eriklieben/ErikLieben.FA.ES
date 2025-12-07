@@ -1,0 +1,68 @@
+name: OpenSSF Scorecard
+
+on:
+  # Run on pushes to main/vnext for tracking over time
+  push:
+    branches:
+      - main
+      - vnext
+  # Run weekly to catch changes in dependencies/ecosystem
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6:00 UTC
+  # Allow manual runs
+  workflow_dispatch:
+
+permissions: {}  # Minimal top-level permissions, defined per job
+
+jobs:
+  scorecard:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required for uploading SARIF results
+      security-events: write
+      # Required for publishing results
+      id-token: write
+      # Required for reading repo contents
+      contents: read
+      # Required for DetectWorkflowPersistence check
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run OpenSSF Scorecard
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: scorecard-results.sarif
+          results_format: sarif
+          # Publish results to OpenSSF REST API for badge
+          publish_results: true
+
+      - name: Upload Scorecard SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: scorecard-results.sarif
+
+      - name: Upload Scorecard results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: scorecard-results.sarif
+          retention-days: 30
+
+      - name: Generate Job Summary
+        if: always()
+        run: |
+          echo "## OpenSSF Scorecard Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Scorecard analyzes your repository for security best practices." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View detailed results in Security tab](/${{ github.repository }}/security/code-scanning?query=tool:Scorecard)" >> $GITHUB_STEP_SUMMARY
+          echo "- [OpenSSF Scorecard documentation](https://securityscorecards.dev/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View public score](https://scorecard.dev/viewer/?uri=github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY

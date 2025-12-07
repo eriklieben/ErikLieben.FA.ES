@@ -1,5 +1,8 @@
-﻿using ErikLieben.FA.ES.Actions;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Actions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Action
 {
@@ -118,7 +121,7 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var expectedEvents = Substitute.For<IEnumerable<IEvent>>();
-                mockSession.ReadAsync(0, null).Returns(Task.FromResult(expectedEvents));
+                mockSession.ReadAsync(0, null)!.Returns(Task.FromResult(expectedEvents));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act
@@ -135,7 +138,7 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var expectedEvents = Substitute.For<IEnumerable<IEvent>>();
-                mockSession.ReadAsync(5, 10).Returns(Task.FromResult(expectedEvents));
+                mockSession.ReadAsync(5, 10)!.Returns(Task.FromResult(expectedEvents));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act

@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
 using ErikLieben.FA.ES.AzureStorage.Blob.Model;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.EventStream;
 using Microsoft.Extensions.Azure;
 using BlobDataStoreDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobDataStoreDocumentContext;
@@ -95,7 +96,20 @@ public class BlobDataStore : IDataStore
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="document"/> or its stream identifier is null.</exception>
     /// <exception cref="ArgumentException">Thrown when no events are provided.</exception>
     /// <exception cref="BlobDataStoreProcessingException">Thrown when optimistic concurrency or persistence operations fail.</exception>
-    public async Task AppendAsync(IObjectDocument document, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
+        => AppendAsync(document, preserveTimestamp: false, events);
+
+    /// <summary>
+    /// Appends the specified events to the event stream of the given document in Azure Blob Storage.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="preserveTimestamp">When true, preserves the original timestamp from BlobJsonEvent sources (useful for migrations).</param>
+    /// <param name="events">The events to append in order; must contain at least one event.</param>
+    /// <returns>A task that represents the asynchronous append operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="document"/> or its stream identifier is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when no events are provided.</exception>
+    /// <exception cref="BlobDataStoreProcessingException">Thrown when optimistic concurrency or persistence operations fail.</exception>
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
     {
         using var activity = ActivitySource.StartActivity("BlobDataStore.AppendAsync");
         ArgumentNullException.ThrowIfNull(document);
@@ -130,12 +144,24 @@ public class BlobDataStore : IDataStore
                 ObjectName = document.ObjectName,
                 LastObjectDocumentHash = blobDoc.Hash ?? "*"
             };
-            newDoc.Events.AddRange(events.Select(BlobJsonEvent.From)!);
+            newDoc.Events.AddRange(events.Select(e => BlobJsonEvent.From(e, preserveTimestamp))!);
             newDoc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
-            await blob.SaveEntityAsync(
-                newDoc,
-                BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
-                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+
+            try
+            {
+                await blob.SaveEntityAsync(
+                    newDoc,
+                    BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
+            {
+                var containerName = blob.BlobContainerName;
+                throw new BlobDocumentStoreContainerNotFoundException(
+                    $"The container by the name '{containerName}' is not found. " +
+                    $"Please create it or adjust the config setting: 'EventStream:Blob:DefaultDocumentContainerName'",
+                ex);
+            }
             return;
         }
 
@@ -148,13 +174,26 @@ public class BlobDataStore : IDataStore
             new BlobRequestConditions { IfMatch = etag })).Item1
             ?? throw new BlobDataStoreProcessingException($"Unable to find document '{document.ObjectName.ToLowerInvariant()}/{documentPath}' while processing save.");
 
+        // Check if the stream is closed - if the last event is EventStream.Closed, reject new events
+        if (doc.Events.Count > 0)
+        {
+            var lastEvent = doc.Events[^1];
+            if (lastEvent.EventType == "EventStream.Closed")
+            {
+                throw new EventStreamClosedException(
+                    document.Active.StreamIdentifier,
+                    $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
+                    $"The stream was closed and may have a continuation stream. Please retry on the active stream.");
+            }
+        }
+
         if (doc.LastObjectDocumentHash != "*" && doc.LastObjectDocumentHash != blobDoc.PrevHash)
         {
             throw new BlobDataStoreProcessingException($"Optimistic concurrency check failed: document hash mismatch for '{document.ObjectName.ToLowerInvariant()}/{documentPath}'.");
         }
         doc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
 
-        doc.Events.AddRange(events.Select(BlobJsonEvent.From)!);
+        doc.Events.AddRange(events.Select(e => BlobJsonEvent.From(e, preserveTimestamp))!);
         await blob.SaveEntityAsync(doc,
             BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
             new BlobRequestConditions { IfMatch = etag });
@@ -164,7 +203,13 @@ public class BlobDataStore : IDataStore
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.StreamConnectionName);
+        // Use DataStore, falling back to deprecated StreamConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.DataStore)
+            ? objectDocument.Active.DataStore
+            : objectDocument.Active.StreamConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (autoCreateContainer)

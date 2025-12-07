@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/ErikLieben.FA.ES?style=flat-square)](https://www.nuget.org/packages/ErikLieben.FA.ES)
 [![Changelog](https://img.shields.io/badge/Changelog-docs-informational?style=flat-square)](docs/CHANGELOG.md)
-[![.NET 9.0](https://img.shields.io/badge/.NET-9.0-blue?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![.NET 9.0 | 10.0](https://img.shields.io/badge/.NET-9.0%20%7C%2010.0-blue?style=flat-square)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=eriklieben_ErikLieben.FA.ES&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=eriklieben_ErikLieben.FA.ES)
@@ -12,6 +12,7 @@
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=eriklieben_ErikLieben.FA.ES&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=eriklieben_ErikLieben.FA.ES)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=eriklieben_ErikLieben.FA.ES&metric=coverage)](https://sonarcloud.io/summary/new_code?id=eriklieben_ErikLieben.FA.ES)
 [![Known Vulnerabilities](https://snyk.io/test/github/eriklieben/ErikLieben.FA.ES/badge.svg)](https://snyk.io/test/github/eriklieben/ErikLieben.FA.ES)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/eriklieben/ErikLieben.FA.ES/badge)](https://scorecard.dev/viewer/?uri=github.com/eriklieben/ErikLieben.FA.ES)
 
 > A lightweight, AOT-friendly Event Sourcing toolkit for .NET. Build aggregates, append and read events, create snapshots, upcast historical data, and integrate with Azure storage and Functions.
 
@@ -37,6 +38,7 @@ ErikLieben.FA.ES is an event sourcing toolkit/framework designed to be:
 - Optional snapshots to accelerate very long streams (snapshot‑free by default)
 - Test helpers for fast and deterministic unit tests
 - Azure Functions input bindings, works without Azure Functions as well (not depended on)
+- ASP.NET Core Minimal APIs bindings with `[EventStream]` and `[Projection]` attributes
 
 ## Install
 
@@ -62,11 +64,16 @@ For Azure Functions:
 dotnet add package ErikLieben.FA.ES.Azure.Functions.Worker.Extensions
 ```
 
+For ASP.NET Core Minimal APIs:
+```bash
+dotnet add package ErikLieben.FA.ES.AspNetCore.MinimalApis
+```
+
 For your unit test projects (inMemory):
 ```bash
 dotnet add package ErikLieben.FA.ES.Testing
 ```
-Requirements: .NET 9.0+
+Requirements: .NET 9.0 or .NET 10.0
 
 
 ## Quick start
@@ -339,6 +346,57 @@ Currently only in development branch:
 
 ### Observability
 - ActivitySource integration points allow you to trace reads, writes, folds, and snapshots.
+
+### ASP.NET Core Minimal APIs
+
+The `ErikLieben.FA.ES.AspNetCore.MinimalApis` package provides parameter binding for aggregates and projections, similar to `[FromServices]` or `[FromBody]`.
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure event store (same as before)
+builder.Services.ConfigureEventStore(new EventStreamDefaultTypeSettings("blob"));
+builder.Services.ConfigureBlobEventStore(new EventStreamBlobSettings("Store", autoCreateContainer: true));
+builder.Services.ConfigureMyDomainFactory();
+builder.Services.AddEventStoreMinimalApis();
+
+var app = builder.Build();
+
+// Bind aggregates directly as parameters
+app.MapPost("/orders/{id}/items", async (
+    [EventStream] Order order,
+    [FromBody] AddItemCommand command) =>
+{
+    order.AddItem(command.ProductId, command.Quantity, command.Price);
+    return Results.Ok();
+})
+.AndUpdateProjectionToLatest<OrderSummaryProjection>();
+
+// Bind projections for read endpoints
+app.MapGet("/dashboard", async ([Projection] DashboardProjection dashboard) =>
+{
+    return Results.Ok(dashboard);
+});
+
+// Routed projections with blob name from route
+app.MapGet("/orders/{id}/summary", async (
+    [Projection("{id}")] OrderSummaryProjection summary) =>
+{
+    return Results.Ok(summary);
+});
+
+app.Run();
+```
+
+Key features:
+- `[EventStream]` - Loads and folds an aggregate from the event store
+- `[EventStream("routeParam")]` - Use a custom route parameter for the object ID
+- `[EventStream(CreateIfNotExists = true)]` - Create new aggregates
+- `[Projection]` - Loads a projection from storage
+- `[Projection("{id}")]` - Routed projections with blob name substitution
+- `.WithProjectionOutput<T>()` / `.AndUpdateProjectionToLatest<T>()` - Update projections after endpoint execution
+
+For full documentation, see [docs/MinimalApis.md](docs/MinimalApis.md).
 
 ## 📄 License
 

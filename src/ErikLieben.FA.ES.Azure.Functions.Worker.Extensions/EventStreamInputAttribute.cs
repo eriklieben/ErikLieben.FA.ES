@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Converters;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 
-[assembly: ExtensionInformation("ErikLieben.FA.ES.WebJobs.Isolated.Extensions", "1.1.1")]
+[assembly: ExtensionInformation("ErikLieben.FA.ES.WebJobs.Isolated.Extensions", "1.0.0")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Tests")]
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions
@@ -10,13 +10,6 @@ namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions
     [InputConverter(typeof(EventStreamConverter))]
     [ConverterFallbackBehavior(ConverterFallbackBehavior.Default)]
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
-    /// <summary>
-    /// Specifies that a parameter or return value binds to an Event Sourcing aggregate loaded from an event stream.
-    /// </summary>
-    /// <remarks>
-    /// The attribute uses the configured <see cref="EventStreamConverter"/> to load or create the target object
-    /// based on binding data supplied by the trigger or other inputs.
-    /// </remarks>
     public class EventStreamInputAttribute : InputBindingAttribute
     {
         /// <summary>

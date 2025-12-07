@@ -1,6 +1,10 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Processors;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Processors;
 
@@ -258,7 +262,7 @@ public class AggregateTests
     private class TestAggregate : Aggregate
     {
         public bool SetupCalled { get; private set; }
-        public List<IEvent> FoldedEvents { get; } = new();
+        public List<IEvent> FoldedEvents { get; } = [];
         public object? ProcessedSnapshot { get; private set; }
 
         public IEventStream TestStream => Stream;
