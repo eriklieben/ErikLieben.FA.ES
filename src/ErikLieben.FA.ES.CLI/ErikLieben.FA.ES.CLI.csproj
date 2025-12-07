@@ -6,7 +6,6 @@
         <DebugType>portable</DebugType>
         <OutputType>Exe</OutputType>
         <LangVersion>default</LangVersion>
-        <PackageType>DotnetCliTool</PackageType>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>faes</ToolCommandName>
 
