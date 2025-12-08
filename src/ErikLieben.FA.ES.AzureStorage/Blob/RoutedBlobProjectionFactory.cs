@@ -307,7 +307,7 @@ public abstract class RoutedBlobProjectionFactory<TProjection>
     /// <summary>
     /// Uploads content to a blob.
     /// </summary>
-    protected async Task UploadBlobAsync(
+    protected static async Task UploadBlobAsync(
         BlobContainerClient containerClient,
         string blobPath,
         string content,

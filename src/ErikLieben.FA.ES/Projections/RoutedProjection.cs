@@ -412,7 +412,7 @@ public abstract class RoutedProjection : Projection
     /// <summary>
     /// Context for routing during When method execution.
     /// </summary>
-    private class RoutingContext
+    private sealed class RoutingContext
     {
         public IEvent Event { get; set; } = null!;
         public IObjectDocument Document { get; set; } = null!;

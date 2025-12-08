@@ -511,11 +511,6 @@ public class GenerateAggregateCode
         code.AppendLine("#nullable enable");
         code.AppendLine("");
 
-        // Determine the ITestableAggregate interface to implement
-        var testableAggregateInterface = aggregate.IdentifierType == "string"
-            ? $"ITestableAggregate<{aggregate.IdentifierName}>"
-            : $"ITestableAggregate<{aggregate.IdentifierName}, {aggregate.IdentifierType}>";
-
         // Generate Create method (required by ITestableAggregate)
         var testableAggregateMethods = $$"""
 

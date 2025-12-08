@@ -9,7 +9,7 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 /// Shows file activity, regeneration status, entity statistics, and logs.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Console TUI rendering code - tested manually through integration")]
-public class WatchDisplay : IWatchDisplay
+public sealed class WatchDisplay : IWatchDisplay
 {
     private readonly object _lock = new();
     private readonly string _solutionPath;
@@ -119,9 +119,9 @@ public class WatchDisplay : IWatchDisplay
                     _refreshCts?.Cancel();
                     if (_refreshTask != null)
                     {
-                        try { await _refreshTask; } catch { }
+                        try { await _refreshTask; } catch { /* Expected during cancellation */ }
                     }
-                    try { await keyboardTask; } catch { }
+                    try { await keyboardTask; } catch { /* Expected during cancellation */ }
                 }
             });
     }
@@ -531,7 +531,7 @@ public class WatchDisplay : IWatchDisplay
             .Expand();
     }
 
-    private Panel BuildFooter()
+    private static Panel BuildFooter()
     {
         var shortcuts = new Markup(
             "[yellow]F[/] [dim]Full re-generate[/]  " +

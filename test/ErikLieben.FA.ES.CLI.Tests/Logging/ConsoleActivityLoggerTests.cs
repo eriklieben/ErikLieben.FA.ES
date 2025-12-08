@@ -437,13 +437,13 @@ public class ConsoleActivityLoggerTests
     public class GetActivityLogMethod : ConsoleActivityLoggerTests
     {
         [Fact]
-        public void Should_return_entries_in_order()
+        public async Task Should_return_entries_in_order()
         {
             // Arrange
             var console = new TestConsole();
             var sut = new ConsoleActivityLogger(console);
             sut.Log(ActivityType.Info, "First");
-            Thread.Sleep(10);
+            await Task.Delay(10);
             sut.Log(ActivityType.Info, "Second");
 
             // Act

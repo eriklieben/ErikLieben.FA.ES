@@ -1,3 +1,6 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8620 // Argument nullability mismatch - NSubstitute mock setup
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

@@ -43,7 +43,7 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: AggregateNotRegisteredDescription,
-        customTags: [WellKnownDiagnosticTags.CompilationEnd]);
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 
     private static readonly DiagnosticDescriptor MissingExtensionsRule = new(
         MissingExtensionsFileDiagnosticId,
@@ -53,7 +53,7 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: MissingExtensionsDescription,
-        customTags: [WellKnownDiagnosticTags.CompilationEnd]);
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -72,7 +72,6 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
         // Collect all Aggregate classes and Extensions files during compilation
         var aggregateClasses = new List<(INamedTypeSymbol Symbol, Location Location)>();
         var extensionsFiles = new List<SyntaxTree>();
-        var registeredAggregates = new HashSet<string>();
 
         context.RegisterSyntaxNodeAction(ctx =>
         {
@@ -127,7 +126,7 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
             if (extensionsTree is null)
             {
                 // Report FAES0014 on the first aggregate
-                var firstAggregate = aggregateClasses.First();
+                var firstAggregate = aggregateClasses[0];
                 var diagnostic = Diagnostic.Create(
                     MissingExtensionsRule,
                     firstAggregate.Location);

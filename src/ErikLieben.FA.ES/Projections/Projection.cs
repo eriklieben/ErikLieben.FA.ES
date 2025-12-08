@@ -384,11 +384,6 @@ public abstract class Projection : IProjectionBase
         }
     }
 
-    private void UpdateVersionIndex(VersionToken versionToken)
-    {
-        UpdateCheckpoint(versionToken);
-    }
-
     /// <summary>
     /// Updates the checkpoint entry without regenerating the fingerprint.
     /// Use this when processing multiple events in a batch for better performance.

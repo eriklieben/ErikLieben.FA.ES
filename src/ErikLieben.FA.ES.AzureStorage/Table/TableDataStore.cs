@@ -183,7 +183,7 @@ public class TableDataStore : IDataStore
         }
     }
 
-    private async Task CheckStreamNotClosedAsync(TableClient tableClient, IObjectDocument document)
+    private static async Task CheckStreamNotClosedAsync(TableClient tableClient, IObjectDocument document)
     {
         int? chunkIdentifier = null;
         if (document.Active.ChunkingEnabled())

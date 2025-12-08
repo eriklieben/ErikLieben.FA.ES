@@ -28,11 +28,11 @@ public class PerformanceMeasurementTests
         }
 
         [Fact]
-        public void Should_measure_elapsed_time()
+        public async Task Should_measure_elapsed_time()
         {
-            var metrics = PerformanceMeasurement.Measure(() =>
+            var metrics = await PerformanceMeasurement.MeasureAsync(async () =>
             {
-                Thread.Sleep(50);
+                await Task.Delay(50);
             }, warmup: false);
 
             Assert.True(metrics.ElapsedTime.TotalMilliseconds >= 40);

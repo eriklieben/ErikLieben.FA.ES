@@ -65,7 +65,7 @@ public class TransformationPipelineBuilder : ITransformationPipelineBuilder
     /// <summary>
     /// Internal transformer that applies filters.
     /// </summary>
-    private class FilterTransformer : IEventTransformer
+    private sealed class FilterTransformer : IEventTransformer
     {
         private readonly List<Func<IEvent, bool>> filters;
 

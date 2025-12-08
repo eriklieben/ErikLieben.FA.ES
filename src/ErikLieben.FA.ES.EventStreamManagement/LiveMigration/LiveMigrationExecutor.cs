@@ -121,9 +121,9 @@ public class LiveMigrationExecutor
             cancellationToken.ThrowIfCancellationRequested();
             return CreateFailureResult("Migration was cancelled");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            _logger.LogWarning("Live migration {MigrationId} was cancelled", _context.MigrationId);
+            _logger.LogWarning(ex, "Live migration {MigrationId} was cancelled", _context.MigrationId);
             throw;
         }
         catch (Exception ex)
@@ -224,8 +224,8 @@ public class LiveMigrationExecutor
             _logger.LogDebug(
                 "Copied {EventCount} events to target stream (versions {Start} to {End})",
                 transformedEvents.Count,
-                transformedEvents.First().EventVersion,
-                transformedEvents.Last().EventVersion);
+                transformedEvents[0].EventVersion,
+                transformedEvents[^1].EventVersion);
         }
 
         var newTargetVersion = targetVersion + transformedEvents.Count;

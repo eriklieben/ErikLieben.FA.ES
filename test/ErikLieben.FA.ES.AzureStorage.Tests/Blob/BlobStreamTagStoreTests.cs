@@ -1,4 +1,7 @@
-﻿using System;
+﻿#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS0618 // Type or member is obsolete - tests verify deprecated properties
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;

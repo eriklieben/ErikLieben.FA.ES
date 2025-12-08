@@ -258,7 +258,7 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
                 await _context.DataStore.AppendAsync(document, [.. events]);
 
                 // Update projection to this stream's version
-                var versionToken = new VersionToken(events.Last(), document);
+                var versionToken = new VersionToken(events[^1], document);
                 await _projection.UpdateToVersion(versionToken.ToLatestVersion());
             }
         }

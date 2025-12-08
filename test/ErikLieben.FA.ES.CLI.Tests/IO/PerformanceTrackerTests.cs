@@ -21,7 +21,7 @@ public class PerformanceTrackerTests
         }
 
         [Fact]
-        public void Should_track_duration_when_disposed()
+        public async Task Should_track_duration_when_disposed()
         {
             // Arrange
             var sut = new PerformanceTracker();
@@ -29,7 +29,7 @@ public class PerformanceTrackerTests
             // Act
             using (sut.Track("test"))
             {
-                Thread.Sleep(10); // Small delay to ensure measurable duration
+                await Task.Delay(10); // Small delay to ensure measurable duration
             }
 
             // Assert
@@ -55,7 +55,7 @@ public class PerformanceTrackerTests
         }
 
         [Fact]
-        public void Should_record_analysis_duration()
+        public async Task Should_record_analysis_duration()
         {
             // Arrange
             var sut = new PerformanceTracker();
@@ -63,7 +63,7 @@ public class PerformanceTrackerTests
             // Act
             using (sut.TrackAnalysis())
             {
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
             var metrics = sut.GetMetrics();
 
@@ -89,7 +89,7 @@ public class PerformanceTrackerTests
         }
 
         [Fact]
-        public void Should_record_generation_duration()
+        public async Task Should_record_generation_duration()
         {
             // Arrange
             var sut = new PerformanceTracker();
@@ -97,7 +97,7 @@ public class PerformanceTrackerTests
             // Act
             using (sut.TrackGeneration())
             {
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
             var metrics = sut.GetMetrics();
 
@@ -123,7 +123,7 @@ public class PerformanceTrackerTests
         }
 
         [Fact]
-        public void Should_record_file_write_duration()
+        public async Task Should_record_file_write_duration()
         {
             // Arrange
             var sut = new PerformanceTracker();
@@ -131,7 +131,7 @@ public class PerformanceTrackerTests
             // Act
             using (sut.TrackFileWrite())
             {
-                Thread.Sleep(10);
+                await Task.Delay(10);
             }
             var metrics = sut.GetMetrics();
 
@@ -254,12 +254,12 @@ public class PerformanceTrackerTests
         }
 
         [Fact]
-        public void Should_return_in_progress_duration_for_running_operation()
+        public async Task Should_return_in_progress_duration_for_running_operation()
         {
             // Arrange
             var sut = new PerformanceTracker();
             var scope = sut.TrackAnalysis();
-            Thread.Sleep(20);
+            await Task.Delay(20);
 
             // Act
             var metrics = sut.GetMetrics();

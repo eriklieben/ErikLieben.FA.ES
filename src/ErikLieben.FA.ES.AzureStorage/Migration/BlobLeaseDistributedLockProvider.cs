@@ -93,6 +93,7 @@ public class BlobLeaseDistributedLockProvider : IDistributedLockProvider
             {
                 // Lease already held by someone else
                 logger.LogDebug(
+                    ex,
                     "Lock {LockKey} is held by another process, waiting... (Elapsed: {Elapsed})",
                     lockKey,
                     stopwatch.Elapsed);

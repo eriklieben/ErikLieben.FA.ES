@@ -262,7 +262,7 @@ public class AggregateTestBuilder<TAggregate> where TAggregate : IBase
 
     private async Task SetupAggregate()
     {
-        if (_aggregate != null)
+        if (!EqualityComparer<TAggregate>.Default.Equals(_aggregate, default))
         {
             return; // Already setup
         }

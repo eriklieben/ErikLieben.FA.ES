@@ -57,7 +57,7 @@ public class StreamActionRefactoringProvider : CodeRefactoringProvider
                name.Contains(".StreamActionAttribute<");
     }
 
-    private async Task TryRegisterManualToAttributeRefactoringAsync(
+    private static async Task TryRegisterManualToAttributeRefactoringAsync(
         CodeRefactoringContext context,
         InvocationExpressionSyntax invocation)
     {
@@ -89,7 +89,7 @@ public class StreamActionRefactoringProvider : CodeRefactoringProvider
                 equivalenceKey: $"ConvertToAttribute_{actionTypeName}"));
     }
 
-    private async Task TryRegisterAttributeToManualRefactoringAsync(
+    private static async Task TryRegisterAttributeToManualRefactoringAsync(
         CodeRefactoringContext context,
         AttributeSyntax attribute)
     {

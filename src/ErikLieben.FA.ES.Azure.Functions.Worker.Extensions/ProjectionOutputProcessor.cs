@@ -169,7 +169,7 @@ public class ProjectionOutputProcessor
             return await projectionFactory.GetOrCreateProjectionAsync(
                 _objectDocumentFactory,
                 _eventStreamFactory,
-                attribute.BlobName) as Projection;
+                attribute.BlobName);
         }
 
         // Fall back to looking for IProjectionFactory implementations
@@ -181,7 +181,7 @@ public class ProjectionOutputProcessor
             return await matchingFactory.GetOrCreateProjectionAsync(
                 _objectDocumentFactory,
                 _eventStreamFactory,
-                attribute.BlobName) as Projection;
+                attribute.BlobName);
         }
 
         return null;

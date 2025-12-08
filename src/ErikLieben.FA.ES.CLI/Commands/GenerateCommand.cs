@@ -91,7 +91,7 @@ public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         AnsiConsole.WriteLine();
         AnsiConsole.Write(new Rule("[green]Generation Complete[/]").RuleStyle("green dim"));
 
-        var metrics = performanceTracker.GetMetrics();
+        _ = performanceTracker.GetMetrics(); // Metrics collected for future use
         AnsiConsole.MarkupLine($"[dim]Analysis:[/] [white]{result.AnalysisDuration.TotalSeconds:F2}s[/]");
         AnsiConsole.MarkupLine($"[dim]Generation:[/] [white]{result.GenerationDuration.TotalSeconds:F2}s[/]");
         AnsiConsole.MarkupLine($"[dim]Files:[/] [white]{result.GeneratedFiles.Count}[/] ([green]{result.GeneratedFiles.Count - result.FilesSkipped} written[/], [dim]{result.FilesSkipped} unchanged[/])");

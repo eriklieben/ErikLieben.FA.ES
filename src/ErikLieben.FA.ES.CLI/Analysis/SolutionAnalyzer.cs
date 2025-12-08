@@ -164,7 +164,7 @@ public class SolutionAnalyzer : ISolutionAnalyzer
         await Task.WhenAll(syntaxTreeTasks);
     }
 
-    private void ProcessClassDeclarations(
+    private static void ProcessClassDeclarations(
         List<ClassDeclarationSyntax> classDeclarations,
         SemanticModel semanticModel,
         Compilation compilation,

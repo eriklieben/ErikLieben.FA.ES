@@ -55,8 +55,6 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         if (!diagnostic.Properties.TryGetValue("EventTypeName", out var eventTypeName) || eventTypeName == null)
             return;
 
-        diagnostic.Properties.TryGetValue("EventTypeNamespace", out var eventTypeNamespace);
-
         // Generate a method name based on the event type
         var newMethodName = $"When{eventTypeName}";
 
@@ -75,8 +73,6 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         string newMethodName,
         CancellationToken cancellationToken)
     {
-        var solution = document.Project.Solution;
-
         // Find the generated document first (before any modifications)
         Document? generatedDocument = null;
         var containingClass = methodDecl.FirstAncestorOrSelf<ClassDeclarationSyntax>();
@@ -88,7 +84,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
 
         // 1. Update the source file (add attribute, rename method, remove parameter)
         var updatedSourceDocument = await UpdateSourceFileAsync(document, methodDecl, eventTypeName, newMethodName, cancellationToken);
-        solution = updatedSourceDocument.Project.Solution;
+        var solution = updatedSourceDocument.Project.Solution;
 
         // 2. Update the .Generated.cs file if found
         if (generatedDocument != null)
@@ -196,9 +192,6 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
                 if (hasNamespaceUsing)
                     return root;
 
-                // Add the using inside the namespace
-                var newNamespaceDecl = namespaceDecl;
-
                 // Find the updated namespace in the root
                 var updatedNamespace = root.DescendantNodes()
                     .OfType<BaseNamespaceDeclarationSyntax>()
@@ -240,10 +233,6 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         var sourceFilePath = sourceDocument.FilePath;
         if (string.IsNullOrEmpty(sourceFilePath))
             return null;
-
-        var directory = Path.GetDirectoryName(sourceFilePath);
-        var generatedFileName = $"{className}.Generated.cs";
-        var expectedGeneratedPath = Path.Combine(directory ?? "", generatedFileName);
 
         // Search in the same project for the generated file
         foreach (var doc in sourceDocument.Project.Documents)

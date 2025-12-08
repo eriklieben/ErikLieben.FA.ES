@@ -71,7 +71,7 @@ public class GenerateProjectionCode
     {
         var usings = InitializeUsings(projection);
         var generatorVersion = solution.Generator?.Version ?? "1.0.0";
-        var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
+        var (_, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
         var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
@@ -82,7 +82,6 @@ public class GenerateProjectionCode
             ? jsonBlobFactoryCode
             : cosmosDbFactoryCode;
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
-        var postWhenCode = GeneratePostWhenCode(projection);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, generatorVersion);
         var foldMethod = GenerateFoldMethod(projection, postWhenAllDummyCode);
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
@@ -943,7 +942,6 @@ public class GenerateProjectionCode
     {
         var foldCode = new StringBuilder();
         var usings = new List<string>();
-        var whenParameterDeclarations = new List<string>();
 
         foreach (var @event in projection.Events)
         {

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿#pragma warning disable CS0618 // Type or member is obsolete - tests are verifying obsolete properties work correctly
+
+using System.Collections.Generic;
 using ErikLieben.FA.ES.Documents;
 using Xunit;
 

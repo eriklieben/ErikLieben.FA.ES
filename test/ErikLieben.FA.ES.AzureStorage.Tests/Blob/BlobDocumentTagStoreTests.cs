@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;

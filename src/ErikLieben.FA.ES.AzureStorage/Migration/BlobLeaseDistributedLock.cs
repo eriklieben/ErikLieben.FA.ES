@@ -130,6 +130,7 @@ public class BlobLeaseDistributedLock : IDistributedLock
         {
             // Lock already released or doesn't exist - this is fine
             logger.LogDebug(
+                ex,
                 "Blob lease lock {LockKey} was already released",
                 LockKey);
         }

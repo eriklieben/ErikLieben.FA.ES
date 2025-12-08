@@ -1,3 +1,6 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+
 using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;

@@ -205,7 +205,7 @@ public class AggregateAssertion<TAggregate> where TAggregate : IBase
         var matchingEvents = _events.Values
             .Where(e => e.EventType == eventName && e.Payload != null)
             .Select(e => JsonSerializer.Deserialize<TEvent>(e.Payload!))
-            .Where(e => e != null && predicate(e));
+            .Where(e => !EqualityComparer<TEvent>.Default.Equals(e, default) && predicate(e!));
 
         if (!matchingEvents.Any())
         {
