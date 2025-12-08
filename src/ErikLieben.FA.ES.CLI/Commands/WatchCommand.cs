@@ -518,6 +518,8 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
 
     private async Task RegenerateEntityAsync(string entityKey, Config config, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (_cachedSolution == null || _cachedSolutionPath == null)
             return;
 

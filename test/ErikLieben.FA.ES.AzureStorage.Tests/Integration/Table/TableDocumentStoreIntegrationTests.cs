@@ -1,3 +1,5 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;

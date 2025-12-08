@@ -189,7 +189,7 @@ public static class SnapshotAssertion
         var expectedJson = File.ReadAllText(snapshotPath);
         var expected = JsonSerializer.Deserialize<T>(expectedJson, options.JsonOptions);
 
-        if (expected == null)
+        if (EqualityComparer<T>.Default.Equals(expected, default))
         {
             throw new TestAssertionException($"Failed to deserialize snapshot '{snapshotName}'.");
         }

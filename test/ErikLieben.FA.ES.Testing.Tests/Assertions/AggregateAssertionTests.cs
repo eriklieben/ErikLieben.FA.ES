@@ -1,3 +1,5 @@
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.Attributes;

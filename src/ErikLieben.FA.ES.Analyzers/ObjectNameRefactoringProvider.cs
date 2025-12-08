@@ -135,8 +135,7 @@ public class ObjectNameRefactoringProvider : CodeRefactoringProvider
         // Get indentation from the class declaration
         var classLeadingTrivia = classDecl.GetLeadingTrivia();
         var indentation = classLeadingTrivia
-            .Where(t => t.IsKind(SyntaxKind.WhitespaceTrivia))
-            .LastOrDefault();
+            .LastOrDefault(t => t.IsKind(SyntaxKind.WhitespaceTrivia));
 
         var attributeLeadingTrivia = indentation != default
             ? SyntaxFactory.TriviaList(indentation)

@@ -33,7 +33,6 @@ public class MigrationBuilder : IMigrationBuilder
     private bool isDryRun;
     private bool supportsPause;
     private bool supportsRollback;
-    private IMigrationPlan? existingPlan;
     private LiveMigrationOptions? liveMigrationOptions;
 
     /// <summary>
@@ -177,7 +176,7 @@ public class MigrationBuilder : IMigrationBuilder
     /// <inheritdoc/>
     public IMigrationBuilder FromDryRunPlan(IMigrationPlan plan)
     {
-        this.existingPlan = plan ?? throw new ArgumentNullException(nameof(plan));
+        ArgumentNullException.ThrowIfNull(plan);
         this.isDryRun = false;
         return this;
     }

@@ -1,3 +1,5 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+
 using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;

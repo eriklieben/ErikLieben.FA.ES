@@ -242,13 +242,14 @@ public static class CodeFormattingHelper
                     d.Contains("net7.0"))
                 .OrderByDescending(d => d);
 
-            foreach (var tfmDir in tfmDirs)
+            // Only use first matching TFM
+            var firstTfmDir = tfmDirs.FirstOrDefault();
+            if (firstTfmDir != null)
             {
-                foreach (var dllPath in Directory.GetFiles(tfmDir, "*.dll"))
+                foreach (var dllPath in Directory.GetFiles(firstTfmDir, "*.dll"))
                 {
                     TryAddReference(dllPath, references, addedLocations);
                 }
-                break; // Only use first matching TFM
             }
         }
         catch

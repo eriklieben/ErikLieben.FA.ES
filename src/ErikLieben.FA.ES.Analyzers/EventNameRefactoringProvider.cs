@@ -162,8 +162,7 @@ public class EventNameRefactoringProvider : CodeRefactoringProvider
         // Get indentation from the type declaration
         var typeLeadingTrivia = typeDecl.GetLeadingTrivia();
         var indentation = typeLeadingTrivia
-            .Where(t => t.IsKind(SyntaxKind.WhitespaceTrivia))
-            .LastOrDefault();
+            .LastOrDefault(t => t.IsKind(SyntaxKind.WhitespaceTrivia));
 
         var attributeLeadingTrivia = indentation != default
             ? SyntaxFactory.TriviaList(indentation)

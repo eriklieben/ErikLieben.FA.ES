@@ -79,6 +79,8 @@ public class MigrationExecutor
 
     private async Task<IMigrationResult> ExecuteDryRunAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         logger.LogInformation(
             "Executing dry-run for migration {MigrationId}",
             context.MigrationId);
@@ -237,6 +239,8 @@ public class MigrationExecutor
 
     private async Task<long> AnalyzeSourceStreamAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Read all events from source stream to count them
         var events = await context.DataStore!.ReadAsync(
             context.SourceDocument,
@@ -360,6 +364,8 @@ public class MigrationExecutor
 
     private async Task PerformCutoverAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (context.DocumentStore == null)
         {
             throw new MigrationException("DocumentStore is required for cutover");

@@ -73,8 +73,10 @@ public class BlobObjectIdProvider : IObjectIdProvider
             .AsPages(continuationToken, pageSize);
 
         // Get only the first page (we only need one page per call)
-        await foreach (var page in resultSegment.WithCancellation(cancellationToken))
+        await using var enumerator = resultSegment.GetAsyncEnumerator(cancellationToken);
+        if (await enumerator.MoveNextAsync())
         {
+            var page = enumerator.Current;
             foreach (var blobItem in page.Values)
             {
                 var objectId = ExtractObjectId(blobItem.Name, objectNameLower);
@@ -85,7 +87,6 @@ public class BlobObjectIdProvider : IObjectIdProvider
             }
 
             nextContinuationToken = page.ContinuationToken;
-            break; // Only process first page
         }
 
         return new PagedResult<string>

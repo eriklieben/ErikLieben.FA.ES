@@ -58,7 +58,7 @@ public class GenerateVersionTokenOfTCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionToken, path, solution.Generator?.Version ?? "1.0.0");
+                await GenerateVersionToken(versionToken, path);
             }
 
             // Generate json
@@ -77,7 +77,7 @@ public class GenerateVersionTokenOfTCode
     /// - Extension methods for converting ObjectMetadata to version tokens
     /// - Proper using directives and namespace declarations
     /// </remarks>
-    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path, string version)
+    private static async Task GenerateVersionToken(VersionTokenDefinition versionToken, string? path)
     {
         if (!versionToken.IsPartialClass)
         {

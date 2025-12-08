@@ -76,21 +76,21 @@ public class GenerateProjectionCode
         var (propertyCode, _) = GeneratePropertyCode(projection);
         var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
         var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, generatorVersion);
-        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput, generatorVersion);
+        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput);
         // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
         var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
             ? jsonBlobFactoryCode
             : cosmosDbFactoryCode;
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenCode = GeneratePostWhenCode(projection);
-        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, generatorVersion);
-        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, generatorVersion);
+        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, generatorVersion);
+        var foldMethod = GenerateFoldMethod(projection, postWhenAllDummyCode);
         var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
         var deserializationCode = GenerateDeserializationCode(projection, ctorCode.ToString());
         var createDestinationInstanceCode = GenerateCreateDestinationInstanceMethod(projection);
-        var routedProjectionSerializationCode = GenerateRoutedProjectionSerializationMethods(projection);
+        var routedProjectionSerializationCode = GenerateRoutedProjectionSerializationMethods();
 
         var codeComponents = new ProjectionCodeComponents(
             foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
@@ -432,7 +432,7 @@ public class GenerateProjectionCode
         // Check if this is a routed projection
         if (projection is RoutedProjectionDefinition routedProjection && routedProjection.IsRoutedProjection)
         {
-            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, ctorInput, version);
+            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, ctorInput);
         }
 
         var needsServiceProvider = !string.IsNullOrEmpty(get);
@@ -481,7 +481,7 @@ public class GenerateProjectionCode
                 """;
     }
 
-    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
+    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
     {
         if (projection.CosmosDbProjection == null)
         {
@@ -543,7 +543,7 @@ public class GenerateProjectionCode
                 """;
     }
 
-    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
+    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string ctorInput)
     {
         usings.Add("ErikLieben.FA.ES.Projections");
         usings.Add("System.Text");
@@ -861,7 +861,7 @@ public class GenerateProjectionCode
         return postWhenStringBuilder.ToString();
     }
 
-    private static string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings, string version)
+    private static string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, string version)
     {
         if (projection.HasPostWhenAllMethod)
         {
@@ -876,8 +876,7 @@ public class GenerateProjectionCode
         return postWhenAllDummyCode.ToString();
     }
 
-    private static string GenerateFoldMethod(ProjectionDefinition projection, StringBuilder foldCode,
-        string postWhenCode, string postWhenAllDummyCode, string version)
+    private static string GenerateFoldMethod(ProjectionDefinition projection, string postWhenAllDummyCode)
     {
         var isAsync = projection.Events.Any(e => e.ActivationAwaitRequired);
         var asyncKeyword = isAsync ? "async " : string.Empty;
@@ -1318,7 +1317,7 @@ public class GenerateProjectionCode
         return code.ToString();
     }
 
-    private static string GenerateRoutedProjectionSerializationMethods(ProjectionDefinition projection)
+    private static string GenerateRoutedProjectionSerializationMethods()
     {
         // Routed projections use standard ToJson() and LoadFromJson() methods
         // since the RoutedProjection base class already has proper [JsonPropertyName] and [JsonIgnore] attributes

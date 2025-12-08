@@ -151,12 +151,11 @@ public class StreamActionRefactoringProvider : CodeRefactoringProvider
             return genericName.TypeArgumentList.Arguments[0].ToString();
         }
 
-        if (name is QualifiedNameSyntax qualifiedName && qualifiedName.Right is GenericNameSyntax qualifiedGeneric)
+        if (name is QualifiedNameSyntax qualifiedName &&
+            qualifiedName.Right is GenericNameSyntax qualifiedGeneric &&
+            qualifiedGeneric.TypeArgumentList.Arguments.Count > 0)
         {
-            if (qualifiedGeneric.TypeArgumentList.Arguments.Count > 0)
-            {
-                return qualifiedGeneric.TypeArgumentList.Arguments[0].ToString();
-            }
+            return qualifiedGeneric.TypeArgumentList.Arguments[0].ToString();
         }
 
         return null;
@@ -185,8 +184,7 @@ public class StreamActionRefactoringProvider : CodeRefactoringProvider
         // Get indentation from the class declaration
         var classLeadingTrivia = classDecl.GetLeadingTrivia();
         var indentation = classLeadingTrivia
-            .Where(t => t.IsKind(SyntaxKind.WhitespaceTrivia))
-            .LastOrDefault();
+            .LastOrDefault(t => t.IsKind(SyntaxKind.WhitespaceTrivia));
 
         var attributeLeadingTrivia = indentation != default
             ? SyntaxFactory.TriviaList(indentation)

@@ -69,15 +69,17 @@ public class TableObjectIdProvider : IObjectIdProvider
 
             var pages = query.AsPages(continuationToken, pageSize);
 
-            await foreach (var page in pages.WithCancellation(cancellationToken))
+            // Get only the first page (we only need one page per call)
+            await using var enumerator = pages.GetAsyncEnumerator(cancellationToken);
+            if (await enumerator.MoveNextAsync())
             {
+                var page = enumerator.Current;
                 foreach (var entity in page.Values)
                 {
                     items.Add(entity.RowKey); // RowKey is the ObjectId
                 }
 
                 nextContinuationToken = page.ContinuationToken;
-                break; // Only process first page
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 404)

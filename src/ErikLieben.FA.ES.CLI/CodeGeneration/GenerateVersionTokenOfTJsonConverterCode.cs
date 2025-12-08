@@ -59,7 +59,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
                     .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
                 var path = System.IO.Path.Combine(solutionPath, normalized);
                 AnsiConsole.MarkupLine($"Path: [blue]{path}[/]");
-                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens, solution.Generator?.Version ?? "1.0.0");
+                await GenerateVersionToken(versionTokenJsonConverter, path, project.VersionTokens);
             }
 
             // Generate json
@@ -76,7 +76,7 @@ public class GenerateVersionTokenOfTJsonConverterCode
     /// <remarks>
     /// The generated code includes a generic Read method that uses a switch expression to instantiate the appropriate version token type based on the generic type parameter.
     /// </remarks>
-    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens, string version)
+    private static async Task GenerateVersionToken(VersionTokenJsonConverterDefinition versionTokenJsonConverter, string? path, List<VersionTokenDefinition> versionTokens)
     {
         if (!versionTokenJsonConverter.IsPartialClass)
         {

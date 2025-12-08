@@ -63,7 +63,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         context.RegisterCodeFix(
             CodeAction.Create(
                 title: $"Convert to [When<{eventTypeName}>] {newMethodName}()",
-                createChangedSolution: c => ConvertToWhenAttributeAsync(context.Document, methodDecl, eventTypeName, newMethodName, eventTypeNamespace, c),
+                createChangedSolution: c => ConvertToWhenAttributeAsync(context.Document, methodDecl, eventTypeName, newMethodName, c),
                 equivalenceKey: nameof(UnusedWhenEventParameterCodeFixProvider)),
             diagnostic);
     }
@@ -73,7 +73,6 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         MethodDeclarationSyntax methodDecl,
         string eventTypeName,
         string newMethodName,
-        string? eventTypeNamespace,
         CancellationToken cancellationToken)
     {
         var solution = document.Project.Solution;
@@ -84,7 +83,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         if (containingClass != null)
         {
             var className = containingClass.Identifier.ValueText;
-            generatedDocument = FindGeneratedDocument(solution, document, className);
+            generatedDocument = FindGeneratedDocument(document, className);
         }
 
         // 1. Update the source file (add attribute, rename method, remove parameter)
@@ -123,8 +122,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         // Extract just the indentation (whitespace before the method modifier)
         // The leading trivia typically ends with whitespace for indentation
         var indentationTrivia = methodLeadingTrivia
-            .Where(t => t.IsKind(SyntaxKind.WhitespaceTrivia))
-            .LastOrDefault();
+            .LastOrDefault(t => t.IsKind(SyntaxKind.WhitespaceTrivia));
 
         var indentation = indentationTrivia != default
             ? SyntaxFactory.TriviaList(indentationTrivia)
@@ -236,7 +234,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         return root;
     }
 
-    private static Document? FindGeneratedDocument(Solution solution, Document sourceDocument, string className)
+    private static Document? FindGeneratedDocument(Document sourceDocument, string className)
     {
         // Look for a .Generated.cs file with the same class name in the same project
         var sourceFilePath = sourceDocument.FilePath;

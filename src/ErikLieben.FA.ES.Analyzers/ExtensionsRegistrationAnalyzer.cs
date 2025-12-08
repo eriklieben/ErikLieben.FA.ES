@@ -122,7 +122,7 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
                 return; // No aggregates, nothing to check
 
             // Find the Extensions.Generated.cs file for this project
-            var extensionsTree = FindExtensionsFile(ctx.Compilation, extensionsFiles);
+            var extensionsTree = FindExtensionsFile(extensionsFiles);
 
             if (extensionsTree is null)
             {
@@ -153,7 +153,7 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private static SyntaxTree? FindExtensionsFile(Compilation compilation, List<SyntaxTree> extensionsTrees)
+    private static SyntaxTree? FindExtensionsFile(List<SyntaxTree> extensionsTrees)
     {
         // Return the first Extensions.Generated.cs file found
         // In most cases there should be only one per project

@@ -139,6 +139,8 @@ public class LiveMigrationExecutor
 
     private async Task EnsureTargetStreamExistsAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Check if target document already exists
         var existingTarget = await _context.DocumentStore.GetAsync(
             _context.SourceDocument.ObjectName,
@@ -234,6 +236,8 @@ public class LiveMigrationExecutor
 
     private async Task<int> GetTargetVersionAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var targetEvents = await _context.DataStore.ReadAsync(
             _context.TargetDocument,
             startVersion: 0,
@@ -250,6 +254,8 @@ public class LiveMigrationExecutor
 
     private async Task<CloseAttemptResult> AttemptCloseAsync(int expectedVersion, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Re-read source to get current version
         var currentEvents = await _context.DataStore.ReadAsync(
             _context.SourceDocument,
