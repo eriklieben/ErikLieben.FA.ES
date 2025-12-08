@@ -569,7 +569,7 @@ public class AzureBlobBackupProviderTests
         return mockDocument;
     }
 
-    private static IBackupHandle CreateMockBackupHandle(Guid? backupId = null, bool isCompressed = false)
+    private static BlobBackupHandle CreateMockBackupHandle(Guid? backupId = null, bool isCompressed = false)
     {
         var id = backupId ?? Guid.NewGuid();
         return new BlobBackupHandle

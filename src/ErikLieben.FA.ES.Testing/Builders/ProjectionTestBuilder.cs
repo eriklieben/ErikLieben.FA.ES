@@ -1,5 +1,3 @@
-#pragma warning disable S4136 // Method overloads should be adjacent - organized by functionality for builder pattern
-
 using System.Text.Json;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Attributes;
@@ -98,6 +96,29 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
     }
 
     /// <summary>
+    /// Sets up events for a specific object stream using domain event objects.
+    /// This overload automatically wraps domain events as JsonEvent instances.
+    /// </summary>
+    /// <param name="objectName">The logical name/scope of the object.</param>
+    /// <param name="objectId">The identifier of the object instance.</param>
+    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
+    public ProjectionTestBuilder<TProjection> GivenEvents(
+        string objectName,
+        string objectId,
+        params object[] domainEvents)
+    {
+        ArgumentNullException.ThrowIfNull(objectName);
+        ArgumentNullException.ThrowIfNull(objectId);
+        ArgumentNullException.ThrowIfNull(domainEvents);
+
+        var events = WrapDomainEvents(domainEvents);
+        _givenEventStreams.Add((objectName, objectId, events));
+        return this;
+    }
+
+    /// <summary>
     /// Sets up events for a specific object stream using aggregate type (AOT-friendly).
     /// Uses the static ObjectName from the aggregate type.
     /// </summary>
@@ -113,6 +134,28 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
         ArgumentNullException.ThrowIfNull(objectId);
         ArgumentNullException.ThrowIfNull(events);
 
+        _givenEventStreams.Add((TAggregate.ObjectName, objectId, events));
+        return this;
+    }
+
+    /// <summary>
+    /// Sets up events for a specific object stream using aggregate type and domain event objects.
+    /// This overload automatically wraps domain events as JsonEvent instances.
+    /// </summary>
+    /// <typeparam name="TAggregate">The aggregate type implementing ITestableAggregate.</typeparam>
+    /// <param name="objectId">The identifier of the object instance.</param>
+    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
+    public ProjectionTestBuilder<TProjection> Given<TAggregate>(
+        string objectId,
+        params object[] domainEvents)
+        where TAggregate : ITestableAggregate<TAggregate>
+    {
+        ArgumentNullException.ThrowIfNull(objectId);
+        ArgumentNullException.ThrowIfNull(domainEvents);
+
+        var events = WrapDomainEvents(domainEvents);
         _givenEventStreams.Add((TAggregate.ObjectName, objectId, events));
         return this;
     }
@@ -152,51 +195,6 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
             _givenEventStreams.Add(stream);
         }
 
-        return this;
-    }
-
-    /// <summary>
-    /// Sets up events for a specific object stream using domain event objects.
-    /// This overload automatically wraps domain events as JsonEvent instances.
-    /// </summary>
-    /// <param name="objectName">The logical name/scope of the object.</param>
-    /// <param name="objectId">The identifier of the object instance.</param>
-    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
-    /// <returns>The builder instance for method chaining.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
-    public ProjectionTestBuilder<TProjection> GivenEvents(
-        string objectName,
-        string objectId,
-        params object[] domainEvents)
-    {
-        ArgumentNullException.ThrowIfNull(objectName);
-        ArgumentNullException.ThrowIfNull(objectId);
-        ArgumentNullException.ThrowIfNull(domainEvents);
-
-        var events = WrapDomainEvents(domainEvents);
-        _givenEventStreams.Add((objectName, objectId, events));
-        return this;
-    }
-
-    /// <summary>
-    /// Sets up events for a specific object stream using aggregate type and domain event objects.
-    /// This overload automatically wraps domain events as JsonEvent instances.
-    /// </summary>
-    /// <typeparam name="TAggregate">The aggregate type implementing ITestableAggregate.</typeparam>
-    /// <param name="objectId">The identifier of the object instance.</param>
-    /// <param name="domainEvents">The domain event objects to apply to this stream.</param>
-    /// <returns>The builder instance for method chaining.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when a domain event doesn't have EventNameAttribute.</exception>
-    public ProjectionTestBuilder<TProjection> Given<TAggregate>(
-        string objectId,
-        params object[] domainEvents)
-        where TAggregate : ITestableAggregate<TAggregate>
-    {
-        ArgumentNullException.ThrowIfNull(objectId);
-        ArgumentNullException.ThrowIfNull(domainEvents);
-
-        var events = WrapDomainEvents(domainEvents);
-        _givenEventStreams.Add((TAggregate.ObjectName, objectId, events));
         return this;
     }
 

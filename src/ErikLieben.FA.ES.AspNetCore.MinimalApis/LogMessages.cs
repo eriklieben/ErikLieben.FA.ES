@@ -1,3 +1,5 @@
+#pragma warning disable CS1591 // Missing XML comment - LoggerMessage source-generated methods are implementation details
+
 namespace ErikLieben.FA.ES.AspNetCore.MinimalApis;
 
 using Microsoft.Extensions.Logging;

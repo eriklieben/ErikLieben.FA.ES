@@ -396,7 +396,7 @@ public class TableDataStoreIntegrationTests : IAsyncLifetime
         }
     }
 
-    private IObjectDocument CreateObjectDocument(string streamId)
+    private static IObjectDocument CreateObjectDocument(string streamId)
     {
         var streamInfo = new StreamInformation
         {

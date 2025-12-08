@@ -54,12 +54,11 @@ public BlobObjectDocumentFactory(
     public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
-        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
-        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
-        // After validation, both objectName and objectId are guaranteed to be non-null
-        var objectNameLower = objectName!.ToLowerInvariant();
-        var result = await blobDocumentStore.CreateAsync(objectNameLower, objectId!, store);
+        var objectNameLower = objectName.ToLowerInvariant();
+        var result = await blobDocumentStore.CreateAsync(objectNameLower, objectId, store);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");

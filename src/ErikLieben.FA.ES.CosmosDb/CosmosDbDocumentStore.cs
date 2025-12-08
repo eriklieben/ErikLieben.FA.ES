@@ -1,5 +1,3 @@
-#pragma warning disable S1192 // String literals should not be duplicated - store type identifiers
-
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Security.Cryptography;
@@ -84,11 +82,11 @@ public class CosmosDbDocumentStore : ICosmosDbDocumentStore
                 Active = new CosmosDbStreamInfo
                 {
                     StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
-                    StreamType = "cosmosdb", // Always use cosmosdb for CosmosDB-created documents
-                    DocumentTagType = "cosmosdb",
+                    StreamType = CosmosDbStreamInfo.DefaultStoreType, // Always use cosmosdb for CosmosDB-created documents
+                    DocumentTagType = CosmosDbStreamInfo.DefaultStoreType,
                     CurrentStreamVersion = -1,
-                    DocumentType = "cosmosdb", // Route to CosmosDB in composite factories
-                    EventStreamTagType = "cosmosdb",
+                    DocumentType = CosmosDbStreamInfo.DefaultStoreType, // Route to CosmosDB in composite factories
+                    EventStreamTagType = CosmosDbStreamInfo.DefaultStoreType,
                     DataStore = targetStore,
                     DocumentStore = targetStore,
                     DocumentTagStore = settings.DefaultDocumentTagStore,

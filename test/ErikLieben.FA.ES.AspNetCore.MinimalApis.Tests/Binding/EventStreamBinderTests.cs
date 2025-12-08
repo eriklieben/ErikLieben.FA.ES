@@ -29,7 +29,7 @@ public class EventStreamBinderTests
         public void ProcessSnapshot(object snapshot) { }
     }
 
-    private static HttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
+    private static DefaultHttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
     {
         var context = new DefaultHttpContext
         {

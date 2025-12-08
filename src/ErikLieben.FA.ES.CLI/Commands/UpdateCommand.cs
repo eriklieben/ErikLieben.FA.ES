@@ -1,5 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - update command involves multiple steps with version checks and migrations
-
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;

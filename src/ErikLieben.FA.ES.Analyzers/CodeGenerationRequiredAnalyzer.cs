@@ -1,5 +1,4 @@
 #pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for cross-file analysis
-#pragma warning disable S3776 // Cognitive Complexity - code generation analysis inherently requires complex logic
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -203,7 +202,7 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
                        a.Name.ToString().StartsWith("WhenAttribute<"))
             .Select(a => (Attribute: a, Symbol: semanticModel.GetSymbolInfo(a).Symbol))
             .Where(x => x.Symbol?.ContainingType is INamedTypeSymbol { TypeArguments.Length: 1 })
-            .Select(x => (x.Attribute, EventType: ((INamedTypeSymbol)x.Symbol!.ContainingType!).TypeArguments[0]));
+            .Select(x => (x.Attribute, EventType: (x.Symbol!.ContainingType as INamedTypeSymbol)!.TypeArguments[0]));
 
         result.AddRange(whenAttributes.Select(x =>
             (x.EventType.Name, x.Attribute.GetLocation())));
@@ -223,23 +222,11 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
             .Where(p => p != null)
             .ToList();
 
-        foreach (var syntaxTree in compilation.SyntaxTrees)
-        {
-            var treePath = syntaxTree.FilePath;
-            if (treePath.EndsWith(expectedFileName))
-            {
-                // Verify it's in a similar directory (same project)
-                foreach (var sourcePath in sourceLocations)
-                {
-                    if (sourcePath != null && AreInSameDirectory(sourcePath, treePath))
-                    {
-                        return syntaxTree;
-                    }
-                }
-            }
-        }
-
-        return null;
+        return compilation.SyntaxTrees
+            .Where(syntaxTree => syntaxTree.FilePath.EndsWith(expectedFileName))
+            .FirstOrDefault(syntaxTree => sourceLocations
+                .Where(sourcePath => sourcePath != null)
+                .Any(sourcePath => AreInSameDirectory(sourcePath!, syntaxTree.FilePath)));
     }
 
     private static bool AreInSameDirectory(string path1, string path2)

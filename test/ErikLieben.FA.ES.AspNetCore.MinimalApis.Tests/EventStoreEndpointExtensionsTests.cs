@@ -56,7 +56,7 @@ public class EventStoreEndpointExtensionsTests
         public override string ToJson() => JsonSerializer.Serialize(this);
     }
 
-    private static HttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
+    private static DefaultHttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
     {
         var context = new DefaultHttpContext
         {
@@ -66,7 +66,7 @@ public class EventStoreEndpointExtensionsTests
         return context;
     }
 
-    private IServiceProvider CreateServiceProviderWithAggregate(TestAggregate aggregate)
+    private ServiceProvider CreateServiceProviderWithAggregate(TestAggregate aggregate)
     {
         var document = Substitute.For<IObjectDocument>();
         var eventStream = Substitute.For<IEventStream>();
@@ -92,7 +92,7 @@ public class EventStoreEndpointExtensionsTests
         return services.BuildServiceProvider();
     }
 
-    private IServiceProvider CreateServiceProviderWithProjection(TestProjection projection)
+    private ServiceProvider CreateServiceProviderWithProjection(TestProjection projection)
     {
         var documentFactory = Substitute.For<IObjectDocumentFactory>();
         var streamFactory = Substitute.For<IEventStreamFactory>();

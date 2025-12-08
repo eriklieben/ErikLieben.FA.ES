@@ -1,5 +1,4 @@
 #pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
-#pragma warning disable S3776 // Cognitive Complexity - aggregate code generation involves complex template logic
 #pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
 #pragma warning disable S1192 // String literals should not be duplicated - code generation templates
 

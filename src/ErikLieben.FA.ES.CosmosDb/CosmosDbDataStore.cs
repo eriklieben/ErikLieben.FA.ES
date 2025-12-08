@@ -1,5 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - CosmosDB operations require handling multiple response scenarios
-
 using System.Diagnostics;
 using System.Net;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
@@ -167,46 +165,7 @@ public class CosmosDbDataStore : IDataStore
         try
         {
             var partitionKey = new PartitionKey(streamId);
-
-            if (cosmosEvents.Count == 1)
-            {
-                // Single event - simple create
-                await container.CreateItemAsync(cosmosEvents[0], partitionKey);
-            }
-            else if (cosmosEvents.Count <= settings.MaxBatchSize)
-            {
-                // Multiple events - use transactional batch for atomicity
-                var batch = container.CreateTransactionalBatch(partitionKey);
-                foreach (var evt in cosmosEvents)
-                {
-                    batch.CreateItem(evt);
-                }
-                var batchResponse = await batch.ExecuteAsync();
-                if (!batchResponse.IsSuccessStatusCode)
-                {
-                    throw new CosmosDbProcessingException(
-                        $"Batch operation failed with status {batchResponse.StatusCode} when appending events to stream '{streamId}'.");
-                }
-            }
-            else
-            {
-                // More than max batch size - split into multiple batches
-                for (int i = 0; i < cosmosEvents.Count; i += settings.MaxBatchSize)
-                {
-                    var batchEvents = cosmosEvents.Skip(i).Take(settings.MaxBatchSize).ToList();
-                    var batch = container.CreateTransactionalBatch(partitionKey);
-                    foreach (var evt in batchEvents)
-                    {
-                        batch.CreateItem(evt);
-                    }
-                    var batchResponse = await batch.ExecuteAsync();
-                    if (!batchResponse.IsSuccessStatusCode)
-                    {
-                        throw new CosmosDbProcessingException(
-                            $"Batch operation failed with status {batchResponse.StatusCode} when appending events to stream '{streamId}'.");
-                    }
-                }
-            }
+            await WriteEventsAsync(container, cosmosEvents, partitionKey, streamId);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
         {
@@ -219,6 +178,52 @@ public class CosmosDbDataStore : IDataStore
             throw new CosmosDbContainerNotFoundException(
                 $"The container '{settings.EventsContainerName}' was not found. " +
                 "Create the container in your deployment or enable AutoCreateContainers in settings.", ex);
+        }
+    }
+
+    private async Task WriteEventsAsync(
+        Container container,
+        List<CosmosDbEventEntity> cosmosEvents,
+        PartitionKey partitionKey,
+        string streamId)
+    {
+        if (cosmosEvents.Count == 1)
+        {
+            await container.CreateItemAsync(cosmosEvents[0], partitionKey);
+            return;
+        }
+
+        if (cosmosEvents.Count <= settings.MaxBatchSize)
+        {
+            await ExecuteBatchAsync(container, cosmosEvents, partitionKey, streamId);
+            return;
+        }
+
+        // More than max batch size - split into multiple batches
+        for (int i = 0; i < cosmosEvents.Count; i += settings.MaxBatchSize)
+        {
+            var batchEvents = cosmosEvents.Skip(i).Take(settings.MaxBatchSize).ToList();
+            await ExecuteBatchAsync(container, batchEvents, partitionKey, streamId);
+        }
+    }
+
+    private static async Task ExecuteBatchAsync(
+        Container container,
+        List<CosmosDbEventEntity> events,
+        PartitionKey partitionKey,
+        string streamId)
+    {
+        var batch = container.CreateTransactionalBatch(partitionKey);
+        foreach (var evt in events)
+        {
+            batch.CreateItem(evt);
+        }
+
+        var batchResponse = await batch.ExecuteAsync();
+        if (!batchResponse.IsSuccessStatusCode)
+        {
+            throw new CosmosDbProcessingException(
+                $"Batch operation failed with status {batchResponse.StatusCode} when appending events to stream '{streamId}'.");
         }
     }
 
@@ -256,43 +261,47 @@ public class CosmosDbDataStore : IDataStore
             return eventsContainer;
         }
 
-        Database database;
-        if (settings.AutoCreateContainers)
-        {
-            // Create database if it doesn't exist
-            var databaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(
-                settings.DatabaseName,
-                settings.DatabaseThroughput != null
-                    ? GetThroughputProperties(settings.DatabaseThroughput)
-                    : null);
-            database = databaseResponse.Database;
-        }
-        else
-        {
-            database = cosmosClient.GetDatabase(settings.DatabaseName);
-        }
+        var database = await GetOrCreateDatabaseAsync();
 
         if (settings.AutoCreateContainers)
         {
-            var throughput = GetThroughputProperties(settings.EventsThroughput);
-            var containerProperties = new ContainerProperties(settings.EventsContainerName, "/streamId")
-            {
-                // Enable TTL at container level
-                DefaultTimeToLive = settings.DefaultTimeToLiveSeconds > 0 ? settings.DefaultTimeToLiveSeconds : -1
-            };
-
-            if (throughput != null)
-            {
-                await database.CreateContainerIfNotExistsAsync(containerProperties, throughput);
-            }
-            else
-            {
-                await database.CreateContainerIfNotExistsAsync(containerProperties);
-            }
+            await CreateContainerIfNotExistsAsync(database);
         }
 
         eventsContainer = database.GetContainer(settings.EventsContainerName);
         return eventsContainer;
+    }
+
+    private async Task<Database> GetOrCreateDatabaseAsync()
+    {
+        if (!settings.AutoCreateContainers)
+        {
+            return cosmosClient.GetDatabase(settings.DatabaseName);
+        }
+
+        var databaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(
+            settings.DatabaseName,
+            GetThroughputProperties(settings.DatabaseThroughput));
+
+        return databaseResponse.Database;
+    }
+
+    private async Task CreateContainerIfNotExistsAsync(Database database)
+    {
+        var throughput = GetThroughputProperties(settings.EventsThroughput);
+        var containerProperties = new ContainerProperties(settings.EventsContainerName, "/streamId")
+        {
+            DefaultTimeToLive = settings.DefaultTimeToLiveSeconds > 0 ? settings.DefaultTimeToLiveSeconds : -1
+        };
+
+        if (throughput != null)
+        {
+            await database.CreateContainerIfNotExistsAsync(containerProperties, throughput);
+        }
+        else
+        {
+            await database.CreateContainerIfNotExistsAsync(containerProperties);
+        }
     }
 
     private static ThroughputProperties? GetThroughputProperties(ThroughputSettings? settings)

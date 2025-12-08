@@ -274,7 +274,7 @@ public class EventNameRefactoringProviderTests
         }
     }
 
-    private (Document document, TextSpan span) CreateDocumentWithSpan(string code, string textToSelect)
+    private static (Document document, TextSpan span) CreateDocumentWithSpan(string code, string textToSelect)
     {
         var index = code.IndexOf(textToSelect, StringComparison.Ordinal);
         var span = new TextSpan(index, textToSelect.Length);

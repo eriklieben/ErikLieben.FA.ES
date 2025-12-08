@@ -1,5 +1,3 @@
-#pragma warning disable S4136 // Method overloads should be adjacent - organized by functionality for readability
-
 using System.Text.Json;
 using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Processors;
@@ -80,26 +78,6 @@ public class AggregateAssertion<TAggregate> where TAggregate : IBase
     }
 
     /// <summary>
-    /// Asserts that no event of the specified type was appended to the stream.
-    /// </summary>
-    /// <typeparam name="TEvent">The event type.</typeparam>
-    /// <returns>The assertion instance for method chaining.</returns>
-    /// <exception cref="TestAssertionException">Thrown when the event was found.</exception>
-    public AggregateAssertion<TAggregate> ShouldNotHaveAppended<TEvent>()
-    {
-        var eventName = EventNameResolver.GetEventName<TEvent>();
-        var matchingEvent = _events.Values.FirstOrDefault(e => e.EventType == eventName);
-
-        if (matchingEvent != null)
-        {
-            throw new TestAssertionException(
-                $"Expected event '{eventName}' NOT to be appended, but it was found in the stream.");
-        }
-
-        return this;
-    }
-
-    /// <summary>
     /// Asserts that a specific event was appended to the stream.
     /// </summary>
     /// <typeparam name="TEvent">The event type.</typeparam>
@@ -125,6 +103,26 @@ public class AggregateAssertion<TAggregate> where TAggregate : IBase
         {
             throw new TestAssertionException(
                 $"Expected event '{eventName}' with payload '{expectedPayload}' was not found in the stream.");
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Asserts that no event of the specified type was appended to the stream.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type.</typeparam>
+    /// <returns>The assertion instance for method chaining.</returns>
+    /// <exception cref="TestAssertionException">Thrown when the event was found.</exception>
+    public AggregateAssertion<TAggregate> ShouldNotHaveAppended<TEvent>()
+    {
+        var eventName = EventNameResolver.GetEventName<TEvent>();
+        var matchingEvent = _events.Values.FirstOrDefault(e => e.EventType == eventName);
+
+        if (matchingEvent != null)
+        {
+            throw new TestAssertionException(
+                $"Expected event '{eventName}' NOT to be appended, but it was found in the stream.");
         }
 
         return this;

@@ -1,4 +1,4 @@
-#pragma warning disable CA2263 // Prefer generic overload - Type parameter passed dynamically from endpoint metadata
+#pragma warning disable CA2263 // Prefer generic overload - GetFactory(Type) returns IAggregateCovarianceFactory<IBase> while GetFactory<T>() returns IAggregateFactory<T>, different interface types
 
 using System.Diagnostics;
 using System.Reflection;

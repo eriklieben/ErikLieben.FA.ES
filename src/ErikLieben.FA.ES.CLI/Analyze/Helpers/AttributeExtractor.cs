@@ -1,5 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - attribute extraction requires analyzing multiple attribute scenarios
-
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 
@@ -145,28 +143,20 @@ public static class AttributeExtractor
     /// </summary>
     public static List<UpcasterDefinition> ExtractUseUpcasterAttributes(INamedTypeSymbol aggregateSymbol)
     {
-        var upcasters = new List<UpcasterDefinition>();
-
         // Look for generic UseUpcasterAttribute<T> - the name will be "UseUpcasterAttribute" with TypeArguments
-        var attributes = aggregateSymbol.GetAttributes()
+        return aggregateSymbol.GetAttributes()
             .Where(a => a.AttributeClass?.Name == "UseUpcasterAttribute" &&
-                       a.AttributeClass.IsGenericType);
-
-        foreach (var attribute in attributes)
-        {
-            // [UseUpcaster<MyUpcaster>] - generic type argument
-            var attributeClass = attribute.AttributeClass;
-            if (attributeClass?.TypeArguments.Length == 1 &&
-                attributeClass.TypeArguments[0] is INamedTypeSymbol upcasterType)
+                       a.AttributeClass.IsGenericType)
+            .Select(a => a.AttributeClass)
+            .Where(ac => ac?.TypeArguments.Length == 1 &&
+                        ac.TypeArguments[0] is INamedTypeSymbol)
+            .Select(ac => ac!.TypeArguments[0])
+            .Cast<INamedTypeSymbol>()
+            .Select(upcasterType => new UpcasterDefinition
             {
-                upcasters.Add(new UpcasterDefinition
-                {
-                    TypeName = upcasterType.Name,
-                    Namespace = upcasterType.ContainingNamespace.ToDisplayString()
-                });
-            }
-        }
-
-        return upcasters;
+                TypeName = upcasterType.Name,
+                Namespace = upcasterType.ContainingNamespace.ToDisplayString()
+            })
+            .ToList();
     }
 }

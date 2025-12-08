@@ -54,11 +54,11 @@ public class TableObjectDocumentFactory : IObjectDocumentFactory
     public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"TableObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
-        DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
-        DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
-        var objectNameLower = objectName!.ToLowerInvariant();
-        var result = await tableDocumentStore.CreateAsync(objectNameLower, objectId!, store);
+        var objectNameLower = objectName.ToLowerInvariant();
+        var result = await tableDocumentStore.CreateAsync(objectNameLower, objectId, store);
 
         if (result is null)
         {

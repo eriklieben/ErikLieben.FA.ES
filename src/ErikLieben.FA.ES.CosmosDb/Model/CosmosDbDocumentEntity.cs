@@ -1,5 +1,3 @@
-#pragma warning disable S1192 // String literals should not be duplicated - "cosmosdb" is intentionally repeated for store type defaults
-
 using System.Text.Json.Serialization;
 
 namespace ErikLieben.FA.ES.CosmosDb.Model;
@@ -81,6 +79,11 @@ public class CosmosDbDocumentEntity
 /// </summary>
 public class CosmosDbStreamInfo
 {
+    /// <summary>
+    /// The default store type identifier for CosmosDB.
+    /// </summary>
+    public const string DefaultStoreType = "cosmosdb";
+
     [JsonPropertyName("streamIdentifier")]
     public string StreamIdentifier { get; set; } = string.Empty;
 
@@ -88,31 +91,31 @@ public class CosmosDbStreamInfo
     public int CurrentStreamVersion { get; set; }
 
     [JsonPropertyName("streamType")]
-    public string StreamType { get; set; } = "cosmosdb";
+    public string StreamType { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("documentType")]
-    public string DocumentType { get; set; } = "cosmosdb";
+    public string DocumentType { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("documentTagType")]
-    public string DocumentTagType { get; set; } = "cosmosdb";
+    public string DocumentTagType { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("eventStreamTagType")]
-    public string EventStreamTagType { get; set; } = "cosmosdb";
+    public string EventStreamTagType { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("dataStore")]
-    public string DataStore { get; set; } = "cosmosdb";
+    public string DataStore { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("documentStore")]
-    public string DocumentStore { get; set; } = "cosmosdb";
+    public string DocumentStore { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("documentTagStore")]
-    public string DocumentTagStore { get; set; } = "cosmosdb";
+    public string DocumentTagStore { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("streamTagStore")]
-    public string StreamTagStore { get; set; } = "cosmosdb";
+    public string StreamTagStore { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("snapShotStore")]
-    public string SnapShotStore { get; set; } = "cosmosdb";
+    public string SnapShotStore { get; set; } = DefaultStoreType;
 
     [JsonPropertyName("createdAt")]
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

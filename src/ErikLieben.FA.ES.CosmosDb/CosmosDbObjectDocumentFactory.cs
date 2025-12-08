@@ -56,8 +56,8 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
-        var objectNameLower = objectName!.ToLowerInvariant();
-        var result = await cosmosDbDocumentStore.CreateAsync(objectNameLower, objectId!, store);
+        var objectNameLower = objectName.ToLowerInvariant();
+        var result = await cosmosDbDocumentStore.CreateAsync(objectNameLower, objectId, store);
 
         if (result is null)
         {

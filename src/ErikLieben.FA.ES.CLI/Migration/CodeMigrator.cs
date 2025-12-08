@@ -1,4 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - migration logic requires handling multiple version scenarios
 #pragma warning disable S1135 // TODO comments - tracked in project backlog
 
 using System.Text.RegularExpressions;

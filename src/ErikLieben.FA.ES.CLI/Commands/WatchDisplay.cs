@@ -1,5 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - TUI rendering involves complex layout and state management
-
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Rendering;

@@ -1,5 +1,4 @@
 #pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive null checks for clarity in change detection logic
-#pragma warning disable S3776 // Cognitive Complexity - change detection logic inherently requires complex comparisons
 #pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
 #pragma warning disable S1192 // String literals should not be duplicated - entity type names used for clarity
 

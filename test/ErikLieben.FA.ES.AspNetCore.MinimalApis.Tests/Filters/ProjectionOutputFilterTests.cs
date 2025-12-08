@@ -42,7 +42,7 @@ public class ProjectionOutputFilterTests
         public override string ToJson() => JsonSerializer.Serialize(this);
     }
 
-    private static HttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
+    private static DefaultHttpContext CreateHttpContext(IServiceProvider serviceProvider, RouteValueDictionary? routeValues = null)
     {
         var context = new DefaultHttpContext
         {

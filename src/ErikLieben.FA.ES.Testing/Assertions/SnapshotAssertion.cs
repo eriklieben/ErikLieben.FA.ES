@@ -1,5 +1,4 @@
 #pragma warning disable CA1869 // Cache and reuse JsonSerializerOptions - options customized per call via SnapshotOptions
-#pragma warning disable S4136 // Method overloads should be adjacent - organized by sync/async pairs for readability
 
 using System.Text.Json;
 
@@ -65,6 +64,44 @@ public static class SnapshotAssertion
                 $"Expected:\n{expectedContent}\n\n" +
                 $"Actual:\n{actualContent}\n\n" +
                 $"To update snapshots, set environment variable {UpdateSnapshotsEnvVar}=true");
+        }
+    }
+
+    /// <summary>
+    /// Verifies that the actual value matches the expected value using a custom comparer.
+    /// </summary>
+    /// <typeparam name="T">The type of the value to compare.</typeparam>
+    /// <param name="actual">The actual value.</param>
+    /// <param name="snapshotName">The name of the snapshot file (without extension).</param>
+    /// <param name="comparer">The custom comparer to use.</param>
+    /// <exception cref="TestAssertionException">Thrown when the values don't match.</exception>
+    public static void MatchesSnapshot<T>(T actual, string snapshotName, ISnapshotComparer<T> comparer)
+    {
+        ArgumentNullException.ThrowIfNull(actual);
+        ArgumentNullException.ThrowIfNull(snapshotName);
+        ArgumentNullException.ThrowIfNull(comparer);
+
+        var options = new SnapshotOptions();
+        var snapshotPath = GetSnapshotPath(snapshotName, options.Format);
+
+        if (!File.Exists(snapshotPath))
+        {
+            UpdateSnapshot(actual, snapshotName, options);
+            return;
+        }
+
+        var expectedJson = File.ReadAllText(snapshotPath);
+        var expected = JsonSerializer.Deserialize<T>(expectedJson, options.JsonOptions);
+
+        if (EqualityComparer<T>.Default.Equals(expected, default))
+        {
+            throw new TestAssertionException($"Failed to deserialize snapshot '{snapshotName}'.");
+        }
+
+        if (!comparer.Matches(actual, expected!, out var differenceMessage))
+        {
+            throw new TestAssertionException(
+                $"Snapshot '{snapshotName}' does not match.\n{differenceMessage}");
         }
     }
 
@@ -164,44 +201,6 @@ public static class SnapshotAssertion
 
         var content = SerializeToSnapshot(actual, options);
         await File.WriteAllTextAsync(snapshotPath, content);
-    }
-
-    /// <summary>
-    /// Verifies that the actual value matches the expected value using a custom comparer.
-    /// </summary>
-    /// <typeparam name="T">The type of the value to compare.</typeparam>
-    /// <param name="actual">The actual value.</param>
-    /// <param name="snapshotName">The name of the snapshot file (without extension).</param>
-    /// <param name="comparer">The custom comparer to use.</param>
-    /// <exception cref="TestAssertionException">Thrown when the values don't match.</exception>
-    public static void MatchesSnapshot<T>(T actual, string snapshotName, ISnapshotComparer<T> comparer)
-    {
-        ArgumentNullException.ThrowIfNull(actual);
-        ArgumentNullException.ThrowIfNull(snapshotName);
-        ArgumentNullException.ThrowIfNull(comparer);
-
-        var options = new SnapshotOptions();
-        var snapshotPath = GetSnapshotPath(snapshotName, options.Format);
-
-        if (!File.Exists(snapshotPath))
-        {
-            UpdateSnapshot(actual, snapshotName, options);
-            return;
-        }
-
-        var expectedJson = File.ReadAllText(snapshotPath);
-        var expected = JsonSerializer.Deserialize<T>(expectedJson, options.JsonOptions);
-
-        if (EqualityComparer<T>.Default.Equals(expected, default))
-        {
-            throw new TestAssertionException($"Failed to deserialize snapshot '{snapshotName}'.");
-        }
-
-        if (!comparer.Matches(actual, expected!, out var differenceMessage))
-        {
-            throw new TestAssertionException(
-                $"Snapshot '{snapshotName}' does not match.\n{differenceMessage}");
-        }
     }
 
     private static string GetSnapshotPath(string snapshotName, SnapshotFormat format)

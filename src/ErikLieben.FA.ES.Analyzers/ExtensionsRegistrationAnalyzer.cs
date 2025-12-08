@@ -1,5 +1,4 @@
 #pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for cross-file analysis
-#pragma warning disable S3776 // Cognitive Complexity - analyzer logic inherently requires complex conditions
 
 using System.Collections.Generic;
 using System.Collections.Immutable;

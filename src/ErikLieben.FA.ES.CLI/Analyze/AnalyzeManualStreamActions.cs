@@ -1,6 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - stream action analysis inherently requires complex control flow
-#pragma warning disable S1066 // Mergeable if statements - pattern matching conditions intentionally separated for readability
-
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
@@ -57,10 +54,7 @@ public class AnalyzeManualStreamActions(
                 continue;
 
             // Get the generic type argument
-            if (memberAccess.Name is not GenericNameSyntax genericName)
-                continue;
-
-            if (genericName.TypeArgumentList.Arguments.Count == 0)
+            if (memberAccess.Name is not GenericNameSyntax { TypeArgumentList.Arguments.Count: > 0 } genericName)
                 continue;
 
             var typeArg = genericName.TypeArgumentList.Arguments[0];
@@ -127,15 +121,11 @@ public class AnalyzeManualStreamActions(
             if (symbolInfo.Symbol is ILocalSymbol localSymbol)
             {
                 // Check if it's an IEventStream<TAggregate>
-                if (localSymbol.Type is INamedTypeSymbol namedType &&
-                    namedType.IsGenericType &&
-                    namedType.Name.Contains("EventStream"))
+                if (localSymbol.Type is INamedTypeSymbol { IsGenericType: true } namedType &&
+                    namedType.Name.Contains("EventStream") &&
+                    namedType.TypeArguments.FirstOrDefault() is { } typeArg)
                 {
-                    var typeArg = namedType.TypeArguments.FirstOrDefault();
-                    if (typeArg != null)
-                    {
-                        return typeArg.Name;
-                    }
+                    return typeArg.Name;
                 }
             }
             else if (symbolInfo.Symbol is IParameterSymbol paramSymbol)

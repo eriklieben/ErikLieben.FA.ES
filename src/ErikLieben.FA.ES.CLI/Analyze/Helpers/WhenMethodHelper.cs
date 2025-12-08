@@ -1,5 +1,3 @@
-#pragma warning disable S3776 // Cognitive Complexity - When method analysis requires examining multiple code paths
-
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

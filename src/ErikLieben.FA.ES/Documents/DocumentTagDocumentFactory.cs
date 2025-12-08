@@ -1,5 +1,3 @@
-#pragma warning disable S1192 // String literals should not be duplicated - error message suffix is intentionally repeated for clarity
-
 using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Exceptions;
 
@@ -10,6 +8,8 @@ namespace ErikLieben.FA.ES.Documents;
 /// </summary>
 public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
 {
+    private const string RegistrationHint = " Are you sure it's properly registered in the configuration?";
+
     private readonly IDictionary<string, IDocumentTagDocumentFactory> documentTagFactories;
     private readonly EventStreamDefaultTypeSettings settings;
 
@@ -64,8 +64,7 @@ public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
         }
 
         throw new UnableToFindDocumentTagFactoryException(
-            $"Unable to find store for DocumentTagType: {document.Active.DocumentTagType}." +
-            " Are you sure it's properly registered in the configuration?");
+            $"Unable to find store for DocumentTagType: {document.Active.DocumentTagType}." + RegistrationHint);
     }
 
     /// <summary>
@@ -88,8 +87,7 @@ public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
         }
 
         throw new UnableToFindDocumentTagFactoryException(
-            $"Unable to find store for DocumentTagType: {type}." +
-            " Are you sure it's properly registered in the configuration?");
+            $"Unable to find store for DocumentTagType: {type}." + RegistrationHint);
     }
 
     /// <summary>
@@ -105,8 +103,7 @@ public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
         }
 
         throw new UnableToFindDocumentTagFactoryException(
-            $"Unable to find store for EventStreamTagType: {settings.EventStreamTagType}." +
-            " Are you sure it's properly registered in the configuration?");
+            $"Unable to find store for EventStreamTagType: {settings.EventStreamTagType}." + RegistrationHint);
     }
 
     /// <summary>
@@ -133,8 +130,7 @@ public class DocumentTagDocumentFactory : IDocumentTagDocumentFactory
         }
 
         throw new UnableToFindDocumentTagFactoryException(
-            $"Unable to find store for EventStreamTagType: {document.Active.EventStreamTagType}." +
-            " Are you sure it's properly registered in the configuration?");
+            $"Unable to find store for EventStreamTagType: {document.Active.EventStreamTagType}." + RegistrationHint);
     }
 }
 

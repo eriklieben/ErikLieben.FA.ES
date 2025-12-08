@@ -56,7 +56,7 @@ public class AggregateFoldBenchmarks
         return events;
     }
 
-    private static IEvent CreateEvent(int version)
+    private static JsonEvent CreateEvent(int version)
     {
         var data = new CounterIncremented { Amount = 1, Timestamp = DateTime.UtcNow };
         return new JsonEvent
