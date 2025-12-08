@@ -241,14 +241,15 @@ public class CodeGeneratorBaseTests
         public void Should_handle_empty_source_file_path()
         {
             // Arrange
-            var solutionPath = @"C:\Solution";
+            var solutionPath = Path.Combine("C:", "Solution");
             var sourceFilePath = "";
 
             // Act
             var result = TestCodeGenerator.TestGetGeneratedFilePath(solutionPath, sourceFilePath);
 
             // Assert
-            Assert.Equal(@"C:\Solution\.Generated.cs", result);
+            var expected = Path.Combine("C:", "Solution", ".Generated.cs");
+            Assert.Equal(expected, result);
         }
     }
 

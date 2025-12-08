@@ -283,9 +283,10 @@ public class WatchDisplayActivityLoggerTests
             // Arrange
             var display = Substitute.For<IWatchDisplay>();
             var sut = new WatchDisplayActivityLogger(display);
+            var filePath = Path.Combine("Project", "src", "MyClass.cs");
 
             // Act
-            sut.LogFileGenerated(@"C:\Project\src\MyClass.cs");
+            sut.LogFileGenerated(filePath);
 
             // Assert
             display.Received(1).LogActivity(
@@ -299,9 +300,10 @@ public class WatchDisplayActivityLoggerTests
             // Arrange
             var display = Substitute.For<IWatchDisplay>();
             var sut = new WatchDisplayActivityLogger(display);
+            var filePath = Path.Combine("Some", "Deep", "Path", "Generated", "MyAggregate.Generated.cs");
 
             // Act
-            sut.LogFileGenerated(@"D:\Some\Deep\Path\Generated\MyAggregate.Generated.cs");
+            sut.LogFileGenerated(filePath);
 
             // Assert
             var log = sut.GetActivityLog();
@@ -317,9 +319,10 @@ public class WatchDisplayActivityLoggerTests
             // Arrange
             var display = Substitute.For<IWatchDisplay>();
             var sut = new WatchDisplayActivityLogger(display);
+            var filePath = Path.Combine("Project", "src", "Unchanged.cs");
 
             // Act
-            sut.LogFileSkipped(@"C:\Project\src\Unchanged.cs");
+            sut.LogFileSkipped(filePath);
 
             // Assert
             display.Received(1).LogActivity(

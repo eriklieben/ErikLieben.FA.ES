@@ -319,8 +319,9 @@ public class FileSystemCodeWriterTests
             // Arrange
             var logger = Substitute.For<IActivityLogger>();
             var sut = new FileSystemCodeWriter(logger);
-            // Invalid path that should fail
-            var filePath = Path.Combine("Z:", "NonExistent", "Path", "Test.cs");
+            // Use a path with invalid characters that will fail on both Windows and Linux
+            // NUL character is invalid on both platforms
+            var filePath = "/\0/invalid/path/Test.cs";
             var content = "public class Test { }";
 
             // Act
@@ -337,7 +338,8 @@ public class FileSystemCodeWriterTests
             // Arrange
             var logger = Substitute.For<IActivityLogger>();
             var sut = new FileSystemCodeWriter(logger);
-            var filePath = Path.Combine("Z:", "NonExistent", "Path", "Test.cs");
+            // Use a path with invalid characters that will fail on both Windows and Linux
+            var filePath = "/\0/invalid/path/Test.cs";
             var content = "public class Test { }";
 
             // Act
@@ -488,7 +490,8 @@ public class FileSystemCodeWriterTests
             var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
             var validPath = Path.Combine(tempDir, "Valid.cs");
-            var invalidPath = Path.Combine("Z:", "Invalid", "Path.cs");
+            // Use a path with invalid characters that will fail on both Windows and Linux
+            var invalidPath = "/\0/invalid/path/Invalid.cs";
 
             try
             {
