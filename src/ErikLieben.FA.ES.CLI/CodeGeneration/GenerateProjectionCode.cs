@@ -1172,7 +1172,7 @@ public class GenerateProjectionCode
                 }
             }
 
-            if (extraParams.Any())
+            if (extraParams.Count > 0)
             {
                 ctorParamsWithValues = "documentFactory, eventStreamFactory" + string.Join("", extraParams.Select(p => $"{p}!"));
             }

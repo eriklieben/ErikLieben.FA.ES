@@ -1,3 +1,5 @@
+#pragma warning disable S4136 // Method overloads should be adjacent - organized by functionality for readability
+
 using System.Text.Json;
 using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Processors;

@@ -80,10 +80,7 @@ public class BlobLeaseDistributedLockProvider : IDistributedLockProvider
                     duration: TimeSpan.FromSeconds(60),
                     cancellationToken: cancellationToken);
 
-                logger.LogInformation(
-                    "Acquired distributed lock {LockKey} with lease ID {LeaseId}",
-                    lockKey,
-                    leaseResponse.Value.LeaseId);
+                logger.LockAcquired(lockKey, leaseResponse.Value.LeaseId);
 
                 return new BlobLeaseDistributedLock(
                     leaseClient,
@@ -94,11 +91,7 @@ public class BlobLeaseDistributedLockProvider : IDistributedLockProvider
             catch (RequestFailedException ex) when (ex.Status == 409)
             {
                 // Lease already held by someone else
-                logger.LogDebug(
-                    ex,
-                    "Lock {LockKey} is held by another process, waiting... (Elapsed: {Elapsed})",
-                    lockKey,
-                    stopwatch.Elapsed);
+                logger.LockWaiting(lockKey, stopwatch.Elapsed, ex);
 
                 // Wait before retry
                 var remainingTime = timeout - stopwatch.Elapsed;
@@ -111,19 +104,13 @@ public class BlobLeaseDistributedLockProvider : IDistributedLockProvider
             }
             catch (Exception ex)
             {
-                logger.LogError(
-                    ex,
-                    "Error acquiring distributed lock {LockKey}",
-                    lockKey);
+                logger.LockAcquisitionError(lockKey, ex);
 
                 throw;
             }
         }
 
-        logger.LogWarning(
-            "Failed to acquire distributed lock {LockKey} within timeout {Timeout}",
-            lockKey,
-            timeout);
+        logger.LockAcquisitionTimeout(lockKey, timeout);
 
         return null;
     }

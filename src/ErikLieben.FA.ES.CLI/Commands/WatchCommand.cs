@@ -44,7 +44,7 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
     private string? _cachedSolutionPath;
     private readonly Dictionary<string, HashSet<string>> _fileToEntityMap = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _pendingChangedFiles = new(StringComparer.OrdinalIgnoreCase);
-    private readonly IChangeDetector _changeDetector = new ChangeDetector();
+    private readonly ChangeDetector _changeDetector = new();
 
     // Deduplication for file change events (Windows fires multiple events per save)
     private readonly Dictionary<string, DateTime> _lastFileChangeLog = new(StringComparer.OrdinalIgnoreCase);

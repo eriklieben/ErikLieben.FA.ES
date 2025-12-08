@@ -1,3 +1,6 @@
+#pragma warning disable CA1869 // Cache and reuse JsonSerializerOptions - options customized per call via SnapshotOptions
+#pragma warning disable S4136 // Method overloads should be adjacent - organized by sync/async pairs for readability
+
 using System.Text.Json;
 
 namespace ErikLieben.FA.ES.Testing.Assertions;
@@ -247,39 +250,21 @@ public static class SnapshotAssertion
 
     private static object? FilterJsonElement(JsonElement element, List<string> ignoredProperties)
     {
-        if (element.ValueKind == JsonValueKind.Object)
+        return element.ValueKind switch
         {
-            var dict = new Dictionary<string, object?>();
-            foreach (var property in element.EnumerateObject())
-            {
-                if (!ignoredProperties.Contains(property.Name))
-                {
-                    dict[property.Name] = FilterJsonElement(property.Value, ignoredProperties);
-                }
-            }
-            return dict;
-        }
-        else if (element.ValueKind == JsonValueKind.Array)
-        {
-            var list = new List<object?>();
-            foreach (var item in element.EnumerateArray())
-            {
-                list.Add(FilterJsonElement(item, ignoredProperties));
-            }
-            return list;
-        }
-        else
-        {
-            return element.ValueKind switch
-            {
-                JsonValueKind.String => element.GetString(),
-                JsonValueKind.Number => element.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => element.ToString()
-            };
-        }
+            JsonValueKind.Object => element.EnumerateObject()
+                .Where(property => !ignoredProperties.Contains(property.Name))
+                .ToDictionary(property => property.Name, property => FilterJsonElement(property.Value, ignoredProperties)),
+            JsonValueKind.Array => element.EnumerateArray()
+                .Select(item => FilterJsonElement(item, ignoredProperties))
+                .ToList(),
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => element.ToString()
+        };
     }
 
     private static bool CompareSnapshots(string actual, string expected, SnapshotOptions options)

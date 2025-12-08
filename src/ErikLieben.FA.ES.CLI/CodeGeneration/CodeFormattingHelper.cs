@@ -78,7 +78,7 @@ public static class CodeFormattingHelper
             .Where(u => u.Name != null && !IsUsingDirectiveUsed(semanticModel, root, u, cancelToken))
             .ToList();
 
-        var newRoot = unusedUsings.Any() ? root.RemoveNodes(unusedUsings, SyntaxRemoveOptions.KeepNoTrivia) : root;
+        var newRoot = unusedUsings.Count > 0 ? root.RemoveNodes(unusedUsings, SyntaxRemoveOptions.KeepNoTrivia) : root;
         var formattedCode = newRoot?.ToFullString() ?? formattedNode.ToFullString();
 
         // Remove consecutive empty lines
@@ -412,7 +412,7 @@ public static class CodeFormattingHelper
         var directory = Path.GetDirectoryName(filePath);
         while (!string.IsNullOrEmpty(directory))
         {
-            if (Directory.GetFiles(directory, "*.csproj").Any())
+            if (Directory.GetFiles(directory, "*.csproj").Length > 0)
             {
                 return directory;
             }

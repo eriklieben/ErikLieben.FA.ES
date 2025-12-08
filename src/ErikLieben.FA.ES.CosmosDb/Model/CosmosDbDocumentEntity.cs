@@ -1,3 +1,5 @@
+#pragma warning disable S1192 // String literals should not be duplicated - "cosmosdb" is intentionally repeated for store type defaults
+
 using System.Text.Json.Serialization;
 
 namespace ErikLieben.FA.ES.CosmosDb.Model;

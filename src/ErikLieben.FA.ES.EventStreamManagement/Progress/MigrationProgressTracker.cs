@@ -1,3 +1,5 @@
+#pragma warning disable S2292 // Auto-implement property - explicit backing fields used for thread-safe access
+
 namespace ErikLieben.FA.ES.EventStreamManagement.Progress;
 
 using ErikLieben.FA.ES.EventStreamManagement.Core;
@@ -153,7 +155,7 @@ public class MigrationProgressTracker
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Error collecting custom metric {MetricName}", name);
+                    logger.CustomMetricError(name, ex);
                 }
             }
         }
@@ -190,12 +192,11 @@ public class MigrationProgressTracker
         // Log if enabled
         if (config?.EnableLogging == true)
         {
-            logger.LogInformation(
-                "Migration {MigrationId} progress: {Percentage:F1}% ({Processed}/{Total} events, {Rate:F0} events/sec)",
+            logger.MigrationProgress(
                 migrationId,
-                progress.PercentageComplete,
                 progress.EventsProcessed,
                 progress.TotalEvents,
+                progress.PercentageComplete,
                 progress.EventsPerSecond);
         }
 
@@ -215,8 +216,7 @@ public class MigrationProgressTracker
 
         if (config?.EnableLogging == true)
         {
-            logger.LogInformation(
-                "Migration {MigrationId} completed in {Elapsed} ({EventCount} events at {Rate:F0} events/sec)",
+            logger.MigrationCompleted(
                 migrationId,
                 progress.Elapsed,
                 progress.EventsProcessed,
@@ -238,12 +238,11 @@ public class MigrationProgressTracker
 
         if (config?.EnableLogging == true)
         {
-            logger.LogError(
-                exception,
-                "Migration {MigrationId} failed after {Elapsed} ({EventCount} events processed)",
+            logger.MigrationFailedAfter(
                 migrationId,
                 progress.Elapsed,
-                progress.EventsProcessed);
+                progress.EventsProcessed,
+                exception);
         }
     }
 

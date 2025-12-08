@@ -27,10 +27,7 @@ public class TransformationPipeline : ITransformationPipeline
         ArgumentNullException.ThrowIfNull(transformer);
         transformers.Add(transformer);
 
-        logger.LogDebug(
-            "Added transformer {TransformerType} to pipeline (Total: {Count})",
-            transformer.GetType().Name,
-            transformers.Count);
+        logger.TransformerAddedToPipeline(transformer.GetType().Name, transformers.Count);
     }
 
     /// <inheritdoc/>
@@ -52,22 +49,21 @@ public class TransformationPipeline : ITransformationPipeline
             return sourceEvent;
         }
 
-        var currentEvent = sourceEvent;
-
-        foreach (var transformer in transformers)
-        {
-            if (transformer.CanTransform(currentEvent.EventType, currentEvent.EventVersion))
+        return await transformers.Aggregate(
+            Task.FromResult(sourceEvent),
+            async (eventTask, transformer) =>
             {
-                logger.LogDebug(
-                    "Applying transformer {TransformerType} to event {EventType} v{Version}",
-                    transformer.GetType().Name,
-                    currentEvent.EventType,
-                    currentEvent.EventVersion);
+                var current = await eventTask;
+                if (transformer.CanTransform(current.EventType, current.EventVersion))
+                {
+                    logger.ApplyingTransformer(
+                        transformer.GetType().Name,
+                        current.EventType,
+                        current.EventVersion);
 
-                currentEvent = await transformer.TransformAsync(currentEvent, cancellationToken);
-            }
-        }
-
-        return currentEvent;
+                    return await transformer.TransformAsync(current, cancellationToken);
+                }
+                return current;
+            });
     }
 }

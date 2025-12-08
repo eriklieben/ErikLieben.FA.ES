@@ -1,5 +1,5 @@
 #pragma warning disable S2139 // Exception handling - distributed routing table requires specific error recovery patterns
-#pragma warning disable S3267 // Loops should be simplified - explicit loops improve readability in migration code
+#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use System.Linq.Async without multi-targeting issues
 
 namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
@@ -66,18 +66,11 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
 
             if (entry == null)
             {
-                logger.LogWarning(
-                    "Failed to deserialize routing entry for {ObjectId}",
-                    objectId);
+                logger.RoutingDeserializationFailed(objectId);
                 return StreamRouting.Normal(string.Empty);
             }
 
-            logger.LogDebug(
-                "Retrieved routing for {ObjectId}: Phase={Phase}, Old={OldStream}, New={NewStream}",
-                objectId,
-                entry.Phase,
-                entry.OldStream,
-                entry.NewStream);
+            logger.RoutingRetrieved(objectId, entry.Phase.ToString(), entry.OldStream, entry.NewStream);
 
             return entry.ToStreamRouting();
         }
@@ -87,10 +80,7 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error retrieving routing for {ObjectId}",
-                objectId);
+            logger.RoutingRetrievalError(objectId, ex);
 
             throw;
         }
@@ -149,19 +139,11 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
                 overwrite: true,
                 cancellationToken: cancellationToken);
 
-            logger.LogInformation(
-                "Set routing for {ObjectId}: Phase={Phase}, Old={OldStream}, New={NewStream}",
-                objectId,
-                phase,
-                oldStream,
-                newStream);
+            logger.RoutingSet(objectId, phase.ToString(), oldStream, newStream);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error setting routing for {ObjectId}",
-                objectId);
+            logger.RoutingSetError(objectId, ex);
 
             throw;
         }
@@ -179,16 +161,11 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
 
             await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
 
-            logger.LogInformation(
-                "Removed routing for {ObjectId}",
-                objectId);
+            logger.RoutingRemoved(objectId);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error removing routing for {ObjectId}",
-                objectId);
+            logger.RoutingRemovalError(objectId, ex);
 
             throw;
         }
@@ -222,9 +199,7 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error retrieving active migrations");
+            logger.ActiveMigrationsError(ex);
 
             throw;
         }

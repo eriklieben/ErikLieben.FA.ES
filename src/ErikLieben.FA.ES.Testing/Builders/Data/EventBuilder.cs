@@ -1,3 +1,5 @@
+#pragma warning disable S4136 // Method overloads should be adjacent - organized by functionality for builder pattern
+
 namespace ErikLieben.FA.ES.Testing.Builders.Data;
 
 /// <summary>

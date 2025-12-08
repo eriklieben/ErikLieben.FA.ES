@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+#pragma warning disable S1133 // Deprecated code - legacy connection name properties maintained for backwards compatibility
+
+using System.Text.Json.Serialization;
 
 namespace ErikLieben.FA.ES.Documents;
 

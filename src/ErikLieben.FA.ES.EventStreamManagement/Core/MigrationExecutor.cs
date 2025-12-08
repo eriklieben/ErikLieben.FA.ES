@@ -1,5 +1,6 @@
 #pragma warning disable CS0618 // Type or member is obsolete - supporting legacy connection name properties during migration
 #pragma warning disable S2139 // Exception handling - migration requires specific error recovery patterns
+#pragma warning disable S1135 // TODO comments - tracked in project backlog
 
 namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 
@@ -63,7 +64,7 @@ public class MigrationExecutor
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Migration {MigrationId} failed", context.MigrationId);
+            logger.MigrationFailed(context.MigrationId, ex);
             progressTracker.ReportFailed(ex);
 
             statistics.CompletedAt = DateTimeOffset.UtcNow;
@@ -84,9 +85,7 @@ public class MigrationExecutor
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        logger.LogInformation(
-            "Executing dry-run for migration {MigrationId}",
-            context.MigrationId);
+        logger.ExecutingDryRun(context.MigrationId);
 
         // TODO: Implement dry-run executor
         // For now, return a simple plan
@@ -130,9 +129,7 @@ public class MigrationExecutor
         {
             if (context.LockOptions != null)
             {
-                logger.LogInformation(
-                    "Acquiring distributed lock for migration {MigrationId}",
-                    context.MigrationId);
+                logger.AcquiringLock(context.MigrationId);
 
                 var lockKey = $"migration-{context.SourceDocument.ObjectId}";
                 migrationLock = await lockProvider.AcquireLockAsync(
@@ -147,10 +144,7 @@ public class MigrationExecutor
                         "Another migration may be in progress for this object.");
                 }
 
-                logger.LogInformation(
-                    "Acquired distributed lock {LockId} for migration {MigrationId}",
-                    migrationLock.LockId,
-                    context.MigrationId);
+                logger.AcquiredLock(migrationLock.LockId, context.MigrationId);
 
                 // Start heartbeat if configured
                 if (context.LockOptions.HeartbeatIntervalValue > TimeSpan.Zero)
@@ -174,45 +168,43 @@ public class MigrationExecutor
 
     private async Task<IMigrationResult> ExecuteMigrationSagaAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation(
-            "Executing migration saga for {MigrationId}",
-            context.MigrationId);
+        logger.ExecutingMigrationSaga(context.MigrationId);
 
         try
         {
             // Step 1: Create backup (if configured)
             if (context.BackupConfig != null)
             {
-                logger.LogInformation("Step 1: Creating backup");
+                logger.StepCreatingBackup();
                 // TODO: Implement backup
             }
 
             // Step 2: Analyze source stream
-            logger.LogInformation("Step 2: Analyzing source stream");
+            logger.StepAnalyzingSourceStream();
             var eventCount = await AnalyzeSourceStreamAsync(cancellationToken);
             progressTracker.TotalEvents = eventCount;
 
             // Step 3: Copy and transform events
-            logger.LogInformation("Step 3: Copying and transforming events");
+            logger.StepCopyingEvents();
             await CopyAndTransformEventsAsync(cancellationToken);
 
             // Step 4: Verify migration (if configured)
             if (context.VerificationConfig != null)
             {
-                logger.LogInformation("Step 4: Verifying migration");
+                logger.StepVerifyingMigration();
                 progressTracker.SetStatus(MigrationStatus.Verifying);
                 // TODO: Implement verification
             }
 
             // Step 5: Cutover to new stream
-            logger.LogInformation("Step 5: Performing cutover");
+            logger.StepPerformingCutover();
             progressTracker.SetStatus(MigrationStatus.CuttingOver);
             await PerformCutoverAsync(cancellationToken);
 
             // Step 6: Book closing (if configured)
             if (context.BookClosingConfig != null)
             {
-                logger.LogInformation("Step 6: Closing books");
+                logger.StepClosingBooks();
                 // TODO: Implement book closing
             }
 
@@ -226,12 +218,12 @@ public class MigrationExecutor
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Migration saga failed");
+            logger.MigrationSagaFailed(ex);
 
             // Rollback if supported
             if (context.SupportsRollback)
             {
-                logger.LogWarning("Rolling back migration");
+                logger.RollingBackMigration();
                 progressTracker.SetStatus(MigrationStatus.RollingBack);
                 // TODO: Implement rollback
             }
@@ -253,10 +245,7 @@ public class MigrationExecutor
 
         var count = events?.Count() ?? 0;
 
-        logger.LogInformation(
-            "Source stream {StreamId} contains {EventCount} events",
-            context.SourceStreamIdentifier,
-            count);
+        logger.SourceStreamAnalyzed(context.SourceStreamIdentifier, count);
 
         return count;
     }
@@ -272,7 +261,7 @@ public class MigrationExecutor
 
         if (sourceEvents == null || !sourceEvents.Any())
         {
-            logger.LogWarning("No events found in source stream");
+            logger.NoEventsInSourceStream();
             return;
         }
 
@@ -295,11 +284,7 @@ public class MigrationExecutor
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(
-                        ex,
-                        "Failed to transform event {EventType} v{Version}",
-                        sourceEvent.EventType,
-                        sourceEvent.EventVersion);
+                    logger.TransformEventFailed(sourceEvent.EventType, sourceEvent.EventVersion, ex);
 
                     statistics.TransformationFailures++;
 
@@ -355,10 +340,7 @@ public class MigrationExecutor
             // Write all events to the target stream
             await context.DataStore.AppendAsync(targetDocument, targetEvents.ToArray());
 
-            logger.LogInformation(
-                "Wrote {EventCount} events to target stream {TargetStream}",
-                targetEvents.Count,
-                context.TargetStreamIdentifier);
+            logger.WroteEventsToTarget(targetEvents.Count, context.TargetStreamIdentifier);
         }
 
         // Calculate average throughput
@@ -429,10 +411,7 @@ public class MigrationExecutor
         // Save the updated document
         await context.DocumentStore.SetAsync(updatedDocument);
 
-        logger.LogInformation(
-            "Cutover complete: switched from {SourceStream} to {TargetStream}",
-            context.SourceStreamIdentifier,
-            context.TargetStreamIdentifier);
+        logger.CutoverComplete(context.SourceStreamIdentifier, context.TargetStreamIdentifier);
     }
 
     private void StartHeartbeat(
@@ -450,13 +429,11 @@ public class MigrationExecutor
 
                     if (!await lockToRenew.RenewAsync(cancellationToken))
                     {
-                        logger.LogWarning(
-                            "Failed to renew lock {LockId} - migration may be interrupted",
-                            lockToRenew.LockId);
+                        logger.LockRenewalFailed(lockToRenew.LockId);
                         break;
                     }
 
-                    logger.LogDebug("Renewed lock {LockId}", lockToRenew.LockId);
+                    logger.LockRenewed(lockToRenew.LockId);
                 }
                 catch (OperationCanceledException)
                 {
@@ -464,7 +441,7 @@ public class MigrationExecutor
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error in heartbeat loop");
+                    logger.HeartbeatError(ex);
                 }
             }
         }, cancellationToken);

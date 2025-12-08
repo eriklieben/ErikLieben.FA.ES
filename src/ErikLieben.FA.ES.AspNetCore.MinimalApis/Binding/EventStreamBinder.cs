@@ -1,3 +1,5 @@
+#pragma warning disable CA2263 // Prefer generic overload - Type parameter passed dynamically from endpoint metadata
+
 using System.Diagnostics;
 using System.Reflection;
 using ErikLieben.FA.ES.Aggregates;

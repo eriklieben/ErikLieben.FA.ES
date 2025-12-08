@@ -1,6 +1,5 @@
 #pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for cross-file analysis
 #pragma warning disable S3776 // Cognitive Complexity - analyzer logic inherently requires complex conditions
-#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability in analyzers
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -169,61 +168,37 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
     /// </summary>
     private static HashSet<string> CollectRegisteredAggregates(SyntaxTree extensionsTree)
     {
-        var result = new HashSet<string>();
         var root = extensionsTree.GetRoot();
 
-        // Find the Register method
-        var registerMethods = root.DescendantNodes()
+        // Find aggregate types from Register method IAggregateFactory<T, Id> patterns
+        var fromRegisterMethods = root.DescendantNodes()
             .OfType<MethodDeclarationSyntax>()
-            .Where(m => m.Identifier.ValueText == "Register");
-
-        foreach (var registerMethod in registerMethods)
-        {
-            // Find all generic type arguments that look like IAggregateFactory<AggregateType, IdType>
-            var genericNames = registerMethod.DescendantNodes()
-                .OfType<GenericNameSyntax>()
-                .Where(g => g.Identifier.ValueText == "IAggregateFactory" &&
-                           g.TypeArgumentList.Arguments.Count == 2);
-
-            foreach (var genericName in genericNames)
+            .Where(m => m.Identifier.ValueText == "Register")
+            .SelectMany(m => m.DescendantNodes().OfType<GenericNameSyntax>())
+            .Where(g => g.Identifier.ValueText == "IAggregateFactory" &&
+                       g.TypeArgumentList.Arguments.Count == 2)
+            .Select(g => g.TypeArgumentList.Arguments[0])
+            .Select(t => t switch
             {
-                // The first type argument is the aggregate type
-                var aggregateType = genericName.TypeArgumentList.Arguments[0];
-                if (aggregateType is IdentifierNameSyntax identifier)
-                {
-                    result.Add(identifier.Identifier.ValueText);
-                }
-                else if (aggregateType is QualifiedNameSyntax qualified)
-                {
-                    result.Add(qualified.Right.Identifier.ValueText);
-                }
-            }
-        }
+                IdentifierNameSyntax id => id.Identifier.ValueText,
+                QualifiedNameSyntax q => q.Right.Identifier.ValueText,
+                _ => null
+            })
+            .Where(n => n != null);
 
-        // Also check the Get method switch expression for registered types
-        var getMethods = root.DescendantNodes()
+        // Find aggregate types from Get method typeof() patterns
+        var fromGetMethods = root.DescendantNodes()
             .OfType<MethodDeclarationSyntax>()
-            .Where(m => m.Identifier.ValueText == "Get");
-
-        foreach (var getMethod in getMethods)
-        {
-            // Find typeof(AggregateType) patterns
-            var typeofExpressions = getMethod.DescendantNodes()
-                .OfType<TypeOfExpressionSyntax>();
-
-            foreach (var typeofExpr in typeofExpressions)
+            .Where(m => m.Identifier.ValueText == "Get")
+            .SelectMany(m => m.DescendantNodes().OfType<TypeOfExpressionSyntax>())
+            .Select(t => t.Type switch
             {
-                if (typeofExpr.Type is IdentifierNameSyntax identifier)
-                {
-                    result.Add(identifier.Identifier.ValueText);
-                }
-                else if (typeofExpr.Type is QualifiedNameSyntax qualified)
-                {
-                    result.Add(qualified.Right.Identifier.ValueText);
-                }
-            }
-        }
+                IdentifierNameSyntax id => id.Identifier.ValueText,
+                QualifiedNameSyntax q => q.Right.Identifier.ValueText,
+                _ => null
+            })
+            .Where(n => n != null);
 
-        return result;
+        return new HashSet<string>(fromRegisterMethods.Concat(fromGetMethods)!);
     }
 }

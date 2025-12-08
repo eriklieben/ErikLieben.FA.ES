@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Documents;
+#pragma warning disable S1133 // Deprecated code - legacy Fold overloads maintained for backwards compatibility
+
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.VersionTokenParts;
 
 namespace ErikLieben.FA.ES.Projections;

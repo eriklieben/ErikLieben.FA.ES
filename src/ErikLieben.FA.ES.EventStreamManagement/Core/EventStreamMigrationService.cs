@@ -1,3 +1,5 @@
+#pragma warning disable S1135 // TODO comments - tracked in project backlog
+
 namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 
 using ErikLieben.FA.ES.Documents;
@@ -41,9 +43,7 @@ public class EventStreamMigrationService : IEventStreamMigrationService
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        logger.LogDebug(
-            "Creating migration builder for document {ObjectId}",
-            document.ObjectId);
+        logger.CreatingMigrationBuilder(document.ObjectId);
 
         return new MigrationBuilder(
             document,
@@ -64,9 +64,7 @@ public class EventStreamMigrationService : IEventStreamMigrationService
             throw new ArgumentException("At least one document is required", nameof(documents));
         }
 
-        logger.LogDebug(
-            "Creating bulk migration builder for {DocumentCount} documents",
-            documentList.Count);
+        logger.CreatingBulkMigrationBuilder(documentList.Count);
 
         // For bulk migrations, we use the first document as the primary
         // and handle multiple documents in the builder
@@ -87,9 +85,7 @@ public class EventStreamMigrationService : IEventStreamMigrationService
             .Select(tracker => tracker.GetProgress())
             .ToList();
 
-        logger.LogDebug(
-            "Retrieved {Count} active migrations",
-            progress.Count);
+        logger.RetrievedActiveMigrations(progress.Count);
 
         return Task.FromResult<IEnumerable<IMigrationProgress>>(progress);
     }
@@ -104,9 +100,7 @@ public class EventStreamMigrationService : IEventStreamMigrationService
             return Task.FromResult<IMigrationProgress?>(tracker.GetProgress());
         }
 
-        logger.LogDebug(
-            "Migration {MigrationId} not found in active migrations",
-            migrationId);
+        logger.MigrationNotFound(migrationId);
 
         return Task.FromResult<IMigrationProgress?>(null);
     }
@@ -120,15 +114,11 @@ public class EventStreamMigrationService : IEventStreamMigrationService
         {
             tracker.SetPaused(true);
 
-            logger.LogInformation(
-                "Paused migration {MigrationId}",
-                migrationId);
+            logger.PausedMigration(migrationId);
         }
         else
         {
-            logger.LogWarning(
-                "Cannot pause migration {MigrationId} - not found",
-                migrationId);
+            logger.CannotPauseMigration(migrationId);
         }
 
         return Task.CompletedTask;
@@ -143,15 +133,11 @@ public class EventStreamMigrationService : IEventStreamMigrationService
         {
             tracker.SetPaused(false);
 
-            logger.LogInformation(
-                "Resumed migration {MigrationId}",
-                migrationId);
+            logger.ResumedMigration(migrationId);
         }
         else
         {
-            logger.LogWarning(
-                "Cannot resume migration {MigrationId} - not found",
-                migrationId);
+            logger.CannotResumeMigration(migrationId);
         }
 
         return Task.CompletedTask;
@@ -166,15 +152,11 @@ public class EventStreamMigrationService : IEventStreamMigrationService
         {
             tracker.SetStatus(MigrationStatus.Cancelled);
 
-            logger.LogInformation(
-                "Cancelled migration {MigrationId}",
-                migrationId);
+            logger.CancelledMigration(migrationId);
         }
         else
         {
-            logger.LogWarning(
-                "Cannot cancel migration {MigrationId} - not found",
-                migrationId);
+            logger.CannotCancelMigration(migrationId);
         }
 
         return Task.CompletedTask;

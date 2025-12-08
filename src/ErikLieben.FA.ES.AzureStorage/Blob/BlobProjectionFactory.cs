@@ -32,9 +32,13 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         string containerOrPath,
         bool autoCreateContainer = true)
     {
-        _blobServiceClientFactory = blobServiceClientFactory ?? throw new ArgumentNullException(nameof(blobServiceClientFactory));
-        _connectionName = connectionName ?? throw new ArgumentNullException(nameof(connectionName));
-        _containerOrPath = containerOrPath ?? throw new ArgumentNullException(nameof(containerOrPath));
+        ArgumentNullException.ThrowIfNull(blobServiceClientFactory);
+        ArgumentNullException.ThrowIfNull(connectionName);
+        ArgumentNullException.ThrowIfNull(containerOrPath);
+
+        _blobServiceClientFactory = blobServiceClientFactory;
+        _connectionName = connectionName;
+        _containerOrPath = containerOrPath;
         _autoCreateContainer = autoCreateContainer;
     }
 
@@ -139,7 +143,7 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        if (projection == null) throw new ArgumentNullException(nameof(projection));
+        ArgumentNullException.ThrowIfNull(projection);
 
         blobName ??= $"{typeof(T).Name}.json";
 

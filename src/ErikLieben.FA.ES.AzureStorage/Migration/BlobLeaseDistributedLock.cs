@@ -63,28 +63,19 @@ public class BlobLeaseDistributedLock : IDistributedLock
             await leaseClient.RenewAsync(cancellationToken: cancellationToken);
             ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(60);
 
-            logger.LogDebug(
-                "Renewed blob lease lock {LockKey} (LeaseId: {LeaseId})",
-                LockKey,
-                leaseId);
+            logger.LockRenewed(LockKey, leaseId);
 
             return true;
         }
         catch (RequestFailedException ex) when (ex.Status == 409 || ex.Status == 404)
         {
-            logger.LogWarning(
-                ex,
-                "Failed to renew blob lease lock {LockKey} - lock was lost",
-                LockKey);
+            logger.LockRenewalFailed(LockKey, ex);
 
             return false;
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error renewing blob lease lock {LockKey}",
-                LockKey);
+            logger.LockRenewalError(LockKey, ex);
 
             throw;
         }
@@ -123,25 +114,16 @@ public class BlobLeaseDistributedLock : IDistributedLock
         {
             await leaseClient.ReleaseAsync(cancellationToken: cancellationToken);
 
-            logger.LogInformation(
-                "Released blob lease lock {LockKey} (LeaseId: {LeaseId})",
-                LockKey,
-                leaseId);
+            logger.LockReleased(LockKey, leaseId);
         }
         catch (RequestFailedException ex) when (ex.Status == 409 || ex.Status == 404)
         {
             // Lock already released or doesn't exist - this is fine
-            logger.LogDebug(
-                ex,
-                "Blob lease lock {LockKey} was already released",
-                LockKey);
+            logger.LockAlreadyReleased(LockKey, ex);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error releasing blob lease lock {LockKey}",
-                LockKey);
+            logger.LockReleaseError(LockKey, ex);
 
             throw;
         }

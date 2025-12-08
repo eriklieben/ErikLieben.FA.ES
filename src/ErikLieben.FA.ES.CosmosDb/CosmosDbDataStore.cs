@@ -222,7 +222,7 @@ public class CosmosDbDataStore : IDataStore
         }
     }
 
-    private async Task CheckStreamNotClosedAsync(Container container, string streamId)
+    private static async Task CheckStreamNotClosedAsync(Container container, string streamId)
     {
         // Query for the stream closed event
         var query = new QueryDefinition(

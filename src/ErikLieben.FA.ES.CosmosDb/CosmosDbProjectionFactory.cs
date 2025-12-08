@@ -154,7 +154,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        if (projection == null) throw new ArgumentNullException(nameof(projection));
+        ArgumentNullException.ThrowIfNull(projection);
 
         blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;

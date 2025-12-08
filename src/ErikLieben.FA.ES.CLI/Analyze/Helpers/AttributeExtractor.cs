@@ -1,5 +1,4 @@
 #pragma warning disable S3776 // Cognitive Complexity - attribute extraction requires analyzing multiple attribute scenarios
-#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
 
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
@@ -54,27 +53,23 @@ public static class AttributeExtractor
             };
         }
 
-        // Handle named arguments constructor
+        // Handle named arguments constructor using Aggregate
         // Example: [EventStreamType(streamType: "blob", documentType: "cosmos")]
-        var data = new EventStreamTypeAttributeData();
-
-        foreach (var namedArg in attribute.NamedArguments)
-        {
-            if (namedArg.Value.Value is not string value)
-                continue;
-
-            data = namedArg.Key switch
+        return attribute.NamedArguments
+            .Where(namedArg => namedArg.Value.Value is string)
+            .Aggregate(new EventStreamTypeAttributeData(), (data, namedArg) =>
             {
-                "StreamType" => data with { StreamType = value },
-                "DocumentType" => data with { DocumentType = value },
-                "DocumentTagType" => data with { DocumentTagType = value },
-                "EventStreamTagType" => data with { EventStreamTagType = value },
-                "DocumentRefType" => data with { DocumentRefType = value },
-                _ => data
-            };
-        }
-
-        return data;
+                var value = (string)namedArg.Value.Value!;
+                return namedArg.Key switch
+                {
+                    "StreamType" => data with { StreamType = value },
+                    "DocumentType" => data with { DocumentType = value },
+                    "DocumentTagType" => data with { DocumentTagType = value },
+                    "EventStreamTagType" => data with { EventStreamTagType = value },
+                    "DocumentRefType" => data with { DocumentRefType = value },
+                    _ => data
+                };
+            });
     }
 
     /// <summary>
@@ -104,26 +99,22 @@ public static class AttributeExtractor
             };
         }
 
-        // Handle named arguments
-        var data = new EventStreamBlobSettingsAttributeData();
-
-        foreach (var namedArg in attribute.NamedArguments)
-        {
-            if (namedArg.Value.Value is not string value)
-                continue;
-
-            data = namedArg.Key switch
+        // Handle named arguments using Aggregate
+        return attribute.NamedArguments
+            .Where(namedArg => namedArg.Value.Value is string)
+            .Aggregate(new EventStreamBlobSettingsAttributeData(), (data, namedArg) =>
             {
-                "DataStore" => data with { DataStore = value },
-                "DocumentStore" => data with { DocumentStore = value },
-                "DocumentTagStore" => data with { DocumentTagStore = value },
-                "StreamTagStore" => data with { StreamTagStore = value },
-                "SnapShotStore" => data with { SnapShotStore = value },
-                _ => data
-            };
-        }
-
-        return data;
+                var value = (string)namedArg.Value.Value!;
+                return namedArg.Key switch
+                {
+                    "DataStore" => data with { DataStore = value },
+                    "DocumentStore" => data with { DocumentStore = value },
+                    "DocumentTagStore" => data with { DocumentTagStore = value },
+                    "StreamTagStore" => data with { StreamTagStore = value },
+                    "SnapShotStore" => data with { SnapShotStore = value },
+                    _ => data
+                };
+            });
     }
 
     /// <summary>

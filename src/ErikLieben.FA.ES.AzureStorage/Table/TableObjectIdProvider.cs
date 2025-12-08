@@ -12,6 +12,9 @@ namespace ErikLieben.FA.ES.AzureStorage.Table;
 /// </summary>
 public class TableObjectIdProvider : IObjectIdProvider
 {
+    private static readonly string[] SelectRowKey = ["RowKey"];
+    private static readonly string[] SelectPartitionKey = ["PartitionKey"];
+
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings tableSettings;
 
@@ -64,7 +67,7 @@ public class TableObjectIdProvider : IObjectIdProvider
             var query = tableClient.QueryAsync<TableDocumentEntity>(
                 filter: filter,
                 maxPerPage: pageSize,
-                select: new[] { "RowKey" }, // Only fetch the object ID (row key)
+                select: SelectRowKey, // Only fetch the object ID (row key)
                 cancellationToken: cancellationToken);
 
             var pages = query.AsPages(continuationToken, pageSize);
@@ -126,7 +129,7 @@ public class TableObjectIdProvider : IObjectIdProvider
             var response = await tableClient.GetEntityIfExistsAsync<TableDocumentEntity>(
                 objectNameLower,
                 objectId,
-                select: new[] { "PartitionKey" }, // Minimal data fetch
+                select: SelectPartitionKey, // Minimal data fetch
                 cancellationToken: cancellationToken);
 
             return response.HasValue;
@@ -162,7 +165,7 @@ public class TableObjectIdProvider : IObjectIdProvider
         {
             await foreach (var _ in tableClient.QueryAsync<TableDocumentEntity>(
                 filter: filter,
-                select: new[] { "PartitionKey" }, // Minimal data fetch
+                select: SelectPartitionKey, // Minimal data fetch
                 cancellationToken: cancellationToken))
             {
                 count++;

@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Configuration;
+#pragma warning disable S1192 // String literals should not be duplicated - error message suffix is intentionally repeated for clarity
+
+using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Exceptions;
 
 namespace ErikLieben.FA.ES.Documents;

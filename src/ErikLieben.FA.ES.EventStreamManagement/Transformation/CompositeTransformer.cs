@@ -33,16 +33,14 @@ public class CompositeTransformer : IEventTransformer
     /// <inheritdoc/>
     public async Task<IEvent> TransformAsync(IEvent sourceEvent, CancellationToken cancellationToken = default)
     {
-        var currentEvent = sourceEvent;
-
-        foreach (var transformer in transformers)
-        {
-            if (transformer.CanTransform(currentEvent.EventType, currentEvent.EventVersion))
+        return await transformers.Aggregate(
+            Task.FromResult(sourceEvent),
+            async (eventTask, transformer) =>
             {
-                currentEvent = await transformer.TransformAsync(currentEvent, cancellationToken);
-            }
-        }
-
-        return currentEvent;
+                var current = await eventTask;
+                return transformer.CanTransform(current.EventType, current.EventVersion)
+                    ? await transformer.TransformAsync(current, cancellationToken)
+                    : current;
+            });
     }
 }

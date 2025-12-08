@@ -1,5 +1,4 @@
 #pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for code analysis
-#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability in analyzers
 
 using System.Collections.Immutable;
 using System.Linq;
@@ -109,23 +108,10 @@ public class VersionTokenGenerationAnalyzer : DiagnosticAnalyzer
             .Where(p => p != null)
             .ToList();
 
-        foreach (var syntaxTree in compilation.SyntaxTrees)
-        {
-            var treePath = syntaxTree.FilePath;
-            if (treePath.EndsWith(expectedFileName))
-            {
-                // Verify it's in a similar directory (same project)
-                foreach (var sourcePath in sourceLocations)
-                {
-                    if (sourcePath != null && AreInSameDirectory(sourcePath, treePath))
-                    {
-                        return syntaxTree;
-                    }
-                }
-            }
-        }
-
-        return null;
+        // Find matching generated file in the same directory as source
+        return compilation.SyntaxTrees
+            .Where(t => t.FilePath.EndsWith(expectedFileName))
+            .FirstOrDefault(t => sourceLocations.Any(s => s != null && AreInSameDirectory(s, t.FilePath)));
     }
 
     private static bool AreInSameDirectory(string path1, string path2)

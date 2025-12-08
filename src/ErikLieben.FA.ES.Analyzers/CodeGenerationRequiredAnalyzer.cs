@@ -1,6 +1,5 @@
 #pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for cross-file analysis
 #pragma warning disable S3776 // Cognitive Complexity - code generation analysis inherently requires complex logic
-#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability in analyzers
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -184,46 +183,30 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
     {
         var result = new List<(string, Location)>();
 
-        foreach (var member in classDecl.Members)
-        {
-            if (member is not MethodDeclarationSyntax methodDecl)
-                continue;
+        // Collect When(EventType evt) method patterns
+        var whenMethods = classDecl.Members
+            .OfType<MethodDeclarationSyntax>()
+            .Where(m => m.Identifier.ValueText == "When" && m.ParameterList.Parameters.Count >= 1)
+            .Select(m => (Method: m, FirstParam: m.ParameterList.Parameters[0]))
+            .Where(x => x.FirstParam.Type != null)
+            .Select(x => (x.Method, TypeInfo: semanticModel.GetTypeInfo(x.FirstParam.Type!)))
+            .Where(x => x.TypeInfo.Type != null);
 
-            // Check for When(EventType evt) method pattern
-            if (methodDecl.Identifier.ValueText == "When" &&
-                methodDecl.ParameterList.Parameters.Count >= 1)
-            {
-                var firstParam = methodDecl.ParameterList.Parameters[0];
-                if (firstParam.Type != null)
-                {
-                    var typeInfo = semanticModel.GetTypeInfo(firstParam.Type);
-                    if (typeInfo.Type != null)
-                    {
-                        var eventTypeName = typeInfo.Type.Name;
-                        result.Add((eventTypeName, methodDecl.Identifier.GetLocation()));
-                    }
-                }
-            }
+        result.AddRange(whenMethods.Select(x =>
+            (x.TypeInfo.Type!.Name, x.Method.Identifier.GetLocation())));
 
-            // Check for [When<EventType>] attribute pattern
-            foreach (var attributeList in methodDecl.AttributeLists)
-            {
-                foreach (var attribute in attributeList.Attributes)
-                {
-                    var attrName = attribute.Name.ToString();
-                    if (attrName.StartsWith("When<") || attrName.StartsWith("WhenAttribute<"))
-                    {
-                        // Extract type from generic attribute
-                        var attrSymbol = semanticModel.GetSymbolInfo(attribute).Symbol;
-                        if (attrSymbol?.ContainingType is INamedTypeSymbol { TypeArguments.Length: 1 } namedType)
-                        {
-                            var eventType = namedType.TypeArguments[0];
-                            result.Add((eventType.Name, attribute.GetLocation()));
-                        }
-                    }
-                }
-            }
-        }
+        // Collect [When<EventType>] attribute patterns using SelectMany
+        var whenAttributes = classDecl.Members
+            .OfType<MethodDeclarationSyntax>()
+            .SelectMany(m => m.AttributeLists.SelectMany(al => al.Attributes))
+            .Where(a => a.Name.ToString().StartsWith("When<") ||
+                       a.Name.ToString().StartsWith("WhenAttribute<"))
+            .Select(a => (Attribute: a, Symbol: semanticModel.GetSymbolInfo(a).Symbol))
+            .Where(x => x.Symbol?.ContainingType is INamedTypeSymbol { TypeArguments.Length: 1 })
+            .Select(x => (x.Attribute, EventType: ((INamedTypeSymbol)x.Symbol!.ContainingType!).TypeArguments[0]));
+
+        result.AddRange(whenAttributes.Select(x =>
+            (x.EventType.Name, x.Attribute.GetLocation())));
 
         return result;
     }
@@ -268,47 +251,24 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
 
     private static HashSet<string> CollectGeneratedEventTypes(SyntaxTree generatedTree, string className)
     {
-        var result = new HashSet<string>();
         var root = generatedTree.GetRoot();
 
-        // Find the Fold method in the generated partial class
-        var classDeclarations = root.DescendantNodes()
+        // Find the Fold method in the generated partial class and collect event types
+        var eventTypes = root.DescendantNodes()
             .OfType<ClassDeclarationSyntax>()
-            .Where(c => c.Identifier.ValueText == className);
-
-        foreach (var classDecl in classDeclarations)
-        {
-            // Look for Fold method (Aggregates, Projections) or DispatchToWhen (RoutedProjections)
-            var foldMethod = classDecl.Members
+            .Where(c => c.Identifier.ValueText == className)
+            .Select(c => c.Members
                 .OfType<MethodDeclarationSyntax>()
                 .FirstOrDefault(m => m.Identifier.ValueText == "Fold" ||
-                                     m.Identifier.ValueText == "DispatchToWhen");
+                                     m.Identifier.ValueText == "DispatchToWhen"))
+            .Where(m => m?.Body != null)
+            .SelectMany(m => m!.Body!.DescendantNodes().OfType<SwitchStatementSyntax>())
+            .SelectMany(s => s.Sections)
+            .SelectMany(section => section.DescendantNodes().OfType<InvocationExpressionSyntax>())
+            .Select(ExtractEventTypeFromInvocation)
+            .Where(name => name != null);
 
-            if (foldMethod?.Body == null)
-                continue;
-
-            // Find all switch sections in the Fold method
-            var switchStatements = foldMethod.Body.DescendantNodes()
-                .OfType<SwitchStatementSyntax>();
-
-            foreach (var switchStmt in switchStatements)
-            {
-                foreach (var section in switchStmt.Sections)
-                {
-                    // Look for When invocations or WhenXxx method calls in the case body
-                    foreach (var invocation in section.DescendantNodes().OfType<InvocationExpressionSyntax>())
-                    {
-                        var eventTypeName = ExtractEventTypeFromInvocation(invocation);
-                        if (eventTypeName != null)
-                        {
-                            result.Add(eventTypeName);
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
+        return new HashSet<string>(eventTypes!);
     }
 
     /// <summary>
@@ -379,32 +339,14 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
     /// </summary>
     private static List<(string PropertyName, Location Location)> CollectSourceProperties(ClassDeclarationSyntax classDecl)
     {
-        var result = new List<(string, Location)>();
-
-        foreach (var member in classDecl.Members)
-        {
-            if (member is not PropertyDeclarationSyntax propertyDecl)
-                continue;
-
-            // Must have public modifier (explicit or implicit via interface implementation)
-            var isPublic = propertyDecl.Modifiers.Any(SyntaxKind.PublicKeyword);
-            if (!isPublic)
-                continue;
-
-            // Must have a getter
-            var hasGetter = propertyDecl.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)) ?? false;
-            var hasExpressionBody = propertyDecl.ExpressionBody != null;
-            if (!hasGetter && !hasExpressionBody)
-                continue;
-
-            // Skip static properties
-            if (propertyDecl.Modifiers.Any(SyntaxKind.StaticKeyword))
-                continue;
-
-            result.Add((propertyDecl.Identifier.ValueText, propertyDecl.Identifier.GetLocation()));
-        }
-
-        return result;
+        return classDecl.Members
+            .OfType<PropertyDeclarationSyntax>()
+            .Where(p => p.Modifiers.Any(SyntaxKind.PublicKeyword))
+            .Where(p => !p.Modifiers.Any(SyntaxKind.StaticKeyword))
+            .Where(p => p.ExpressionBody != null ||
+                       (p.AccessorList?.Accessors.Any(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)) ?? false))
+            .Select(p => (p.Identifier.ValueText, p.Identifier.GetLocation()))
+            .ToList();
     }
 
     /// <summary>
@@ -412,26 +354,15 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
     /// </summary>
     private static HashSet<string> CollectGeneratedInterfaceProperties(SyntaxTree generatedTree, string className)
     {
-        var result = new HashSet<string>();
         var root = generatedTree.GetRoot();
-
-        // Find the generated interface (I{ClassName})
         var interfaceName = $"I{className}";
-        var interfaceDeclarations = root.DescendantNodes()
+
+        var properties = root.DescendantNodes()
             .OfType<InterfaceDeclarationSyntax>()
-            .Where(i => i.Identifier.ValueText == interfaceName);
+            .Where(i => i.Identifier.ValueText == interfaceName)
+            .SelectMany(i => i.Members.OfType<PropertyDeclarationSyntax>())
+            .Select(p => p.Identifier.ValueText);
 
-        foreach (var interfaceDecl in interfaceDeclarations)
-        {
-            foreach (var member in interfaceDecl.Members)
-            {
-                if (member is PropertyDeclarationSyntax propertyDecl)
-                {
-                    result.Add(propertyDecl.Identifier.ValueText);
-                }
-            }
-        }
-
-        return result;
+        return new HashSet<string>(properties);
     }
 }

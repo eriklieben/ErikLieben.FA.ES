@@ -202,11 +202,7 @@ public class MigrationBuilder : IMigrationBuilder
                 "Live migration not configured. Call WithLiveMigration() before ExecuteLiveMigrationAsync().");
         }
 
-        logger.LogInformation(
-            "Starting live migration {MigrationId} from {SourceStream} to {TargetStream}",
-            context.MigrationId,
-            context.SourceStreamIdentifier,
-            context.TargetStreamIdentifier);
+        logger.StartingLiveMigration(context.MigrationId, context.SourceStreamIdentifier, context.TargetStreamIdentifier);
 
         // Create target stream info based on source
         var targetStreamInfo = new StreamInformation
@@ -276,12 +272,7 @@ public class MigrationBuilder : IMigrationBuilder
         context.DataStore = dataStore;
         context.DocumentStore = documentStore;
 
-        logger.LogInformation(
-            "Starting migration {MigrationId} from {SourceStream} to {TargetStream} (DryRun: {IsDryRun})",
-            context.MigrationId,
-            context.SourceStreamIdentifier,
-            context.TargetStreamIdentifier,
-            isDryRun);
+        logger.StartingMigration(context.MigrationId, context.SourceStreamIdentifier, context.TargetStreamIdentifier, isDryRun);
 
         // Create executor and run migration
         var executor = new MigrationExecutor(context, lockProvider, loggerFactory);

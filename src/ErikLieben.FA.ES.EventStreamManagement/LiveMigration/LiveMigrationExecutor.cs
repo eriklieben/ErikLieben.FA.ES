@@ -50,8 +50,7 @@ public class LiveMigrationExecutor
 
         try
         {
-            _logger.LogInformation(
-                "Starting live migration {MigrationId} from {SourceStream} to {TargetStream}",
+            _logger.LiveMigrationStarted(
                 _context.MigrationId,
                 _context.SourceStreamId,
                 _context.TargetStreamId);
@@ -85,9 +84,7 @@ public class LiveMigrationExecutor
                 if (targetVersion < sourceVersion)
                 {
                     // Not yet synced, continue catch-up
-                    _logger.LogDebug(
-                        "Iteration {Iteration}: Target at {TargetVersion}, source at {SourceVersion}. Continuing catch-up.",
-                        _iteration, targetVersion, sourceVersion);
+                    _logger.LiveMigrationCatchUp(_iteration, targetVersion, sourceVersion);
 
                     await Task.Delay(_context.Options.CatchUpDelay, cancellationToken);
                     continue;
@@ -103,8 +100,7 @@ public class LiveMigrationExecutor
 
                     _stopwatch.Stop();
 
-                    _logger.LogInformation(
-                        "Live migration {MigrationId} completed successfully. Copied {EventCount} events in {Iterations} iterations ({Elapsed})",
+                    _logger.LiveMigrationSuccess(
                         _context.MigrationId,
                         _totalEventsCopied,
                         _iteration,
@@ -114,9 +110,7 @@ public class LiveMigrationExecutor
                 }
 
                 // Close failed due to version conflict - new events arrived
-                _logger.LogDebug(
-                    "Iteration {Iteration}: Close attempt failed. Source version changed from {Expected} to {Actual}. Retrying catch-up.",
-                    _iteration, sourceVersion, closeResult.ActualVersion);
+                _logger.LiveMigrationCloseRetry(_iteration, sourceVersion, closeResult.ActualVersion);
 
                 await Task.Delay(_context.Options.CatchUpDelay, cancellationToken);
             }
@@ -126,12 +120,12 @@ public class LiveMigrationExecutor
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "Live migration {MigrationId} was cancelled", _context.MigrationId);
+            _logger.LiveMigrationCancelled(_context.MigrationId, ex);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Live migration {MigrationId} failed", _context.MigrationId);
+            _logger.LiveMigrationError(_context.MigrationId, ex);
             return CreateFailureResult(ex.Message, ex);
         }
         finally
@@ -151,7 +145,7 @@ public class LiveMigrationExecutor
 
         if (existingTarget == null)
         {
-            _logger.LogDebug("Target stream {TargetStream} will be created on first event write", _context.TargetStreamId);
+            _logger.TargetStreamWillBeCreated(_context.TargetStreamId);
         }
     }
 
@@ -204,9 +198,7 @@ public class LiveMigrationExecutor
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex,
-                        "Failed to transform event {EventType} v{Version}. Skipping.",
-                        evt.EventType, evt.EventVersion);
+                    _logger.TransformEventSkipped(evt.EventType, evt.EventVersion, ex);
                     continue;
                 }
             }
@@ -224,8 +216,7 @@ public class LiveMigrationExecutor
 
             _totalEventsCopied += transformedEvents.Count;
 
-            _logger.LogDebug(
-                "Copied {EventCount} events to target stream (versions {Start} to {End})",
+            _logger.EventsCopiedToTarget(
                 transformedEvents.Count,
                 transformedEvents[0].EventVersion,
                 transformedEvents[^1].EventVersion);
@@ -310,21 +301,18 @@ public class LiveMigrationExecutor
                 preserveTimestamp: false,
                 closeEventJson);
 
-            _logger.LogInformation(
-                "Successfully closed source stream {SourceStream} at version {Version}",
-                _context.SourceStreamId,
-                expectedVersion + 1);
+            _logger.SourceStreamClosed(_context.SourceStreamId, expectedVersion + 1);
 
             return CloseAttemptResult.Succeeded();
         }
         catch (OptimisticConcurrencyException ex)
         {
-            _logger.LogDebug(ex, "Optimistic concurrency conflict during close attempt");
+            _logger.CloseAttemptConcurrencyConflict(ex);
             return CloseAttemptResult.VersionConflict(ex.ActualVersion ?? actualVersion);
         }
         catch (Exception ex) when (IsVersionConflict(ex))
         {
-            _logger.LogDebug(ex, "Version conflict during close attempt");
+            _logger.CloseAttemptVersionConflict(ex);
 
             // Re-read to get actual version
             var newEvents = await _context.DataStore.ReadAsync(
@@ -408,9 +396,7 @@ public class LiveMigrationExecutor
         // Save the updated document
         await _context.DocumentStore.SetAsync(updatedDocument);
 
-        _logger.LogInformation(
-            "Updated ObjectDocument: Active stream is now {TargetStream}",
-            _context.TargetStreamId);
+        _logger.ObjectDocumentUpdated(_context.TargetStreamId);
     }
 
     private void ReportProgress(int eventsCopiedThisIteration, int sourceVersion, int targetVersion)

@@ -209,7 +209,7 @@ public sealed class WatchDisplay : IWatchDisplay
         }
     }
 
-    private IRenderable BuildLayout()
+    private Layout BuildLayout()
     {
         var layout = new Layout("Root")
             .SplitRows(
@@ -235,7 +235,7 @@ public sealed class WatchDisplay : IWatchDisplay
         return layout;
     }
 
-    private IRenderable BuildHeader()
+    private Rule BuildHeader()
     {
         var solutionName = Path.GetFileName(_solutionPath);
 

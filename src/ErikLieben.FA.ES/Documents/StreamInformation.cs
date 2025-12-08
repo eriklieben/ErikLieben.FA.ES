@@ -1,4 +1,6 @@
-﻿namespace ErikLieben.FA.ES.Documents;
+#pragma warning disable S1133 // Deprecated code - legacy connection name properties maintained for backwards compatibility
+
+namespace ErikLieben.FA.ES.Documents;
 
 /// <summary>
 /// Provides concrete stream metadata including identifiers, connection names, and options such as chunking and snapshots.

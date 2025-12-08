@@ -1,3 +1,5 @@
+#pragma warning disable S1135 // TODO comments - tracked in project backlog
+
 namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
 using Azure.Storage.Blobs;
@@ -43,10 +45,7 @@ public class AzureBlobBackupProvider : IBackupProvider
         var backupId = Guid.NewGuid();
         var timestamp = DateTimeOffset.UtcNow;
 
-        logger.LogInformation(
-            "Starting backup {BackupId} for {ObjectId}",
-            backupId,
-            context.Document.ObjectId);
+        logger.BackupStarting(backupId, context.Document.ObjectId);
 
         // Ensure container exists
         var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
@@ -98,10 +97,7 @@ public class AzureBlobBackupProvider : IBackupProvider
             overwrite: false,
             cancellationToken: cancellationToken);
 
-        logger.LogInformation(
-            "Backup {BackupId} completed ({Size} bytes)",
-            backupId,
-            bytes.Length);
+        logger.BackupCompleted(backupId, bytes.Length);
 
         // Create and return handle
         return new BlobBackupHandle
@@ -135,9 +131,7 @@ public class AzureBlobBackupProvider : IBackupProvider
         ArgumentNullException.ThrowIfNull(handle);
         ArgumentNullException.ThrowIfNull(context);
 
-        logger.LogInformation(
-            "Starting restore from backup {BackupId}",
-            handle.BackupId);
+        logger.RestoreStarting(handle.BackupId);
 
         // Download backup blob
         var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
@@ -166,10 +160,7 @@ public class AzureBlobBackupProvider : IBackupProvider
             throw new InvalidOperationException("Failed to deserialize backup data");
         }
 
-        logger.LogInformation(
-            "Restored backup {BackupId} with {EventCount} events",
-            handle.BackupId,
-            backup.EventCount);
+        logger.RestoreCompleted(handle.BackupId, backup.EventCount);
 
         // TODO: Implement actual restore logic to write events back to the data store
     }
@@ -190,9 +181,7 @@ public class AzureBlobBackupProvider : IBackupProvider
             // Check if blob exists
             if (!await blobClient.ExistsAsync(cancellationToken))
             {
-                logger.LogWarning(
-                    "Backup {BackupId} blob not found",
-                    handle.BackupId);
+                logger.BackupBlobNotFound(handle.BackupId);
                 return false;
             }
 
@@ -216,24 +205,17 @@ public class AzureBlobBackupProvider : IBackupProvider
 
             if (backup == null || backup.BackupId != handle.BackupId)
             {
-                logger.LogWarning(
-                    "Backup {BackupId} has invalid structure",
-                    handle.BackupId);
+                logger.BackupInvalidStructure(handle.BackupId);
                 return false;
             }
 
-            logger.LogDebug(
-                "Backup {BackupId} validation successful",
-                handle.BackupId);
+            logger.BackupValidationSuccessful(handle.BackupId);
 
             return true;
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Error validating backup {BackupId}",
-                handle.BackupId);
+            logger.BackupValidationError(handle.BackupId, ex);
             return false;
         }
     }
@@ -251,9 +233,7 @@ public class AzureBlobBackupProvider : IBackupProvider
 
         await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
 
-        logger.LogInformation(
-            "Deleted backup {BackupId}",
-            handle.BackupId);
+        logger.BackupDeleted(handle.BackupId);
     }
 
     private static string GetBackupBlobName(Guid backupId, string objectId)

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using ErikLieben.FA.ES.CLI.Configuration;
@@ -134,7 +134,7 @@ public class Analyze(Config config, IAnsiConsole? console = null)
         OnProgress?.Invoke(totalProjects, totalProjects, "Analysis complete");
     }
 
-    private async Task ProcessProjectSilentAsync(
+    private static async Task ProcessProjectSilentAsync(
         Project project,
         SolutionDefinition solutionDefinition,
         string solutionRootPath,

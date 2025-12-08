@@ -1,3 +1,6 @@
+#pragma warning disable S2292 // Auto-implement property - backing field required for override mechanism with serialization
+#pragma warning disable S1133 // Deprecated code - Fold overloads maintained for backwards compatibility
+
 using ErikLieben.FA.ES.Documents;
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;

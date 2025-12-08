@@ -1,4 +1,6 @@
-﻿using ErikLieben.FA.ES.Exceptions;
+#pragma warning disable S2292 // Auto-implement property - backing field required for SchemaVersion serialization logic
+
+using ErikLieben.FA.ES.Exceptions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;

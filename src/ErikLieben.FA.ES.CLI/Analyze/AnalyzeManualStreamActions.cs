@@ -1,4 +1,5 @@
 #pragma warning disable S3776 // Cognitive Complexity - stream action analysis inherently requires complex control flow
+#pragma warning disable S1066 // Mergeable if statements - pattern matching conditions intentionally separated for readability
 
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;

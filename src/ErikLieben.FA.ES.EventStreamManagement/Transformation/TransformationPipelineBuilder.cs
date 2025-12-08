@@ -79,14 +79,10 @@ public class TransformationPipelineBuilder : ITransformationPipelineBuilder
         public Task<IEvent> TransformAsync(IEvent sourceEvent, CancellationToken cancellationToken = default)
         {
             // Check if event passes all filters
-            foreach (var filter in filters)
+            if (!filters.All(filter => filter(sourceEvent)))
             {
-                if (!filter(sourceEvent))
-                {
-                    // Event filtered out - could throw or return marker
-                    throw new EventFilteredException(
-                        $"Event {sourceEvent.EventType} v{sourceEvent.EventVersion} was filtered out");
-                }
+                throw new EventFilteredException(
+                    $"Event {sourceEvent.EventType} v{sourceEvent.EventVersion} was filtered out");
             }
 
             return Task.FromResult(sourceEvent);

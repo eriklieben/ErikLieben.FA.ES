@@ -57,10 +57,8 @@ public class TableObjectDocumentFactory : IObjectDocumentFactory
         DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
 
-        var objectNameLower = objectName.ToLowerInvariant();
-#pragma warning disable CS8604 // Possible null reference argument - validated above
-        var result = await tableDocumentStore.CreateAsync(objectNameLower, objectId, store);
-#pragma warning restore CS8604
+        var objectNameLower = objectName!.ToLowerInvariant();
+        var result = await tableDocumentStore.CreateAsync(objectNameLower, objectId!, store);
 
         if (result is null)
         {

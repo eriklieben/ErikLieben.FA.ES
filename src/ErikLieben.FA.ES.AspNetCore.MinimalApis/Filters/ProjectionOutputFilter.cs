@@ -89,8 +89,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
         activity?.SetTag("projectionType", typeof(TProjection).Name);
         activity?.SetTag("blobName", blobName ?? "(default)");
 
-        logger?.LogDebug("Updating projection {ProjectionType} with blob name {BlobName}",
-            typeof(TProjection).Name, blobName ?? "(default)");
+        logger?.UpdatingProjection(typeof(TProjection).Name, blobName ?? "(default)");
 
         // Load the projection
         var projection = await LoadProjectionAsync(serviceProvider, documentFactory, streamFactory, blobName);
@@ -104,7 +103,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
             await SaveProjectionAsync(serviceProvider, projection, blobName, logger);
         }
 
-        logger?.LogDebug("Successfully updated projection {ProjectionType}", typeof(TProjection).Name);
+        logger?.ProjectionUpdated(typeof(TProjection).Name);
     }
 
     private static async Task<TProjection> LoadProjectionAsync(
@@ -152,7 +151,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
         if (genericFactory != null)
         {
             await genericFactory.SaveAsync(projection, blobName);
-            logger?.LogDebug("Saved projection {ProjectionType} using generic factory", typeof(TProjection).Name);
+            logger?.ProjectionSavedGeneric(typeof(TProjection).Name);
             return;
         }
 
@@ -163,7 +162,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
         if (matchingFactory != null)
         {
             await matchingFactory.SaveProjectionAsync(projection, blobName);
-            logger?.LogDebug("Saved projection {ProjectionType} using non-generic factory", typeof(TProjection).Name);
+            logger?.ProjectionSavedNonGeneric(typeof(TProjection).Name);
             return;
         }
 

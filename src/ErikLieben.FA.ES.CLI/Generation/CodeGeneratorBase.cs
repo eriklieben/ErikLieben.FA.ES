@@ -77,7 +77,7 @@ public abstract class CodeGeneratorBase : ICodeGenerator
         var directory = Path.GetDirectoryName(filePath);
         while (!string.IsNullOrEmpty(directory))
         {
-            if (Directory.GetFiles(directory, "*.csproj").Any())
+            if (Directory.GetFiles(directory, "*.csproj").Length > 0)
             {
                 return directory;
             }
