@@ -123,32 +123,52 @@ public class TableObjectDocumentFactoryTests
             Assert.Equal(expectedObjectDocument, result);
         }
 
-        [Theory]
-        [InlineData(null!)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public async Task Should_throw_when_object_name_is_invalid(string? objectName)
+        [Fact]
+        public async Task Should_throw_ArgumentNullException_when_object_name_is_null()
         {
             // Arrange
             var objectId = "id-123";
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                sut.GetOrCreateAsync(objectName!, objectId));
+                sut.GetOrCreateAsync(null!, objectId));
         }
 
         [Theory]
-        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
-        public async Task Should_throw_when_object_id_is_invalid(string? objectId)
+        public async Task Should_throw_ArgumentException_when_object_name_is_empty_or_whitespace(string objectName)
+        {
+            // Arrange
+            var objectId = "id-123";
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                sut.GetOrCreateAsync(objectName, objectId));
+        }
+
+        [Fact]
+        public async Task Should_throw_ArgumentNullException_when_object_id_is_null()
         {
             // Arrange
             var objectName = "TestObject";
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                sut.GetOrCreateAsync(objectName, objectId!));
+                sut.GetOrCreateAsync(objectName, null!));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task Should_throw_ArgumentException_when_object_id_is_empty_or_whitespace(string objectId)
+        {
+            // Arrange
+            var objectName = "TestObject";
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                sut.GetOrCreateAsync(objectName, objectId));
         }
 
         [Fact]
