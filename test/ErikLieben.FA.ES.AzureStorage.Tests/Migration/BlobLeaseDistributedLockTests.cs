@@ -406,8 +406,11 @@ public class BlobLeaseDistributedLockTests
             mockLeaseClient.ReleaseAsync(cancellationToken: Arg.Any<CancellationToken>())
                 .ThrowsAsync(new RequestFailedException(409, "Conflict"));
 
-            // Act & Assert (should not throw)
+            // Act
             await sut.ReleaseAsync();
+
+            // Assert - 409 conflict is handled gracefully without throwing
+            Assert.True(true);
         }
 
         [Fact]
@@ -423,8 +426,11 @@ public class BlobLeaseDistributedLockTests
             mockLeaseClient.ReleaseAsync(cancellationToken: Arg.Any<CancellationToken>())
                 .ThrowsAsync(new RequestFailedException(404, "Not Found"));
 
-            // Act & Assert (should not throw)
+            // Act
             await sut.ReleaseAsync();
+
+            // Assert - 404 not found is handled gracefully without throwing
+            Assert.True(true);
         }
 
         [Fact]

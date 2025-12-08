@@ -446,7 +446,7 @@ public class GenerateProjectionCode
                  /// <summary>
                  /// Factory for creating and managing {{projection.Name}} blob-based projections.
                  /// </summary>
-                 public class {{projection.Name}}Factory(
+                 public partial class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
                      IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
@@ -503,7 +503,7 @@ public class GenerateProjectionCode
                  /// <summary>
                  /// Factory for creating and managing {{projection.Name}} CosmosDB-based projections.
                  /// </summary>
-                 public class {{projection.Name}}Factory(
+                 public partial class {{projection.Name}}Factory(
                      CosmosClient cosmosClient,
                      EventStreamCosmosDbSettings settings,
                      IObjectDocumentFactory objectDocumentFactory,
@@ -561,7 +561,7 @@ public class GenerateProjectionCode
                  /// Main file at [BlobJsonProjection] path contains $checkpoint and $metadata.
                  /// Each destination is stored in a separate file.
                  /// </summary>
-                 public class {{projection.Name}}Factory(
+                 public partial class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
                      IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
@@ -1159,7 +1159,12 @@ public class GenerateProjectionCode
         // Generate case for each property
         foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories"))
         {
-            var jsonPropertyName = property.Name == "Checkpoint" ? "$checkpoint" : property.Name;
+            var jsonPropertyName = property.Name switch
+            {
+                "Checkpoint" => "$checkpoint",
+                "CheckpointFingerprint" => "$checkpointFingerprint",
+                _ => property.Name
+            };
             var varName = property.Name == "Checkpoint" ? "checkpoint" : ToCamelCase(property.Name);
             var fullTypeDef = BuildFullTypeDefinition(property);
 
@@ -1237,6 +1242,7 @@ public class GenerateProjectionCode
         }
 
         code.AppendLine("                                instance.Checkpoint = checkpoint;");
+        code.AppendLine("                                instance.CheckpointFingerprint = checkpointFingerprint;");
         code.AppendLine();
         code.AppendLine("                                return instance;");
 

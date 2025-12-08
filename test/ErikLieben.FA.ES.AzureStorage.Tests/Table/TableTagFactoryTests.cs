@@ -2,7 +2,6 @@ using System;
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Table;
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
@@ -13,13 +12,11 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Table;
 public class TableTagFactoryTests
 {
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly EventStreamTableSettings tableSettings;
 
     public TableTagFactoryTests()
     {
         clientFactory = Substitute.For<IAzureClientFactory<TableServiceClient>>();
-        settings = new EventStreamDefaultTypeSettings("table");
         tableSettings = new EventStreamTableSettings("test-connection");
     }
 
@@ -29,7 +26,7 @@ public class TableTagFactoryTests
         public void Should_return_table_document_tag_store_with_default_settings()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
 
             // Act
             var result = sut.CreateDocumentTagStore();
@@ -43,7 +40,7 @@ public class TableTagFactoryTests
         public void Should_return_table_document_tag_store_for_document()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
             var document = Substitute.For<IObjectDocument>();
             var streamInfo = Substitute.For<StreamInformation>();
             streamInfo.DocumentTagType = "table";
@@ -61,7 +58,7 @@ public class TableTagFactoryTests
         public void Should_throw_argument_null_exception_when_document_is_null()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => sut.CreateDocumentTagStore((IObjectDocument)null!));
@@ -71,7 +68,7 @@ public class TableTagFactoryTests
         public void Should_return_table_document_tag_store_for_type()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
 
             // Act
             var result = sut.CreateDocumentTagStore("custom-type");
@@ -88,7 +85,7 @@ public class TableTagFactoryTests
         public void Should_return_table_stream_tag_store_with_default_settings()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
 
             // Act
             var result = sut.CreateStreamTagStore();
@@ -102,7 +99,7 @@ public class TableTagFactoryTests
         public void Should_return_table_stream_tag_store_for_document()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
             var document = Substitute.For<IObjectDocument>();
             var streamInfo = Substitute.For<StreamInformation>();
             streamInfo.EventStreamTagType = "table";
@@ -120,7 +117,7 @@ public class TableTagFactoryTests
         public void Should_throw_argument_null_exception_when_document_is_null()
         {
             // Arrange
-            var sut = new TableTagFactory(clientFactory, settings, tableSettings);
+            var sut = new TableTagFactory(clientFactory, tableSettings);
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => sut.CreateStreamTagStore(null!));

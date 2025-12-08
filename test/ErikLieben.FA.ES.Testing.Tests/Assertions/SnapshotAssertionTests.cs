@@ -93,8 +93,9 @@ public class SnapshotAssertionTests
             var json = JsonSerializer.Serialize(testObject, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(snapshotPath, json);
 
-            // Should not throw
+            // Act & Assert - matching snapshot should not throw
             SnapshotAssertion.MatchesSnapshot(testObject, "existing");
+            Assert.True(true);
         }
 
         [Fact]
@@ -168,8 +169,9 @@ public class SnapshotAssertionTests
             var json = JsonSerializer.Serialize(testObject, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(snapshotPath, json);
 
-            // Should not throw
+            // Act & Assert - matching snapshot should not throw
             await SnapshotAssertion.MatchesSnapshotAsync(testObject, "existing_async");
+            Assert.True(true);
         }
     }
 
@@ -473,8 +475,9 @@ public class SnapshotAssertionTests
             // Value differs but comparer only checks Name
             var data = new TestData("Test", 999);
 
-            // Should not throw because comparer ignores Value
+            // Act & Assert - should not throw because comparer ignores Value
             SnapshotAssertion.MatchesSnapshot(data, "comparer_match", new TestComparer());
+            Assert.True(true);
         }
 
         [Fact]

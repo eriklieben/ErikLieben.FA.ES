@@ -1,4 +1,3 @@
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Exceptions;
 using ErikLieben.FA.ES.Documents;
@@ -13,7 +12,6 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
 {
     private readonly CosmosDbContainerFixture _fixture;
     private readonly EventStreamCosmosDbSettings _settings;
-    private readonly EventStreamDefaultTypeSettings _typeSettings;
     private readonly IDocumentTagDocumentFactory _documentTagFactory;
     private Database? _database;
 
@@ -26,7 +24,6 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
             DocumentsContainerName = "documents",
             AutoCreateContainers = true
         };
-        _typeSettings = new EventStreamDefaultTypeSettings();
         _documentTagFactory = Substitute.For<IDocumentTagDocumentFactory>();
     }
 
@@ -54,7 +51,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_create_new_document()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
 
         // Act
         var result = await sut.CreateAsync("TestObject", "test-id-001");
@@ -71,7 +68,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_return_existing_document_on_create()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
 
         // Create first
         var first = await sut.CreateAsync("TestObject", "test-id-002");
@@ -88,7 +85,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_get_existing_document()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         await sut.CreateAsync("TestObject", "test-id-003");
 
         // Act
@@ -103,7 +100,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_throw_when_document_not_found()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
 
         // Act & Assert
         await Assert.ThrowsAsync<CosmosDbDocumentNotFoundException>(
@@ -114,7 +111,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_update_document_with_set()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         var created = await sut.CreateAsync("TestObject", "test-id-004");
 
         // Modify the stream version
@@ -132,7 +129,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_create_document_with_correct_stream_info()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
 
         // Act
         var result = await sut.CreateAsync("Order", "order-123");
@@ -156,7 +153,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
             UseOptimisticConcurrency = true
         };
 
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, settingsWithConcurrency, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, settingsWithConcurrency);
         var created = await sut.CreateAsync("TestObject", "test-id-005");
 
         // Update with hash
@@ -177,7 +174,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
     public async Task Should_preserve_terminated_streams()
     {
         // Arrange
-        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var sut = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         var created = await sut.CreateAsync("TestObject", "test-id-006");
 
         // Add a terminated stream

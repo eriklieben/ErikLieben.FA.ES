@@ -1,4 +1,3 @@
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Azure.Cosmos;
@@ -9,14 +8,12 @@ namespace ErikLieben.FA.ES.CosmosDb.Tests;
 public class CosmosDbTagFactoryTests
 {
     private readonly CosmosClient cosmosClient;
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly EventStreamCosmosDbSettings cosmosDbSettings;
     private readonly IObjectDocument objectDocument;
 
     public CosmosDbTagFactoryTests()
     {
         cosmosClient = Substitute.For<CosmosClient>();
-        settings = new EventStreamDefaultTypeSettings();
         cosmosDbSettings = new EventStreamCosmosDbSettings();
         objectDocument = Substitute.For<IObjectDocument>();
 
@@ -33,7 +30,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_create_instance_with_valid_parameters()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
             Assert.NotNull(sut);
         }
     }
@@ -43,14 +40,14 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_throw_argument_null_exception_when_document_is_null()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
             Assert.Throws<ArgumentNullException>(() => sut.CreateDocumentTagStore((IObjectDocument)null!));
         }
 
         [Fact]
         public void Should_throw_argument_null_exception_when_document_tag_type_is_null()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
             var doc = Substitute.For<IObjectDocument>();
             doc.Active.Returns(new StreamInformation { DocumentTagType = null });
 
@@ -60,7 +57,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_return_cosmos_db_document_tag_store()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
 
             var result = sut.CreateDocumentTagStore(objectDocument);
 
@@ -74,7 +71,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_return_cosmos_db_document_tag_store()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
 
             var result = sut.CreateDocumentTagStore();
 
@@ -88,7 +85,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_return_cosmos_db_document_tag_store_for_any_type()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
 
             var result = sut.CreateDocumentTagStore("cosmosdb");
 
@@ -102,14 +99,14 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_throw_argument_null_exception_when_document_is_null()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
             Assert.Throws<ArgumentNullException>(() => sut.CreateStreamTagStore(null!));
         }
 
         [Fact]
         public void Should_throw_argument_null_exception_when_event_stream_tag_type_is_null()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
             var doc = Substitute.For<IObjectDocument>();
             doc.Active.Returns(new StreamInformation { EventStreamTagType = null });
 
@@ -119,7 +116,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_return_cosmos_db_stream_tag_store()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
 
             var result = sut.CreateStreamTagStore(objectDocument);
 
@@ -133,7 +130,7 @@ public class CosmosDbTagFactoryTests
         [Fact]
         public void Should_return_cosmos_db_stream_tag_store()
         {
-            var sut = new CosmosDbTagFactory(cosmosClient, settings, cosmosDbSettings);
+            var sut = new CosmosDbTagFactory(cosmosClient, cosmosDbSettings);
 
             var result = sut.CreateStreamTagStore();
 

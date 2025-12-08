@@ -37,11 +37,8 @@ public class ProjectionDataTests
         [Fact]
         public void Should_set_CreateIfNotExists()
         {
-            // Arrange
-            var createIfNotExists = false;
-
-            // Act
-            var sut = new ProjectionData(createIfNotExists: createIfNotExists);
+            // Arrange & Act
+            var sut = new ProjectionData { CreateIfNotExists = false };
 
             // Assert
             Assert.False(sut.CreateIfNotExists);
@@ -66,7 +63,7 @@ public class ProjectionDataTests
         public void Should_allow_null_BlobName()
         {
             // Arrange & Act
-            var sut = new ProjectionData(null, true);
+            var sut = new ProjectionData { BlobName = null, CreateIfNotExists = true };
 
             // Assert
             Assert.Null(sut.BlobName);

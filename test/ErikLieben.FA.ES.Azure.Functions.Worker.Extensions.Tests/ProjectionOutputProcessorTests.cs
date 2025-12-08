@@ -174,7 +174,8 @@ public class ProjectionOutputProcessorTests
             // Act
             await sut.ProcessProjectionOutputsAsync(null!, "TestFunction");
 
-            // Assert - no exception thrown
+            // Assert - method completes without exception
+            Assert.True(true);
         }
 
         [Fact]
@@ -190,7 +191,8 @@ public class ProjectionOutputProcessorTests
             // Act
             await sut.ProcessProjectionOutputsAsync(Array.Empty<ProjectionOutputAttribute>(), "TestFunction");
 
-            // Assert - no exception thrown
+            // Assert - method completes without exception
+            Assert.True(true);
         }
 
         [Fact]

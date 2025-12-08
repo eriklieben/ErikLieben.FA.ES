@@ -13,7 +13,6 @@ public class WatchDisplay : IWatchDisplay
 {
     private readonly object _lock = new();
     private readonly string _solutionPath;
-    private readonly bool _verbose;
 
     // State
     private WatchStatus _status = WatchStatus.Initializing;
@@ -55,10 +54,10 @@ public class WatchDisplay : IWatchDisplay
     public event Action? OnFullRegenRequested;
     public event Action? OnClearActivityRequested;
 
-    public WatchDisplay(string solutionPath, bool verbose)
+    public WatchDisplay(string solutionPath, bool verbose = false)
     {
         _solutionPath = solutionPath;
-        _verbose = verbose;
+        _ = verbose; // Parameter kept for API compatibility
     }
 
     public enum WatchStatus

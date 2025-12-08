@@ -1,5 +1,4 @@
 using System.Net;
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Exceptions;
 using ErikLieben.FA.ES.CosmosDb.Model;
@@ -15,7 +14,6 @@ public class CosmosDbDocumentStoreTests
     private readonly CosmosClient cosmosClient;
     private readonly IDocumentTagDocumentFactory documentTagFactory;
     private readonly EventStreamCosmosDbSettings settings;
-    private readonly EventStreamDefaultTypeSettings typeSettings;
     private readonly Database database;
     private readonly Container container;
 
@@ -33,8 +31,6 @@ public class CosmosDbDocumentStoreTests
             AutoCreateContainers = false
         };
 
-        typeSettings = new EventStreamDefaultTypeSettings();
-
         cosmosClient.GetDatabase(settings.DatabaseName).Returns(database);
         database.GetContainer(settings.DocumentsContainerName).Returns(container);
     }
@@ -45,34 +41,27 @@ public class CosmosDbDocumentStoreTests
         public void Should_throw_argument_null_exception_when_cosmos_client_is_null()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new CosmosDbDocumentStore(null!, documentTagFactory, settings, typeSettings));
+                new CosmosDbDocumentStore(null!, documentTagFactory, settings));
         }
 
         [Fact]
         public void Should_throw_argument_null_exception_when_document_tag_factory_is_null()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new CosmosDbDocumentStore(cosmosClient, null!, settings, typeSettings));
+                new CosmosDbDocumentStore(cosmosClient, null!, settings));
         }
 
         [Fact]
         public void Should_throw_argument_null_exception_when_settings_is_null()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new CosmosDbDocumentStore(cosmosClient, documentTagFactory, null!, typeSettings));
-        }
-
-        [Fact]
-        public void Should_throw_argument_null_exception_when_type_settings_is_null()
-        {
-            Assert.Throws<ArgumentNullException>(() =>
-                new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, null!));
+                new CosmosDbDocumentStore(cosmosClient, documentTagFactory, null!));
         }
 
         [Fact]
         public void Should_create_instance_when_all_parameters_are_valid()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
             Assert.NotNull(sut);
         }
     }
@@ -82,7 +71,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_existing_document_when_found()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var existingEntity = new CosmosDbDocumentEntity
             {
@@ -116,7 +105,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_create_new_document_when_not_found()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             container.ReadItemAsync<CosmosDbDocumentEntity>(
                 Arg.Any<string>(),
@@ -159,7 +148,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_document_when_found()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var existingEntity = new CosmosDbDocumentEntity
             {
@@ -192,7 +181,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_throw_document_not_found_exception_when_not_found()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             container.ReadItemAsync<CosmosDbDocumentEntity>(
                 Arg.Any<string>(),
@@ -211,14 +200,14 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_throw_argument_null_exception_when_document_is_null()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
             await Assert.ThrowsAsync<ArgumentNullException>(() => sut.SetAsync(null!));
         }
 
         [Fact]
         public async Task Should_replace_document_without_concurrency_check_when_hash_is_empty()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var document = Substitute.For<IObjectDocument>();
             document.ObjectName.Returns("testobject");
@@ -261,7 +250,7 @@ public class CosmosDbDocumentStoreTests
                 UseOptimisticConcurrency = true
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency);
 
             var document = Substitute.For<IObjectDocument>();
             document.ObjectName.Returns("TestObject");
@@ -315,7 +304,7 @@ public class CosmosDbDocumentStoreTests
                 UseOptimisticConcurrency = true
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency);
 
             var document = Substitute.For<IObjectDocument>();
             document.ObjectName.Returns("TestObject");
@@ -363,7 +352,7 @@ public class CosmosDbDocumentStoreTests
                 UseOptimisticConcurrency = true
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settingsWithConcurrency);
 
             var document = Substitute.For<IObjectDocument>();
             document.ObjectName.Returns("TestObject");
@@ -402,7 +391,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_preserve_terminated_streams()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var terminatedStreams = new List<TerminatedStream>
             {
@@ -449,7 +438,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_null_when_no_documents_have_tag()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
             tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(Array.Empty<string>());
@@ -463,7 +452,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_document_when_tag_matches()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
             tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(new[] { "test-id" });
@@ -502,7 +491,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_empty_when_no_documents_have_tag()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
             tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(Array.Empty<string>());
@@ -516,7 +505,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_return_all_documents_with_tag()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
             tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(new[] { "test-id-1", "test-id-2" });
@@ -574,7 +563,7 @@ public class CosmosDbDocumentStoreTests
                 DocumentsThroughput = new ThroughputSettings { AutoscaleMaxThroughput = 4000 }
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings);
 
             var databaseResponse = Substitute.For<DatabaseResponse>();
             databaseResponse.Database.Returns(database);
@@ -633,7 +622,7 @@ public class CosmosDbDocumentStoreTests
                 DocumentsThroughput = new ThroughputSettings { ManualThroughput = 400 }
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings);
 
             var databaseResponse = Substitute.For<DatabaseResponse>();
             databaseResponse.Database.Returns(database);
@@ -686,7 +675,7 @@ public class CosmosDbDocumentStoreTests
                 // No throughput settings
             };
 
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, autoCreateSettings);
 
             var databaseResponse = Substitute.For<DatabaseResponse>();
             databaseResponse.Database.Returns(database);
@@ -731,7 +720,7 @@ public class CosmosDbDocumentStoreTests
         [Fact]
         public async Task Should_reuse_container_on_subsequent_calls()
         {
-            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
+            var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var existingEntity = new CosmosDbDocumentEntity
             {

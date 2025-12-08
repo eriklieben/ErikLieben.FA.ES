@@ -27,7 +27,7 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
         EventStreamDefaultTypeSettings settings,
         EventStreamCosmosDbSettings cosmosDbSettings)
     {
-        cosmosDbDocumentStore = new CosmosDbDocumentStore(cosmosClient, documentTagStore, cosmosDbSettings, settings);
+        cosmosDbDocumentStore = new CosmosDbDocumentStore(cosmosClient, documentTagStore, cosmosDbSettings);
     }
 
     /// <summary>

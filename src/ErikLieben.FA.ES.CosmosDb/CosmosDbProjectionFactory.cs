@@ -97,16 +97,16 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     /// </summary>
     /// <param name="documentFactory">The object document factory.</param>
     /// <param name="eventStreamFactory">The event stream factory.</param>
-    /// <param name="documentId">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
+    /// <param name="blobName">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The loaded or newly created projection instance.</returns>
     public virtual async Task<T> GetOrCreateAsync(
         IObjectDocumentFactory documentFactory,
         IEventStreamFactory eventStreamFactory,
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        documentId ??= typeof(T).Name;
+        blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
 
@@ -115,7 +115,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         try
         {
             var response = await container.ReadItemAsync<ProjectionDocument>(
-                documentId,
+                blobName,
                 partitionKey,
                 cancellationToken: cancellationToken);
 
@@ -147,16 +147,16 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     /// Saves the projection to CosmosDB.
     /// </summary>
     /// <param name="projection">The projection to save.</param>
-    /// <param name="documentId">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
+    /// <param name="blobName">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public virtual async Task SaveAsync(
         T projection,
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
         if (projection == null) throw new ArgumentNullException(nameof(projection));
 
-        documentId ??= typeof(T).Name;
+        blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
 
@@ -165,7 +165,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         var json = projection.ToJson();
         var document = new ProjectionDocument
         {
-            Id = documentId,
+            Id = blobName,
             ProjectionName = projectionName,
             Data = json,
             LastModified = DateTimeOffset.UtcNow
@@ -186,13 +186,13 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     /// <summary>
     /// Deletes the projection from CosmosDB.
     /// </summary>
-    /// <param name="documentId">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
+    /// <param name="blobName">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public virtual async Task DeleteAsync(
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        documentId ??= typeof(T).Name;
+        blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
 
@@ -201,7 +201,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         try
         {
             await container.DeleteItemAsync<ProjectionDocument>(
-                documentId,
+                blobName,
                 partitionKey,
                 cancellationToken: cancellationToken);
         }
@@ -214,14 +214,14 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     /// <summary>
     /// Checks if the projection exists in CosmosDB.
     /// </summary>
-    /// <param name="documentId">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
+    /// <param name="blobName">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the projection exists; otherwise, false.</returns>
     public virtual async Task<bool> ExistsAsync(
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        documentId ??= typeof(T).Name;
+        blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
 
@@ -230,7 +230,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         try
         {
             await container.ReadItemAsync<ProjectionDocument>(
-                documentId,
+                blobName,
                 partitionKey,
                 cancellationToken: cancellationToken);
             return true;
@@ -244,14 +244,14 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     /// <summary>
     /// Gets the last modified timestamp of the projection.
     /// </summary>
-    /// <param name="documentId">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
+    /// <param name="blobName">Optional document ID. If not provided, uses a default ID based on the projection type.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The last modified timestamp, or null if the projection doesn't exist.</returns>
     public virtual async Task<DateTimeOffset?> GetLastModifiedAsync(
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        documentId ??= typeof(T).Name;
+        blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
 
@@ -260,7 +260,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         try
         {
             var response = await container.ReadItemAsync<ProjectionDocument>(
-                documentId,
+                blobName,
                 partitionKey,
                 cancellationToken: cancellationToken);
             return response.Resource.LastModified;
@@ -385,16 +385,16 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
     public async Task<Projection> GetOrCreateProjectionAsync(
         IObjectDocumentFactory documentFactory,
         IEventStreamFactory eventStreamFactory,
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
-        return await GetOrCreateAsync(documentFactory, eventStreamFactory, documentId, cancellationToken);
+        return await GetOrCreateAsync(documentFactory, eventStreamFactory, blobName, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task SaveProjectionAsync(
         Projection projection,
-        string? documentId = null,
+        string? blobName = null,
         CancellationToken cancellationToken = default)
     {
         if (projection is not T typedProjection)
@@ -402,7 +402,7 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
             throw new ArgumentException($"Projection must be of type {typeof(T).Name}", nameof(projection));
         }
 
-        await SaveAsync(typedProjection, documentId, cancellationToken);
+        await SaveAsync(typedProjection, blobName, cancellationToken);
     }
 }
 

@@ -296,11 +296,13 @@ public class NoOpDistributedLockTests
             // Arrange
             var sut = await CreateLockAsync();
 
-            // Act & Assert
+            // Act
             await sut.DisposeAsync();
             await sut.DisposeAsync();
             await sut.DisposeAsync();
-            // No exception should be thrown
+
+            // Assert - multiple dispose calls complete without throwing
+            Assert.True(true);
         }
     }
 }

@@ -1,4 +1,3 @@
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Model;
 using Microsoft.Azure.Cosmos;
@@ -12,7 +11,6 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
 {
     private readonly CosmosDbContainerFixture _fixture;
     private readonly EventStreamCosmosDbSettings _settings;
-    private readonly EventStreamDefaultTypeSettings _typeSettings;
     private readonly IDocumentTagDocumentFactory _documentTagFactory;
     private Database? _database;
 
@@ -25,7 +23,6 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
             DocumentsContainerName = "documents",
             AutoCreateContainers = true
         };
-        _typeSettings = new EventStreamDefaultTypeSettings();
         _documentTagFactory = Substitute.For<IDocumentTagDocumentFactory>();
     }
 
@@ -80,7 +77,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
     public async Task Should_return_true_for_existing_document()
     {
         // Arrange
-        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         await documentStore.CreateAsync("TestObject", "exists-001");
 
         var sut = new CosmosDbObjectIdProvider(_fixture.CosmosClient!, _settings);
@@ -109,7 +106,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
     public async Task Should_return_correct_count()
     {
         // Arrange
-        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         await documentStore.CreateAsync("CountTest", "count-001");
         await documentStore.CreateAsync("CountTest", "count-002");
         await documentStore.CreateAsync("CountTest", "count-003");
@@ -127,7 +124,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
     public async Task Should_return_object_ids_with_paging()
     {
         // Arrange
-        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         for (int i = 0; i < 5; i++)
         {
             await documentStore.CreateAsync("PageTest", $"page-{i:D3}");
@@ -147,7 +144,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
     public async Task Should_use_continuation_token_for_next_page()
     {
         // Arrange
-        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings, _typeSettings);
+        var documentStore = new CosmosDbDocumentStore(_fixture.CosmosClient!, _documentTagFactory, _settings);
         for (int i = 0; i < 10; i++)
         {
             await documentStore.CreateAsync("ContinuationTest", $"cont-{i:D3}");

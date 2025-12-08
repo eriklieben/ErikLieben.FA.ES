@@ -18,7 +18,6 @@ public abstract class RoutedBlobProjectionFactory<TProjection>
     : BlobProjectionFactory<TProjection>
     where TProjection : RoutedProjection, new()
 {
-    private readonly string _pathTemplate;
     private readonly string _blobPath;
 
     /// <summary>
@@ -39,8 +38,6 @@ public abstract class RoutedBlobProjectionFactory<TProjection>
             BlobPathTemplateResolver.GetContainerName(pathTemplate),
             autoCreateContainer)
     {
-        _pathTemplate = pathTemplate;
-
         // Extract blob path without container name
         var containerName = BlobPathTemplateResolver.GetContainerName(pathTemplate);
         _blobPath = pathTemplate.StartsWith(containerName + "/")

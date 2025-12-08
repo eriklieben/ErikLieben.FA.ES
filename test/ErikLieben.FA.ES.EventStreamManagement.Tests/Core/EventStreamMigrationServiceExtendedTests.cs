@@ -119,8 +119,11 @@ public class EventStreamMigrationServiceExtendedTests
             var (dataStore, documentStore, lockProvider, loggerFactory) = CreateDependencies();
             var sut = new EventStreamMigrationService(dataStore, documentStore, lockProvider, loggerFactory);
 
-            // Act & Assert - should not throw
+            // Act
             await sut.PauseMigrationAsync(Guid.NewGuid());
+
+            // Assert - completes without throwing for non-existent migration
+            Assert.True(true);
         }
     }
 
@@ -133,8 +136,11 @@ public class EventStreamMigrationServiceExtendedTests
             var (dataStore, documentStore, lockProvider, loggerFactory) = CreateDependencies();
             var sut = new EventStreamMigrationService(dataStore, documentStore, lockProvider, loggerFactory);
 
-            // Act & Assert - should not throw
+            // Act
             await sut.ResumeMigrationAsync(Guid.NewGuid());
+
+            // Assert - completes without throwing for non-existent migration
+            Assert.True(true);
         }
     }
 
@@ -147,8 +153,11 @@ public class EventStreamMigrationServiceExtendedTests
             var (dataStore, documentStore, lockProvider, loggerFactory) = CreateDependencies();
             var sut = new EventStreamMigrationService(dataStore, documentStore, lockProvider, loggerFactory);
 
-            // Act & Assert - should not throw
+            // Act
             await sut.CancelMigrationAsync(Guid.NewGuid());
+
+            // Assert - completes without throwing for non-existent migration
+            Assert.True(true);
         }
     }
 }

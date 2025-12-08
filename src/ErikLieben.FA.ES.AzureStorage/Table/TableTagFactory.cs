@@ -1,6 +1,5 @@
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 
@@ -11,7 +10,6 @@ namespace ErikLieben.FA.ES.AzureStorage.Table;
 /// </summary>
 public class TableTagFactory : IDocumentTagDocumentFactory
 {
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly EventStreamTableSettings tableSettings;
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
 
@@ -19,14 +17,11 @@ public class TableTagFactory : IDocumentTagDocumentFactory
     /// Initializes a new instance of the <see cref="TableTagFactory"/> class.
     /// </summary>
     /// <param name="clientFactory">The Azure client factory used to create <see cref="TableServiceClient"/> instances.</param>
-    /// <param name="settings">The default type settings used to resolve tag store types.</param>
     /// <param name="tableSettings">The Table storage settings controlling default stores and auto-creation.</param>
     public TableTagFactory(
         IAzureClientFactory<TableServiceClient> clientFactory,
-        EventStreamDefaultTypeSettings settings,
         EventStreamTableSettings tableSettings)
     {
-        this.settings = settings;
         this.tableSettings = tableSettings;
         this.clientFactory = clientFactory;
     }

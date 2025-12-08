@@ -3,7 +3,6 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Exceptions;
 using ErikLieben.FA.ES.CosmosDb.Model;
@@ -21,7 +20,6 @@ public class CosmosDbDocumentStore : ICosmosDbDocumentStore
     private readonly CosmosClient cosmosClient;
     private readonly EventStreamCosmosDbSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
-    private readonly EventStreamDefaultTypeSettings typeSettings;
     private Container? documentsContainer;
 
     /// <summary>
@@ -30,23 +28,19 @@ public class CosmosDbDocumentStore : ICosmosDbDocumentStore
     /// <param name="cosmosClient">The CosmosDB client instance.</param>
     /// <param name="documentTagStoreFactory">The factory used to access document tag storage.</param>
     /// <param name="settings">The CosmosDB settings for containers and throughput.</param>
-    /// <param name="typeSettings">The default type settings for streams, documents, and tags.</param>
     /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
     public CosmosDbDocumentStore(
         CosmosClient cosmosClient,
         IDocumentTagDocumentFactory documentTagStoreFactory,
-        EventStreamCosmosDbSettings settings,
-        EventStreamDefaultTypeSettings typeSettings)
+        EventStreamCosmosDbSettings settings)
     {
         ArgumentNullException.ThrowIfNull(cosmosClient);
         ArgumentNullException.ThrowIfNull(documentTagStoreFactory);
         ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(typeSettings);
 
         this.cosmosClient = cosmosClient;
         this.documentTagStoreFactory = documentTagStoreFactory;
         this.settings = settings;
-        this.typeSettings = typeSettings;
     }
 
     /// <summary>

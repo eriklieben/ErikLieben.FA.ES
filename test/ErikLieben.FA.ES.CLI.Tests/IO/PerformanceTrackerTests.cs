@@ -34,8 +34,7 @@ public class PerformanceTrackerTests
 
             // Assert
             var metrics = sut.GetMetrics();
-            // The operation is not one of the named ones, so check via Track
-            // We can indirectly verify by reset clearing it
+            Assert.NotNull(metrics);
         }
     }
 
@@ -209,9 +208,9 @@ public class PerformanceTrackerTests
             // Act
             sut.Record("customMetric", 42);
 
-            // Assert - verify the value is stored (indirectly via reset)
-            sut.Reset();
-            // After reset, the value should be gone
+            // Assert - Record doesn't throw and metrics can be retrieved
+            var metrics = sut.GetMetrics();
+            Assert.NotNull(metrics);
         }
     }
 
@@ -228,7 +227,9 @@ public class PerformanceTrackerTests
             sut.Increment("counter");
             sut.Increment("counter");
 
-            // Assert - verify via RecordFileGenerated which uses Increment
+            // Assert - Increment doesn't throw and metrics can be retrieved
+            var metrics = sut.GetMetrics();
+            Assert.NotNull(metrics);
         }
     }
 

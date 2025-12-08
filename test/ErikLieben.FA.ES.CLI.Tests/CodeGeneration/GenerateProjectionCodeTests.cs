@@ -435,7 +435,7 @@ public class GenerateProjectionCodeTests
         Assert.Contains("using Azure.Storage.Blobs;", code);
 
         // Blob projection factory class with proper base and constructor
-        Assert.Contains("public class BlobbedFactory(", code);
+        Assert.Contains("public partial class BlobbedFactory(", code);
         Assert.Contains(": BlobProjectionFactory<Blobbed>(", code);
         Assert.Contains("return new Blobbed(objectDocumentFactory, eventStreamFactory);", code);
         // External checkpoint flag used in HasExternalCheckpoint override
@@ -512,7 +512,7 @@ public class GenerateProjectionCodeTests
 
         // Factory constructor should include IServiceProvider parameter
         Assert.Contains("IServiceProvider serviceProvider", code);
-        Assert.Contains("public class ProjectionWithDependenciesFactory(", code);
+        Assert.Contains("public partial class ProjectionWithDependenciesFactory(", code);
 
         // New() method should resolve custom dependencies via DI
         Assert.Contains("var taskItemFactory = serviceProvider.GetService(typeof(ITaskItemFactory)) as ITaskItemFactory;", code);
@@ -917,5 +917,199 @@ public class GenerateProjectionCodeTests
 
         // Checkpoint deserialization should use null-coalescing operator to default to empty array
         Assert.Contains("checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, CheckpointProjectionJsonSerializerContext.Default.Options) ?? [];", code);
+    }
+
+    [Fact]
+    public async Task Generate_deserialization_uses_dollar_prefix_for_checkpoint_fingerprint_json_property()
+    {
+        // Arrange - projection with external checkpoint to verify CheckpointFingerprint deserialization
+        var projection = new ProjectionDefinition
+        {
+            Name = "ExternalCheckpointProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = true,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties =
+            [
+                new()
+                {
+                    Name = "Items",
+                    Type = "List",
+                    Namespace = "System.Collections.Generic",
+                    IsNullable = true,
+                    GenericTypes =
+                    [
+                        new PropertyGenericTypeDefinition(
+                            Name: "String",
+                            Namespace: "System",
+                            GenericTypes: [],
+                            SubTypes: [])
+                    ]
+                },
+                // Include Checkpoint property to verify it uses $checkpoint JSON name
+                new()
+                {
+                    Name = "Checkpoint",
+                    Type = "Checkpoint",
+                    Namespace = "ErikLieben.FA.ES",
+                    IsNullable = false
+                },
+                new()
+                {
+                    Name = "CheckpointFingerprint",
+                    Type = "String",
+                    Namespace = "System",
+                    IsNullable = true
+                }
+            ],
+            Events = [],
+            BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
+            FileLocations = ["Demo\\ExternalCheckpointProjection.cs"]
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "ExternalCheckpointProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // CheckpointFingerprint should be deserialized using $checkpointFingerprint JSON property name
+        // (matching the [JsonPropertyName("$checkpointFingerprint")] attribute in base Projection class)
+        Assert.Contains("case \"$checkpointFingerprint\":", code);
+
+        // Checkpoint should be deserialized using $checkpoint JSON property name
+        Assert.Contains("case \"$checkpoint\":", code);
+
+        // CheckpointFingerprint should be assigned to instance after deserialization
+        Assert.Contains("instance.CheckpointFingerprint = checkpointFingerprint;", code);
+
+        // Checkpoint should also be assigned
+        Assert.Contains("instance.Checkpoint = checkpoint;", code);
+    }
+
+    [Fact]
+    public async Task Generate_blob_factory_is_partial_class()
+    {
+        // Arrange
+        var projection = new ProjectionDefinition
+        {
+            Name = "PartialFactoryProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [],
+            Events = [],
+            BlobProjection = new BlobProjectionDefinition { Container = "projections", Connection = "BlobStorage" },
+            FileLocations = ["Demo\\PartialFactoryProjection.cs"]
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "PartialFactoryProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Factory class should be partial to allow user-defined extensions
+        Assert.Contains("public partial class PartialFactoryProjectionFactory(", code);
+    }
+
+    [Fact]
+    public async Task Generate_cosmosdb_factory_is_partial_class()
+    {
+        // Arrange
+        var projection = new ProjectionDefinition
+        {
+            Name = "CosmosPartialProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = true,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [],
+            Events = [],
+            CosmosDbProjection = new CosmosDbProjectionDefinition
+            {
+                Container = "projections",
+                PartitionKeyPath = "/projectionName",
+                Connection = "cosmosdb"
+            },
+            FileLocations = ["Demo\\CosmosPartialProjection.cs"]
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "CosmosPartialProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // CosmosDB factory class should be partial to allow user-defined extensions
+        Assert.Contains("public partial class CosmosPartialProjectionFactory(", code);
     }
 }

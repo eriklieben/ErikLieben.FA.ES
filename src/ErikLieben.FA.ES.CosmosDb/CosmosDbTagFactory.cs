@@ -1,4 +1,3 @@
-using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Azure.Cosmos;
@@ -10,7 +9,6 @@ namespace ErikLieben.FA.ES.CosmosDb;
 /// </summary>
 public class CosmosDbTagFactory : IDocumentTagDocumentFactory
 {
-    private readonly EventStreamDefaultTypeSettings settings;
     private readonly EventStreamCosmosDbSettings cosmosDbSettings;
     private readonly CosmosClient cosmosClient;
 
@@ -18,14 +16,11 @@ public class CosmosDbTagFactory : IDocumentTagDocumentFactory
     /// Initializes a new instance of the <see cref="CosmosDbTagFactory"/> class.
     /// </summary>
     /// <param name="cosmosClient">The CosmosDB client instance.</param>
-    /// <param name="settings">The default type settings used to resolve tag store types.</param>
     /// <param name="cosmosDbSettings">The CosmosDB settings controlling default stores and auto-creation.</param>
     public CosmosDbTagFactory(
         CosmosClient cosmosClient,
-        EventStreamDefaultTypeSettings settings,
         EventStreamCosmosDbSettings cosmosDbSettings)
     {
-        this.settings = settings;
         this.cosmosDbSettings = cosmosDbSettings;
         this.cosmosClient = cosmosClient;
     }

@@ -13,8 +13,6 @@ namespace ErikLieben.FA.ES.Testing.Assertions;
 public class AggregateAssertion<TAggregate> where TAggregate : IBase
 {
     private readonly TAggregate _aggregate;
-    private readonly string _objectName;
-    private readonly string _objectId;
     private readonly TestContext _context;
     private readonly Exception? _caughtException;
     private readonly Dictionary<int, IEvent> _events;
@@ -27,8 +25,6 @@ public class AggregateAssertion<TAggregate> where TAggregate : IBase
         Exception? caughtException)
     {
         _aggregate = aggregate;
-        _objectName = objectName;
-        _objectId = objectId;
         _context = context;
         _caughtException = caughtException;
 
