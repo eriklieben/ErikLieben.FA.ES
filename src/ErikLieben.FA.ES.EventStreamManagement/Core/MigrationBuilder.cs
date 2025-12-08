@@ -5,6 +5,7 @@ using ErikLieben.FA.ES.EventStream;
 using ErikLieben.FA.ES.EventStreamManagement.Backup;
 using ErikLieben.FA.ES.EventStreamManagement.BookClosing;
 using ErikLieben.FA.ES.EventStreamManagement.Coordination;
+using ErikLieben.FA.ES.EventStreamManagement.LiveMigration;
 using ErikLieben.FA.ES.EventStreamManagement.Progress;
 using ErikLieben.FA.ES.EventStreamManagement.Transformation;
 using ErikLieben.FA.ES.EventStreamManagement.Verification;
@@ -33,6 +34,7 @@ public class MigrationBuilder : IMigrationBuilder
     private bool supportsPause;
     private bool supportsRollback;
     private IMigrationPlan? existingPlan;
+    private LiveMigrationOptions? liveMigrationOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MigrationBuilder"/> class.
@@ -178,6 +180,79 @@ public class MigrationBuilder : IMigrationBuilder
         this.existingPlan = plan ?? throw new ArgumentNullException(nameof(plan));
         this.isDryRun = false;
         return this;
+    }
+
+    /// <inheritdoc/>
+    public IMigrationBuilder WithLiveMigration(Action<ILiveMigrationOptions>? configure = null)
+    {
+        this.liveMigrationOptions = new LiveMigrationOptions();
+        configure?.Invoke(this.liveMigrationOptions);
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public async Task<LiveMigrationResult> ExecuteLiveMigrationAsync(CancellationToken cancellationToken = default)
+    {
+        ValidateConfiguration();
+
+        if (liveMigrationOptions == null)
+        {
+            throw new InvalidOperationException(
+                "Live migration not configured. Call WithLiveMigration() before ExecuteLiveMigrationAsync().");
+        }
+
+        logger.LogInformation(
+            "Starting live migration {MigrationId} from {SourceStream} to {TargetStream}",
+            context.MigrationId,
+            context.SourceStreamIdentifier,
+            context.TargetStreamIdentifier);
+
+        // Create target stream info based on source
+        var targetStreamInfo = new StreamInformation
+        {
+            StreamIdentifier = context.TargetStreamIdentifier,
+            StreamType = context.SourceDocument.Active.StreamType,
+            DocumentTagType = context.SourceDocument.Active.DocumentTagType,
+            CurrentStreamVersion = -1,
+            StreamConnectionName = context.SourceDocument.Active.StreamConnectionName,
+            DocumentTagConnectionName = context.SourceDocument.Active.DocumentTagConnectionName,
+            StreamTagConnectionName = context.SourceDocument.Active.StreamTagConnectionName,
+            SnapShotConnectionName = context.SourceDocument.Active.SnapShotConnectionName,
+            ChunkSettings = context.SourceDocument.Active.ChunkSettings,
+            StreamChunks = [],
+            SnapShots = [],
+            DocumentType = context.SourceDocument.Active.DocumentType,
+            EventStreamTagType = context.SourceDocument.Active.EventStreamTagType,
+            DocumentRefType = context.SourceDocument.Active.DocumentRefType,
+            DataStore = context.SourceDocument.Active.DataStore,
+            DocumentStore = context.SourceDocument.Active.DocumentStore,
+            DocumentConnectionName = context.SourceDocument.Active.DocumentConnectionName,
+            DocumentTagStore = context.SourceDocument.Active.DocumentTagStore,
+            StreamTagStore = context.SourceDocument.Active.StreamTagStore,
+            SnapShotStore = context.SourceDocument.Active.SnapShotStore
+        };
+
+        // Create a temporary target document for writing events
+        var targetDocument = new MigrationTargetDocument(
+            context.SourceDocument.ObjectId,
+            context.SourceDocument.ObjectName,
+            targetStreamInfo);
+
+        var liveMigrationContext = new LiveMigrationContext
+        {
+            MigrationId = context.MigrationId,
+            SourceDocument = context.SourceDocument,
+            SourceStreamId = context.SourceStreamIdentifier,
+            TargetStreamId = context.TargetStreamIdentifier,
+            TargetDocument = targetDocument,
+            DataStore = dataStore,
+            DocumentStore = documentStore,
+            Options = liveMigrationOptions,
+            Transformer = transformer ?? pipeline
+        };
+
+        var executor = new LiveMigrationExecutor(liveMigrationContext, loggerFactory);
+        return await executor.ExecuteAsync(cancellationToken);
     }
 
     /// <inheritdoc/>

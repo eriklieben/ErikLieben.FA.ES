@@ -6,7 +6,7 @@
         <Configuration>
           <Format>json,cobertura,lcov,opencover,xml</Format>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
-          <Include>[ErikLieben.FA.ES.*]*</Include>
+          <Include>[ErikLieben.FA.ES*]*</Include>
           <Exclude>[*.Tests]*</Exclude>
         </Configuration>
       </DataCollector>

@@ -71,9 +71,10 @@ public static class BlobPathTemplateResolver
         var templateWithoutExt = template.Replace(".json", "");
         var pathWithoutExt = resolvedPath.Replace(".json", "");
 
-        // Build regex from template
-        var regexPattern = Regex.Escape(templateWithoutExt);
-        regexPattern = Regex.Replace(regexPattern, @"\\{(\w+)\\}", @"(?<$1>[^/]+)");
+        // Build regex from template by replacing {placeholder} with named capture groups
+        // Note: We don't use Regex.Escape because it would escape the braces,
+        // and blob paths typically don't contain regex special characters
+        var regexPattern = Regex.Replace(templateWithoutExt, @"\{(\w+)\}", @"(?<$1>[^/]+)");
 
         var regex = new Regex($"^{regexPattern}$");
         var match = regex.Match(pathWithoutExt);

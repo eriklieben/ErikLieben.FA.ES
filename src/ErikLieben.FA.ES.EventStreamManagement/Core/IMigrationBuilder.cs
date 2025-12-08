@@ -3,6 +3,7 @@ namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 using ErikLieben.FA.ES.EventStreamManagement.Backup;
 using ErikLieben.FA.ES.EventStreamManagement.BookClosing;
 using ErikLieben.FA.ES.EventStreamManagement.Coordination;
+using ErikLieben.FA.ES.EventStreamManagement.LiveMigration;
 using ErikLieben.FA.ES.EventStreamManagement.Progress;
 using ErikLieben.FA.ES.EventStreamManagement.Transformation;
 using ErikLieben.FA.ES.EventStreamManagement.Verification;
@@ -99,4 +100,29 @@ public interface IMigrationBuilder
     /// <param name="plan">The migration plan to execute.</param>
     /// <returns>This builder for fluent chaining.</returns>
     IMigrationBuilder FromDryRunPlan(IMigrationPlan plan);
+
+    /// <summary>
+    /// Enables live migration mode where the source stream remains active during migration.
+    /// Events are copied while new writes continue to the source, then the source is
+    /// atomically closed using optimistic concurrency.
+    /// </summary>
+    /// <param name="configure">Optional action to configure live migration options.</param>
+    /// <returns>This builder for fluent chaining.</returns>
+    /// <remarks>
+    /// Live migration uses a catch-up loop that:
+    /// 1. Copies events from source to target
+    /// 2. Verifies sync between source and target
+    /// 3. Attempts to close source with optimistic concurrency
+    /// 4. If new events arrived, repeats from step 1
+    /// 5. On successful close, updates ObjectDocument to point to target
+    /// </remarks>
+    IMigrationBuilder WithLiveMigration(Action<ILiveMigrationOptions>? configure = null);
+
+    /// <summary>
+    /// Executes a live migration with the configured settings.
+    /// This is separate from ExecuteAsync to clearly indicate live migration mode.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The result of the live migration operation.</returns>
+    Task<LiveMigrationResult> ExecuteLiveMigrationAsync(CancellationToken cancellationToken = default);
 }

@@ -131,6 +131,37 @@ public class BlobPathTemplateResolverTests
     public class ExtractValuesMethod
     {
         [Fact]
+        public void Should_extract_single_placeholder_value()
+        {
+            // Arrange
+            var template = "questions/{language}.json";
+            var resolvedPath = "questions/en-GB.json";
+
+            // Act
+            var values = BlobPathTemplateResolver.ExtractValues(template, resolvedPath);
+
+            // Assert
+            Assert.Single(values);
+            Assert.Equal("en-GB", values["language"]);
+        }
+
+        [Fact]
+        public void Should_extract_multiple_placeholder_values()
+        {
+            // Arrange
+            var template = "projections/{entityType}/{language}.json";
+            var resolvedPath = "projections/questions/de-DE.json";
+
+            // Act
+            var values = BlobPathTemplateResolver.ExtractValues(template, resolvedPath);
+
+            // Assert
+            Assert.Equal(2, values.Count);
+            Assert.Equal("questions", values["entityType"]);
+            Assert.Equal("de-DE", values["language"]);
+        }
+
+        [Fact]
         public void Should_return_empty_dictionary_for_non_matching_path()
         {
             // Arrange
