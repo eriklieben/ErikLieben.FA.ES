@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.CLI.Abstractions;
@@ -20,6 +21,7 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 /// Optimized for incremental regeneration - only regenerates entities whose source files changed.
 /// Features a full-screen TUI with real-time status updates.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "CLI command orchestration with file watchers, console I/O, and TUI coordination")]
 public class WatchCommand : AsyncCommand<WatchCommand.Settings>
 {
     private static readonly JsonSerializerOptions AnalyzeJsonOptions = new()

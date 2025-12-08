@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using ErikLieben.FA.ES.CLI.Migration;
 using Spectre.Console;
@@ -11,6 +12,7 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 /// Updates ErikLieben.FA.ES packages to the latest version and migrates code for breaking changes.
 /// Requires a clean git working directory to ensure safe rollback on failure.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "CLI command orchestration with console I/O, git operations, and package management")]
 public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 {
     public class Settings : CommandSettings

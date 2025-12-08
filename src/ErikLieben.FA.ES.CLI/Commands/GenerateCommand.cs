@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.CLI.Abstractions;
@@ -13,6 +14,7 @@ using Spectre.Console.Cli;
 
 namespace ErikLieben.FA.ES.CLI.Commands;
 
+[ExcludeFromCodeCoverage(Justification = "CLI command orchestration with console I/O, file system, and process launching")]
 public partial class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 {
     private static readonly JsonSerializerOptions AnalyzeJsonOptions = new()

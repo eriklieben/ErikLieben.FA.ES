@@ -2286,4 +2286,359 @@ public class GenerateAggregateCodeTests
         // Assert
         Assert.Contains("Test.Upcasters", usings);
     }
+
+    [Fact]
+    public void GetDocumentStoreFromAttribute_returns_null_when_no_attribute()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamBlobSettingsAttribute = null
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentStoreFromAttribute(aggregate);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetDocumentStoreFromAttribute_returns_value_when_attribute_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamBlobSettingsAttribute = new EventStreamBlobSettingsAttributeData
+            {
+                DocumentStore = "my-custom-store"
+            }
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentStoreFromAttribute(aggregate);
+
+        // Assert
+        Assert.Equal("my-custom-store", result);
+    }
+
+    [Fact]
+    public void GetDocumentTypeFromAttribute_returns_null_when_no_attribute()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamTypeAttribute = null
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentTypeFromAttribute(aggregate);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetDocumentTypeFromAttribute_returns_value_when_attribute_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamTypeAttribute = new EventStreamTypeAttributeData
+            {
+                DocumentType = "CosmosDb"
+            }
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentTypeFromAttribute(aggregate);
+
+        // Assert
+        Assert.Equal("CosmosDb", result);
+    }
+
+    [Fact]
+    public void GetDocumentTagStoreFromAttribute_returns_null_when_no_attribute()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamBlobSettingsAttribute = null
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentTagStoreFromAttribute(aggregate);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetDocumentTagStoreFromAttribute_returns_value_when_attribute_exists()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamBlobSettingsAttribute = new EventStreamBlobSettingsAttributeData
+            {
+                DocumentTagStore = "my-tag-store"
+            }
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GetDocumentTagStoreFromAttribute(aggregate);
+
+        // Assert
+        Assert.Equal("my-tag-store", result);
+    }
+
+    [Fact]
+    public void GenerateSettingsApplicationCode_returns_empty_when_no_attributes()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamTypeAttribute = null,
+            EventStreamBlobSettingsAttribute = null
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSettingsApplicationCode(aggregate);
+
+        // Assert
+        Assert.Equal(string.Empty, result);
+    }
+
+    [Fact]
+    public void GenerateSettingsApplicationCode_generates_code_when_attributes_exist()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            EventStreamTypeAttribute = new EventStreamTypeAttributeData
+            {
+                DocumentType = "CosmosDb"
+            },
+            EventStreamBlobSettingsAttribute = new EventStreamBlobSettingsAttributeData
+            {
+                DocumentStore = "my-store",
+                DataStore = "my-data-store"
+            }
+        };
+
+        // Act
+        var result = GenerateAggregateCode.GenerateSettingsApplicationCode(aggregate);
+
+        // Assert
+        Assert.NotEmpty(result);
+        Assert.Contains("document", result);
+    }
+
+    [Fact]
+    public void GeneratePropertyCode_skips_ObjectName_property()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Properties =
+            [
+                new() { Name = "ObjectName", Type = "String", Namespace = "System", IsNullable = false },
+                new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }
+            ]
+        };
+        var serializableCode = new System.Text.StringBuilder();
+
+        // Act
+        var (propertyCode, propertySnapshotCode) = GenerateAggregateCode.GeneratePropertyCode(aggregate, serializableCode);
+
+        // Assert
+        var propCode = propertyCode.ToString();
+        var snapCode = propertySnapshotCode.ToString();
+        Assert.DoesNotContain("public String ObjectName", propCode);
+        Assert.DoesNotContain("public required String ObjectName", snapCode);
+        Assert.Contains("public String Title", propCode);
+        Assert.Contains("public required String Title", snapCode);
+    }
+
+    [Fact]
+    public void GeneratePropertyCode_handles_nullable_properties()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Properties =
+            [
+                new() { Name = "Description", Type = "String", Namespace = "System", IsNullable = true }
+            ]
+        };
+        var serializableCode = new System.Text.StringBuilder();
+
+        // Act
+        var (propertyCode, propertySnapshotCode) = GenerateAggregateCode.GeneratePropertyCode(aggregate, serializableCode);
+
+        // Assert
+        var propCode = propertyCode.ToString();
+        var snapCode = propertySnapshotCode.ToString();
+        Assert.Contains("String?", propCode);
+        Assert.Contains("String?", snapCode);
+    }
+
+    [Fact]
+    public void GeneratePropertyCode_adds_subtypes_to_serializable_code()
+    {
+        // Arrange
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Test",
+            ObjectName = "Test",
+            IdentifierType = "Guid",
+            IdentifierTypeNamespace = "System",
+            Namespace = "Test",
+            Properties =
+            [
+                new()
+                {
+                    Name = "Items",
+                    Type = "List",
+                    Namespace = "System.Collections.Generic",
+                    IsNullable = false,
+                    SubTypes =
+                    [
+                        new PropertyGenericTypeDefinition(
+                            Name: "ItemDto",
+                            Namespace: "Test.Dtos",
+                            GenericTypes: [],
+                            SubTypes: [])
+                    ]
+                }
+            ]
+        };
+        var serializableCode = new System.Text.StringBuilder();
+
+        // Act
+        GenerateAggregateCode.GeneratePropertyCode(aggregate, serializableCode);
+
+        // Assert
+        var serializable = serializableCode.ToString();
+        Assert.Contains("[JsonSerializable(typeof(Test.Dtos.ItemDto))]", serializable);
+    }
+
+    [Fact]
+    public void BuildPropertyType_returns_simple_type_for_non_generic()
+    {
+        // Arrange
+        var property = new PropertyDefinition
+        {
+            Name = "Name",
+            Type = "String",
+            Namespace = "System",
+            IsNullable = false
+            // IsGeneric is computed from GenericTypes.Count > 0, so omitting GenericTypes makes it false
+        };
+
+        // Act
+        var result = GenerateAggregateCode.BuildPropertyType(property);
+
+        // Assert
+        Assert.Equal("String", result);
+    }
+
+    [Fact]
+    public void GenerateFoldCodeWithSchemaVersionDispatch_handles_multiple_parameters()
+    {
+        // Arrange
+        var events = new List<EventDefinition>
+        {
+            new()
+            {
+                TypeName = "OrderCreatedV1",
+                Namespace = "Test.Events",
+                EventName = "Order.Created",
+                SchemaVersion = 1,
+                ActivationType = "WhenV1",
+                ActivationAwaitRequired = false,
+                File = "",
+                Parameters =
+                [
+                    new() { Name = "e", Type = "OrderCreatedV1", Namespace = "Test.Events" },
+                    new() { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES.Documents" }
+                ]
+            },
+            new()
+            {
+                TypeName = "OrderCreatedV2",
+                Namespace = "Test.Events",
+                EventName = "Order.Created",
+                SchemaVersion = 2,
+                ActivationType = "WhenV2",
+                ActivationAwaitRequired = false,
+                File = "",
+                Parameters =
+                [
+                    new() { Name = "e", Type = "OrderCreatedV2", Namespace = "Test.Events" },
+                    new() { Name = "evt", Type = "IEvent", Namespace = "ErikLieben.FA.ES" }
+                ]
+            }
+        };
+        var foldCode = new System.Text.StringBuilder();
+
+        // Act
+        GenerateAggregateCode.GenerateFoldCodeWithSchemaVersionDispatch(events, foldCode);
+
+        // Assert
+        var code = foldCode.ToString();
+        Assert.Contains("case \"Order.Created\":", code);
+        Assert.Contains("Stream.Document", code); // IObjectDocument parameter
+        Assert.Contains("@event", code); // IEvent parameter
+    }
 }

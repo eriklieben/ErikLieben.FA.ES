@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
@@ -7,6 +8,7 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 /// Full-screen TUI display for watch mode with real-time updates.
 /// Shows file activity, regeneration status, entity statistics, and logs.
 /// </summary>
+[ExcludeFromCodeCoverage(Justification = "Console TUI rendering code - tested manually through integration")]
 public class WatchDisplay : IWatchDisplay
 {
     private readonly object _lock = new();
