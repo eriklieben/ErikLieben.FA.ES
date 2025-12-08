@@ -53,7 +53,7 @@ jobs:
           dotnet test --configuration Release --no-build \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+            --settings coverage.runsettings
 
       - name: Upload coverage artifact
         id: upload
