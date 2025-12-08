@@ -1366,4 +1366,1081 @@ public class ChangeDetectorTests
             Assert.Empty(changes);
         }
     }
+
+    public class AdditionalPropertyChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_property_generic_type_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            var prevAggregate = CreateAggregate("TestAgg");
+            prevAggregate.Properties.Add(new PropertyDefinition
+            {
+                Name = "Items",
+                Type = "List",
+                Namespace = "System.Collections.Generic",
+                IsNullable = false,
+                GenericTypes = [new PropertyGenericTypeDefinition("string", "System", [], [])]
+            });
+            prevProject.Aggregates.Add(prevAggregate);
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            var currAggregate = CreateAggregate("TestAgg");
+            currAggregate.Properties.Add(new PropertyDefinition
+            {
+                Name = "Items",
+                Type = "List",
+                Namespace = "System.Collections.Generic",
+                IsNullable = false,
+                GenericTypes = [new PropertyGenericTypeDefinition("int", "System", [], [])]
+            });
+            currProject.Aggregates.Add(currAggregate);
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed generic types", changes[0].Description);
+        }
+    }
+
+    public class AdditionalPostWhenChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_postwhen_parameter_count_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", postWhen: new PostWhenDeclaration
+            {
+                Parameters = [new PostWhenParameterDeclaration { Name = "p1", Type = "IService", Namespace = "Test" }]
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", postWhen: new PostWhenDeclaration
+            {
+                Parameters =
+                [
+                    new PostWhenParameterDeclaration { Name = "p1", Type = "IService", Namespace = "Test" },
+                    new PostWhenParameterDeclaration { Name = "p2", Type = "ILogger", Namespace = "Test" }
+                ]
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed PostWhen parameters", changes[0].Description);
+            Assert.Contains("1 → 2", changes[0].Details);
+        }
+    }
+
+    public class AdditionalEventChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_event_parameter_count_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            var prevAggregate = CreateAggregate("TestAgg");
+            prevAggregate.Events.Add(new EventDefinition
+            {
+                EventName = "TestEvent",
+                TypeName = "TestEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = false,
+                SchemaVersion = 1,
+                Parameters = [new ParameterDefinition { Name = "e", Type = "TestEvent", Namespace = "Test" }]
+            });
+            prevProject.Aggregates.Add(prevAggregate);
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            var currAggregate = CreateAggregate("TestAgg");
+            currAggregate.Events.Add(new EventDefinition
+            {
+                EventName = "TestEvent",
+                TypeName = "TestEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = false,
+                SchemaVersion = 1,
+                Parameters =
+                [
+                    new ParameterDefinition { Name = "e", Type = "TestEvent", Namespace = "Test" },
+                    new ParameterDefinition { Name = "doc", Type = "IObjectDocument", Namespace = "ErikLieben.FA.ES" }
+                ]
+            });
+            currProject.Aggregates.Add(currAggregate);
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed When parameters", changes[0].Description);
+            Assert.Contains("1 → 2", changes[0].Details);
+        }
+    }
+
+    public class AdditionalProjectionChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_removed_projection()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("OldProjection"));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            current.Projects.Add(CreateEmptyProject());
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Equal(ChangeType.Removed, changes[0].Type);
+            Assert.Contains("Removed projection OldProjection", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_projection_event_added()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", eventCount: 1));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            var projection = CreateProjection("TestProj", eventCount: 1);
+            projection.Events.Add(new ProjectionEventDefinition
+            {
+                EventName = "NewEvent",
+                TypeName = "NewEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = false,
+                Parameters = []
+            });
+            currProject.Projections.Add(projection);
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Added NewEvent handler", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_projection_event_removed()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            var prevProjection = CreateProjection("TestProj");
+            prevProjection.Events.Add(new ProjectionEventDefinition
+            {
+                EventName = "OldEvent",
+                TypeName = "OldEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = false,
+                Parameters = []
+            });
+            prevProject.Projections.Add(prevProjection);
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Removed OldEvent handler", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_postwhenall_added()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", hasPostWhenAll: false));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj", hasPostWhenAll: true));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Added PostWhenAll handler", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_blob_projection_added()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj"));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj", blobProjection: new BlobProjectionDefinition
+            {
+                Container = "my-container",
+                Connection = "conn"
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Added blob projection", changes[0].Description);
+            Assert.Contains("container: my-container", changes[0].Details);
+        }
+
+        [Fact]
+        public void Should_detect_blob_projection_removed()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", blobProjection: new BlobProjectionDefinition
+            {
+                Container = "my-container",
+                Connection = "conn"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Removed blob projection", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_blob_projection_connection_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", blobProjection: new BlobProjectionDefinition
+            {
+                Container = "container",
+                Connection = "conn1"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj", blobProjection: new BlobProjectionDefinition
+            {
+                Container = "container",
+                Connection = "conn2"
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed blob connection", changes[0].Description);
+            Assert.Contains("conn1 → conn2", changes[0].Details);
+        }
+    }
+
+    public class RoutedProjectionChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_router_type_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(new RoutedProjectionDefinition
+            {
+                Name = "TestProj",
+                Namespace = "Test",
+                Events = [],
+                Properties = [],
+                Constructors = [],
+                IsRoutedProjection = true,
+                RouterType = "LanguageRouter"
+            });
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(new RoutedProjectionDefinition
+            {
+                Name = "TestProj",
+                Namespace = "Test",
+                Events = [],
+                Properties = [],
+                Constructors = [],
+                IsRoutedProjection = true,
+                RouterType = "RegionRouter"
+            });
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed router type", changes[0].Description);
+            Assert.Contains("LanguageRouter → RegionRouter", changes[0].Details);
+        }
+
+        [Fact]
+        public void Should_detect_destination_type_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(new RoutedProjectionDefinition
+            {
+                Name = "TestProj",
+                Namespace = "Test",
+                Events = [],
+                Properties = [],
+                Constructors = [],
+                IsRoutedProjection = true,
+                DestinationType = "LanguageProjection"
+            });
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(new RoutedProjectionDefinition
+            {
+                Name = "TestProj",
+                Namespace = "Test",
+                Events = [],
+                Properties = [],
+                Constructors = [],
+                IsRoutedProjection = true,
+                DestinationType = "RegionProjection"
+            });
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed destination type", changes[0].Description);
+            Assert.Contains("LanguageProjection → RegionProjection", changes[0].Details);
+        }
+    }
+
+    public class AdditionalVersionTokenChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_version_token_partial_class_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.VersionTokens.Add(new VersionTokenDefinition
+            {
+                Name = "TestToken",
+                GenericType = "int",
+                Namespace = "Test",
+                NamespaceOfType = "System",
+                FileLocations = ["/test.cs"],
+                IsPartialClass = false
+            });
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.VersionTokens.Add(new VersionTokenDefinition
+            {
+                Name = "TestToken",
+                GenericType = "int",
+                Namespace = "Test",
+                NamespaceOfType = "System",
+                FileLocations = ["/test.cs"],
+                IsPartialClass = true
+            });
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("is now partial", changes[0].Description);
+        }
+    }
+
+    public class AdditionalInheritedAggregateChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_removed_inherited_aggregate()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.InheritedAggregates.Add(new InheritedAggregateDefinition
+            {
+                IdentifierName = "OldChild",
+                InheritedIdentifierName = "Parent",
+                ObjectName = "OldChild",
+                IdentifierType = "Guid",
+                IdentifierTypeNamespace = "System",
+                Namespace = "Test",
+                InheritedNamespace = "Test",
+                ParentInterface = "IParent",
+                ParentInterfaceNamespace = "Test"
+            });
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            current.Projects.Add(CreateEmptyProject());
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Equal(ChangeType.Removed, changes[0].Type);
+            Assert.Contains("Removed inherited aggregate OldChild", changes[0].Description);
+        }
+    }
+
+    public class AdditionalStreamActionChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_stream_action_interfaces_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", streamActions:
+            [
+                new StreamActionDefinition
+                {
+                    Type = "CustomAction",
+                    Namespace = "Test",
+                    StreamActionInterfaces = ["IStreamAction"],
+                    RegistrationType = "Auto"
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", streamActions:
+            [
+                new StreamActionDefinition
+                {
+                    Type = "CustomAction",
+                    Namespace = "Test",
+                    StreamActionInterfaces = ["IStreamAction", "IStreamActionWithResult"],
+                    RegistrationType = "Auto"
+                }
+            ]));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed interfaces", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_removed_stream_action()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", streamActions:
+            [
+                new StreamActionDefinition
+                {
+                    Type = "OldAction",
+                    Namespace = "Test",
+                    StreamActionInterfaces = ["IStreamAction"],
+                    RegistrationType = "Auto"
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Equal(ChangeType.Removed, changes[0].Type);
+            Assert.Contains("Removed stream action OldAction", changes[0].Description);
+        }
+    }
+
+    public class AdditionalCommandChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_removed_command()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "OldCommand",
+                    RequiresAwait = false,
+                    Parameters = [],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Equal(ChangeType.Removed, changes[0].Type);
+            Assert.Contains("Removed command OldCommand", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_command_no_longer_produces_event()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = false,
+                    Parameters = [],
+                    ProducesEvents =
+                    [
+                        new CommandEventDefinition { TypeName = "OldEvent", Namespace = "Test", File = "/test.cs", EventName = "OldEvent" }
+                    ],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = false,
+                    Parameters = [],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("no longer produces OldEvent", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_command_parameter_count_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = false,
+                    Parameters = [new CommandParameter { Name = "p1", Type = "string", Namespace = "System", IsGeneric = false, GenericTypes = [] }],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = false,
+                    Parameters =
+                    [
+                        new CommandParameter { Name = "p1", Type = "string", Namespace = "System", IsGeneric = false, GenericTypes = [] },
+                        new CommandParameter { Name = "p2", Type = "int", Namespace = "System", IsGeneric = false, GenericTypes = [] }
+                    ],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed parameters", changes[0].Description);
+            Assert.Contains("1 → 2", changes[0].Details);
+        }
+    }
+
+    public class AdditionalAttributeChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_removed_event_stream_type_attribute()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", eventStreamType: new EventStreamTypeAttributeData
+            {
+                StreamType = "blob"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Removed [EventStreamType]", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_document_type_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", eventStreamType: new EventStreamTypeAttributeData
+            {
+                DocumentType = "Blob"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", eventStreamType: new EventStreamTypeAttributeData
+            {
+                DocumentType = "Table"
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed DocumentType", changes[0].Description);
+            Assert.Contains("Blob → Table", changes[0].Details);
+        }
+
+        [Fact]
+        public void Should_detect_removed_blob_settings()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", blobSettings: new EventStreamBlobSettingsAttributeData
+            {
+                DataStore = "store"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg"));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Removed [EventStreamBlobSettings]", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_document_store_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", blobSettings: new EventStreamBlobSettingsAttributeData
+            {
+                DocumentStore = "store1"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", blobSettings: new EventStreamBlobSettingsAttributeData
+            {
+                DocumentStore = "store2"
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed DocumentStore", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_snapshot_store_change()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", blobSettings: new EventStreamBlobSettingsAttributeData
+            {
+                SnapShotStore = "snap1"
+            }));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", blobSettings: new EventStreamBlobSettingsAttributeData
+            {
+                SnapShotStore = "snap2"
+            }));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Changed SnapShotStore", changes[0].Description);
+        }
+    }
+
+    public class AdditionalAggregateChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_factory_partial_removed()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", hasFactoryPartial: true));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", hasFactoryPartial: false));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Custom factory partial removed", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_repository_partial_removed()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", hasRepositoryPartial: true));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", hasRepositoryPartial: false));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Custom repository partial removed", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_is_no_longer_partial()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", isPartial: true));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", isPartial: false));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("is no longer partial", changes[0].Description);
+        }
+    }
+
+    public class AdditionalVersionTokenPartialChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_version_token_no_longer_partial()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.VersionTokens.Add(new VersionTokenDefinition
+            {
+                Name = "TestToken",
+                GenericType = "int",
+                Namespace = "Test",
+                NamespaceOfType = "System",
+                FileLocations = ["/test.cs"],
+                IsPartialClass = true
+            });
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.VersionTokens.Add(new VersionTokenDefinition
+            {
+                Name = "TestToken",
+                GenericType = "int",
+                Namespace = "Test",
+                NamespaceOfType = "System",
+                FileLocations = ["/test.cs"],
+                IsPartialClass = false
+            });
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("is no longer partial", changes[0].Description);
+        }
+    }
+
+    public class AdditionalProjectionPostWhenChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_postwhenall_removed()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", hasPostWhenAll: true));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj", hasPostWhenAll: false));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Equal(ChangeType.Removed, changes[0].Type);
+            Assert.Contains("Removed PostWhenAll handler", changes[0].Description);
+        }
+
+        [Fact]
+        public void Should_detect_disabled_external_checkpoint()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Projections.Add(CreateProjection("TestProj", externalCheckpoint: true));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Projections.Add(CreateProjection("TestProj", externalCheckpoint: false));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("Disabled external checkpoint", changes[0].Description);
+        }
+    }
+
+    public class AdditionalEventAsyncChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_event_no_longer_async()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            var prevAggregate = CreateAggregate("TestAgg");
+            prevAggregate.Events.Add(new EventDefinition
+            {
+                EventName = "TestEvent",
+                TypeName = "TestEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = true,
+                SchemaVersion = 1,
+                Parameters = []
+            });
+            prevProject.Aggregates.Add(prevAggregate);
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            var currAggregate = CreateAggregate("TestAgg");
+            currAggregate.Events.Add(new EventDefinition
+            {
+                EventName = "TestEvent",
+                TypeName = "TestEvent",
+                Namespace = "Test",
+                ActivationType = "When",
+                ActivationAwaitRequired = false,
+                SchemaVersion = 1,
+                Parameters = []
+            });
+            currProject.Aggregates.Add(currAggregate);
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("no longer async", changes[0].Description);
+        }
+    }
+
+    public class AdditionalCommandAsyncChanges : ChangeDetectorTests
+    {
+        [Fact]
+        public void Should_detect_command_no_longer_async()
+        {
+            // Arrange
+            var previous = CreateEmptySolution();
+            var prevProject = CreateEmptyProject();
+            prevProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = true,
+                    Parameters = [],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            previous.Projects.Add(prevProject);
+
+            var current = CreateEmptySolution();
+            var currProject = CreateEmptyProject();
+            currProject.Aggregates.Add(CreateAggregate("TestAgg", commands:
+            [
+                new CommandDefinition
+                {
+                    CommandName = "DoSomething",
+                    RequiresAwait = false,
+                    Parameters = [],
+                    ProducesEvents = [],
+                    ReturnType = new CommandReturnType { Type = "void", Namespace = "System" }
+                }
+            ]));
+            current.Projects.Add(currProject);
+
+            // Act
+            var changes = _sut.DetectChanges(previous, current);
+
+            // Assert
+            Assert.Single(changes);
+            Assert.Contains("is no longer async", changes[0].Description);
+        }
+    }
 }
