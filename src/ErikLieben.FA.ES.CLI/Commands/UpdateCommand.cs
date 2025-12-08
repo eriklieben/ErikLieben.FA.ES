@@ -192,12 +192,21 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 
     private static async Task<(bool Success, bool IsGitRepo, bool IsClean)> CheckGitStatusAsync(string folderPath, CancellationToken cancellationToken)
     {
+        // Resolve git path from secure locations only
+        var gitPath = ResolveGitPath();
+        if (gitPath == null)
+        {
+            AnsiConsole.MarkupLine("[red]✗ Git not found in secure system directories[/]");
+            AnsiConsole.MarkupLine("[yellow]Make sure git is installed in a standard location (e.g., C:\\Program Files\\Git or /usr/bin/git).[/]");
+            return (false, false, false);
+        }
+
         // Check if it's a git repository
         var gitCheckProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "git",
+                FileName = gitPath,
                 Arguments = "rev-parse --is-inside-work-tree",
                 WorkingDirectory = folderPath,
                 RedirectStandardOutput = true,
@@ -234,7 +243,7 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "git",
+                FileName = gitPath,
                 Arguments = "status --porcelain",
                 WorkingDirectory = folderPath,
                 RedirectStandardOutput = true,
@@ -307,12 +316,20 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 
     private static async Task<string?> GetLatestVersionAsync(CancellationToken cancellationToken)
     {
+        // Resolve dotnet path from secure locations only
+        var dotnetPath = ResolveDotnetPath();
+        if (dotnetPath == null)
+        {
+            // Fallback to hardcoded version if dotnet is not found in secure locations
+            return "2.0.0";
+        }
+
         // Query NuGet for latest version
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = dotnetPath,
                 Arguments = "package search ErikLieben.FA.ES --take 1",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -392,11 +409,19 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[gray]Running dotnet restore...[/]");
 
+        // Resolve dotnet path from secure locations only
+        var dotnetPath = ResolveDotnetPath();
+        if (dotnetPath == null)
+        {
+            AnsiConsole.MarkupLine("[red]✗ Dotnet not found in secure system directories[/]");
+            return false;
+        }
+
         var restoreProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = dotnetPath,
                 Arguments = "restore",
                 WorkingDirectory = folderPath,
                 RedirectStandardOutput = true,
@@ -424,11 +449,19 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
     {
         AnsiConsole.MarkupLine("[gray]Running dotnet faes generate...[/]");
 
+        // Resolve dotnet path from secure locations only
+        var dotnetPath = ResolveDotnetPath();
+        if (dotnetPath == null)
+        {
+            AnsiConsole.MarkupLine("[red]✗ Dotnet not found in secure system directories[/]");
+            return false;
+        }
+
         var generateProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = dotnetPath,
                 Arguments = $"faes generate \"{solutionPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -487,5 +520,169 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 
         var allSolutionFiles = slnFiles.Concat(slnxFiles).ToArray();
         return allSolutionFiles.Length > 0 ? allSolutionFiles[0] : null;
+    }
+
+    /// <summary>
+    /// Resolves the full path to the dotnet executable from secure system directories only.
+    /// This prevents PATH manipulation attacks by only checking known safe locations.
+    /// </summary>
+    /// <returns>The full path to dotnet executable, or null if not found in secure locations.</returns>
+    private static string? ResolveDotnetPath()
+    {
+        // Check known secure installation directories first
+        var knownPaths = OperatingSystem.IsWindows()
+            ? new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet", "dotnet.exe"),
+                @"C:\Program Files\dotnet\dotnet.exe",
+            }
+            : new[]
+            {
+                "/usr/bin/dotnet",
+                "/usr/local/bin/dotnet",
+                "/usr/share/dotnet/dotnet",
+                "/opt/homebrew/bin/dotnet",
+            };
+
+        foreach (var path in knownPaths)
+        {
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        // Search PATH but only in secure system directories
+        var pathEnv = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(pathEnv))
+        {
+            return null;
+        }
+
+        var separator = OperatingSystem.IsWindows() ? ';' : ':';
+        var secureDirectories = OperatingSystem.IsWindows()
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                @"C:\Program Files",
+                @"C:\Program Files (x86)",
+                @"C:\Windows",
+                @"C:\Windows\System32",
+            }
+            : new HashSet<string>(StringComparer.Ordinal)
+            {
+                "/usr/bin",
+                "/usr/local/bin",
+                "/usr/share/dotnet",
+                "/bin",
+                "/opt/homebrew/bin",
+            };
+
+        var dotnetExecutable = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
+
+        foreach (var dir in pathEnv.Split(separator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            // Only check directories that are under secure system paths
+            var isSecure = secureDirectories.Any(secure =>
+                dir.StartsWith(secure, OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal));
+
+            if (isSecure)
+            {
+                var dotnetPath = Path.Combine(dir, dotnetExecutable);
+                if (File.Exists(dotnetPath))
+                {
+                    return dotnetPath;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves the full path to the git executable from secure system directories only.
+    /// This prevents PATH manipulation attacks by only checking known safe locations.
+    /// </summary>
+    /// <returns>The full path to git executable, or null if not found in secure locations.</returns>
+    private static string? ResolveGitPath()
+    {
+        // Check known secure installation directories first
+        var knownPaths = OperatingSystem.IsWindows()
+            ? new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Git", "cmd", "git.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Git", "cmd", "git.exe"),
+                @"C:\Program Files\Git\cmd\git.exe",
+                @"C:\Program Files (x86)\Git\cmd\git.exe",
+            }
+            : new[]
+            {
+                "/usr/bin/git",
+                "/usr/local/bin/git",
+                "/opt/homebrew/bin/git",
+            };
+
+        foreach (var path in knownPaths)
+        {
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        // Search PATH but only in secure system directories
+        var pathEnv = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(pathEnv))
+        {
+            return null;
+        }
+
+        var separator = OperatingSystem.IsWindows() ? ';' : ':';
+        var secureDirectories = OperatingSystem.IsWindows()
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                @"C:\Program Files",
+                @"C:\Program Files (x86)",
+                @"C:\Windows",
+                @"C:\Windows\System32",
+            }
+            : new HashSet<string>(StringComparer.Ordinal)
+            {
+                "/usr/bin",
+                "/usr/local/bin",
+                "/bin",
+                "/opt/homebrew/bin",
+            };
+
+        var gitExecutable = OperatingSystem.IsWindows() ? "git.exe" : "git";
+
+        foreach (var dir in pathEnv.Split(separator, StringSplitOptions.RemoveEmptyEntries))
+        {
+            // Only check directories that are under secure system paths
+            var isSecure = secureDirectories.Any(secure =>
+                dir.StartsWith(secure, OperatingSystem.IsWindows()
+                    ? StringComparison.OrdinalIgnoreCase
+                    : StringComparison.Ordinal));
+
+            if (isSecure)
+            {
+                var gitPath = Path.Combine(dir, gitExecutable);
+                if (File.Exists(gitPath))
+                {
+                    return gitPath;
+                }
+            }
+        }
+
+        return null;
     }
 }

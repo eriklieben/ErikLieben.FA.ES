@@ -138,7 +138,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
         var result = await sut.GetObjectIdsAsync("PageTest", null, 3);
 
         // Assert
-        Assert.Equal(3, result.Items.Count());
+        Assert.Equal(3, result.Items.Count);
         Assert.Equal(3, result.PageSize);
     }
 
@@ -158,7 +158,7 @@ public class CosmosDbObjectIdProviderIntegrationTests : IAsyncLifetime
         var firstPage = await sut.GetObjectIdsAsync("ContinuationTest", null, 5);
 
         // Assert
-        Assert.Equal(5, firstPage.Items.Count());
+        Assert.Equal(5, firstPage.Items.Count);
         // Note: Continuation token behavior depends on actual data distribution
     }
 }

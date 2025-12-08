@@ -32,6 +32,7 @@ internal record ProjectionCodeComponents(
 public class GenerateProjectionCode
 {
     private const string IEventTypeName = "IEvent";
+    private static readonly string[] SpecialDependencies = ["IObjectDocumentFactory", "IEventStreamFactory"];
 
     private readonly SolutionDefinition solution;
     private readonly Config config;
@@ -399,9 +400,8 @@ public class GenerateProjectionCode
         var ctorInputBuilder = new StringBuilder();
 
         // Find the best constructor (prefer one with most parameters that includes IObjectDocumentFactory and IEventStreamFactory)
-        var specialDependencies = new[] { "IObjectDocumentFactory", "IEventStreamFactory" };
         var bestMatch = projection.Constructors
-            .Where(ctor => specialDependencies.All(dep => ctor.Parameters.Any(p => p.Type == dep)))
+            .Where(ctor => SpecialDependencies.All(dep => ctor.Parameters.Any(p => p.Type == dep)))
             .OrderByDescending(ctor => ctor.Parameters.Count)
             .FirstOrDefault();
 
@@ -1007,9 +1007,8 @@ public class GenerateProjectionCode
     private static StringBuilder SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
     {
         var ctorCode = new StringBuilder();
-        var specialDependencies = new[] { "IObjectDocumentFactory", "IEventStreamFactory" };
 
-        var bestMatch = RankConstructorsByPropertyMatch(projection, specialDependencies).FirstOrDefault();
+        var bestMatch = RankConstructorsByPropertyMatch(projection, SpecialDependencies).FirstOrDefault();
 
         if (bestMatch != null)
         {

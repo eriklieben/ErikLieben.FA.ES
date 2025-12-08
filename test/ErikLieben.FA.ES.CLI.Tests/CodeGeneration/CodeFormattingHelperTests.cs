@@ -243,7 +243,7 @@ public class CodeFormattingHelperTests
             // Assert
             Assert.NotNull(foundProjectDir);
             Assert.True(Directory.Exists(foundProjectDir));
-            Assert.True(Directory.GetFiles(foundProjectDir, "*.csproj").Any());
+            Assert.True(Directory.GetFiles(foundProjectDir, "*.csproj").Length > 0);
             Assert.Equal(projectDir, foundProjectDir);
         }
         finally

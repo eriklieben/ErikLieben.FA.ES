@@ -138,40 +138,58 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
         // Check When methods
         if (sourceEventTypes.Count > 0)
         {
-            // Parse the Fold method in the generated file to get handled event types
-            var generatedEventTypes = CollectGeneratedEventTypes(generatedSyntaxTree, symbol.Name);
-
-            // Find When methods that are NOT in the generated Fold
-            foreach (var (eventTypeName, location) in sourceEventTypes)
-            {
-                if (!generatedEventTypes.Contains(eventTypeName))
-                {
-                    var diagnostic = Diagnostic.Create(
-                        StaleCodeRule,
-                        location,
-                        "When",
-                        eventTypeName);
-                    context.ReportDiagnostic(diagnostic);
-                }
-            }
+            ReportStaleWhenMethods(context, generatedSyntaxTree, symbol.Name, sourceEventTypes);
         }
 
         // Check properties (FAES0007)
         if (sourceProperties.Count > 0)
         {
-            var generatedInterfaceProperties = CollectGeneratedInterfaceProperties(generatedSyntaxTree, symbol.Name);
+            ReportMissingInterfaceProperties(context, generatedSyntaxTree, symbol.Name, sourceProperties);
+        }
+    }
 
-            foreach (var (propertyName, location) in sourceProperties)
+    private static void ReportStaleWhenMethods(
+        SyntaxNodeAnalysisContext context,
+        SyntaxTree generatedSyntaxTree,
+        string className,
+        List<(string EventTypeName, Location Location)> sourceEventTypes)
+    {
+        // Parse the Fold method in the generated file to get handled event types
+        var generatedEventTypes = CollectGeneratedEventTypes(generatedSyntaxTree, className);
+
+        // Find When methods that are NOT in the generated Fold
+        foreach (var (eventTypeName, location) in sourceEventTypes)
+        {
+            if (!generatedEventTypes.Contains(eventTypeName))
             {
-                if (!generatedInterfaceProperties.Contains(propertyName))
-                {
-                    var diagnostic = Diagnostic.Create(
-                        PropertyNotInInterfaceRule,
-                        location,
-                        propertyName,
-                        symbol.Name);
-                    context.ReportDiagnostic(diagnostic);
-                }
+                var diagnostic = Diagnostic.Create(
+                    StaleCodeRule,
+                    location,
+                    "When",
+                    eventTypeName);
+                context.ReportDiagnostic(diagnostic);
+            }
+        }
+    }
+
+    private static void ReportMissingInterfaceProperties(
+        SyntaxNodeAnalysisContext context,
+        SyntaxTree generatedSyntaxTree,
+        string className,
+        List<(string PropertyName, Location Location)> sourceProperties)
+    {
+        var generatedInterfaceProperties = CollectGeneratedInterfaceProperties(generatedSyntaxTree, className);
+
+        foreach (var (propertyName, location) in sourceProperties)
+        {
+            if (!generatedInterfaceProperties.Contains(propertyName))
+            {
+                var diagnostic = Diagnostic.Create(
+                    PropertyNotInInterfaceRule,
+                    location,
+                    propertyName,
+                    className);
+                context.ReportDiagnostic(diagnostic);
             }
         }
     }
@@ -202,7 +220,7 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
                        a.Name.ToString().StartsWith("WhenAttribute<"))
             .Select(a => (Attribute: a, Symbol: semanticModel.GetSymbolInfo(a).Symbol))
             .Where(x => x.Symbol?.ContainingType is INamedTypeSymbol { TypeArguments.Length: 1 })
-            .Select(x => (x.Attribute, EventType: (x.Symbol!.ContainingType as INamedTypeSymbol)!.TypeArguments[0]));
+            .Select(x => (x.Attribute, EventType: ((INamedTypeSymbol)x.Symbol!.ContainingType!).TypeArguments[0]));
 
         result.AddRange(whenAttributes.Select(x =>
             (x.EventType.Name, x.Attribute.GetLocation())));
@@ -267,18 +285,7 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
     /// </summary>
     private static string? ExtractEventTypeFromInvocation(InvocationExpressionSyntax invocation)
     {
-        string? methodName = null;
-
-        // Get the method name
-        if (invocation.Expression is IdentifierNameSyntax identifier)
-        {
-            methodName = identifier.Identifier.ValueText;
-        }
-        else if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
-        {
-            methodName = memberAccess.Name.Identifier.ValueText;
-        }
-
+        var methodName = GetInvocationMethodName(invocation);
         if (methodName == null)
             return null;
 
@@ -288,36 +295,43 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
             return methodName.Substring(4); // Remove "When" prefix
         }
 
-        // Pattern 2: When(JsonEvent.To/@event, XxxJsonSerializerContext.Default.Xxx))
-        // Pattern 3: When(JsonEvent.ToEvent(@event, Ctx.Default.Xxx).Data(), ...)
+        // Pattern 2 & 3: When(JsonEvent.To/ToEvent(...))
         if (methodName == "When" && invocation.ArgumentList.Arguments.Count >= 1)
         {
-            var firstArg = invocation.ArgumentList.Arguments[0].Expression;
-
-            // Handle chained call: JsonEvent.ToEvent(...).Data()
-            if (firstArg is InvocationExpressionSyntax dataInvocation &&
-                dataInvocation.Expression is MemberAccessExpressionSyntax dataAccess &&
-                dataAccess.Name.Identifier.ValueText == "Data")
-            {
-                // Get the inner JsonEvent.ToEvent(...) call
-                firstArg = dataAccess.Expression;
-            }
-
-            // The argument could be JsonEvent.To(...) or JsonEvent.ToEvent(...)
-            if (firstArg is InvocationExpressionSyntax jsonEventInvocation &&
-                jsonEventInvocation.ArgumentList.Arguments.Count >= 2)
-            {
-                // Get the second argument which is like: XxxJsonSerializerContext.Default.Xxx
-                var serializerArg = jsonEventInvocation.ArgumentList.Arguments[1].Expression;
-                if (serializerArg is MemberAccessExpressionSyntax serializerAccess)
-                {
-                    // The event type name is the final member name
-                    return serializerAccess.Name.Identifier.ValueText;
-                }
-            }
+            return ExtractEventTypeFromWhenArgument(invocation.ArgumentList.Arguments[0].Expression);
         }
 
         return null;
+    }
+
+    private static string? GetInvocationMethodName(InvocationExpressionSyntax invocation)
+    {
+        return invocation.Expression switch
+        {
+            IdentifierNameSyntax identifier => identifier.Identifier.ValueText,
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
+            _ => null
+        };
+    }
+
+    private static string? ExtractEventTypeFromWhenArgument(ExpressionSyntax firstArg)
+    {
+        // Handle chained call: JsonEvent.ToEvent(...).Data()
+        if (firstArg is InvocationExpressionSyntax dataInvocation &&
+            dataInvocation.Expression is MemberAccessExpressionSyntax { Name.Identifier.ValueText: "Data" } dataAccess)
+        {
+            firstArg = dataAccess.Expression;
+        }
+
+        // The argument could be JsonEvent.To(...) or JsonEvent.ToEvent(...)
+        if (firstArg is not InvocationExpressionSyntax { ArgumentList.Arguments.Count: >= 2 } jsonEventInvocation)
+            return null;
+
+        // Get the second argument which is like: XxxJsonSerializerContext.Default.Xxx
+        var serializerArg = jsonEventInvocation.ArgumentList.Arguments[1].Expression;
+        return serializerArg is MemberAccessExpressionSyntax serializerAccess
+            ? serializerAccess.Name.Identifier.ValueText
+            : null;
     }
 
     /// <summary>

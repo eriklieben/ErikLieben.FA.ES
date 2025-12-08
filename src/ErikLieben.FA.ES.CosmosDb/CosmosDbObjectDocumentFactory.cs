@@ -6,6 +6,7 @@ using Microsoft.Azure.Cosmos;
 
 namespace ErikLieben.FA.ES.CosmosDb;
 
+#pragma warning disable CS8602 // Dereference of possibly null reference - cosmosDbDocumentStore is always initialized in constructors
 /// <summary>
 /// Provides a CosmosDB-backed implementation of <see cref="IObjectDocumentFactory"/>.
 /// </summary>
@@ -27,7 +28,7 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
         EventStreamDefaultTypeSettings settings,
         EventStreamCosmosDbSettings cosmosDbSettings)
     {
-        cosmosDbDocumentStore = new CosmosDbDocumentStore(cosmosClient, documentTagStore, cosmosDbSettings);
+        this.cosmosDbDocumentStore = new CosmosDbDocumentStore(cosmosClient, documentTagStore, cosmosDbSettings);
     }
 
     /// <summary>
@@ -57,7 +58,7 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
         var objectNameLower = objectName.ToLowerInvariant();
-        var result = await cosmosDbDocumentStore.CreateAsync(objectNameLower, objectId, store);
+        var result = await this.cosmosDbDocumentStore!.CreateAsync(objectNameLower, objectId, store);
 
         if (result is null)
         {
@@ -82,7 +83,7 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
-        var result = await cosmosDbDocumentStore.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
+        var result = await this.cosmosDbDocumentStore!.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
         if (result is null)
         {
             throw new InvalidOperationException("CosmosDbDocumentStore.GetAsync returned null document.");

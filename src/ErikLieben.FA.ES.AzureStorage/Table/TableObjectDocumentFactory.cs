@@ -8,6 +8,7 @@ using Microsoft.Extensions.Azure;
 
 namespace ErikLieben.FA.ES.AzureStorage.Table;
 
+#pragma warning disable CS8602 // Dereference of possibly null reference - tableDocumentStore is always initialized in constructors
 /// <summary>
 /// Provides an Azure Table Storage-backed implementation of <see cref="IObjectDocumentFactory"/>.
 /// </summary>
@@ -29,7 +30,7 @@ public class TableObjectDocumentFactory : IObjectDocumentFactory
         EventStreamDefaultTypeSettings settings,
         EventStreamTableSettings tableSettings)
     {
-        tableDocumentStore = new TableDocumentStore(clientFactory, documentTagStore, tableSettings, settings);
+        this.tableDocumentStore = new TableDocumentStore(clientFactory, documentTagStore, tableSettings, settings);
     }
 
     /// <summary>
@@ -58,7 +59,7 @@ public class TableObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
         var objectNameLower = objectName.ToLowerInvariant();
-        var result = await tableDocumentStore.CreateAsync(objectNameLower, objectId, store);
+        var result = await this.tableDocumentStore!.CreateAsync(objectNameLower, objectId, store);
 
         if (result is null)
         {
@@ -82,7 +83,7 @@ public class TableObjectDocumentFactory : IObjectDocumentFactory
         DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
 
-        var result = await tableDocumentStore.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
+        var result = await this.tableDocumentStore!.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
         if (result is null)
         {
             throw new InvalidOperationException("TableDocumentStore.GetAsync returned null document.");

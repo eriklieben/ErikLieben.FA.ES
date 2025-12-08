@@ -8,6 +8,7 @@ using Microsoft.Extensions.Azure;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
+#pragma warning disable CS8602 // Dereference of possibly null reference - blobDocumentStore is always initialized in constructors
 /// <summary>
 /// Provides an Azure Blob Storage-backed implementation of <see cref="IObjectDocumentFactory"/>.
 /// </summary>
@@ -29,7 +30,7 @@ public BlobObjectDocumentFactory(
         EventStreamDefaultTypeSettings settings,
         EventStreamBlobSettings blobSettings)
     {
-        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings, settings);
+        this.blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings, settings);
     }
 
     /// <summary>
@@ -58,7 +59,7 @@ public BlobObjectDocumentFactory(
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
         var objectNameLower = objectName.ToLowerInvariant();
-        var result = await blobDocumentStore.CreateAsync(objectNameLower, objectId, store);
+        var result = await this.blobDocumentStore!.CreateAsync(objectNameLower, objectId, store);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");
@@ -80,7 +81,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
 
-        var result = await blobDocumentStore.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
+        var result = await this.blobDocumentStore!.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.GetAsync returned null document.");

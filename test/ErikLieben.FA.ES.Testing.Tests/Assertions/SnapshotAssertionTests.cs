@@ -11,6 +11,8 @@ public class SnapshotTestsCollection { }
 
 public class SnapshotAssertionTests
 {
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
+
     [Collection("SnapshotTests")]
     public class SnapshotDirectoryTests
     {
@@ -58,6 +60,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -90,7 +93,7 @@ public class SnapshotAssertionTests
         {
             var testObject = new { Name = "Test", Value = 42 };
             var snapshotPath = Path.Combine(_testSnapshotDir, "existing.json");
-            var json = JsonSerializer.Serialize(testObject, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(testObject, IndentedJsonOptions);
             File.WriteAllText(snapshotPath, json);
 
             // Act & Assert - matching snapshot should not throw
@@ -134,6 +137,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -166,7 +170,7 @@ public class SnapshotAssertionTests
         {
             var testObject = new { Name = "Test", Value = 42 };
             var snapshotPath = Path.Combine(_testSnapshotDir, "existing_async.json");
-            var json = JsonSerializer.Serialize(testObject, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(testObject, IndentedJsonOptions);
             await File.WriteAllTextAsync(snapshotPath, json);
 
             // Act & Assert - matching snapshot should not throw
@@ -196,6 +200,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -259,6 +264,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -308,6 +314,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -415,6 +422,7 @@ public class SnapshotAssertionTests
             {
                 Directory.Delete(_testSnapshotDir, recursive: true);
             }
+            GC.SuppressFinalize(this);
         }
 
         private class TestComparer : ISnapshotComparer<TestData>

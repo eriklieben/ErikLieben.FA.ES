@@ -155,7 +155,7 @@ public class CosmosDbObjectIdProviderTests
 
             var result = await sut.GetObjectIdsAsync("TestObject", null, 10);
 
-            Assert.Equal(3, result.Items.Count());
+            Assert.Equal(3, result.Items.Count);
             Assert.Equal("next-page-token", result.ContinuationToken);
             Assert.Equal(10, result.PageSize);
         }

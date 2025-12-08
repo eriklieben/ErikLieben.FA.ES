@@ -75,83 +75,84 @@ public class ExtensionsRegistrationAnalyzer : DiagnosticAnalyzer
         var aggregateClasses = new List<(INamedTypeSymbol Symbol, Location Location)>();
         var extensionsFiles = new List<SyntaxTree>();
 
-        context.RegisterSyntaxNodeAction(ctx =>
+        context.RegisterSyntaxNodeAction(
+            ctx => AnalyzeClassNode(ctx, aggregateClasses, extensionsFiles),
+            SyntaxKind.ClassDeclaration);
+
+        context.RegisterCompilationEndAction(
+            ctx => ReportUnregisteredAggregates(ctx, aggregateClasses, extensionsFiles));
+    }
+
+    private static void AnalyzeClassNode(
+        SyntaxNodeAnalysisContext ctx,
+        List<(INamedTypeSymbol Symbol, Location Location)> aggregateClasses,
+        List<SyntaxTree> extensionsFiles)
+    {
+        if (ctx.Node is not ClassDeclarationSyntax classDecl)
+            return;
+
+        var filePath = classDecl.SyntaxTree.FilePath;
+
+        // Check if this is an Extensions.Generated.cs file
+        if (filePath.EndsWith("Extensions.Generated.cs"))
         {
-            if (ctx.Node is not ClassDeclarationSyntax classDecl)
-                return;
-
-            var filePath = classDecl.SyntaxTree.FilePath;
-
-            // Check if this is an Extensions.Generated.cs file
-            if (filePath.EndsWith("Extensions.Generated.cs"))
+            lock (extensionsFiles)
             {
-                lock (extensionsFiles)
+                if (!extensionsFiles.Contains(classDecl.SyntaxTree))
                 {
-                    if (!extensionsFiles.Contains(classDecl.SyntaxTree))
-                    {
-                        extensionsFiles.Add(classDecl.SyntaxTree);
-                    }
+                    extensionsFiles.Add(classDecl.SyntaxTree);
                 }
-                return;
             }
+            return;
+        }
 
-            // Skip other generated files
-            if (filePath.EndsWith(".Generated.cs"))
-                return;
+        // Skip other generated files
+        if (filePath.EndsWith(".Generated.cs"))
+            return;
 
-            // Check if this is an Aggregate class
-            var symbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl);
-            if (symbol is null)
-                return;
+        // Check if this is an Aggregate class
+        var symbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl);
+        if (symbol is null || !SymbolHelpers.IsAggregateType(symbol) || !SymbolHelpers.IsPartialClass(classDecl))
+            return;
 
-            if (!SymbolHelpers.IsAggregateType(symbol))
-                return;
-
-            // Must be partial
-            if (!SymbolHelpers.IsPartialClass(classDecl))
-                return;
-
-            lock (aggregateClasses)
-            {
-                aggregateClasses.Add((symbol, classDecl.Identifier.GetLocation()));
-            }
-        }, SyntaxKind.ClassDeclaration);
-
-        context.RegisterCompilationEndAction(ctx =>
+        lock (aggregateClasses)
         {
-            if (aggregateClasses.Count == 0)
-                return; // No aggregates, nothing to check
+            aggregateClasses.Add((symbol, classDecl.Identifier.GetLocation()));
+        }
+    }
 
-            // Find the Extensions.Generated.cs file for this project
-            var extensionsTree = FindExtensionsFile(extensionsFiles);
+    private static void ReportUnregisteredAggregates(
+        CompilationAnalysisContext ctx,
+        List<(INamedTypeSymbol Symbol, Location Location)> aggregateClasses,
+        List<SyntaxTree> extensionsFiles)
+    {
+        if (aggregateClasses.Count == 0)
+            return; // No aggregates, nothing to check
 
-            if (extensionsTree is null)
+        // Find the Extensions.Generated.cs file for this project
+        var extensionsTree = FindExtensionsFile(extensionsFiles);
+
+        if (extensionsTree is null)
+        {
+            // Report FAES0014 on the first aggregate
+            var firstAggregate = aggregateClasses[0];
+            var diagnostic = Diagnostic.Create(MissingExtensionsRule, firstAggregate.Location);
+            ctx.ReportDiagnostic(diagnostic);
+            return;
+        }
+
+        // Parse the Extensions file to find registered aggregates
+        var registeredTypes = CollectRegisteredAggregates(extensionsTree);
+
+        // Check each aggregate to see if it's registered
+        foreach (var (symbol, location) in aggregateClasses)
+        {
+            if (!registeredTypes.Contains(symbol.Name))
             {
-                // Report FAES0014 on the first aggregate
-                var firstAggregate = aggregateClasses[0];
-                var diagnostic = Diagnostic.Create(
-                    MissingExtensionsRule,
-                    firstAggregate.Location);
+                var diagnostic = Diagnostic.Create(AggregateNotRegisteredRule, location, symbol.Name);
                 ctx.ReportDiagnostic(diagnostic);
-                return;
             }
-
-            // Parse the Extensions file to find registered aggregates
-            var registeredTypes = CollectRegisteredAggregates(extensionsTree);
-
-            // Check each aggregate to see if it's registered
-            foreach (var (symbol, location) in aggregateClasses)
-            {
-                if (!registeredTypes.Contains(symbol.Name))
-                {
-                    var diagnostic = Diagnostic.Create(
-                        AggregateNotRegisteredRule,
-                        location,
-                        symbol.Name);
-                    ctx.ReportDiagnostic(diagnostic);
-                }
-            }
-        });
+        }
     }
 
     private static SyntaxTree? FindExtensionsFile(List<SyntaxTree> extensionsTrees)

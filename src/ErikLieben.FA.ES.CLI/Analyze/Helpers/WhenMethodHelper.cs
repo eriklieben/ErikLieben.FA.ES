@@ -11,90 +11,95 @@ internal static class WhenMethodHelper
         Compilation compilation,
         RoslynHelper roslyn)
     {
+        var allWhenMethods = CollectWhenMethods(symbol);
+        var items = new List<ProjectionEventDefinition>();
+
+        foreach (var whenMethod in allWhenMethods)
+        {
+            var definition = CreateEventDefinition(whenMethod, compilation, roslyn);
+            if (definition != null)
+            {
+                items.Add(definition);
+            }
+        }
+
+        return items;
+    }
+
+    private static List<IMethodSymbol> CollectWhenMethods(INamedTypeSymbol symbol)
+    {
         // Get methods named "When"
-        var whenMethods = symbol.GetMembers("When")
-            .OfType<IMethodSymbol>()
-            .ToList();
+        var whenMethods = symbol.GetMembers("When").OfType<IMethodSymbol>();
 
         // Get methods with [When<TEvent>] attribute
         var attributeBasedMethods = symbol.GetMembers()
             .OfType<IMethodSymbol>()
-            .Where(m => HasWhenAttribute(m))
-            .ToList();
+            .Where(m => HasWhenAttribute(m));
 
         // Combine both approaches
-        var allWhenMethods = whenMethods.Concat(attributeBasedMethods)
+        return whenMethods.Concat(attributeBasedMethods)
             .Distinct(SymbolEqualityComparer.Default)
             .OfType<IMethodSymbol>()
             .ToList();
+    }
 
-        var items = new List<ProjectionEventDefinition>();
-        foreach (var whenMethod in allWhenMethods)
+    private static ProjectionEventDefinition? CreateEventDefinition(
+        IMethodSymbol whenMethod,
+        Compilation compilation,
+        RoslynHelper roslyn)
+    {
+        var parameterTypeSymbol = ResolveEventTypeSymbol(whenMethod);
+        if (parameterTypeSymbol == null || parameterTypeSymbol.Name == "IExecutionContextWithEvent")
         {
-            // Try to get event type from attribute first
-            var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
-
-            INamedTypeSymbol? parameterTypeSymbol = null;
-            if (eventTypeFromAttribute != null)
-            {
-                // Use event type from attribute
-                parameterTypeSymbol = eventTypeFromAttribute;
-            }
-            else
-            {
-                // Fall back to parameter-based detection
-                var parameter = whenMethod.Parameters.FirstOrDefault();
-                if (parameter?.Type is not INamedTypeSymbol typeSymbol)
-                {
-                    continue;
-                }
-                parameterTypeSymbol = typeSymbol;
-            }
-
-            if (parameterTypeSymbol.Name == "IExecutionContextWithEvent")
-            {
-                continue;
-            }
-
-            var eventName = RoslynHelper.GetEventName(parameterTypeSymbol);
-
-            // Determine if first parameter is the event or if we're using attribute-based detection
-            var hasEventParameter = eventTypeFromAttribute == null;
-            var skipCount = hasEventParameter ? 1 : 0;
-            var extra = whenMethod.Parameters.Skip(skipCount).ToList();
-
-            var typeName = parameterTypeSymbol.Name;
-            if (parameterTypeSymbol.TypeArguments.Length is > 0 and 1)
-            {
-                typeName = RoslynHelper.GetFullTypeName(parameterTypeSymbol.TypeArguments[0]);
-            }
-
-            items.Add(new ProjectionEventDefinition
-            {
-                ActivationType = whenMethod.Name,
-                ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
-                EventName = eventName,
-                SchemaVersion = AttributeExtractor.ExtractEventVersionAttribute(parameterTypeSymbol),
-                Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
-                File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
-                TypeName = typeName,
-                Properties = PropertyHelper.GetPublicGetterProperties(parameterTypeSymbol),
-                Parameters = ParameterHelper.GetParameters(whenMethod),
-                // StreamActions = GetStreamActions(parameterTypeSymbol),
-                WhenParameterValueFactories = GetWhenParameterValueFactories(whenMethod),
-                WhenParameterDeclarations = extra.Select(p => new WhenParameterDeclaration
-                {
-                    Name = p.Name,
-                    Type = RoslynHelper.GetFullTypeName(p.Type),
-                    Namespace = RoslynHelper.GetFullNamespace(p.Type),
-                    GenericArguments = p.Type is INamedTypeSymbol namedType
-                        ? RoslynHelper.GetGenericArguments(namedType)
-                        : [],
-                    IsExecutionContext = IsExecutionContextType(p.Type)
-                }).ToList(),
-            });
+            return null;
         }
-        return items;
+
+        var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
+        var hasEventParameter = eventTypeFromAttribute == null;
+        var skipCount = hasEventParameter ? 1 : 0;
+        var extra = whenMethod.Parameters.Skip(skipCount).ToList();
+
+        var typeName = parameterTypeSymbol.TypeArguments.Length == 1
+            ? RoslynHelper.GetFullTypeName(parameterTypeSymbol.TypeArguments[0])
+            : parameterTypeSymbol.Name;
+
+        return new ProjectionEventDefinition
+        {
+            ActivationType = whenMethod.Name,
+            ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
+            EventName = RoslynHelper.GetEventName(parameterTypeSymbol),
+            SchemaVersion = AttributeExtractor.ExtractEventVersionAttribute(parameterTypeSymbol),
+            Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
+            File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
+            TypeName = typeName,
+            Properties = PropertyHelper.GetPublicGetterProperties(parameterTypeSymbol),
+            Parameters = ParameterHelper.GetParameters(whenMethod),
+            WhenParameterValueFactories = GetWhenParameterValueFactories(whenMethod),
+            WhenParameterDeclarations = extra.Select(p => new WhenParameterDeclaration
+            {
+                Name = p.Name,
+                Type = RoslynHelper.GetFullTypeName(p.Type),
+                Namespace = RoslynHelper.GetFullNamespace(p.Type),
+                GenericArguments = p.Type is INamedTypeSymbol namedType
+                    ? RoslynHelper.GetGenericArguments(namedType)
+                    : [],
+                IsExecutionContext = IsExecutionContextType(p.Type)
+            }).ToList(),
+        };
+    }
+
+    private static INamedTypeSymbol? ResolveEventTypeSymbol(IMethodSymbol whenMethod)
+    {
+        // Try to get event type from attribute first
+        var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
+        if (eventTypeFromAttribute != null)
+        {
+            return eventTypeFromAttribute;
+        }
+
+        // Fall back to parameter-based detection
+        var parameter = whenMethod.Parameters.FirstOrDefault();
+        return parameter?.Type as INamedTypeSymbol;
     }
 
     /// <summary>

@@ -128,16 +128,14 @@ public class AnalyzeManualStreamActions(
                     return typeArg.Name;
                 }
             }
-            else if (symbolInfo.Symbol is IParameterSymbol paramSymbol)
+            else if (symbolInfo.Symbol is IParameterSymbol paramSymbol &&
+                     paramSymbol.Type is INamedTypeSymbol paramType &&
+                     paramType.IsGenericType &&
+                     paramType.Name.Contains("EventStream") &&
+                     paramType.TypeArguments.FirstOrDefault() is { } typeArg)
             {
                 // Check if the parameter type is IEventStream<TAggregate>
-                if (paramSymbol.Type is INamedTypeSymbol paramType &&
-                    paramType.IsGenericType &&
-                    paramType.Name.Contains("EventStream") &&
-                    paramType.TypeArguments.FirstOrDefault() is { } typeArg)
-                {
-                    return typeArg.Name;
-                }
+                return typeArg.Name;
             }
         }
 
