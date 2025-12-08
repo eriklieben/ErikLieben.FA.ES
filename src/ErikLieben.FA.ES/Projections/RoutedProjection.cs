@@ -94,11 +94,11 @@ public abstract class RoutedProjection : Projection
         IEvent @event,
         IObjectDocument document,
         T? data = null,
-        IExecutionContext? parentContext = null) where T : class
+        IExecutionContext? context = null) where T : class
     {
         // Create version token and delegate to VersionToken overload
         var versionToken = new VersionToken(@event, document);
-        await Fold(@event, versionToken, data, parentContext);
+        await Fold(@event, versionToken, data, context);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public abstract class RoutedProjection : Projection
         IEvent @event,
         VersionToken versionToken,
         T? data = null,
-        IExecutionContext? parentContext = null) where T : class
+        IExecutionContext? context = null) where T : class
     {
         // Get document reference (lightweight - just metadata)
         IObjectDocument? document = null;
@@ -153,7 +153,7 @@ public abstract class RoutedProjection : Projection
                 var eventToForward = target.CustomEvent ?? @event;
 
                 // Use target's context if provided, otherwise use parent context
-                var contextToUse = target.Context ?? parentContext;
+                var contextToUse = target.Context ?? context;
 
                 // Forward using VersionToken overload (no document lookup needed!)
                 await destination.Fold(eventToForward, versionToken, data, contextToUse);

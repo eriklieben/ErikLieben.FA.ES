@@ -49,7 +49,7 @@ public static class BlobPathTemplateResolver
     /// </summary>
     public static IEnumerable<string> GetPlaceholders(string template)
     {
-        var regex = new Regex(@"\{(\w+)\}");
+        var regex = new Regex(@"\{(\w+)\}", RegexOptions.None, TimeSpan.FromSeconds(1));
         var matches = regex.Matches(template);
 
         foreach (Match match in matches)
@@ -74,9 +74,9 @@ public static class BlobPathTemplateResolver
         // Build regex from template by replacing {placeholder} with named capture groups
         // Note: We don't use Regex.Escape because it would escape the braces,
         // and blob paths typically don't contain regex special characters
-        var regexPattern = Regex.Replace(templateWithoutExt, @"\{(\w+)\}", @"(?<$1>[^/]+)");
+        var regexPattern = Regex.Replace(templateWithoutExt, @"\{(\w+)\}", @"(?<$1>[^/]+)", RegexOptions.None, TimeSpan.FromSeconds(1));
 
-        var regex = new Regex($"^{regexPattern}$");
+        var regex = new Regex($"^{regexPattern}$", RegexOptions.None, TimeSpan.FromSeconds(1));
         var match = regex.Match(pathWithoutExt);
 
         if (match.Success)

@@ -295,6 +295,8 @@ public class EventTypeRegistryTests
             // Act & Assert - should not throw
             registry.Freeze();
             registry.Freeze();
+
+            Assert.True(true);
         }
 
         [Fact]

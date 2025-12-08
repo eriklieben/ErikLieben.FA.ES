@@ -157,7 +157,9 @@ public class RenameIEventUpcasterMigration : IMigration
         content = Regex.Replace(
             content,
             @"\bIEventUpcaster\b",
-            "IUpcastEvent");
+            "IUpcastEvent",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1));
 
         // Update using statements if needed
         // The namespace hasn't changed, so no using updates needed
@@ -187,14 +189,18 @@ public class UpdateUpcasterNamingConventionMigration : IMigration
         content = Regex.Replace(
             content,
             @"\b(class\s+\w+Event)Upcaster\b",
-            "$1Upcast");
+            "$1Upcast",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1));
 
         // Also update references to these classes
         // Pattern: new SomeEventUpcaster -> new SomeEventUpcast
         content = Regex.Replace(
             content,
             @"\b(\w+Event)Upcaster\b(?!\s*:)",
-            "$1Upcast");
+            "$1Upcast",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1));
 
         return content;
     }
@@ -220,12 +226,14 @@ public class StaticDocumentTagFactoryMigration : IMigration
         content = Regex.Replace(
             content,
             @"DocumentTagDocumentFactory\.CreateDocumentTagStore\s*\(\s*\)",
-            "_documentTagFactory.CreateDocumentTagStore()");
+            "_documentTagFactory.CreateDocumentTagStore()",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(1));
 
         // Add a TODO comment if we made changes and the factory isn't already injected
         // Check for field declaration pattern (not just method call we just added)
-        var hasFactoryField = Regex.IsMatch(content, @"(private|readonly|protected)\s+.*IDocumentTagDocumentFactory");
-        var hasFactoryFieldDeclaration = Regex.IsMatch(content, @"_documentTagFactory\s*[;=]");
+        var hasFactoryField = Regex.IsMatch(content, @"(private|readonly|protected)\s+.*IDocumentTagDocumentFactory", RegexOptions.None, TimeSpan.FromSeconds(1));
+        var hasFactoryFieldDeclaration = Regex.IsMatch(content, @"_documentTagFactory\s*[;=]", RegexOptions.None, TimeSpan.FromSeconds(1));
 
         if (!hasFactoryField && !hasFactoryFieldDeclaration)
         {
@@ -264,7 +272,7 @@ public class DeprecatedFoldOverloadMigration : IMigration
         var foldPattern = @"\.Fold\s*(<[^>]+>)?\s*\(\s*(@?\w+)\s*,\s*(\w+)\s*(?:,\s*[^)]+)?\)";
 
         // Check if the file contains Fold calls that might need migration
-        var matches = Regex.Matches(content, foldPattern);
+        var matches = Regex.Matches(content, foldPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
 
         foreach (Match match in matches)
         {
@@ -279,7 +287,7 @@ public class DeprecatedFoldOverloadMigration : IMigration
                 {
                     var indent = "";
                     var lineContent = content.Substring(lineStart + 1);
-                    var indentMatch = Regex.Match(lineContent, @"^(\s*)");
+                    var indentMatch = Regex.Match(lineContent, @"^(\s*)", RegexOptions.None, TimeSpan.FromSeconds(1));
                     if (indentMatch.Success)
                     {
                         indent = indentMatch.Groups[1].Value;

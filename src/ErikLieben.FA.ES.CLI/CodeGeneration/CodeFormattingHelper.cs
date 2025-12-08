@@ -79,10 +79,10 @@ public static class CodeFormattingHelper
         var formattedCode = newRoot?.ToFullString() ?? formattedNode.ToFullString();
 
         // Remove consecutive empty lines
-        formattedCode = System.Text.RegularExpressions.Regex.Replace(formattedCode, @"(\r?\n){3,}", "$1$1");
+        formattedCode = System.Text.RegularExpressions.Regex.Replace(formattedCode, @"(\r?\n){3,}", "$1$1", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
 
         // Remove empty lines before closing braces
-        formattedCode = System.Text.RegularExpressions.Regex.Replace(formattedCode, @"(\r?\n)\s*(\r?\n)(\s*})", "$1$3");
+        formattedCode = System.Text.RegularExpressions.Regex.Replace(formattedCode, @"(\r?\n)\s*(\r?\n)(\s*})", "$1$3", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
 
         return formattedCode;
     }
@@ -185,7 +185,7 @@ public static class CodeFormattingHelper
                 if (line.Contains("\"compile\"") || line.Contains("\"runtime\""))
                 {
                     // Extract package path from entries like "lib/net6.0/Azure.Storage.Blobs.dll"
-                    var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""");
+                    var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
                     if (match.Success)
                     {
                         packagePaths.Add(match.Groups[1].Value);
@@ -196,7 +196,7 @@ public static class CodeFormattingHelper
             // Also look for target section which has package names and versions
             foreach (var line in lines)
             {
-                var packageMatch = System.Text.RegularExpressions.Regex.Match(line, @"""([a-zA-Z0-9\.]+)/([0-9\.]+)""");
+                var packageMatch = System.Text.RegularExpressions.Regex.Match(line, @"""([a-zA-Z0-9\.]+)/([0-9\.]+)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
                 if (packageMatch.Success)
                 {
                     var packageName = packageMatch.Groups[1].Value.ToLowerInvariant();

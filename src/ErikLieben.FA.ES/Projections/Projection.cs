@@ -66,13 +66,13 @@ public abstract class Projection : IProjectionBase
     /// <param name="event">The event to fold.</param>
     /// <param name="versionToken">The version token identifying the event's version context.</param>
     /// <param name="data">Optional auxiliary data passed to the fold operation; may be null.</param>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous fold operation.</returns>
     public abstract Task Fold<T>(
         IEvent @event,
         VersionToken versionToken,
         T? data = null,
-        IExecutionContext? parentContext = null)
+        IExecutionContext? context = null)
         where T : class;
 
     /// <summary>
@@ -84,18 +84,18 @@ public abstract class Projection : IProjectionBase
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The object document that represents the projection target.</param>
     /// <param name="data">Optional auxiliary data passed to the fold operation; may be null.</param>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous fold operation.</returns>
     [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     public virtual Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
-        IExecutionContext? parentContext = null)
+        IExecutionContext? context = null)
         where T : class
     {
         // Create version token from event and document
         var versionToken = new VersionToken(@event, document);
 
         // Delegate to the version token-based fold method
-        return Fold(@event, versionToken, data, parentContext);
+        return Fold(@event, versionToken, data, context);
     }
 
     /// <summary>
@@ -115,12 +115,12 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The projection object document.</param>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     [Obsolete("Use Fold(IEvent, VersionToken, IExecutionContext?) instead. This overload will be removed in a future major version.")]
-    protected Task Fold(IEvent @event, IObjectDocument document, IExecutionContext? parentContext)
+    protected Task Fold(IEvent @event, IObjectDocument document, IExecutionContext? context)
     {
-        return Fold<object>(@event, document, null!, parentContext);
+        return Fold<object>(@event, document, null!, context);
     }
 
     /// <summary>
@@ -139,11 +139,11 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <param name="event">The event to fold.</param>
     /// <param name="versionToken">The version token identifying the event's version context.</param>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    protected Task Fold(IEvent @event, VersionToken versionToken, IExecutionContext? parentContext)
+    protected Task Fold(IEvent @event, VersionToken versionToken, IExecutionContext? context)
     {
-        return Fold<object>(@event, versionToken, null!, parentContext);
+        return Fold<object>(@event, versionToken, null!, context);
     }
 
     /// <summary>
@@ -262,10 +262,10 @@ public abstract class Projection : IProjectionBase
     /// Updates the projection to the specified version by reading and folding events from the event stream.
     /// </summary>
     /// <param name="token">The version token that identifies the object and target version.</param>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous update operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
-    public async Task UpdateToVersion(VersionToken token, IExecutionContext? parentContext = null)
+    public async Task UpdateToVersion(VersionToken token, IExecutionContext? context = null)
     {
         if (DocumentFactory == null)
         {
@@ -298,7 +298,7 @@ public abstract class Projection : IProjectionBase
         {
             // Create version token directly from event and document info
             var eventVersionToken = new VersionToken(@event, document);
-            await Fold(@event, eventVersionToken, parentContext);
+            await Fold(@event, eventVersionToken, context);
             UpdateCheckpointEntry(eventVersionToken);
         }
 
@@ -316,12 +316,12 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <typeparam name="T">The type of the auxiliary data and execution context.</typeparam>
     /// <param name="token">The version token that identifies the object and target version.</param>
-    /// <param name="parentContext">Optional parent execution context carrying the parent event and correlation; may be null.</param>
+    /// <param name="context">Optional execution context carrying the parent event and correlation; may be null.</param>
     /// <param name="data">Optional auxiliary data made available during folding; may be null.</param>
     /// <returns>A task that represents the asynchronous update operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the parent event in the context equals the current event, indicating a processing loop.</exception>
-    public async Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? parentContext = null, T? data = null)
+    public async Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
         where T: class
     {
         if (DocumentFactory == null)
@@ -352,14 +352,14 @@ public abstract class Projection : IProjectionBase
 
         foreach (var @event in events)
         {
-            if (parentContext != null && @event == parentContext.Event)
+            if (context != null && @event == context.Event)
             {
                 throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
             }
 
             // Create version token directly from event and document info
             var eventVersionToken = new VersionToken(@event, document);
-            await Fold(@event, eventVersionToken, data, parentContext);
+            await Fold(@event, eventVersionToken, data, context);
             UpdateCheckpointEntry(eventVersionToken);
         }
 
@@ -374,13 +374,13 @@ public abstract class Projection : IProjectionBase
     /// <summary>
     /// Updates the projection to the latest versions for all tracked streams in the checkpoint.
     /// </summary>
-    /// <param name="parentContext">Optional parent execution context for nested projections; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous update operation.</returns>
-    public async Task UpdateToLatestVersion(IExecutionContext? parentContext = null)
+    public async Task UpdateToLatestVersion(IExecutionContext? context = null)
     {
         foreach (var versionToken in Checkpoint)
         {
-            await UpdateToVersion(new VersionToken(versionToken.Key, versionToken.Value).ToLatestVersion(), parentContext);
+            await UpdateToVersion(new VersionToken(versionToken.Key, versionToken.Value).ToLatestVersion(), context);
         }
     }
 

@@ -290,14 +290,14 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
             var content = await File.ReadAllTextAsync(csproj, cancellationToken);
 
             // Match PackageReference for ErikLieben.FA.ES packages
-            var match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES""[^>]*Version=""([^""]+)""", RegexOptions.IgnoreCase);
+            var match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES""[^>]*Version=""([^""]+)""", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
             if (match.Success)
             {
                 return match.Groups[1].Value;
             }
 
             // Also check the closing tag format
-            match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES[^""]*""\s*>\s*<Version>([^<]+)</Version>", RegexOptions.IgnoreCase);
+            match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES[^""]*""\s*>\s*<Version>([^<]+)</Version>", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -330,7 +330,7 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
             await process.WaitForExitAsync(cancellationToken);
 
             // Parse version from output - format varies, look for version pattern
-            var match = Regex.Match(output, @"ErikLieben\.FA\.ES\s+(\d+\.\d+\.\d+(?:-\w+)?)", RegexOptions.IgnoreCase);
+            var match = Regex.Match(output, @"ErikLieben\.FA\.ES\s+(\d+\.\d+\.\d+(?:-\w+)?)", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
             if (match.Success)
             {
                 return match.Groups[1].Value;
@@ -376,11 +376,11 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
             {
                 // Update Version attribute format
                 var pattern = $@"(<PackageReference\s+Include=""{Regex.Escape(package)}""[^>]*Version="")[^""]+("")";
-                content = Regex.Replace(content, pattern, $"${{1}}{targetVersion}${{2}}");
+                content = Regex.Replace(content, pattern, $"${{1}}{targetVersion}${{2}}", RegexOptions.None, TimeSpan.FromSeconds(1));
 
                 // Update <Version> element format
                 pattern = $@"(<PackageReference\s+Include=""{Regex.Escape(package)}""[^>]*>\s*<Version>)[^<]+(</Version>)";
-                content = Regex.Replace(content, pattern, $"${{1}}{targetVersion}${{2}}");
+                content = Regex.Replace(content, pattern, $"${{1}}{targetVersion}${{2}}", RegexOptions.None, TimeSpan.FromSeconds(1));
             }
 
             if (content != originalContent)

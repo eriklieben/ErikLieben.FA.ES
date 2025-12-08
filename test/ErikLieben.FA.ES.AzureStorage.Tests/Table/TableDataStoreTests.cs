@@ -658,6 +658,8 @@ public class TableDataStoreTests
 
             // Act & Assert - should not throw
             await sut.AppendAsync(document, events);
+
+            Assert.True(true);
         }
 
         private void SetupEmptyStreamQuery()

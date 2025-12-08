@@ -277,7 +277,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         var pattern = $@"When\(JsonEvent\.To\(@event,\s*{Regex.Escape(eventTypeName)}JsonSerializerContext\.Default\.{Regex.Escape(eventTypeName)}\)\)";
         var replacement = $"{newMethodName}()";
 
-        var updatedContent = Regex.Replace(content, pattern, replacement);
+        var updatedContent = Regex.Replace(content, pattern, replacement, RegexOptions.None, TimeSpan.FromSeconds(1));
 
         // Return updated document
         return generatedDocument.WithText(SourceText.From(updatedContent, text.Encoding));
