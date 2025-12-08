@@ -38,7 +38,7 @@ public record BlobJsonEvent : JsonEvent
     /// <param name="event">The source event instance.</param>
     /// <param name="preserveTimestamp">When true and the source is a BlobJsonEvent, preserves the original timestamp. Default is false (uses current UTC time).</param>
     /// <returns>A new <see cref="BlobJsonEvent"/> or the same instance when already of this type; null when conversion is not possible.</returns>
-    public new static BlobJsonEvent? From(IEvent @event, bool preserveTimestamp = false)
+    public static BlobJsonEvent? From(IEvent @event, bool preserveTimestamp = false)
     {
         var jsonEvent = @event as JsonEvent;
 

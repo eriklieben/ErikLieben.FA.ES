@@ -16,7 +16,7 @@ public sealed class WatchDisplay : IWatchDisplay
 
     // State
     private WatchStatus _status = WatchStatus.Initializing;
-    private DateTime _startTime = DateTime.Now;
+    private DateTime _startTime = DateTime.UtcNow;
     private DateTime? _lastRegenTime;
     private long _lastRegenDurationMs;
     private int _fullRegenCount;
@@ -89,7 +89,7 @@ public sealed class WatchDisplay : IWatchDisplay
 
     public async Task RunAsync(Func<Task> watchLoop, CancellationToken cancellationToken)
     {
-        _startTime = DateTime.Now;
+        _startTime = DateTime.UtcNow;
         _status = WatchStatus.Watching;
 
         // Clear screen to take over the terminal
@@ -116,7 +116,10 @@ public sealed class WatchDisplay : IWatchDisplay
                 }
                 finally
                 {
-                    _refreshCts?.Cancel();
+                    if (_refreshCts != null)
+                    {
+                        await _refreshCts.CancelAsync();
+                    }
                     if (_refreshTask != null)
                     {
                         try { await _refreshTask; } catch { /* Expected during cancellation */ }
@@ -277,7 +280,7 @@ public sealed class WatchDisplay : IWatchDisplay
             _ => "Unknown"
         };
 
-        var uptime = DateTime.Now - _startTime;
+        var uptime = DateTime.UtcNow - _startTime;
         var uptimeStr = uptime.TotalHours >= 1
             ? $"{uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s"
             : uptime.TotalMinutes >= 1
@@ -490,7 +493,7 @@ public sealed class WatchDisplay : IWatchDisplay
                 };
 
                 // Calculate age-based opacity (newer = brighter, older = dimmer)
-                var age = DateTime.Now - entry.Time;
+                var age = DateTime.UtcNow - entry.Time;
                 var ageSeconds = age.TotalSeconds;
                 var opacity = ageSeconds switch
                 {
@@ -547,7 +550,7 @@ public sealed class WatchDisplay : IWatchDisplay
 
     private static string GetRelativeTime(DateTime time)
     {
-        var diff = DateTime.Now - time;
+        var diff = DateTime.UtcNow - time;
 
         if (diff.TotalSeconds < 5) return "just now";
         if (diff.TotalSeconds < 60) return $"{(int)diff.TotalSeconds}s ago";
@@ -622,7 +625,7 @@ public sealed class WatchDisplay : IWatchDisplay
     {
         lock (_lock)
         {
-            _recentActivity.Add(new ActivityEntry(DateTime.Now, type, message));
+            _recentActivity.Add(new ActivityEntry(DateTime.UtcNow, type, message));
 
             // Keep only recent entries
             while (_recentActivity.Count > MaxActivityEntries * 2)
@@ -663,7 +666,7 @@ public sealed class WatchDisplay : IWatchDisplay
     {
         lock (_lock)
         {
-            _lastRegenTime = DateTime.Now;
+            _lastRegenTime = DateTime.UtcNow;
             _lastRegenDurationMs = elapsedMs;
             if (isIncremental)
                 _incrementalRegenCount++;

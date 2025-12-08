@@ -4,7 +4,6 @@ namespace ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions;
 /// Exception thrown when a projection cannot be found in storage
 /// and <see cref="ProjectionAttribute.CreateIfNotExists"/> is <c>false</c>.
 /// </summary>
-[Serializable]
 public sealed class ProjectionNotFoundException : Exception
 {
     /// <summary>

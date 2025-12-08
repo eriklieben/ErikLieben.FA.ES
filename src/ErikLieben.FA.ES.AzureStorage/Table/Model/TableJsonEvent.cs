@@ -25,7 +25,7 @@ public record TableJsonEvent : JsonEvent
     /// <param name="event">The source event instance.</param>
     /// <param name="preserveTimestamp">Unused parameter, kept for API compatibility. Azure Table Storage manages timestamps automatically.</param>
     /// <returns>A new <see cref="TableJsonEvent"/> or the same instance when already of this type; null when conversion is not possible.</returns>
-    public new static TableJsonEvent? From(IEvent @event, bool preserveTimestamp = false)
+    public static TableJsonEvent? From(IEvent @event, bool preserveTimestamp = false)
     {
         var jsonEvent = @event as JsonEvent;
 

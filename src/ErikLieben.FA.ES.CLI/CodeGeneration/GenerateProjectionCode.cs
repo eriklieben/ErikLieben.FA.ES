@@ -431,7 +431,7 @@ public class GenerateProjectionCode
         // Check if this is a routed projection
         if (projection is RoutedProjectionDefinition routedProjection && routedProjection.IsRoutedProjection)
         {
-            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, ctorInput);
+            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get);
         }
 
         var needsServiceProvider = !string.IsNullOrEmpty(get);
@@ -542,7 +542,7 @@ public class GenerateProjectionCode
                 """;
     }
 
-    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get)
     {
         usings.Add("ErikLieben.FA.ES.Projections");
         usings.Add("System.Text");
@@ -790,38 +790,6 @@ public class GenerateProjectionCode
         }
 
         return whenParameterDeclarations.Aggregate((x, y) => x + "," + y + Environment.NewLine);
-    }
-
-    private static string GeneratePostWhenCode(ProjectionDefinition projection)
-    {
-        if (projection.PostWhen == null)
-        {
-            return string.Empty;
-        }
-
-        var postWhenStringBuilder = new StringBuilder();
-        postWhenStringBuilder.Append($"PostWhen(");
-
-        foreach (var parameter in projection.PostWhen.Parameters)
-        {
-            switch (parameter.Type)
-            {
-                case "IObjectDocument":
-                    postWhenStringBuilder.Append("document");
-                    break;
-                case IEventTypeName:
-                    postWhenStringBuilder.Append("JsonEvent.ToEvent(@event, @event.EventType)");
-                    break;
-            }
-
-            if (parameter != projection.PostWhen.Parameters[^1])
-            {
-                postWhenStringBuilder.Append(", ");
-            }
-        }
-        postWhenStringBuilder.Append(");");
-
-        return postWhenStringBuilder.ToString();
     }
 
     private static string GeneratePostWhenCodeWithVersionToken(ProjectionDefinition projection)
@@ -1321,28 +1289,6 @@ public class GenerateProjectionCode
         // since the RoutedProjection base class already has proper [JsonPropertyName] and [JsonIgnore] attributes
         // No additional serialization methods needed
         return string.Empty;
-    }
-
-    private static string GetFullTypeName(PropertyDefinition prop)
-    {
-        if (!prop.IsGeneric)
-        {
-            return string.IsNullOrEmpty(prop.Namespace) ? prop.Type : $"{prop.Namespace}.{prop.Type}";
-        }
-
-        var genericArgs = string.Join(", ", prop.GenericTypes.Select(GetFullGenericTypeName));
-        return $"{prop.Type}<{genericArgs}>";
-    }
-
-    private static string GetFullGenericTypeName(PropertyGenericTypeDefinition genType)
-    {
-        if (genType.GenericTypes.Count == 0)
-        {
-            return string.IsNullOrEmpty(genType.Namespace) ? genType.Name : $"{genType.Namespace}.{genType.Name}";
-        }
-
-        var genericArgs = string.Join(", ", genType.GenericTypes.Select(GetFullGenericTypeName));
-        return $"{genType.Name}<{genericArgs}>";
     }
 
     private static async Task AssembleAndWriteCode(

@@ -8,6 +8,17 @@ using Microsoft.Extensions.Logging;
 namespace ErikLieben.FA.ES.AspNetCore.MinimalApis.Filters;
 
 /// <summary>
+/// Shared resources for projection output filters.
+/// </summary>
+internal static class ProjectionOutputFilterResources
+{
+    /// <summary>
+    /// The activity source for all projection output filter operations.
+    /// </summary>
+    public static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AspNetCore.MinimalApis");
+}
+
+/// <summary>
 /// Endpoint filter that updates and saves a projection after successful endpoint execution.
 /// </summary>
 /// <typeparam name="TProjection">The projection type to update.</typeparam>
@@ -28,7 +39,6 @@ namespace ErikLieben.FA.ES.AspNetCore.MinimalApis.Filters;
 public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
     where TProjection : Projection
 {
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AspNetCore.MinimalApis");
 
     private readonly string? _blobNamePattern;
     private readonly bool _saveAfterUpdate;
@@ -64,7 +74,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
 
     private async Task UpdateProjectionAsync(HttpContext httpContext)
     {
-        using var activity = ActivitySource.StartActivity($"ProjectionOutputFilter<{typeof(TProjection).Name}>.UpdateProjection");
+        using var activity = ProjectionOutputFilterResources.ActivitySource.StartActivity($"ProjectionOutputFilter<{typeof(TProjection).Name}>.UpdateProjection");
 
         var serviceProvider = httpContext.RequestServices;
         var logger = serviceProvider.GetService<ILogger<ProjectionOutputFilter<TProjection>>>();
@@ -135,7 +145,7 @@ public sealed class ProjectionOutputFilter<TProjection> : IEndpointFilter
         string? blobName,
         ILogger? logger)
     {
-        using var activity = ActivitySource.StartActivity($"ProjectionOutputFilter<{typeof(TProjection).Name}>.Save");
+        using var activity = ProjectionOutputFilterResources.ActivitySource.StartActivity($"ProjectionOutputFilter<{typeof(TProjection).Name}>.Save");
 
         // Try generic factory first
         var genericFactory = serviceProvider.GetService<IProjectionFactory<TProjection>>();

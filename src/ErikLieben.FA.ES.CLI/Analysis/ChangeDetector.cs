@@ -539,9 +539,9 @@ public class ChangeDetector : IChangeDetector
                 entityName,
                 $"Removed PostWhen handler from {entityName}"));
         }
-        else if (previous != null && current != null)
+        else if (previous != null) // current is also not null at this point
         {
-            if (previous.Parameters.Count != current.Parameters.Count)
+            if (previous.Parameters.Count != current!.Parameters.Count)
             {
                 changes.Add(new DetectedChange(
                     ChangeType.Modified,

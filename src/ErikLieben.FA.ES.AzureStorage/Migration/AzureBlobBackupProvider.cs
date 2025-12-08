@@ -84,7 +84,7 @@ public class AzureBlobBackupProvider : IBackupProvider
             using var outputStream = new MemoryStream();
             using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress))
             {
-                gzipStream.Write(bytes, 0, bytes.Length);
+                await gzipStream.WriteAsync(bytes, cancellationToken);
             }
             bytes = outputStream.ToArray();
         }

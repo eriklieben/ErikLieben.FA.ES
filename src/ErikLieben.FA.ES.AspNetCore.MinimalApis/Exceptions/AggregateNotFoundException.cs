@@ -4,7 +4,6 @@ namespace ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions;
 /// Exception thrown when an aggregate cannot be found in the event store
 /// and <see cref="EventStreamAttribute.CreateIfNotExists"/> is <c>false</c>.
 /// </summary>
-[Serializable]
 public sealed class AggregateNotFoundException : Exception
 {
     /// <summary>

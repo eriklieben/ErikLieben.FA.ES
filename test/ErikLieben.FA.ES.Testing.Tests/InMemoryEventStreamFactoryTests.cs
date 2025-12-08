@@ -1,4 +1,6 @@
-﻿using System;
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
 using System.Threading.Tasks;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;

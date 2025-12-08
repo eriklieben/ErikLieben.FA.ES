@@ -1,4 +1,6 @@
-﻿using System;
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Linq;

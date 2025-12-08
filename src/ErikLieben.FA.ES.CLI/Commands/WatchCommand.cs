@@ -39,7 +39,7 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
     // Cached data for incremental regeneration
     private SolutionDefinition? _cachedSolution;
     private string? _cachedSolutionPath;
-    private Dictionary<string, HashSet<string>> _fileToEntityMap = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, HashSet<string>> _fileToEntityMap = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<string> _pendingChangedFiles = new(StringComparer.OrdinalIgnoreCase);
     private readonly IChangeDetector _changeDetector = new ChangeDetector();
 

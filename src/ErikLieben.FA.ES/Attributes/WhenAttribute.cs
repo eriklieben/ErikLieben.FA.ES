@@ -1,3 +1,5 @@
+#pragma warning disable S2326 // TEvent is used at compile-time for type-safe event binding
+
 namespace ErikLieben.FA.ES.Attributes;
 
 /// <summary>

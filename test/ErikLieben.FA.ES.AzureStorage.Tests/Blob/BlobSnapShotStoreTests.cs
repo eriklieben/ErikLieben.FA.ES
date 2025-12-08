@@ -1,4 +1,5 @@
-﻿#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
 
 using System;
 using System.IO;

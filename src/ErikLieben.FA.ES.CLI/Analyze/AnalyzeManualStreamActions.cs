@@ -68,7 +68,7 @@ public class AnalyzeManualStreamActions(
 
             // Try to determine which aggregate this RegisterAction belongs to
             // by looking at the stream variable's type or the method context
-            var aggregateName = DetermineAggregateFromContext(invocation, memberAccess, method);
+            var aggregateName = DetermineAggregateFromContext(memberAccess, method);
 
             if (string.IsNullOrEmpty(aggregateName))
                 continue;
@@ -113,7 +113,6 @@ public class AnalyzeManualStreamActions(
     }
 
     private string? DetermineAggregateFromContext(
-        InvocationExpressionSyntax invocation,
         MemberAccessExpressionSyntax memberAccess,
         MethodDeclarationSyntax method)
     {

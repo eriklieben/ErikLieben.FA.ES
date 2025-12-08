@@ -1,3 +1,5 @@
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
 using System;
 using ErikLieben.FA.ES.Documents;
 using NSubstitute;

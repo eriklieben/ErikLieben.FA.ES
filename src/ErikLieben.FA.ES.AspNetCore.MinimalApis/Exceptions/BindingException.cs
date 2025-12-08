@@ -3,7 +3,6 @@ namespace ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions;
 /// <summary>
 /// Exception thrown when parameter binding fails for event stream or projection parameters.
 /// </summary>
-[Serializable]
 public sealed class BindingException : Exception
 {
     /// <summary>
