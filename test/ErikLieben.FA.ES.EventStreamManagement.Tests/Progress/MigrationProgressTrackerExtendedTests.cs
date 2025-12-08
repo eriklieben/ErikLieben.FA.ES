@@ -10,7 +10,10 @@ public class MigrationProgressTrackerExtendedTests
 {
     private static ILogger<MigrationProgressTracker> CreateLogger()
     {
-        return Substitute.For<ILogger<MigrationProgressTracker>>();
+        var logger = Substitute.For<ILogger<MigrationProgressTracker>>();
+        // Enable all log levels so source-generated LoggerMessage methods call Log()
+        logger.IsEnabled(Arg.Any<LogLevel>()).Returns(true);
+        return logger;
     }
 
     public class IncrementProcessedMethod
