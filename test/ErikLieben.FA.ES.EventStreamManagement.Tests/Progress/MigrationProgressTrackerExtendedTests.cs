@@ -256,13 +256,13 @@ public class MigrationProgressTrackerExtendedTests
         }
 
         [Fact]
-        public void Should_include_elapsed_time()
+        public async Task Should_include_elapsed_time()
         {
             // Arrange
             var sut = new MigrationProgressTracker(Guid.NewGuid(), null, CreateLogger());
 
             // Wait a tiny bit to ensure elapsed > 0
-            Thread.Sleep(10);
+            await Task.Delay(10);
 
             // Act
             var progress = sut.GetProgress();

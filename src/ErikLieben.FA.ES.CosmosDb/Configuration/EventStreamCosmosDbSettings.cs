@@ -6,6 +6,8 @@ namespace ErikLieben.FA.ES.CosmosDb.Configuration;
 /// </summary>
 public record EventStreamCosmosDbSettings
 {
+    private const string DefaultStoreType = "cosmosdb";
+
     /// <summary>
     /// The CosmosDB database name. Default: "eventstore".
     /// </summary>
@@ -49,27 +51,27 @@ public record EventStreamCosmosDbSettings
     /// <summary>
     /// The default data store type identifier. Default: "cosmosdb".
     /// </summary>
-    public string DefaultDataStore { get; init; } = "cosmosdb";
+    public string DefaultDataStore { get; init; } = DefaultStoreType;
 
     /// <summary>
     /// The default document store type identifier. Default: "cosmosdb".
     /// </summary>
-    public string DefaultDocumentStore { get; init; } = "cosmosdb";
+    public string DefaultDocumentStore { get; init; } = DefaultStoreType;
 
     /// <summary>
     /// The default snapshot store type identifier. Default: "cosmosdb".
     /// </summary>
-    public string DefaultSnapShotStore { get; init; } = "cosmosdb";
+    public string DefaultSnapShotStore { get; init; } = DefaultStoreType;
 
     /// <summary>
     /// The default document tag store type identifier. Default: "cosmosdb".
     /// </summary>
-    public string DefaultDocumentTagStore { get; init; } = "cosmosdb";
+    public string DefaultDocumentTagStore { get; init; } = DefaultStoreType;
 
     /// <summary>
     /// The default stream tag type identifier. Default: "cosmosdb".
     /// </summary>
-    public string DefaultEventStreamTagType { get; init; } = "cosmosdb";
+    public string DefaultEventStreamTagType { get; init; } = DefaultStoreType;
 
     /// <summary>
     /// Whether to automatically create the database and containers if they don't exist.

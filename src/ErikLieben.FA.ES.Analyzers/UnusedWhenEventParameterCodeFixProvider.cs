@@ -38,7 +38,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         if (root == null)
             return;
 
-        var diagnostic = context.Diagnostics.First();
+        var diagnostic = context.Diagnostics[0];
         var diagnosticSpan = diagnostic.Location.SourceSpan;
 
         // Find the parameter that triggered the diagnostic

@@ -416,7 +416,7 @@ public abstract class RoutedProjection : Projection
     {
         public IEvent Event { get; set; } = null!;
         public IObjectDocument Document { get; set; } = null!;
-        public VersionToken VersionToken { get; set; }
+        public VersionToken VersionToken { get; set; } = null!;
         public List<RouteTarget> RouteTargets { get; } = [];
     }
 }

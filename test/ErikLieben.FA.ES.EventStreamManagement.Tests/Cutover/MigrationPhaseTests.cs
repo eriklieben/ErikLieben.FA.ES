@@ -10,7 +10,7 @@ public class MigrationPhaseTests
         public void Should_have_normal_phase()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationPhase), MigrationPhase.Normal));
+            Assert.True(Enum.IsDefined<MigrationPhase>(MigrationPhase.Normal));
             Assert.Equal(0, (int)MigrationPhase.Normal);
         }
 
@@ -18,7 +18,7 @@ public class MigrationPhaseTests
         public void Should_have_dual_write_phase()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationPhase), MigrationPhase.DualWrite));
+            Assert.True(Enum.IsDefined<MigrationPhase>(MigrationPhase.DualWrite));
             Assert.Equal(1, (int)MigrationPhase.DualWrite);
         }
 
@@ -26,7 +26,7 @@ public class MigrationPhaseTests
         public void Should_have_dual_read_phase()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationPhase), MigrationPhase.DualRead));
+            Assert.True(Enum.IsDefined<MigrationPhase>(MigrationPhase.DualRead));
             Assert.Equal(2, (int)MigrationPhase.DualRead);
         }
 
@@ -34,7 +34,7 @@ public class MigrationPhaseTests
         public void Should_have_cutover_phase()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationPhase), MigrationPhase.Cutover));
+            Assert.True(Enum.IsDefined<MigrationPhase>(MigrationPhase.Cutover));
             Assert.Equal(3, (int)MigrationPhase.Cutover);
         }
 
@@ -42,7 +42,7 @@ public class MigrationPhaseTests
         public void Should_have_book_closed_phase()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationPhase), MigrationPhase.BookClosed));
+            Assert.True(Enum.IsDefined<MigrationPhase>(MigrationPhase.BookClosed));
             Assert.Equal(4, (int)MigrationPhase.BookClosed);
         }
     }

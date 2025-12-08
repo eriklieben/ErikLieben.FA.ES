@@ -35,7 +35,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             [InlineData("Custom error message")]
             public void Should_accept_any_message_parameter(string message)

@@ -10,70 +10,70 @@ public class MigrationStatusTests
         public void Should_have_pending_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Pending));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Pending));
         }
 
         [Fact]
         public void Should_have_in_progress_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.InProgress));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.InProgress));
         }
 
         [Fact]
         public void Should_have_paused_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Paused));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Paused));
         }
 
         [Fact]
         public void Should_have_verifying_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Verifying));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Verifying));
         }
 
         [Fact]
         public void Should_have_cutting_over_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.CuttingOver));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.CuttingOver));
         }
 
         [Fact]
         public void Should_have_completed_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Completed));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Completed));
         }
 
         [Fact]
         public void Should_have_failed_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Failed));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Failed));
         }
 
         [Fact]
         public void Should_have_cancelled_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.Cancelled));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.Cancelled));
         }
 
         [Fact]
         public void Should_have_rolling_back_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.RollingBack));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.RollingBack));
         }
 
         [Fact]
         public void Should_have_rolled_back_status()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStatus), MigrationStatus.RolledBack));
+            Assert.True(Enum.IsDefined<MigrationStatus>(MigrationStatus.RolledBack));
         }
     }
 
@@ -99,21 +99,21 @@ public class MigrationStrategyTests
         public void Should_have_copy_and_transform_strategy()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStrategy), MigrationStrategy.CopyAndTransform));
+            Assert.True(Enum.IsDefined<MigrationStrategy>(MigrationStrategy.CopyAndTransform));
         }
 
         [Fact]
         public void Should_have_lazy_transform_strategy()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStrategy), MigrationStrategy.LazyTransform));
+            Assert.True(Enum.IsDefined<MigrationStrategy>(MigrationStrategy.LazyTransform));
         }
 
         [Fact]
         public void Should_have_in_place_transform_strategy()
         {
             // Assert
-            Assert.True(Enum.IsDefined(typeof(MigrationStrategy), MigrationStrategy.InPlaceTransform));
+            Assert.True(Enum.IsDefined<MigrationStrategy>(MigrationStrategy.InPlaceTransform));
         }
     }
 

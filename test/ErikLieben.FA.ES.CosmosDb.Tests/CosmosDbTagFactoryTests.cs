@@ -1,3 +1,5 @@
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Azure.Cosmos;

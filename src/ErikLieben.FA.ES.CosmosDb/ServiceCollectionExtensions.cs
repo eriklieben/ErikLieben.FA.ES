@@ -8,6 +8,8 @@ namespace ErikLieben.FA.ES.CosmosDb;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
+    private const string CosmosDbServiceKey = "cosmosdb";
+
     /// <summary>
     /// Registers the CosmosDB-based implementations for document tags, documents, and event streams using the provided settings.
     /// </summary>
@@ -17,10 +19,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureCosmosDbEventStore(this IServiceCollection services, EventStreamCosmosDbSettings settings)
     {
         services.AddSingleton(settings);
-        services.AddKeyedSingleton<IDocumentTagDocumentFactory, CosmosDbTagFactory>("cosmosdb");
-        services.AddKeyedSingleton<IObjectDocumentFactory, CosmosDbObjectDocumentFactory>("cosmosdb");
-        services.AddKeyedSingleton<IEventStreamFactory, CosmosDbEventStreamFactory>("cosmosdb");
-        services.AddKeyedSingleton<IObjectIdProvider, CosmosDbObjectIdProvider>("cosmosdb");
+        services.AddKeyedSingleton<IDocumentTagDocumentFactory, CosmosDbTagFactory>(CosmosDbServiceKey);
+        services.AddKeyedSingleton<IObjectDocumentFactory, CosmosDbObjectDocumentFactory>(CosmosDbServiceKey);
+        services.AddKeyedSingleton<IEventStreamFactory, CosmosDbEventStreamFactory>(CosmosDbServiceKey);
+        services.AddKeyedSingleton<IObjectIdProvider, CosmosDbObjectIdProvider>(CosmosDbServiceKey);
         return services;
     }
 }

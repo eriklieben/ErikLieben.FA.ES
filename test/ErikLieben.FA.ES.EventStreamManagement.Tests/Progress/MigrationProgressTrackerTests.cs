@@ -386,13 +386,13 @@ public class MigrationProgressTrackerTests
         }
 
         [Fact]
-        public void Should_return_elapsed_time()
+        public async Task Should_return_elapsed_time()
         {
             // Arrange
             var sut = CreateTracker();
 
             // Act
-            Thread.Sleep(50); // Wait a bit
+            await Task.Delay(50); // Wait a bit
             var progress = sut.GetProgress();
 
             // Assert

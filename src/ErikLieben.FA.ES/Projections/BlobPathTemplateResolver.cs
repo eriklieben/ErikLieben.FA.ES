@@ -8,6 +8,7 @@ namespace ErikLieben.FA.ES.Projections;
 /// </summary>
 public static class BlobPathTemplateResolver
 {
+    private const string JsonExtension = ".json";
     /// <summary>
     /// Resolves a template with partition values.
     /// Example: "questions/{language}.json" + { "language": "en-GB" } → "questions/en-GB.json"
@@ -23,9 +24,9 @@ public static class BlobPathTemplateResolver
         }
 
         // Ensure .json extension if not present
-        if (!result.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        if (!result.EndsWith(JsonExtension, StringComparison.OrdinalIgnoreCase))
         {
-            result += ".json";
+            result += JsonExtension;
         }
 
         return result;
@@ -68,8 +69,8 @@ public static class BlobPathTemplateResolver
         var values = new Dictionary<string, string>();
 
         // Remove .json extension for comparison
-        var templateWithoutExt = template.Replace(".json", "");
-        var pathWithoutExt = resolvedPath.Replace(".json", "");
+        var templateWithoutExt = template.Replace(JsonExtension, "");
+        var pathWithoutExt = resolvedPath.Replace(JsonExtension, "");
 
         // Build regex from template by replacing {placeholder} with named capture groups
         // Note: We don't use Regex.Escape because it would escape the braces,

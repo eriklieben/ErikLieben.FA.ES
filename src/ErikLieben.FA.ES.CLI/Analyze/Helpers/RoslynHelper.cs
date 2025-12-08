@@ -330,7 +330,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        firstArgument = argumentList.Arguments.First();
+        firstArgument = argumentList.Arguments[0];
         return firstArgument.Expression is ObjectCreationExpressionSyntax;
     }
 

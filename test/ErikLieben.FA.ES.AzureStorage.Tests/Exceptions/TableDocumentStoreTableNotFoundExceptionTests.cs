@@ -34,7 +34,7 @@ public class TableDocumentStoreTableNotFoundExceptionTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("The table 'eventstream' was not found in the storage account")]
         public void Should_accept_any_message_parameter(string? message)

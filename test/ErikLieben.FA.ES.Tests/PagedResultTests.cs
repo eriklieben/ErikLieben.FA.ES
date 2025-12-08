@@ -63,7 +63,7 @@ public class PagedResultTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public void Should_return_false_when_continuation_token_is_null_or_empty(string? token)

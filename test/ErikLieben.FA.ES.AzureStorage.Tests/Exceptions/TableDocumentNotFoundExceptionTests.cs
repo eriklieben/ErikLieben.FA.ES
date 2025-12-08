@@ -34,7 +34,7 @@ public class TableDocumentNotFoundExceptionTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("The document 'test-doc' was not found in table storage")]
         public void Should_accept_any_message_parameter(string? message)

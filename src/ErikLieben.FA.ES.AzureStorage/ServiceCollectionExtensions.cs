@@ -10,6 +10,9 @@ namespace ErikLieben.FA.ES.AzureStorage;
 /// </summary>
 public static class ServiceCollectionExtensions
 {
+    private const string BlobServiceKey = "blob";
+    private const string TableServiceKey = "table";
+
     /// <summary>
     /// Registers the Blob-based implementations for document tags, documents, and event streams using the provided settings.
     /// </summary>
@@ -19,10 +22,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureBlobEventStore(this IServiceCollection services, EventStreamBlobSettings settings)
     {
         services.AddSingleton(settings);
-        services.AddKeyedSingleton<IDocumentTagDocumentFactory, BlobTagFactory>("blob");
-        services.AddKeyedSingleton<IObjectDocumentFactory, BlobObjectDocumentFactory>("blob");
-        services.AddKeyedSingleton<IEventStreamFactory, BlobEventStreamFactory>("blob");
-        services.AddKeyedSingleton<IObjectIdProvider, BlobObjectIdProvider>("blob");
+        services.AddKeyedSingleton<IDocumentTagDocumentFactory, BlobTagFactory>(BlobServiceKey);
+        services.AddKeyedSingleton<IObjectDocumentFactory, BlobObjectDocumentFactory>(BlobServiceKey);
+        services.AddKeyedSingleton<IEventStreamFactory, BlobEventStreamFactory>(BlobServiceKey);
+        services.AddKeyedSingleton<IObjectIdProvider, BlobObjectIdProvider>(BlobServiceKey);
         return services;
     }
 
@@ -35,10 +38,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureTableEventStore(this IServiceCollection services, EventStreamTableSettings settings)
     {
         services.AddSingleton(settings);
-        services.AddKeyedSingleton<IDocumentTagDocumentFactory, TableTagFactory>("table");
-        services.AddKeyedSingleton<IObjectDocumentFactory, TableObjectDocumentFactory>("table");
-        services.AddKeyedSingleton<IEventStreamFactory, TableEventStreamFactory>("table");
-        services.AddKeyedSingleton<IObjectIdProvider, TableObjectIdProvider>("table");
+        services.AddKeyedSingleton<IDocumentTagDocumentFactory, TableTagFactory>(TableServiceKey);
+        services.AddKeyedSingleton<IObjectDocumentFactory, TableObjectDocumentFactory>(TableServiceKey);
+        services.AddKeyedSingleton<IEventStreamFactory, TableEventStreamFactory>(TableServiceKey);
+        services.AddKeyedSingleton<IObjectIdProvider, TableObjectIdProvider>(TableServiceKey);
         return services;
     }
 }

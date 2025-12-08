@@ -1,3 +1,5 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+
 using System.Net;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Exceptions;

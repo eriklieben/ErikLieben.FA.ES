@@ -124,7 +124,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_name_is_invalid(string? objectName)
@@ -138,7 +138,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_id_is_invalid(string? objectId)
@@ -233,7 +233,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_name_is_invalid(string? objectName)
@@ -247,7 +247,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_id_is_invalid(string? objectId)
@@ -401,7 +401,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_name_is_invalid(string? objectName)
@@ -415,7 +415,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_tag_is_invalid(string? tag)
@@ -512,7 +512,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_object_name_is_invalid(string? objectName)
@@ -526,7 +526,7 @@ public class TableObjectDocumentFactoryTests
         }
 
         [Theory]
-        [InlineData(null)]
+        [InlineData(null!)]
         [InlineData("")]
         [InlineData("   ")]
         public async Task Should_throw_when_tag_is_invalid(string? tag)
