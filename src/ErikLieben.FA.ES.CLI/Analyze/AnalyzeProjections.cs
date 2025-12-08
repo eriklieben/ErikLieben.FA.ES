@@ -262,13 +262,10 @@ public class AnalyzeProjections
         // Look for [BlobJsonProjection("path")] attribute
         foreach (var attr in typeSymbol.GetAttributes())
         {
-            if (attr.AttributeClass?.Name == "BlobJsonProjectionAttribute")
+            if (attr.AttributeClass?.Name == "BlobJsonProjectionAttribute" &&
+                attr.ConstructorArguments.Length > 0)
             {
-                // First constructor argument is the path
-                if (attr.ConstructorArguments.Length > 0)
-                {
-                    return attr.ConstructorArguments[0].Value?.ToString();
-                }
+                return attr.ConstructorArguments[0].Value?.ToString();
             }
         }
 

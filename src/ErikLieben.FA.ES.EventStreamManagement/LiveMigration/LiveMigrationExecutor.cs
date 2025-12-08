@@ -1,3 +1,6 @@
+#pragma warning disable CS0618 // Type or member is obsolete - supporting legacy connection name properties during migration
+#pragma warning disable S2139 // Exception handling - migration requires specific error recovery patterns
+
 namespace ErikLieben.FA.ES.EventStreamManagement.LiveMigration;
 
 using System.Diagnostics;

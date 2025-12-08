@@ -1,3 +1,5 @@
+#pragma warning disable S1215 // GC.Collect - performance measurement intentionally forces GC for accurate memory metrics
+
 using System.Diagnostics;
 
 namespace ErikLieben.FA.ES.Testing.Performance;

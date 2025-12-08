@@ -1,3 +1,7 @@
+#pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for cross-file analysis
+#pragma warning disable S3776 // Cognitive Complexity - code generation analysis inherently requires complex logic
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability in analyzers
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;

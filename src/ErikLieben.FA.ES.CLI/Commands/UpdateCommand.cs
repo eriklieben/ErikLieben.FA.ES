@@ -1,3 +1,5 @@
+#pragma warning disable S3776 // Cognitive Complexity - update command involves multiple steps with version checks and migrations
+
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -95,13 +97,11 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 
         // Check if update is needed
         if (Version.TryParse(currentVersion.TrimStart('v'), out var current) &&
-            Version.TryParse(targetVersion.TrimStart('v'), out var target))
+            Version.TryParse(targetVersion.TrimStart('v'), out var target) &&
+            current >= target)
         {
-            if (current >= target)
-            {
-                AnsiConsole.MarkupLine("[green]✓ Already at latest version[/]");
-                return 0;
-            }
+            AnsiConsole.MarkupLine("[green]✓ Already at latest version[/]");
+            return 0;
         }
 
         if (settings.DryRun)
@@ -444,9 +444,9 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         // Stream output
         var outputTask = Task.Run(async () =>
         {
-            while (!generateProcess.StandardOutput.EndOfStream)
+            string? line;
+            while ((line = await generateProcess.StandardOutput.ReadLineAsync(cancellationToken)) != null)
             {
-                var line = await generateProcess.StandardOutput.ReadLineAsync(cancellationToken);
                 if (!string.IsNullOrWhiteSpace(line))
                 {
                     AnsiConsole.MarkupLine($"[gray]{Markup.Escape(line)}[/]");

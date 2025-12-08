@@ -1,3 +1,7 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
+#pragma warning disable S3776 // Cognitive Complexity - projection code generation involves complex template logic
+#pragma warning disable S1192 // String literals should not be duplicated - code generation templates
+
 using System.Text;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Configuration;

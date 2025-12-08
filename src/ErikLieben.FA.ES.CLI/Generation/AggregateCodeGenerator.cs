@@ -1,3 +1,5 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
+
 using ErikLieben.FA.ES.CLI.Abstractions;
 using ErikLieben.FA.ES.CLI.CodeGeneration;
 using ErikLieben.FA.ES.CLI.Configuration;

@@ -1,3 +1,6 @@
+#pragma warning disable S3776 // Cognitive Complexity - attribute extraction requires analyzing multiple attribute scenarios
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 

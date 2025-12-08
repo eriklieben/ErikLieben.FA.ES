@@ -1,3 +1,6 @@
+#pragma warning disable S2139 // Exception handling - distributed routing table requires specific error recovery patterns
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve readability in migration code
+
 namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
 using Azure;

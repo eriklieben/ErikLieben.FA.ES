@@ -133,7 +133,7 @@ public class SolutionAnalyzer : ISolutionAnalyzer
         }
     }
 
-    private async Task ProcessSyntaxTreesAsync(
+    private static async Task ProcessSyntaxTreesAsync(
         Compilation compilation,
         ProjectDefinition projectDefinition,
         string solutionRootPath,

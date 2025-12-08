@@ -1,3 +1,5 @@
+#pragma warning disable S3776 // Cognitive Complexity - CosmosDB operations require handling multiple response scenarios
+
 using System.Diagnostics;
 using System.Net;
 using ErikLieben.FA.ES.CosmosDb.Configuration;

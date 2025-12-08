@@ -194,7 +194,7 @@ public static class SnapshotAssertion
             throw new TestAssertionException($"Failed to deserialize snapshot '{snapshotName}'.");
         }
 
-        if (!comparer.Matches(actual, expected, out var differenceMessage))
+        if (!comparer.Matches(actual, expected!, out var differenceMessage))
         {
             throw new TestAssertionException(
                 $"Snapshot '{snapshotName}' does not match.\n{differenceMessage}");
@@ -358,7 +358,7 @@ public enum SnapshotFormat
 /// Defines a custom comparer for snapshot comparison.
 /// </summary>
 /// <typeparam name="T">The type being compared.</typeparam>
-public interface ISnapshotComparer<T>
+public interface ISnapshotComparer<in T>
 {
     /// <summary>
     /// Determines whether the actual value matches the expected value.

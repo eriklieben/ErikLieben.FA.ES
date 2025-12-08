@@ -1,4 +1,6 @@
-﻿using System;
+#pragma warning disable CS0618 // Type or member is obsolete - tests verify behavior of legacy properties
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ErikLieben.FA.ES.Documents;

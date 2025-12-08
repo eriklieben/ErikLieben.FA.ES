@@ -1,3 +1,5 @@
+#pragma warning disable CS0618 // Type or member is obsolete - supporting legacy connection name properties during migration
+
 namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 
 using ErikLieben.FA.ES.Documents;

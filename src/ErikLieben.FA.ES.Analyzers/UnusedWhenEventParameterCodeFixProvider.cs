@@ -257,10 +257,7 @@ public class UnusedWhenEventParameterCodeFixProvider : CodeFixProvider
         var text = await generatedDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
         var content = text.ToString();
 
-        // Find and replace the method call in the Fold switch case
-        // Pattern: When(JsonEvent.To(@event, {EventTypeName}JsonSerializerContext.Default.{EventTypeName}));
-        // Replace with: {newMethodName}();
-        // The new method no longer takes the event parameter
+        // Find and replace the When invocation with the parameterless method call in generated code
         var pattern = $@"When\(JsonEvent\.To\(@event,\s*{Regex.Escape(eventTypeName)}JsonSerializerContext\.Default\.{Regex.Escape(eventTypeName)}\)\)";
         var replacement = $"{newMethodName}()";
 

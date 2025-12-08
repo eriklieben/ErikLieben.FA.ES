@@ -254,7 +254,7 @@ public class StreamActionRefactoringProvider : CodeRefactoringProvider
 
         var streamName = streamParam?.Identifier.Text ?? "stream";
 
-        // Create: stream.RegisterAction(new ActionType());
+        // Build statement that registers the action on the stream parameter
         var registerActionStatement = SyntaxFactory.ExpressionStatement(
             SyntaxFactory.InvocationExpression(
                 SyntaxFactory.MemberAccessExpression(

@@ -1,3 +1,5 @@
+#pragma warning disable S3776 // Cognitive Complexity - migration logic requires handling multiple version scenarios
+
 using System.Text.RegularExpressions;
 using Spectre.Console;
 

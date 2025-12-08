@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+#pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for code analysis
+
+using System.Collections.Immutable;
 using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

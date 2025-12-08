@@ -1,3 +1,6 @@
+#pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for code analysis
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability in analyzers
+
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;

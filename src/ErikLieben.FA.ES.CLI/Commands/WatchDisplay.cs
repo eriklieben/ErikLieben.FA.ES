@@ -1,3 +1,5 @@
+#pragma warning disable S3776 // Cognitive Complexity - TUI rendering involves complex layout and state management
+
 using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
 using Spectre.Console.Rendering;
@@ -281,11 +283,7 @@ public sealed class WatchDisplay : IWatchDisplay
         };
 
         var uptime = DateTime.UtcNow - _startTime;
-        var uptimeStr = uptime.TotalHours >= 1
-            ? $"{uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s"
-            : uptime.TotalMinutes >= 1
-                ? $"{uptime.Minutes}m {uptime.Seconds}s"
-                : $"{uptime.Seconds}s";
+        var uptimeStr = FormatUptime(uptime);
 
         var lastRegenStr = _lastRegenTime.HasValue
             ? $"{GetRelativeTime(_lastRegenTime.Value)} ({FormatDuration(_lastRegenDurationMs)})"
@@ -556,6 +554,21 @@ public sealed class WatchDisplay : IWatchDisplay
         if (diff.TotalSeconds < 60) return $"{(int)diff.TotalSeconds}s ago";
         if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
         return $"{(int)diff.TotalHours}h ago";
+    }
+
+    private static string FormatUptime(TimeSpan uptime)
+    {
+        if (uptime.TotalHours >= 1)
+        {
+            return $"{uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s";
+        }
+
+        if (uptime.TotalMinutes >= 1)
+        {
+            return $"{uptime.Minutes}m {uptime.Seconds}s";
+        }
+
+        return $"{uptime.Seconds}s";
     }
 
     private static string FormatDuration(long milliseconds)

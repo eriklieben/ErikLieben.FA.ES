@@ -1,3 +1,5 @@
+#pragma warning disable S3776 // Cognitive Complexity - stream action analysis inherently requires complex control flow
+
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
@@ -140,13 +142,10 @@ public class AnalyzeManualStreamActions(
                 // Check if the parameter type is IEventStream<TAggregate>
                 if (paramSymbol.Type is INamedTypeSymbol paramType &&
                     paramType.IsGenericType &&
-                    paramType.Name.Contains("EventStream"))
+                    paramType.Name.Contains("EventStream") &&
+                    paramType.TypeArguments.FirstOrDefault() is { } typeArg)
                 {
-                    var typeArg = paramType.TypeArguments.FirstOrDefault();
-                    if (typeArg != null)
-                    {
-                        return typeArg.Name;
-                    }
+                    return typeArg.Name;
                 }
             }
         }

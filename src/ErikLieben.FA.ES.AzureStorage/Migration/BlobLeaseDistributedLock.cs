@@ -1,3 +1,5 @@
+#pragma warning disable S2139 // Exception handling - distributed locks require specific error recovery patterns
+
 namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
 using Azure;

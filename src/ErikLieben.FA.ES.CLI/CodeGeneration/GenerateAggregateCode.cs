@@ -1,3 +1,8 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
+#pragma warning disable S3776 // Cognitive Complexity - aggregate code generation involves complex template logic
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+#pragma warning disable S1192 // String literals should not be duplicated - code generation templates
+
 using System.Text;
 using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
@@ -218,7 +223,7 @@ public class GenerateAggregateCode
         {
             var @event = events[i];
             var isLast = i == events.Count - 1;
-            var condition = isLast ? "else" : (i == 0 ? $"if (@event.SchemaVersion == {@event.SchemaVersion})" : $"else if (@event.SchemaVersion == {@event.SchemaVersion})");
+            var condition = GetSchemaVersionCondition(i, isLast, @event.SchemaVersion);
 
             if (@event.Parameters.Count == 0)
             {
@@ -305,6 +310,21 @@ public class GenerateAggregateCode
                                   {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
                               break;
                               """);
+    }
+
+    private static string GetSchemaVersionCondition(int index, bool isLast, int schemaVersion)
+    {
+        if (isLast)
+        {
+            return "else";
+        }
+
+        if (index == 0)
+        {
+            return $"if (@event.SchemaVersion == {schemaVersion})";
+        }
+
+        return $"else if (@event.SchemaVersion == {schemaVersion})";
     }
 
     internal static StringBuilder GenerateJsonSerializableCode(AggregateDefinition aggregate, List<string> usings)

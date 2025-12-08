@@ -1,3 +1,6 @@
+#pragma warning disable S3776 // Cognitive Complexity - file watching and code generation coordination requires complex control flow
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;

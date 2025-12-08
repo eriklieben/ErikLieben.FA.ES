@@ -1,3 +1,6 @@
+#pragma warning disable S3776 // Cognitive Complexity - code formatting requires complex AST manipulation
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

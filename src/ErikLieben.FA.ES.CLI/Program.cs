@@ -1,3 +1,5 @@
+#pragma warning disable S1192 // String literals should not be duplicated - command configuration
+
 using System.Text;
 using ErikLieben.FA.ES.CLI.Commands;
 using Spectre.Console;

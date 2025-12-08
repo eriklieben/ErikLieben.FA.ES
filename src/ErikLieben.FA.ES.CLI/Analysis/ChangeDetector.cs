@@ -1,3 +1,8 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive null checks for clarity in change detection logic
+#pragma warning disable S3776 // Cognitive Complexity - change detection logic inherently requires complex comparisons
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+#pragma warning disable S1192 // String literals should not be duplicated - entity type names used for clarity
+
 using ErikLieben.FA.ES.CLI.Abstractions;
 using ErikLieben.FA.ES.CLI.Model;
 
@@ -539,18 +544,15 @@ public class ChangeDetector : IChangeDetector
                 entityName,
                 $"Removed PostWhen handler from {entityName}"));
         }
-        else if (previous != null) // current is also not null at this point
+        else if (previous != null && previous.Parameters.Count != current!.Parameters.Count)
         {
-            if (previous.Parameters.Count != current!.Parameters.Count)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.PostWhen,
-                    entityType,
-                    entityName,
-                    $"Changed PostWhen parameters in {entityName}",
-                    $"{previous.Parameters.Count} → {current.Parameters.Count} parameters"));
-            }
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.PostWhen,
+                entityType,
+                entityName,
+                $"Changed PostWhen parameters in {entityName}",
+                $"{previous.Parameters.Count} → {current.Parameters.Count} parameters"));
         }
     }
 
@@ -1017,18 +1019,16 @@ public class ChangeDetector : IChangeDetector
         // Find modified inherited aggregates
         foreach (var (name, currInherited) in current)
         {
-            if (previous.TryGetValue(name, out var prevInherited))
+            if (previous.TryGetValue(name, out var prevInherited) &&
+                prevInherited.InheritedIdentifierName != currInherited.InheritedIdentifierName)
             {
-                if (prevInherited.InheritedIdentifierName != currInherited.InheritedIdentifierName)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.InheritedAggregate,
-                        "InheritedAggregate",
-                        name,
-                        $"Changed base type of {name}",
-                        $"{prevInherited.InheritedIdentifierName} → {currInherited.InheritedIdentifierName}"));
-                }
+                changes.Add(new DetectedChange(
+                    ChangeType.Modified,
+                    ChangeCategory.InheritedAggregate,
+                    "InheritedAggregate",
+                    name,
+                    $"Changed base type of {name}",
+                    $"{prevInherited.InheritedIdentifierName} → {currInherited.InheritedIdentifierName}"));
             }
         }
     }

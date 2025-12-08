@@ -1,3 +1,5 @@
+#pragma warning disable S1192 // String literals should not be duplicated - store type identifiers
+
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Security.Cryptography;

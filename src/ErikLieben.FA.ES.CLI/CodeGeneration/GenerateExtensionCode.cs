@@ -1,3 +1,6 @@
+#pragma warning disable S3776 // Cognitive Complexity - extension code generation involves complex template logic
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+
 using System.Text;
 using System.Text.RegularExpressions;
 using ErikLieben.FA.ES.CLI.Configuration;

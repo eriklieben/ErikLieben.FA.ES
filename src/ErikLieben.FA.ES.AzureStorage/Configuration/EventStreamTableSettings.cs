@@ -1,3 +1,5 @@
+#pragma warning disable S107 // Methods should not have too many parameters - settings record requires all configuration properties
+
 namespace ErikLieben.FA.ES.AzureStorage.Configuration;
 
 /// <summary>
