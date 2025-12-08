@@ -9,10 +9,10 @@ namespace ErikLieben.FA.ES.CLI.Logging;
 /// </summary>
 public class WatchDisplayActivityLogger : IActivityLogger
 {
-    private readonly WatchDisplay _display;
+    private readonly IWatchDisplay _display;
     private readonly ConcurrentBag<ActivityLogEntry> _entries = [];
 
-    public WatchDisplayActivityLogger(WatchDisplay display)
+    public WatchDisplayActivityLogger(IWatchDisplay display)
     {
         _display = display;
     }

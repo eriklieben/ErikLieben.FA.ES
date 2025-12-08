@@ -321,4 +321,329 @@ public class CodeFormattingHelperTests
         // ErikLieben.FA.ES is used for IEvent
         Assert.Contains("using ErikLieben.FA.ES;", result);
     }
+
+    [Fact]
+    public void FormatCode_with_project_directory_loads_additional_references()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        // Create a helper file in the project
+        File.WriteAllText(Path.Combine(tempDir, "MyHelper.cs"), """
+            namespace Test;
+            public class MyHelper { }
+            """);
+
+        var code = """
+            namespace Test;
+            public class Foo
+            {
+                public MyHelper Helper { get; set; }
+            }
+            """;
+
+        try
+        {
+            // Act
+            var result = CodeFormattingHelper.FormatCode(code, tempDir);
+
+            // Assert
+            Assert.Contains("public class Foo", result);
+            Assert.Contains("MyHelper", result);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void FormatCode_skips_files_in_bin_directory()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var binDir = Path.Combine(tempDir, "bin", "Debug");
+        Directory.CreateDirectory(binDir);
+        File.WriteAllText(Path.Combine(binDir, "Compiled.cs"), "public class Compiled { }");
+
+        var code = "namespace Test; public class Foo { }";
+
+        try
+        {
+            // Act - Should not throw
+            var result = CodeFormattingHelper.FormatCode(code, tempDir);
+
+            // Assert
+            Assert.Contains("public class Foo", result);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void FormatCode_skips_files_in_obj_directory()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var objDir = Path.Combine(tempDir, "obj", "Debug");
+        Directory.CreateDirectory(objDir);
+        File.WriteAllText(Path.Combine(objDir, "Generated.cs"), "public class Generated { }");
+
+        var code = "namespace Test; public class Foo { }";
+
+        try
+        {
+            // Act - Should not throw
+            var result = CodeFormattingHelper.FormatCode(code, tempDir);
+
+            // Assert
+            Assert.Contains("public class Foo", result);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void FormatCode_skips_generated_files()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        File.WriteAllText(Path.Combine(tempDir, "Helper.Generated.cs"), "public class Helper { }");
+
+        var code = "namespace Test; public class Foo { }";
+
+        try
+        {
+            // Act
+            var result = CodeFormattingHelper.FormatCode(code, tempDir);
+
+            // Assert
+            Assert.Contains("public class Foo", result);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void FormatCode_with_cancellation_token()
+    {
+        // Arrange
+        var code = "public class Foo { }";
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code, null, cts.Token);
+
+        // Assert
+        Assert.Contains("public class Foo", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_records()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            public record Person(string Name, int Age);
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("public record Person", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_file_scoped_namespaces()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            public class Foo
+            {
+                public void Bar() { }
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("namespace Test;", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_async_methods()
+    {
+        // Arrange
+        var code = """
+            using System.Threading.Tasks;
+            namespace Test;
+            public class Foo
+            {
+                public async Task<int> GetValueAsync()
+                {
+                    await Task.Delay(1);
+                    return 42;
+                }
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("public async Task<int> GetValueAsync()", result);
+        Assert.Contains("using System.Threading.Tasks;", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_static_using()
+    {
+        // Arrange
+        var code = """
+            using static System.Math;
+            namespace Test;
+            public class Foo
+            {
+                public double Value => PI;
+                public double Calculate(double x) => Abs(x);
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        // Static using may be removed if symbols can't be resolved - just verify formatting works
+        Assert.Contains("public class Foo", result);
+        Assert.Contains("Calculate", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_global_using()
+    {
+        // Arrange
+        var code = """
+            global using System;
+            namespace Test;
+            public class Foo
+            {
+                public DateTime Created { get; set; }
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("global using System;", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_using_alias()
+    {
+        // Arrange
+        var code = """
+            using Dict = System.Collections.Generic.Dictionary<string, int>;
+            namespace Test;
+            public class Foo
+            {
+                public Dict Data { get; set; } = new();
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("using Dict = System.Collections.Generic.Dictionary<string, int>;", result);
+    }
+
+    [Fact]
+    public void FormatCode_preserves_xml_documentation()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            /// <summary>
+            /// This is a test class
+            /// </summary>
+            public class Foo { }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("/// <summary>", result);
+        Assert.Contains("/// This is a test class", result);
+        Assert.Contains("/// </summary>", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_interfaces()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            public interface IFoo
+            {
+                void Bar();
+                string Name { get; set; }
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("public interface IFoo", result);
+        Assert.Contains("void Bar();", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_enums()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            public enum Status { Active, Inactive, Pending }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("public enum Status", result);
+        Assert.Contains("Active", result);
+    }
+
+    [Fact]
+    public void FormatCode_handles_partial_classes()
+    {
+        // Arrange
+        var code = """
+            namespace Test;
+            public partial class Foo
+            {
+                public void Bar() { }
+            }
+            """;
+
+        // Act
+        var result = CodeFormattingHelper.FormatCode(code);
+
+        // Assert
+        Assert.Contains("public partial class Foo", result);
+    }
 }

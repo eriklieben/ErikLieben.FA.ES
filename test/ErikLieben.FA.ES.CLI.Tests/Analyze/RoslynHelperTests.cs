@@ -690,10 +690,11 @@ public class RoslynHelperTests
             var result = filePath.First().Split("ErikLieben.FA.ES.CLI.Tests")[1];
 
             // Assert
+            var tfm = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains("10") ? "net10.0" : "net9.0";
 #if DEBUG
-            Assert.Equal(@"\bin\Debug\net9.0\System.Private.CoreLib.dll", result);
+            Assert.Equal($@"\bin\Debug\{tfm}\System.Private.CoreLib.dll", result);
 #else
-            Assert.Equal(@"\bin\Release\net9.0\System.Private.CoreLib.dll", result);
+            Assert.Equal($@"\bin\Release\{tfm}\System.Private.CoreLib.dll", result);
 #endif
         }
 

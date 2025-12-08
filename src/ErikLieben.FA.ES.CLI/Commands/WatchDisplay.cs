@@ -7,7 +7,7 @@ namespace ErikLieben.FA.ES.CLI.Commands;
 /// Full-screen TUI display for watch mode with real-time updates.
 /// Shows file activity, regeneration status, entity statistics, and logs.
 /// </summary>
-public sealed class WatchDisplay : IDisposable
+public class WatchDisplay : IWatchDisplay
 {
     private readonly object _lock = new();
     private readonly string _solutionPath;
