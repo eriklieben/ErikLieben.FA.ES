@@ -1,5 +1,6 @@
 using System.Dynamic;
 using System.Net;
+using System.Text.Json;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Model;
 using Microsoft.Azure.Cosmos;
@@ -56,6 +57,12 @@ public class CosmosDbObjectIdProviderTests
 
     public class GetObjectIdsAsync : CosmosDbObjectIdProviderTests
     {
+        private static JsonElement CreateJsonElement(string objectId)
+        {
+            var json = JsonSerializer.Serialize(new { objectId });
+            return JsonDocument.Parse(json).RootElement.Clone();
+        }
+
         [Fact]
         public async Task Should_throw_argument_null_exception_when_object_name_is_null()
         {
@@ -82,12 +89,12 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -104,15 +111,15 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedResponse = Substitute.For<FeedResponse<dynamic>>();
-            feedResponse.GetEnumerator().Returns(new List<dynamic>().GetEnumerator());
+            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
+            feedResponse.GetEnumerator().Returns(new List<JsonElement>().GetEnumerator());
             feedResponse.ContinuationToken.Returns((string?)null);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -127,24 +134,21 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            dynamic item1 = new ExpandoObject();
-            item1.objectId = "obj-1";
-            dynamic item2 = new ExpandoObject();
-            item2.objectId = "obj-2";
-            dynamic item3 = new ExpandoObject();
-            item3.objectId = "obj-3";
+            var item1 = CreateJsonElement("obj-1");
+            var item2 = CreateJsonElement("obj-2");
+            var item3 = CreateJsonElement("obj-3");
 
-            var items = new List<dynamic> { item1, item2, item3 };
+            var items = new List<JsonElement> { item1, item2, item3 };
 
-            var feedResponse = Substitute.For<FeedResponse<dynamic>>();
+            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
             feedResponse.GetEnumerator().Returns(items.GetEnumerator());
             feedResponse.ContinuationToken.Returns("next-page-token");
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -161,22 +165,22 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedResponse = Substitute.For<FeedResponse<dynamic>>();
-            feedResponse.GetEnumerator().Returns(new List<dynamic>().GetEnumerator());
+            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
+            feedResponse.GetEnumerator().Returns(new List<JsonElement>().GetEnumerator());
             feedResponse.ContinuationToken.Returns((string?)null);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Is<string>("existing-continuation-token"),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
 
             await sut.GetObjectIdsAsync("TestObject", "existing-continuation-token", 25);
 
-            container.Received(1).GetItemQueryIterator<dynamic>(
+            container.Received(1).GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 "existing-continuation-token",
                 Arg.Any<QueryRequestOptions>());

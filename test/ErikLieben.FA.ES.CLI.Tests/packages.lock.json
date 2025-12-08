@@ -436,6 +436,11 @@
         "resolved": "9.0.0",
         "contentHash": "qd01+AqPhbAG14KtdtIqFk+cxHQFZ/oqRSCoxU1F+Q6Kv0cl726sl7RzU9yLFGd4BUOKdN4XojXF0pQf/R6YeA=="
       },
+      "System.Formats.Asn1": {
+        "type": "Transitive",
+        "resolved": "9.0.10",
+        "contentHash": "RWiTJ02zR2+jGjNje7dbH0iI/D1JPHax+8ET5Y7vHVf/yeYY5eUPP8f8KbcbI3iisNs6x1yfAEB2H57mQ7hPIQ=="
+      },
       "System.Formats.Nrbf": {
         "type": "Transitive",
         "resolved": "9.0.0",
@@ -496,6 +501,11 @@
         "type": "Transitive",
         "resolved": "8.0.0",
         "contentHash": "OZIsVplFGaVY90G2SbpgU7EnCoOO5pw1t4ic21dBF3/1omrJFpAGoNAVpPyMVOC90/hvgkGG3VFqR13YgZMQfg=="
+      },
+      "System.Text.Json": {
+        "type": "Transitive",
+        "resolved": "9.0.10",
+        "contentHash": "XM02ZBnzxk7Ti6l9YRy8Bp639wANqJzJzw4W4VYiCh+HXY9hBOWkGB4k89OLP/s/RxgM02P4a/mWcJTgFiLf1Q=="
       },
       "System.Threading.Channels": {
         "type": "Transitive",
@@ -564,7 +574,9 @@
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "[5.0.0, )",
           "Pastel": "[7.0.1, )",
           "Spectre.Console": "[0.53.0, )",
-          "Spectre.Console.Cli": "[0.53.0, )"
+          "Spectre.Console.Cli": "[0.53.0, )",
+          "System.Formats.Asn1": "[9.0.10, )",
+          "System.Text.Json": "[9.0.10, )"
         }
       },
       "eriklieben.fa.es.codeanalysis": {

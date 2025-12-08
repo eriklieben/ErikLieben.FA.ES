@@ -216,12 +216,12 @@ public class CosmosDbDocumentStoreTests
         }
 
         [Fact]
-        public async Task Should_upsert_document_without_concurrency_check_when_hash_is_empty()
+        public async Task Should_replace_document_without_concurrency_check_when_hash_is_empty()
         {
             var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings, typeSettings);
 
             var document = Substitute.For<IObjectDocument>();
-            document.ObjectName.Returns("TestObject");
+            document.ObjectName.Returns("testobject");
             document.ObjectId.Returns("test-id");
             document.Hash.Returns((string?)null);
             document.Active.Returns(new StreamInformation
@@ -233,16 +233,18 @@ public class CosmosDbDocumentStoreTests
             document.TerminatedStreams.Returns([]);
 
             var itemResponse = Substitute.For<ItemResponse<CosmosDbDocumentEntity>>();
-            container.UpsertItemAsync(
+            container.ReplaceItemAsync(
                 Arg.Any<CosmosDbDocumentEntity>(),
+                Arg.Any<string>(),
                 Arg.Any<PartitionKey>(),
                 Arg.Any<ItemRequestOptions>(),
                 Arg.Any<CancellationToken>()).Returns(itemResponse);
 
             await sut.SetAsync(document);
 
-            await container.Received(1).UpsertItemAsync(
+            await container.Received(1).ReplaceItemAsync(
                 Arg.Any<CosmosDbDocumentEntity>(),
+                Arg.Any<string>(),
                 Arg.Any<PartitionKey>(),
                 Arg.Any<ItemRequestOptions>(),
                 Arg.Any<CancellationToken>());
@@ -414,7 +416,7 @@ public class CosmosDbDocumentStoreTests
             };
 
             var document = Substitute.For<IObjectDocument>();
-            document.ObjectName.Returns("TestObject");
+            document.ObjectName.Returns("testobject");
             document.ObjectId.Returns("test-id");
             document.Hash.Returns((string?)null);
             document.Active.Returns(new StreamInformation
@@ -427,8 +429,9 @@ public class CosmosDbDocumentStoreTests
 
             CosmosDbDocumentEntity? capturedEntity = null;
             var itemResponse = Substitute.For<ItemResponse<CosmosDbDocumentEntity>>();
-            container.UpsertItemAsync(
+            container.ReplaceItemAsync(
                 Arg.Do<CosmosDbDocumentEntity>(e => capturedEntity = e),
+                Arg.Any<string>(),
                 Arg.Any<PartitionKey>(),
                 Arg.Any<ItemRequestOptions>(),
                 Arg.Any<CancellationToken>()).Returns(itemResponse);
@@ -601,7 +604,7 @@ public class CosmosDbDocumentStoreTests
             createResponse.Resource.Returns(new CosmosDbDocumentEntity
             {
                 ObjectId = "test-id",
-                ObjectName = "TestObject",
+                ObjectName = "testobject",
                 Active = new CosmosDbStreamInfo { StreamIdentifier = "stream-123" }
             });
             container.CreateItemAsync(
@@ -656,7 +659,7 @@ public class CosmosDbDocumentStoreTests
             createResponse.Resource.Returns(new CosmosDbDocumentEntity
             {
                 ObjectId = "test-id",
-                ObjectName = "TestObject",
+                ObjectName = "testobject",
                 Active = new CosmosDbStreamInfo { StreamIdentifier = "stream-123" }
             });
             container.CreateItemAsync(
@@ -708,7 +711,7 @@ public class CosmosDbDocumentStoreTests
             createResponse.Resource.Returns(new CosmosDbDocumentEntity
             {
                 ObjectId = "test-id",
-                ObjectName = "TestObject",
+                ObjectName = "testobject",
                 Active = new CosmosDbStreamInfo { StreamIdentifier = "stream-123" }
             });
             container.CreateItemAsync(
@@ -733,7 +736,7 @@ public class CosmosDbDocumentStoreTests
             var existingEntity = new CosmosDbDocumentEntity
             {
                 ObjectId = "test-id",
-                ObjectName = "TestObject",
+                ObjectName = "testobject",
                 Active = new CosmosDbStreamInfo { StreamIdentifier = "stream-123" }
             };
 

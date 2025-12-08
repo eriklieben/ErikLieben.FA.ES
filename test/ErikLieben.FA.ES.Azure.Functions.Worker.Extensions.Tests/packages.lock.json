@@ -742,6 +742,11 @@
           "System.Runtime": "4.3.0"
         }
       },
+      "System.Text.Json": {
+        "type": "Transitive",
+        "resolved": "9.0.10",
+        "contentHash": "XM02ZBnzxk7Ti6l9YRy8Bp639wANqJzJzw4W4VYiCh+HXY9hBOWkGB4k89OLP/s/RxgM02P4a/mWcJTgFiLf1Q=="
+      },
       "System.Threading": {
         "type": "Transitive",
         "resolved": "4.3.0",
@@ -826,7 +831,8 @@
           "Microsoft.Extensions.Azure": "[1.13.1, )",
           "Microsoft.Extensions.Options": "[9.0.10, )",
           "Microsoft.Extensions.Options.DataAnnotations": "[9.0.10, )",
-          "Newtonsoft.Json": "[13.0.4, )"
+          "Newtonsoft.Json": "[13.0.4, )",
+          "System.Text.Json": "[9.0.10, )"
         }
       }
     }

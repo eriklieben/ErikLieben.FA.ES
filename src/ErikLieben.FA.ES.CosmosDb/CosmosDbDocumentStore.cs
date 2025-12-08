@@ -79,10 +79,11 @@ public class CosmosDbDocumentStore : ICosmosDbDocumentStore
         {
             // Document doesn't exist, create it
             var targetStore = store ?? settings.DefaultDataStore;
+            var nameLower = name.ToLowerInvariant();
             var newEntity = new CosmosDbDocumentEntity
             {
                 Id = documentId,
-                ObjectName = name,
+                ObjectName = nameLower,
                 ObjectId = objectId,
                 Active = new CosmosDbStreamInfo
                 {
@@ -260,8 +261,16 @@ public class CosmosDbDocumentStore : ICosmosDbDocumentStore
             }
             else
             {
-                // Upsert without concurrency check
-                await container.UpsertItemAsync(entity, partitionKey);
+                // Try to replace, fallback to create if not found
+                try
+                {
+                    await container.ReplaceItemAsync(entity, documentId, partitionKey);
+                }
+                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // Document doesn't exist yet, create it
+                    await container.CreateItemAsync(entity, partitionKey);
+                }
             }
 
             document.SetHash(hash, document.Hash);

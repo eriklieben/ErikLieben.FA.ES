@@ -1,5 +1,6 @@
 using System.Dynamic;
 using System.Net;
+using System.Text.Json;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Model;
 using ErikLieben.FA.ES.Documents;
@@ -131,17 +132,23 @@ public class CosmosDbStreamTagStoreTests
 
     public class GetAsync : CosmosDbStreamTagStoreTests
     {
+        private static JsonElement CreateJsonElement(string objectId)
+        {
+            var json = JsonSerializer.Serialize(new { objectId });
+            return JsonDocument.Parse(json).RootElement.Clone();
+        }
+
         [Fact]
         public async Task Should_return_empty_when_container_not_found()
         {
             var sut = new CosmosDbStreamTagStore(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -156,14 +163,14 @@ public class CosmosDbStreamTagStoreTests
         {
             var sut = new CosmosDbStreamTagStore(cosmosClient, settings);
 
-            var feedResponse = Substitute.For<FeedResponse<dynamic>>();
-            feedResponse.GetEnumerator().Returns(new List<dynamic>().GetEnumerator());
+            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
+            feedResponse.GetEnumerator().Returns(new List<JsonElement>().GetEnumerator());
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -178,21 +185,19 @@ public class CosmosDbStreamTagStoreTests
         {
             var sut = new CosmosDbStreamTagStore(cosmosClient, settings);
 
-            dynamic item1 = new ExpandoObject();
-            item1.objectId = "stream-1";
-            dynamic item2 = new ExpandoObject();
-            item2.objectId = "stream-2";
+            var item1 = CreateJsonElement("stream-1");
+            var item2 = CreateJsonElement("stream-2");
 
-            var items = new List<dynamic> { item1, item2 };
+            var items = new List<JsonElement> { item1, item2 };
 
-            var feedResponse = Substitute.For<FeedResponse<dynamic>>();
+            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
             feedResponse.GetEnumerator().Returns(items.GetEnumerator());
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -207,25 +212,23 @@ public class CosmosDbStreamTagStoreTests
         {
             var sut = new CosmosDbStreamTagStore(cosmosClient, settings);
 
-            dynamic item1 = new ExpandoObject();
-            item1.objectId = "stream-1";
-            dynamic item2 = new ExpandoObject();
-            item2.objectId = "stream-2";
+            var item1 = CreateJsonElement("stream-1");
+            var item2 = CreateJsonElement("stream-2");
 
-            var page1Items = new List<dynamic> { item1 };
-            var page2Items = new List<dynamic> { item2 };
+            var page1Items = new List<JsonElement> { item1 };
+            var page2Items = new List<JsonElement> { item2 };
 
-            var feedResponse1 = Substitute.For<FeedResponse<dynamic>>();
+            var feedResponse1 = Substitute.For<FeedResponse<JsonElement>>();
             feedResponse1.GetEnumerator().Returns(page1Items.GetEnumerator());
 
-            var feedResponse2 = Substitute.For<FeedResponse<dynamic>>();
+            var feedResponse2 = Substitute.For<FeedResponse<JsonElement>>();
             feedResponse2.GetEnumerator().Returns(page2Items.GetEnumerator());
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(true, true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse1, feedResponse2);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -243,10 +246,10 @@ public class CosmosDbStreamTagStoreTests
         {
             var sut = new CosmosDbStreamTagStore(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(false);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -288,10 +291,10 @@ public class CosmosDbStreamTagStoreTests
                 Arg.Any<RequestOptions>(),
                 Arg.Any<CancellationToken>()).Returns(containerResponse);
 
-            var feedIterator = Substitute.For<FeedIterator<dynamic>>();
+            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
             feedIterator.HasMoreResults.Returns(false);
 
-            container.GetItemQueryIterator<dynamic>(
+            container.GetItemQueryIterator<JsonElement>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);

@@ -62,7 +62,7 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
         // Assert
         Assert.NotNull(result);
         Assert.Equal("test-id-001", result.ObjectId);
-        Assert.Equal("TestObject", result.ObjectName);
+        Assert.Equal("testobject", result.ObjectName); // ObjectName is stored lowercase for partition key consistency
         Assert.NotNull(result.Active);
         Assert.Contains("testid001", result.Active.StreamIdentifier);
     }
@@ -193,8 +193,9 @@ public class CosmosDbDocumentStoreIntegrationTests : IAsyncLifetime
         };
 
         // Create a document mock with terminated streams
+        // Note: ObjectName must be lowercase to match the stored document
         var document = Substitute.For<IObjectDocument>();
-        document.ObjectName.Returns("TestObject");
+        document.ObjectName.Returns("testobject");
         document.ObjectId.Returns("test-id-006");
         document.Hash.Returns((string?)null);
         document.SchemaVersion.Returns("1.0.0");

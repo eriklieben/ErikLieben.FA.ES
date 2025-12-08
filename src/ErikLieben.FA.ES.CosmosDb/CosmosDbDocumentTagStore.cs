@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Model;
@@ -94,13 +95,13 @@ public partial class CosmosDbDocumentTagStore : IDocumentTagStore
 
         try
         {
-            using var iterator = container.GetItemQueryIterator<dynamic>(query, requestOptions: queryOptions);
+            using var iterator = container.GetItemQueryIterator<JsonElement>(query, requestOptions: queryOptions);
             while (iterator.HasMoreResults)
             {
                 var response = await iterator.ReadNextAsync();
                 foreach (var item in response)
                 {
-                    objectIds.Add((string)item.objectId);
+                    objectIds.Add(item.GetProperty("objectId").GetString()!);
                 }
             }
         }

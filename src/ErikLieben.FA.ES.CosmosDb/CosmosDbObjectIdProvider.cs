@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Model;
 using Microsoft.Azure.Cosmos;
@@ -65,7 +66,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
 
         try
         {
-            using var iterator = container.GetItemQueryIterator<dynamic>(
+            using var iterator = container.GetItemQueryIterator<JsonElement>(
                 query,
                 continuationToken: continuationToken,
                 requestOptions: queryOptions);
@@ -75,7 +76,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
                 var response = await iterator.ReadNextAsync(cancellationToken);
                 foreach (var item in response)
                 {
-                    items.Add((string)item.objectId);
+                    items.Add(item.GetProperty("objectId").GetString()!);
                 }
                 nextContinuationToken = response.ContinuationToken;
             }
