@@ -1,6 +1,13 @@
-﻿using System.Text.Json;
+﻿#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS0618 // Type or member is obsolete - tests verify deprecated properties
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -11,6 +18,7 @@ using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -388,7 +396,7 @@ public class BlobStreamTagStoreTests
             mockDocument.Active.Returns(mockActive);
             mockActive.StreamIdentifier = "stream-id";
             mockDocument.ObjectName.Returns("object-name");
-            mockDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+            mockDocument.TerminatedStreams.Returns([]);
             mockActive.StreamConnectionName = "connection";
             mockDocument.ObjectId.Returns(Guid.NewGuid().ToString());
 

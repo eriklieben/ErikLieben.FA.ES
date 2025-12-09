@@ -16,10 +16,10 @@ public class InMemoryDocumentStore
             name.ToLowerInvariant(),
             new StreamInformation
             {
-                StreamConnectionName = InMemoryConnectionName,
-                SnapShotConnectionName = InMemoryConnectionName,
-                DocumentTagConnectionName = InMemoryConnectionName,
-                StreamTagConnectionName = InMemoryConnectionName,
+                DataStore = InMemoryConnectionName,
+                SnapShotStore = InMemoryConnectionName,
+                DocumentTagStore = InMemoryConnectionName,
+                StreamTagStore = InMemoryConnectionName,
                 StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
                 StreamType = InMemoryConnectionName,
                 DocumentTagType = InMemoryConnectionName,

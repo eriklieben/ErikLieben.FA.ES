@@ -1,4 +1,5 @@
 using ErikLieben.FA.ES.CLI.Model;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,8 +10,6 @@ internal class RoslynHelper(
     SemanticModel semanticModel,
     string solutionRootPath)
 {
-    private const string FrameworkNamespace = "ErikLieben.FA.ES";
-    private const string FrameworkAttributesNamespace = "ErikLieben.FA.ES.Attributes";
 
     internal bool IsProcessableAggregate(INamedTypeSymbol? classSymbol)
     {
@@ -29,7 +28,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        return !(classSymbol?.ContainingAssembly.Identity.Name.StartsWith(FrameworkNamespace) ?? false);
+        return !(classSymbol?.ContainingAssembly.Identity.Name.StartsWith(TypeConstants.FrameworkNamespace) ?? false);
     }
 
     internal bool IsInheritedAggregate(INamedTypeSymbol? classSymbol)
@@ -44,7 +43,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        if ((classSymbol?.ContainingAssembly.Identity.Name.StartsWith(FrameworkNamespace) ?? false))
+        if ((classSymbol?.ContainingAssembly.Identity.Name.StartsWith(TypeConstants.FrameworkNamespace) ?? false))
         {
             return false;
         }
@@ -99,7 +98,7 @@ internal class RoslynHelper(
             {
                 var typeSymbol = attribute.AttributeClass;
                 if (typeSymbol == null) return true;
-                return GetFullNamespace(typeSymbol) == FrameworkAttributesNamespace &&
+                return SymbolHelpers.GetFullNamespace(typeSymbol) == TypeConstants.FrameworkAttributesNamespace &&
                        typeSymbol.Name == "IgnoreAttribute";
             });
     }
@@ -112,7 +111,7 @@ internal class RoslynHelper(
         var objectNameAttribute = attributes.FirstOrDefault(a =>
             a.AttributeClass?.Name == "ObjectNameAttribute" &&
             a.AttributeClass.ContainingNamespace.ToDisplayString()
-                .Equals(FrameworkAttributesNamespace, StringComparison.Ordinal));
+                .Equals(TypeConstants.FrameworkAttributesNamespace, StringComparison.Ordinal));
 
         if (objectNameAttribute == null)
         {
@@ -141,7 +140,7 @@ internal class RoslynHelper(
     internal static string GetIdentifierTypeFromMetadata(List<PropertyDefinition> properties)
     {
         var metadataProperty = properties
-            .FirstOrDefault(p => p.Namespace == FrameworkNamespace &&
+            .FirstOrDefault(p => p.Namespace == TypeConstants.FrameworkNamespace &&
                                  p.Type.StartsWith("ObjectMetadata<"));
 
         return metadataProperty != null
@@ -165,7 +164,7 @@ internal class RoslynHelper(
         var attribute = symbol
             .GetAttributes()
             .FirstOrDefault(a => a.AttributeClass?.Name == "EventNameAttribute" &&
-                                 GetFullNamespace(a.AttributeClass.ContainingNamespace) == FrameworkNamespace);
+                                 SymbolHelpers.GetFullNamespace(a.AttributeClass.ContainingNamespace) == TypeConstants.FrameworkNamespace);
 
         if (attribute == null)
         {
@@ -295,10 +294,13 @@ internal class RoslynHelper(
 
             list.Add(new CommandEventDefinition
             {
-                EventName = RoslynHelper.GetEventName(symbolInfo.Symbol!),
-                Namespace = RoslynHelper.GetFullNamespace(symbolInfo.Symbol!),
+                EventName = GetEventName(symbolInfo.Symbol!),
+                Namespace = SymbolHelpers.GetFullNamespace(symbolInfo.Symbol!),
                 File = GetFilePaths(symbolInfo.Symbol!).FirstOrDefault() ?? string.Empty,
-                TypeName = RoslynHelper.GetFullTypeName(typeInfo.Type!),
+                TypeName = SymbolHelpers.GetFullTypeName(typeInfo.Type!),
+                SchemaVersion = typeInfo.Type is INamedTypeSymbol namedType
+                    ? AttributeExtractor.ExtractEventVersionAttribute(namedType)
+                    : 1,
             });
         }
 
@@ -328,7 +330,7 @@ internal class RoslynHelper(
             return false;
         }
 
-        firstArgument = argumentList.Arguments.First();
+        firstArgument = argumentList.Arguments[0];
         return firstArgument.Expression is ObjectCreationExpressionSyntax;
     }
 
@@ -371,12 +373,12 @@ internal class RoslynHelper(
                 case ILocalSymbol localSymbol:
                 {
                     var type = localSymbol.Type;
-                    return IsSymbolOfType(type, FrameworkNamespace, "IEventStream");
+                    return IsSymbolOfType(type, TypeConstants.FrameworkNamespace, "IEventStream");
                 }
                 case IPropertySymbol propertySymbol:
                 {
                     var type = propertySymbol.Type;
-                    return IsSymbolOfType(type, FrameworkNamespace, "IEventStream");
+                    return IsSymbolOfType(type, TypeConstants.FrameworkNamespace, "IEventStream");
                 }
                 default:
                     return false;
@@ -388,7 +390,7 @@ internal class RoslynHelper(
         var symbol = semanticModel.GetSymbolInfo(expression).Symbol;
         if (symbol is IParameterSymbol parameterSymbol)
         {
-            return IsSymbolOfType(parameterSymbol.Type, FrameworkNamespace, "ILeasedSession");
+            return IsSymbolOfType(parameterSymbol.Type, TypeConstants.FrameworkNamespace, "ILeasedSession");
         }
 
         return false;
@@ -461,34 +463,15 @@ internal class RoslynHelper(
         return typeSymbol?.IsReferenceType ?? false;
     }
 
+    // Delegate to shared SymbolHelpers for consistency
     internal static bool IsPartial(ClassDeclarationSyntax classDeclaration)
-    {
-        return classDeclaration.Modifiers.Any(SyntaxKind.PartialKeyword);
-    }
+        => SymbolHelpers.IsPartialClass(classDeclaration);
 
     internal static string GetFullNamespace(ISymbol symbol)
-    {
-        var currentNamespace = symbol.ContainingNamespace;
-        var namespaceParts = new List<string>();
-        while (currentNamespace != null && !string.IsNullOrEmpty(currentNamespace.Name))
-        {
-            namespaceParts.Insert(0, currentNamespace.Name);
-            currentNamespace = currentNamespace.ContainingNamespace;
-        }
-
-        return string.Join(".", namespaceParts);
-    }
+        => SymbolHelpers.GetFullNamespace(symbol);
 
     internal static string GetFullTypeName(ITypeSymbol typeSymbol)
-    {
-        var containingType = typeSymbol.ContainingType;
-        if (containingType != null)
-        {
-            return GetFullTypeName(containingType) + "." + typeSymbol.Name;
-        }
-
-        return typeSymbol.Name;
-    }
+        => SymbolHelpers.GetFullTypeName(typeSymbol);
 
     internal List<string> GetFilePaths(ISymbol symbol)
     {

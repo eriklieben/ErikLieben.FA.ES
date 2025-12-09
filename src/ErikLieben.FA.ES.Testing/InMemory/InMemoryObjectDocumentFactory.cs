@@ -26,8 +26,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectName">The object type/name used as logical scope.</param>
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="documentType">Unused in this implementation.</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
+    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         return blobDocumentStore.CreateAsync(objectName.ToLowerInvariant(), objectId);
     }
@@ -76,8 +77,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectName">The object type/name used as logical scope.</param>
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="documentType">Unused in this implementation.</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
+    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         return blobDocumentStore.GetAsync(objectName.ToLowerInvariant(), objectId);
     }
@@ -87,8 +89,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="document">The object document to persist.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="documentType">Unused in this implementation.</param>
     /// <returns>A completed task.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null!)
+    public Task SetAsync(IObjectDocument document, string? store = null!, string? documentType = null)
     {
         return blobDocumentStore.SetAsync(document);
     }

@@ -1,0 +1,55 @@
+<Project>
+  <!--
+    Centralized package version management for multi-targeting.
+    Framework-specific packages (Microsoft.Extensions.*) get version based on target framework.
+    Other packages use shared versions regardless of target framework.
+  -->
+
+  <!-- Enable NuGet package lock files for reproducible builds -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <!-- .NET 9 specific versions -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <MicrosoftExtensionsVersion>9.0.10</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>9.0.10</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>9.0.10</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>9.0.10</MicrosoftBclAsyncInterfacesVersion>
+  </PropertyGroup>
+
+  <!-- .NET 10 specific versions -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <MicrosoftExtensionsVersion>10.0.0</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>10.0.0</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>10.0.0</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>10.0.0</MicrosoftBclAsyncInterfacesVersion>
+  </PropertyGroup>
+
+  <!-- Shared versions (not framework-dependent) -->
+  <PropertyGroup>
+    <!-- Azure SDK packages -->
+    <AzureIdentityVersion>1.17.1</AzureIdentityVersion>
+    <AzureStorageBlobsVersion>12.26.0</AzureStorageBlobsVersion>
+    <AzureDataTablesVersion>12.11.0</AzureDataTablesVersion>
+    <MicrosoftExtensionsAzureVersion>1.13.1</MicrosoftExtensionsAzureVersion>
+    <MicrosoftAzureCosmosVersion>3.56.0</MicrosoftAzureCosmosVersion>
+
+    <!-- Azure Functions packages -->
+    <MicrosoftAzureFunctionsWorkerVersion>2.0.0</MicrosoftAzureFunctionsWorkerVersion>
+    <MicrosoftAzureFunctionsWorkerCoreVersion>2.2.0</MicrosoftAzureFunctionsWorkerCoreVersion>
+    <MicrosoftAzureFunctionsExtensionsVersion>1.1.0</MicrosoftAzureFunctionsExtensionsVersion>
+    <MicrosoftAzureFunctionsWorkerExtensionsAbstractionsVersion>1.3.0</MicrosoftAzureFunctionsWorkerExtensionsAbstractionsVersion>
+
+    <!-- Code Analysis packages -->
+    <MicrosoftCodeAnalysisVersion>5.0.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisCSharpVersion>4.14.0</MicrosoftCodeAnalysisCSharpVersion>
+    <MicrosoftCodeAnalysisAnalyzersVersion>4.14.0</MicrosoftCodeAnalysisAnalyzersVersion>
+
+    <!-- Other packages -->
+    <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
+    <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>
+    <SpectreConsoleVersion>0.53.0</SpectreConsoleVersion>
+    <PastelVersion>7.0.1</PastelVersion>
+  </PropertyGroup>
+</Project>

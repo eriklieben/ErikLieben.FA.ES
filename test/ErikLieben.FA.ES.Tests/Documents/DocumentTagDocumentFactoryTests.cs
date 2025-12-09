@@ -1,7 +1,10 @@
-﻿using ErikLieben.FA.ES.Configuration;
+﻿using System;
+using System.Collections.Generic;
+using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Documents
 {
@@ -255,15 +258,206 @@ namespace ErikLieben.FA.ES.Tests.Documents
         public class CreateDocumentTagStoreWithoutParameters
         {
             [Fact]
-            public void Should_throw_not_implemented_exception()
+            public void Should_delegate_to_factory_for_default_document_tag_type()
+            {
+                // Arrange
+                var mockTagStore = Substitute.For<IDocumentTagStore>();
+                var mockFactory = Substitute.For<IDocumentTagDocumentFactory>();
+                mockFactory.CreateDocumentTagStore(Arg.Any<string>()).Returns(mockTagStore);
+
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>
+                {
+                    { "blob", mockFactory }
+                };
+                var settings = new EventStreamDefaultTypeSettings("blob");
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                // Act
+                var result = sut.CreateDocumentTagStore();
+
+                // Assert
+                Assert.Same(mockTagStore, result);
+            }
+
+            [Fact]
+            public void Should_throw_exception_when_no_factory_found()
+            {
+                // Arrange
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>();
+                var settings = new EventStreamDefaultTypeSettings("blob");
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                // Act & Assert
+                Assert.Throws<UnableToFindDocumentTagFactoryException>(() => sut.CreateDocumentTagStore());
+            }
+        }
+
+        public class CreateStreamTagStoreWithoutParameters
+        {
+            [Fact]
+            public void Should_delegate_to_factory_for_default_event_stream_tag_type()
+            {
+                // Arrange
+                var mockTagStore = Substitute.For<IDocumentTagStore>();
+                var mockFactory = Substitute.For<IDocumentTagDocumentFactory>();
+                mockFactory.CreateStreamTagStore().Returns(mockTagStore);
+
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>
+                {
+                    { "blob", mockFactory }
+                };
+                var settings = new EventStreamDefaultTypeSettings
+                {
+                    EventStreamTagType = "blob"
+                };
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                // Act
+                var result = sut.CreateStreamTagStore();
+
+                // Assert
+                Assert.Same(mockTagStore, result);
+                mockFactory.Received(1).CreateStreamTagStore();
+            }
+
+            [Fact]
+            public void Should_throw_exception_when_no_factory_found()
+            {
+                // Arrange
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>();
+                var settings = new EventStreamDefaultTypeSettings
+                {
+                    EventStreamTagType = "blob"
+                };
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                // Act & Assert
+                Assert.Throws<UnableToFindDocumentTagFactoryException>(() => sut.CreateStreamTagStore());
+            }
+        }
+
+        public class CreateStreamTagStoreWithDocument
+        {
+            [Fact]
+            public void Should_throw_argument_null_exception_when_document_is_null()
+            {
+                // Arrange
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>();
+                var settings = Substitute.For<EventStreamDefaultTypeSettings>();
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+                IObjectDocument document = null!;
+
+                // Act & Assert
+                Assert.Throws<ArgumentNullException>(() => sut.CreateStreamTagStore(document));
+            }
+
+            [Fact]
+            public void Should_throw_argument_null_exception_when_event_stream_tag_type_is_null()
             {
                 // Arrange
                 var factories = new Dictionary<string, IDocumentTagDocumentFactory>();
                 var settings = Substitute.For<EventStreamDefaultTypeSettings>();
                 var sut = new DocumentTagDocumentFactory(factories, settings);
 
+                var document = Substitute.For<IObjectDocument>();
+                var active = Substitute.For<StreamInformation>();
+                active.EventStreamTagType = null!;
+                document.Active.Returns(active);
+
                 // Act & Assert
-                Assert.Throws<NotImplementedException>(() => DocumentTagDocumentFactory.CreateDocumentTagStore());
+                Assert.Throws<ArgumentNullException>(() => sut.CreateStreamTagStore(document));
+            }
+
+            [Fact]
+            public void Should_use_factory_when_event_stream_tag_type_is_found()
+            {
+                // Arrange
+                const string streamTagType = "blobTag";
+                var streamTagStore = Substitute.For<IDocumentTagStore>();
+                var streamTagFactory = Substitute.For<IDocumentTagDocumentFactory>();
+                streamTagFactory.CreateStreamTagStore(Arg.Any<IObjectDocument>()).Returns(streamTagStore);
+
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>
+                {
+                    { streamTagType, streamTagFactory }
+                };
+
+                var settings = Substitute.For<EventStreamDefaultTypeSettings>();
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                var document = Substitute.For<IObjectDocument>();
+                var active = Substitute.For<StreamInformation>();
+                active.EventStreamTagType = streamTagType;
+                document.Active.Returns(active);
+
+                // Act
+                var result = sut.CreateStreamTagStore(document);
+
+                // Assert
+                Assert.Same(streamTagStore, result);
+                streamTagFactory.Received(1).CreateStreamTagStore(document);
+            }
+
+            [Fact]
+            public void Should_use_default_factory_when_event_stream_tag_type_not_found_but_default_exists()
+            {
+                // Arrange
+                const string streamTagType = "blobTag";
+                const string defaultTagType = "defaultTag";
+                var streamTagStore = Substitute.For<IDocumentTagStore>();
+                var defaultTagFactory = Substitute.For<IDocumentTagDocumentFactory>();
+                defaultTagFactory.CreateStreamTagStore(Arg.Any<IObjectDocument>()).Returns(streamTagStore);
+
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>
+                {
+                    { defaultTagType, defaultTagFactory }
+                };
+
+                var settings = new EventStreamDefaultTypeSettings
+                {
+                    EventStreamTagType = defaultTagType
+                };
+
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                var document = Substitute.For<IObjectDocument>();
+                var active = Substitute.For<StreamInformation>();
+                active.EventStreamTagType = streamTagType;
+                document.Active.Returns(active);
+
+                // Act
+                var result = sut.CreateStreamTagStore(document);
+
+                // Assert
+                Assert.Same(streamTagStore, result);
+                defaultTagFactory.Received(1).CreateStreamTagStore(document);
+            }
+
+            [Fact]
+            public void Should_throw_exception_when_no_factory_found()
+            {
+                // Arrange
+                const string streamTagType = "unknownTag";
+                const string defaultTagType = "defaultTag";
+
+                var factories = new Dictionary<string, IDocumentTagDocumentFactory>();
+                var settings = new EventStreamDefaultTypeSettings
+                {
+                    EventStreamTagType = defaultTagType
+                };
+
+                var sut = new DocumentTagDocumentFactory(factories, settings);
+
+                var document = Substitute.For<IObjectDocument>();
+                var active = Substitute.For<StreamInformation>();
+                active.EventStreamTagType = streamTagType;
+                document.Active.Returns(active);
+
+                // Act & Assert
+                var exception = Assert.Throws<UnableToFindDocumentTagFactoryException>(
+                    () => sut.CreateStreamTagStore(document));
+
+                Assert.Contains(streamTagType, exception.Message);
             }
         }
     }

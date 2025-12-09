@@ -13,6 +13,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     private readonly IDictionary<string, IObjectDocumentFactory> objectDocumentFactories;
     private readonly EventStreamDefaultTypeSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagDocumentFactory;
+    private readonly Configuration.IAggregateStorageRegistry? aggregateStorageRegistry;
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
 
     /// <summary>
@@ -21,10 +22,12 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentFactories">A keyed collection of underlying factories by store type.</param>
     /// <param name="documentTagDocumentFactory">The factory used to create document tag stores.</param>
     /// <param name="settings">Default type settings used when resolving factories.</param>
+    /// <param name="aggregateStorageRegistry">Optional registry mapping aggregate names to storage connections for cross-storage projections.</param>
     public ObjectDocumentFactory(
         IDictionary<string, IObjectDocumentFactory> objectDocumentFactories,
         IDocumentTagDocumentFactory documentTagDocumentFactory,
-        EventStreamDefaultTypeSettings settings)
+        EventStreamDefaultTypeSettings settings,
+        Configuration.IAggregateStorageRegistry? aggregateStorageRegistry = null)
     {
         ArgumentNullException.ThrowIfNull(objectDocumentFactories);
         ArgumentNullException.ThrowIfNull(settings);
@@ -33,6 +36,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         this.objectDocumentFactories = objectDocumentFactories;
         this.settings = settings;
         this.documentTagDocumentFactory = documentTagDocumentFactory;
+        this.aggregateStorageRegistry = aggregateStorageRegistry;
     }
 
     /// <summary>
@@ -41,16 +45,20 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectName">The object type/name.</param>
     /// <param name="objectId">The object identifier.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
-    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
+    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetAsync)}");
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
-        var factoryType = settings.DocumentType.ToLowerInvariant();
+        // Resolve storage account from registry if not explicitly provided
+        var targetStore = store ?? aggregateStorageRegistry?.GetStorageForAggregate(objectName);
+
+        var factoryType = (documentType ?? settings.DocumentType).ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            return objectDocumentFactory.GetAsync(objectName, objectId, store);
+            return objectDocumentFactory.GetAsync(objectName, objectId, targetStore);
         }
 
         throw new UnableToFindDocumentFactoryException(
@@ -64,7 +72,8 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectName">The object type/name.</param>
     /// <param name="objectId">The object identifier.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
-    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
+    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetOrCreateAsync)}");
         activity?.AddTag("ObjectName", objectName);
@@ -72,10 +81,13 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
-        var factoryType = settings.DocumentType.ToLowerInvariant();
+        // Resolve storage account from registry if not explicitly provided
+        var targetStore = store ?? aggregateStorageRegistry?.GetStorageForAggregate(objectName);
+
+        var factoryType = (documentType ?? settings.DocumentType).ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out var objectDocumentFactory))
         {
-            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, store);
+            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, targetStore);
         }
 
         throw new UnableToFindDocumentFactoryException(
@@ -134,15 +146,28 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// </summary>
     /// <param name="document">The object document to persist.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
-    public async Task SetAsync(IObjectDocument document, string? store = null)
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
+    public async Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity("ObjectDocument.SetAsync");
         ArgumentNullException.ThrowIfNull(document);
 
-        var factoryType = settings.DocumentType.ToLowerInvariant();
+        // Use document's own DocumentType if set, otherwise use parameter or default
+        var factoryType = (documentType ?? document.Active.DocumentType ?? settings.DocumentType).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(factoryType))
+        {
+            factoryType = settings.DocumentType.ToLowerInvariant();
+        }
+
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
             await objectDocumentFactory.SetAsync(document, store);
+        }
+        else
+        {
+            throw new UnableToFindDocumentFactoryException(
+                $"Unable to find store for DocumentType: {factoryType}." +
+                " Are you sure it's properly registered in the configuration?");
         }
     }
 }

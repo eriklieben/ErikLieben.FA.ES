@@ -1,11 +1,10 @@
 name: OpenSSF Scorecard
 
 on:
-  # Run on pushes to main/vnext for tracking over time
+  # Run on pushes to main for tracking over time
   push:
     branches:
       - main
-      - vnext
   # Run weekly to catch changes in dependencies/ecosystem
   schedule:
     - cron: '0 6 * * 1'  # Every Monday at 6:00 UTC

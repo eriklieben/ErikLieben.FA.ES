@@ -1,4 +1,11 @@
-﻿using ErikLieben.FA.ES.AzureStorage.Exceptions;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+#pragma warning disable xUnit1012 // Null values in [InlineData] for non-nullable parameters - testing null scenarios
+
+using System;
+using ErikLieben.FA.ES.AzureStorage.Exceptions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
 {
@@ -33,7 +40,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Exceptions
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             [InlineData("Custom error message")]
             public void Should_accept_any_message_parameter(string message)

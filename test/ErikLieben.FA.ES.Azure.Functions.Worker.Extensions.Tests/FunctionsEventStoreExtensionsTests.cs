@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using ErikLieben.FA.ES.Azure.Functions.Worker.Extensions;
-using ErikLieben.FA.ES.Configuration;
-using ErikLieben.FA.ES.Documents;
+﻿using ErikLieben.FA.ES.Azure.Functions.Worker.Extensions;
+using Microsoft.Azure.Functions.Worker.Converters;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -10,35 +7,96 @@ namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.Tests;
 
 public class FunctionsEventStoreExtensionsTests
 {
-    [Fact]
-    public void ConfigureEventStore_registers_expected_services_and_keyed_dictionary()
+    public class ConfigureEventStoreBindingsMethod : FunctionsEventStoreExtensionsTests
     {
-        var services = new ServiceCollection();
-        var settings = new EventStreamDefaultTypeSettings();
+        [Fact]
+        public void Should_register_EventStreamConverter()
+        {
+            // Arrange
+            var services = new ServiceCollection();
 
-        FunctionsEventStoreExtensions.ConfigureEventStore(services, settings);
+            // Act
+            services.ConfigureEventStoreBindings();
 
-        var provider = services.BuildServiceProvider();
+            // Assert
+            Assert.Contains(services, sd => sd.ImplementationType?.Name == "EventStreamConverter");
+        }
 
-        // singleton settings
-        var resolvedSettings = provider.GetService<EventStreamDefaultTypeSettings>();
-        Assert.Same(settings, resolvedSettings);
+        [Fact]
+        public void Should_register_ProjectionConverter()
+        {
+            // Arrange
+            var services = new ServiceCollection();
 
-        // Factories
-        Assert.NotNull(provider.GetService<IObjectDocumentFactory>());
-        Assert.NotNull(provider.GetService<IDocumentTagDocumentFactory>());
-        Assert.NotNull(provider.GetService<IEventStreamFactory>());
+            // Act
+            services.ConfigureEventStoreBindings();
 
-        // Keyed dictionaries should resolve even if empty
-        var dict1 = provider.GetService<IDictionary<string, IObjectDocumentFactory>>();
-        var dict2 = provider.GetService<IDictionary<string, IDocumentTagDocumentFactory>>();
-        var dict3 = provider.GetService<IDictionary<string, IEventStreamFactory>>();
+            // Assert
+            Assert.Contains(services, sd => sd.ImplementationType?.Name == "ProjectionConverter");
+        }
 
-        Assert.NotNull(dict1);
-        Assert.NotNull(dict2);
-        Assert.NotNull(dict3);
-        Assert.Empty(dict1!);
-        Assert.Empty(dict2!);
-        Assert.Empty(dict3!);
+        [Fact]
+        public void Should_register_converters_as_IInputConverter()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+
+            // Act
+            services.ConfigureEventStoreBindings();
+
+            // Assert
+            Assert.Contains(services, sd =>
+                sd.ServiceType == typeof(IInputConverter) &&
+                sd.ImplementationType?.Name == "EventStreamConverter");
+            Assert.Contains(services, sd =>
+                sd.ServiceType == typeof(IInputConverter) &&
+                sd.ImplementationType?.Name == "ProjectionConverter");
+        }
+
+        [Fact]
+        public void Should_register_converters_as_singletons()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+
+            // Act
+            services.ConfigureEventStoreBindings();
+
+            // Assert
+            Assert.Contains(services, sd =>
+                sd.ImplementationType?.Name == "EventStreamConverter" &&
+                sd.Lifetime == ServiceLifetime.Singleton);
+            Assert.Contains(services, sd =>
+                sd.ImplementationType?.Name == "ProjectionConverter" &&
+                sd.Lifetime == ServiceLifetime.Singleton);
+        }
+
+        [Fact]
+        public void Should_return_service_collection_for_chaining()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+
+            // Act
+            var result = services.ConfigureEventStoreBindings();
+
+            // Assert
+            Assert.Same(services, result);
+        }
+
+        [Fact]
+        public void Should_allow_multiple_calls_without_error()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+
+            // Act
+            services.ConfigureEventStoreBindings();
+            services.ConfigureEventStoreBindings();
+
+            // Assert
+            var converterCount = services.Count(sd => sd.ServiceType == typeof(IInputConverter));
+            Assert.Equal(4, converterCount); // 2 converters x 2 calls
+        }
     }
 }

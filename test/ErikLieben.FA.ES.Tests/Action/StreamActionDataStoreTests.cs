@@ -1,7 +1,11 @@
-﻿using ErikLieben.FA.ES.Actions;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Action
 {

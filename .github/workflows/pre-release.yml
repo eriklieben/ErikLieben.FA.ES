@@ -1,9 +1,13 @@
 name: vnext Release
 
 on:
-  push:
-    branches:
-      - vnext
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run without publishing packages (test run)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: vnext-release
@@ -79,7 +83,7 @@ jobs:
           dotnet test --configuration Release --no-build \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+            --settings coverage.runsettings
 
       - name: Generate coverage report
         env:
@@ -197,7 +201,8 @@ jobs:
             /o:"eriklieben" \
             /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
+            /d:sonar.branch.name="${{ github.ref_name }}"
 
       - name: Build (required for SonarCloud)
         run: dotnet build --configuration Release --no-restore
@@ -256,12 +261,12 @@ jobs:
         run: snyk monitor --file=ErikLieben.FA.ES.sln || true
         continue-on-error: true
 
-  # Publish to NuGet Test Server (only if packages were created)
+  # Publish to NuGet.org (only if packages were created and not a dry run)
   publish:
-    name: Publish to NuGet Test Server
+    name: Publish to NuGet.org
     runs-on: ubuntu-latest
     needs: build
-    if: needs.build.outputs.has-packages == 'true'
+    if: needs.build.outputs.has-packages == 'true' && inputs.dry_run != true
 
     permissions:
       contents: write
@@ -313,16 +318,14 @@ jobs:
         uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1
         id: nuget-login
         with:
-          user: ${{ secrets.NUGET_TEST_USER }}
-          token-service-url: https://int.nugettest.org/api/v2/token
-          audience: https://int.nugettest.org
+          user: ${{ secrets.NUGET_USER }}
 
-      - name: Push to NuGet Test Server
+      - name: Push to NuGet.org
         run: |
           for package in release-artifacts/*.nupkg release-artifacts/*.snupkg; do
             if [ -f "$package" ]; then
-              echo "Pushing $package to NuGet Test Server..."
-              dotnet nuget push "$package" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://apiint.nugettest.org/v3/index.json --skip-duplicate
+              echo "Pushing $package to NuGet.org..."
+              dotnet nuget push "$package" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
             fi
           done
 
@@ -344,7 +347,7 @@ jobs:
           done
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- Published to: **NuGet Test Server** (int.nugettest.org)" >> $GITHUB_STEP_SUMMARY
+          echo "- Published to: **NuGet.org**" >> $GITHUB_STEP_SUMMARY
           echo "- SBOM generated" >> $GITHUB_STEP_SUMMARY
           echo "- Build attestations created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,5 @@
 ﻿using ErikLieben.FA.ES.Projections;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Projections
 {

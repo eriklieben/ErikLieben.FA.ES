@@ -1,4 +1,8 @@
-﻿using System;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -245,6 +249,231 @@ namespace App.Domain { public partial class A(ErikLieben.FA.ES.IEventStream s) :
             var agg = aggregates.First();
             Assert.Single(agg.Events);
         }
+
+        [Fact]
+        public void Should_merge_command_events_without_when_handlers_into_events_list()
+        {
+            // Arrange: Aggregate with a command that appends an event, but NO When handler for that event
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { }
+  public interface ILeasedSession { Task Append(object evt); }
+  public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors {
+  public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream stream){ Stream = stream; }
+    protected ErikLieben.FA.ES.IEventStream Stream { get; }
+  }
+}
+namespace ErikLieben.FA.ES { public interface IEventStream { System.Threading.Tasks.Task Session(System.Func<ILeasedSession, System.Threading.Tasks.Task> f); } }
+namespace App.Domain {
+  public partial class Project(ErikLieben.FA.ES.IEventStream stream) : ErikLieben.FA.ES.Processors.Aggregate(stream)
+  {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+    // Obsolete command that appends legacy event
+    [System.Obsolete(""Use CompleteProjectSuccessfully instead"")]
+    public System.Threading.Tasks.Task CompleteProject() {
+      return Stream.Session(ctx => { return ctx.Append(new ProjectCompleted()); });
+    }
+    // New command with When handler
+    public System.Threading.Tasks.Task CompleteProjectSuccessfully() {
+      return Stream.Session(ctx => { return ctx.Append(new ProjectCompletedSuccessfully()); });
+    }
+    // When handler ONLY for new event
+    public void When(ProjectCompletedSuccessfully e) { }
+  }
+  public record ProjectCompleted();  // Legacy event, no When handler
+  public record ProjectCompletedSuccessfully();  // New event, has When handler
+}
+";
+            var (classSymbol, classDeclaration, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Project.cs"));
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classDeclaration!, semanticModel, compilation!, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.Equal(2, agg.Events.Count);
+
+            // Both events should be in the events list
+            var legacyEvent = agg.Events.FirstOrDefault(e => e.TypeName == "ProjectCompleted");
+            Assert.NotNull(legacyEvent);
+            Assert.Equal("Command", legacyEvent!.ActivationType); // Comes from command, not When
+
+            var newEvent = agg.Events.FirstOrDefault(e => e.TypeName == "ProjectCompletedSuccessfully");
+            Assert.NotNull(newEvent);
+            Assert.Equal("When", newEvent.ActivationType); // Has When handler
+
+            // Both commands should be detected
+            Assert.Equal(2, agg.Commands.Count);
+            var legacyCommand = agg.Commands.FirstOrDefault(c => c.CommandName == "CompleteProject");
+            Assert.NotNull(legacyCommand);
+            Assert.Single(legacyCommand!.ProducesEvents);
+            Assert.Equal("ProjectCompleted", legacyCommand.ProducesEvents.First().TypeName);
+
+            var newCommand = agg.Commands.FirstOrDefault(c => c.CommandName == "CompleteProjectSuccessfully");
+            Assert.NotNull(newCommand);
+            Assert.Single(newCommand!.ProducesEvents);
+            Assert.Equal("ProjectCompletedSuccessfully", newCommand.ProducesEvents.First().TypeName);
+        }
+
+        [Fact]
+        public void Should_detect_user_defined_factory_partial()
+        {
+            // Arrange: Aggregate with a user-defined partial factory class
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ } } }
+namespace App.Domain {
+  public partial class UserProfile(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+  // User-defined partial factory in same namespace
+  public partial class UserProfileFactory {
+    public async Task<UserProfile> CreateWithEmailAsync(string email) { return null; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "UserProfile.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UserProfile");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.True(agg.HasUserDefinedFactoryPartial, "Should detect user-defined partial factory");
+        }
+
+        [Fact]
+        public void Should_not_detect_factory_partial_when_only_generated_exists()
+        {
+            // Arrange: Aggregate WITHOUT user-defined factory partial
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ Stream = s; } protected ErikLieben.FA.ES.IEventStream Stream { get; } } }
+namespace App.Domain {
+  public partial class Product(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.cs")),
+                // Simulate generated factory file
+                SyntaxFactory.ParseSyntaxTree("namespace App.Domain { public partial class ProductFactory { } }", new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.Generated.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Product");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.False(agg.HasUserDefinedFactoryPartial, "Should NOT detect factory partial when only generated file exists");
+        }
+
+        [Fact]
+        public void Should_detect_user_defined_repository_partial()
+        {
+            // Arrange: Aggregate with a user-defined partial repository class
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ } } }
+namespace App.Domain {
+  public partial class UserProfile(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+  // User-defined partial repository in same namespace
+  public partial class UserProfileRepository {
+    public async Task<UserProfile> GetByEmailAsync(string email) { return null; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "UserProfile.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UserProfile");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.True(agg.HasUserDefinedRepositoryPartial, "Should detect user-defined partial repository");
+        }
+
+        [Fact]
+        public void Should_not_detect_repository_partial_when_only_generated_exists()
+        {
+            // Arrange: Aggregate WITHOUT user-defined repository partial
+            var code = @"
+using System; using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} public interface IEventStream { } public interface IObjectDocument { } public class ObjectMetadata<T> {} }
+namespace ErikLieben.FA.ES.Processors { public abstract class Aggregate { protected Aggregate(ErikLieben.FA.ES.IEventStream s){ Stream = s; } protected ErikLieben.FA.ES.IEventStream Stream { get; } } }
+namespace App.Domain {
+  public partial class Product(ErikLieben.FA.ES.IEventStream s) : ErikLieben.FA.ES.Processors.Aggregate(s) {
+    public ErikLieben.FA.ES.ObjectMetadata<Guid>? Metadata { get; private set; }
+  }
+}
+";
+            var trees = new[] {
+                SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.cs")),
+                // Simulate generated repository file
+                SyntaxFactory.ParseSyntaxTree("namespace App.Domain { public partial class ProductRepository { } }", new CSharpParseOptions(), Path.Combine(Path.GetTempPath(), "Repo", "App", "Domain", "Product.Generated.cs"))
+            };
+            var compilation = CSharpCompilation.Create("TestAssembly", trees, References, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            var aggregateTree = trees[0];
+            var semanticModel = compilation.GetSemanticModel(aggregateTree);
+            var classNode = aggregateTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Product");
+            var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
+            var root = Path.Combine(Path.GetTempPath(), "Repo", "App");
+            var sut = new AnalyzeAggregates(classSymbol!, classNode, semanticModel, compilation, root + Path.DirectorySeparatorChar);
+            var aggregates = new List<AggregateDefinition>();
+
+            // Act
+            sut.Run(aggregates);
+
+            // Assert
+            Assert.Single(aggregates);
+            var agg = aggregates.First();
+            Assert.False(agg.HasUserDefinedRepositoryPartial, "Should NOT detect repository partial when only generated file exists");
+        }
     }
 
     private static (INamedTypeSymbol?, ClassDeclarationSyntax?, SemanticModel, CSharpCompilation?) GetFromCode(
@@ -258,7 +487,7 @@ namespace App.Domain { public partial class A(ErikLieben.FA.ES.IEventStream s) :
 
         var compilation = CSharpCompilation.Create(
             testAssembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -273,18 +502,19 @@ namespace App.Domain { public partial class A(ErikLieben.FA.ES.IEventStream s) :
         var tree = CSharpSyntaxTree.ParseText("public class A {} ");
         var compilation = CSharpCompilation.Create(
             "Dummy",
-            new[] { tree },
+            [tree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
         return compilation.GetSemanticModel(tree);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

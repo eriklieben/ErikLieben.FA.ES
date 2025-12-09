@@ -38,6 +38,11 @@ public abstract class BaseEventStream : IEventStream
     public EventTypeRegistry EventTypeRegistry { get; } = new();
 
     /// <summary>
+    /// Gets the event upcaster registry for AOT-friendly schema version migration.
+    /// </summary>
+    public EventUpcasterRegistry EventUpcasterRegistry { get; } = new();
+
+    /// <summary>
     /// Gets the registered actions for the event stream.
     /// </summary>
     protected readonly List<IAction> Actions = [];
@@ -48,9 +53,9 @@ public abstract class BaseEventStream : IEventStream
     protected readonly List<INotification> Notifications = [];
 
     /// <summary>
-    /// Gets the registered upcasters for event migration.
+    /// Gets the registered upcasters for event migration (interface-based approach).
     /// </summary>
-    protected readonly List<IEventUpcaster> UpCasters = [];
+    protected readonly List<IUpcastEvent> UpCasters = [];
 
     /// <summary>
     /// Gets or sets the JSON type information for snapshot serialization.
@@ -146,7 +151,7 @@ public abstract class BaseEventStream : IEventStream
         return events;
     }
 
-    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IEventUpcaster upcast)
+    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IUpcastEvent upcast)
     {
         if (@event == null) {
             return;
@@ -174,19 +179,30 @@ public abstract class BaseEventStream : IEventStream
     }
 
     /// <summary>
-    /// Registers an event type with its associated metadata.
+    /// Registers an event type with its associated metadata and schema version 1.
     /// </summary>
     /// <typeparam name="T">The CLR type of the event.</typeparam>
     /// <param name="eventName">The name used to identify the event in storage.</param>
     /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
     public void RegisterEvent<T>(string eventName, JsonTypeInfo<T> jsonTypeInfo)
+        => RegisterEvent(eventName, 1, jsonTypeInfo);
+
+    /// <summary>
+    /// Registers an event type with its associated metadata and specified schema version.
+    /// </summary>
+    /// <typeparam name="T">The CLR type of the event.</typeparam>
+    /// <param name="eventName">The name used to identify the event in storage.</param>
+    /// <param name="schemaVersion">The schema version of the event.</param>
+    /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
+    public void RegisterEvent<T>(string eventName, int schemaVersion, JsonTypeInfo<T> jsonTypeInfo)
     {
         using var activity = ActivitySource.StartActivity("EventStream.RegisterEvent");
         var type = typeof(T);
         activity?.AddTag("EventType", type.FullName);
         activity?.AddTag("EventName", eventName);
+        activity?.AddTag("SchemaVersion", schemaVersion);
 
-        EventTypeRegistry.Add(type, eventName, jsonTypeInfo);
+        EventTypeRegistry.Add(type, eventName, schemaVersion, jsonTypeInfo);
     }
 
     /// <summary>
@@ -247,14 +263,33 @@ public abstract class BaseEventStream : IEventStream
     }
 
     /// <summary>
-    /// Registers an upcaster for migrating events from old versions to new versions.
+    /// Registers an event upcast for migrating legacy event schemas to current versions.
+    /// Upcasts transform old event formats into new ones during event stream replay,
+    /// enabling backward compatibility and schema evolution.
     /// </summary>
-    /// <param name="upcaster">The upcaster to register.</param>
-    /// <exception cref="ArgumentNullException">Thrown when upcaster is null.</exception>
-    public void RegisterUpcaster(IEventUpcaster upcaster)
+    /// <param name="upcast">The event upcast to register.</param>
+    /// <exception cref="ArgumentNullException">Thrown when upcast is null.</exception>
+    public void RegisterUpcast(IUpcastEvent upcast)
     {
-        ArgumentNullException.ThrowIfNull(upcaster);
-        UpCasters.Add(upcaster);
+        ArgumentNullException.ThrowIfNull(upcast);
+        UpCasters.Add(upcast);
+    }
+
+    /// <summary>
+    /// Registers an upcaster function for transforming events from one schema version to another.
+    /// This is an AOT-friendly alternative to <see cref="RegisterUpcast(IUpcastEvent)"/>.
+    /// </summary>
+    /// <typeparam name="TFrom">The source event type.</typeparam>
+    /// <typeparam name="TTo">The target event type.</typeparam>
+    /// <param name="eventName">The event name (must match the stored event type).</param>
+    /// <param name="fromVersion">The source schema version to upcast from.</param>
+    /// <param name="toVersion">The target schema version to upcast to.</param>
+    /// <param name="upcast">The function that transforms the event.</param>
+    public void RegisterUpcaster<TFrom, TTo>(string eventName, int fromVersion, int toVersion, Func<TFrom, TTo> upcast)
+        where TFrom : class
+        where TTo : class
+    {
+        EventUpcasterRegistry.Add(eventName, fromVersion, toVersion, upcast);
     }
 
     /// <summary>

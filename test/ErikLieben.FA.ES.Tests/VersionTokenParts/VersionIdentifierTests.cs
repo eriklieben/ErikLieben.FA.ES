@@ -1,6 +1,8 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.VersionTokenParts;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.VersionTokenParts
 {

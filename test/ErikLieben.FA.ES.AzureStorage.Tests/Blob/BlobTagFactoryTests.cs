@@ -1,10 +1,16 @@
-﻿using Azure.Storage.Blobs;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
+using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -141,7 +147,7 @@ public class BlobTagFactoryTests
         }
 
         [Fact]
-        public void Should_throw_when_document_tag_type_is_null()
+        public void Should_throw_when_event_stream_tag_type_is_null()
         {
             // Arrange
             var clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
@@ -151,7 +157,7 @@ public class BlobTagFactoryTests
 
             var document = Substitute.For<IObjectDocument>();
             var documentState = Substitute.For<StreamInformation>();
-            documentState.DocumentTagType = null!;
+            documentState.EventStreamTagType = null!;
             document.Active.Returns(documentState);
 
             // Act & Assert
@@ -159,7 +165,7 @@ public class BlobTagFactoryTests
         }
 
         [Fact]
-        public void Should_create_blob_document_tag_store_with_event_stream_tag_type()
+        public void Should_create_blob_stream_tag_store_with_event_stream_tag_type()
         {
             // Arrange
             var clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
@@ -169,7 +175,7 @@ public class BlobTagFactoryTests
 
             var document = Substitute.For<IObjectDocument>();
             var documentState = Substitute.For<StreamInformation>();
-            documentState.DocumentTagType = "document-tag-type";
+            documentState.EventStreamTagType = "stream-tag-type";
             document.Active.Returns(documentState);
 
             // Act
@@ -177,7 +183,27 @@ public class BlobTagFactoryTests
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<BlobDocumentTagStore>(result);
+            Assert.IsType<BlobStreamTagStore>(result);
+        }
+    }
+
+    public class CreateStreamTagStoreNoParameters
+    {
+        [Fact]
+        public void Should_create_blob_stream_tag_store_with_default_settings()
+        {
+            // Arrange
+            var clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
+            var settings = new EventStreamDefaultTypeSettings { EventStreamTagType = "stream-type" };
+            var blobSettings = new EventStreamBlobSettings("test-store") { AutoCreateContainer = true };
+            var sut = new BlobTagFactory(clientFactory, settings, blobSettings);
+
+            // Act
+            var result = sut.CreateStreamTagStore();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<BlobStreamTagStore>(result);
         }
     }
 }

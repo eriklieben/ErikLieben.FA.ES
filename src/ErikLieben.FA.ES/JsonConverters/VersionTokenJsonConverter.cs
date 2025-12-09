@@ -22,13 +22,15 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
     public override VersionToken Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var versionTokenString = reader.GetString();
-        
-        // TODO: temp hack
+
+        // BACKWARDS COMPATIBILITY: Convert legacy "versionToken[...]" format to current "vt[...]" format.
+        // The old format was used in v1.x and may still exist in persisted data.
+        // This compatibility shim will be removed in a future major version.
         if (versionTokenString != null && versionTokenString.StartsWith("versionToken["))
         {
             versionTokenString = "vt[" + versionTokenString[13..];
         }
-        
+
         if (string.IsNullOrEmpty(versionTokenString) || !versionTokenString.StartsWith(Prefix))
         {
             throw new JsonException($"Invalid versionToken format: {versionTokenString}");
@@ -40,8 +42,9 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
             throw new JsonException($"Invalid versionToken format: {versionTokenString}");
         }
 
-        var value = versionTokenString.Substring(Prefix.Length, suffixStartIndex - Prefix.Length);
-        var schemaVersion = versionTokenString.Substring(suffixStartIndex + 1); // Extract version part after ']'
+        ReadOnlySpan<char> span = versionTokenString.AsSpan();
+        var value = span.Slice(Prefix.Length, suffixStartIndex - Prefix.Length).ToString();
+        var schemaVersion = span[(suffixStartIndex + 1)..].ToString();
 
         if (string.IsNullOrEmpty(schemaVersion))
         {
@@ -81,8 +84,10 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
     public override VersionToken ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var versionTokenString = reader.GetString();
-        
-        // TODO: temp hack
+
+        // BACKWARDS COMPATIBILITY: Convert legacy "versionToken[...]" format to current "vt[...]" format.
+        // The old format was used in v1.x and may still exist in persisted data.
+        // This compatibility shim will be removed in a future major version.
         if (versionTokenString != null && versionTokenString.StartsWith("versionToken["))
         {
             versionTokenString = "vt[" + versionTokenString[13..];
@@ -99,8 +104,9 @@ public class VersionTokenJsonConverter : JsonConverter<VersionToken>
             throw new JsonException($"Invalid versionToken format as property name: {versionTokenString}");
         }
 
-        var value = versionTokenString.Substring(Prefix.Length, suffixStartIndex - Prefix.Length);
-        var schemaVersion = versionTokenString.Substring(suffixStartIndex + 1);
+        ReadOnlySpan<char> span = versionTokenString.AsSpan();
+        var value = span.Slice(Prefix.Length, suffixStartIndex - Prefix.Length).ToString();
+        var schemaVersion = span[(suffixStartIndex + 1)..].ToString();
 
         if (string.IsNullOrEmpty(schemaVersion))
         {

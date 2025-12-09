@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using ErikLieben.FA.ES.CLI.CodeGeneration;
 using ErikLieben.FA.ES.CLI.Model;
 using Xunit;
@@ -241,12 +243,22 @@ public class AggregateSettingsCodeGeneratorTests
             AggregateSettingsCodeGenerator.ExtractEventStreamBlobSettings(attribute, assignments);
 
             // Assert
-            Assert.Equal(5, assignments.Count);
+            // DataStore adds 2 assignments (DataStore + StreamConnectionName)
+            // DocumentStore adds 2 assignments (DocumentStore + DocumentConnectionName)
+            // DocumentTagStore adds 2 assignments (DocumentTagStore + DocumentTagConnectionName)
+            // StreamTagStore adds 2 assignments (StreamTagStore + StreamTagConnectionName)
+            // SnapShotStore adds 2 assignments (SnapShotStore + SnapShotConnectionName)
+            Assert.Equal(10, assignments.Count);
             Assert.Contains("document.Active.DataStore = \"Store1\";", assignments);
+            Assert.Contains("document.Active.StreamConnectionName = \"Store1\";", assignments);
             Assert.Contains("document.Active.DocumentStore = \"DocStore\";", assignments);
+            Assert.Contains("document.Active.DocumentConnectionName = \"DocStore\";", assignments);
             Assert.Contains("document.Active.DocumentTagStore = \"TagStore\";", assignments);
+            Assert.Contains("document.Active.DocumentTagConnectionName = \"TagStore\";", assignments);
             Assert.Contains("document.Active.StreamTagStore = \"StreamStore\";", assignments);
+            Assert.Contains("document.Active.StreamTagConnectionName = \"StreamStore\";", assignments);
             Assert.Contains("document.Active.SnapShotStore = \"SnapshotStore\";", assignments);
+            Assert.Contains("document.Active.SnapShotConnectionName = \"SnapshotStore\";", assignments);
         }
 
         [Fact]
@@ -265,8 +277,10 @@ public class AggregateSettingsCodeGeneratorTests
             AggregateSettingsCodeGenerator.ExtractEventStreamBlobSettings(attribute, assignments);
 
             // Assert
-            Assert.Single(assignments);
+            // DataStore adds 2 assignments (DataStore + StreamConnectionName)
+            Assert.Equal(2, assignments.Count);
             Assert.Contains("document.Active.DataStore = \"Store1\";", assignments);
+            Assert.Contains("document.Active.StreamConnectionName = \"Store1\";", assignments);
         }
     }
 

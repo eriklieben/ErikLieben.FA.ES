@@ -1,6 +1,16 @@
-﻿using System.Text;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8603 // Possible null reference return - test context
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -14,6 +24,7 @@ using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -66,7 +77,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(null!, documentTagStoreFactory, blobSettings));
+            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(null!, documentTagStoreFactory, blobSettings, defaultTypeSettings));
         }
 
         [Fact]
@@ -83,14 +94,45 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(clientFactory, null!, blobSettings));
+            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(clientFactory, null!, blobSettings, defaultTypeSettings));
         }
 
         [Fact]
         public void Should_throw_argument_null_exception_when_blob_settings_is_null()
         {
+            // Arrange
+            var blobSettings = new EventStreamBlobSettings("blob")
+            {
+                DefaultDocumentStore = "test-connection",
+                DefaultDocumentContainerName = "test-container",
+                DefaultSnapShotStore = "test-snapshot",
+                DefaultDocumentTagStore = "test-tag-store",
+                EnableStreamChunks = true,
+                DefaultChunkSize = 1024,
+                AutoCreateContainer = true
+            };
+
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(clientFactory, documentTagStoreFactory, null!));
+            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(clientFactory, documentTagStoreFactory, null!, defaultTypeSettings));
+        }
+
+        [Fact]
+        public void Should_throw_argument_null_exception_when_type_settings_is_null()
+        {
+            // Arrange
+            var blobSettings = new EventStreamBlobSettings("blob")
+            {
+                DefaultDocumentStore = "test-connection",
+                DefaultDocumentContainerName = "test-container",
+                DefaultSnapShotStore = "test-snapshot",
+                DefaultDocumentTagStore = "test-tag-store",
+                EnableStreamChunks = true,
+                DefaultChunkSize = 1024,
+                AutoCreateContainer = true
+            };
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, null!));
         }
 
         [Fact]
@@ -107,7 +149,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
 
             // Assert
             Assert.NotNull(sut);
@@ -130,7 +172,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var etag = new ETag("test-etag");
@@ -204,7 +246,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var requestFailedException = new RequestFailedException(404, "ContainerNotFound", "ContainerNotFound", null);
@@ -231,7 +273,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var etag = new ETag("test-etag");
@@ -275,7 +317,7 @@ public class BlobDocumentStoreTests
      //            DefaultChunkSize = 1024,
      //            AutoCreateContainer = true
      //        };
-     //        var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+     //        var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
      //        var name = "test-name";
      //        var objectId = "test-object-id";
      //        var etag = new ETag("test-etag");
@@ -332,7 +374,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var requestFailedException = new RequestFailedException(404, "ContainerNotFound", "ContainerNotFound", null);
@@ -358,7 +400,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var requestFailedException = new RequestFailedException(404, "BlobNotFound", "BlobNotFound", null);
@@ -385,7 +427,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var name = "test-name";
             var objectId = "test-object-id";
             var etag = new ETag("test-etag");
@@ -429,7 +471,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectName = "test-object-name";
             var tag = "test-tag";
             var objectId = "test-object-id";
@@ -440,8 +482,8 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -449,7 +491,7 @@ public class BlobDocumentStoreTests
             };
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { objectId });
+            documentTagStore.GetAsync(objectName, tag).Returns([objectId]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
@@ -490,12 +532,12 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectName = "test-object-name";
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(Array.Empty<string>());
+            documentTagStore.GetAsync(objectName, tag).Returns([]);
 
             // Act
             var result = await sut.GetFirstByDocumentByTagAsync(objectName, tag);
@@ -518,12 +560,12 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectName = "test-object-name";
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { string.Empty });
+            documentTagStore.GetAsync(objectName, tag).Returns([string.Empty]);
 
             // Act
             var result = await sut.GetFirstByDocumentByTagAsync(objectName, tag);
@@ -549,7 +591,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectName = "test-object-name";
             var tag = "test-tag";
             var objectId1 = "test-object-id-1";
@@ -561,8 +603,8 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId1,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -572,8 +614,8 @@ public class BlobDocumentStoreTests
             {
                 ObjectId = objectId2,
                 ObjectName = objectName,
-                Active = new StreamInformation(),
-                TerminatedStreams = new List<TerminatedStream>(),
+                Active = DeserializeStreamInformation.From(new StreamInformation()),
+                TerminatedStreams = [],
                 SchemaVersion = "1",
                 Hash = hash,
                 PrevHash = "prev-hash",
@@ -581,7 +623,7 @@ public class BlobDocumentStoreTests
             };
 
             documentTagStoreFactory.CreateDocumentTagStore(blobSettings.DefaultDocumentTagStore).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(new[] { objectId1, objectId2 });
+            documentTagStore.GetAsync(objectName, tag).Returns([objectId1, objectId2]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
@@ -628,12 +670,12 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectName = "test-object-name";
             var tag = "test-tag";
 
             documentTagStoreFactory.CreateDocumentTagStore(defaultTypeSettings.DocumentTagType).Returns(documentTagStore);
-            documentTagStore.GetAsync(objectName, tag).Returns(Array.Empty<string>());
+            documentTagStore.GetAsync(objectName, tag).Returns([]);
 
             // Act
             var result = await sut.GetByDocumentByTagAsync(objectName, tag);
@@ -660,7 +702,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectId = "test-object-id";
             var objectName = "test-object-name";
             var etag = new ETag("test-etag");
@@ -668,7 +710,7 @@ public class BlobDocumentStoreTests
             objectDocument.ObjectId.Returns(objectId);
             objectDocument.ObjectName.Returns(objectName);
             objectDocument.Active.Returns(new StreamInformation());
-            objectDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+            objectDocument.TerminatedStreams.Returns([]);
 
             var blobProperties = BlobsModelFactory.BlobProperties(eTag: etag);
             var response = Response.FromValue(blobProperties, Substitute.For<Response>());
@@ -712,7 +754,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
             var objectId = "test-object-id";
             var objectName = "test-object-name";
             var etag = new ETag("test-etag");
@@ -754,7 +796,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
 
 
             // Act - We can't directly test the private method, but we can test it indirectly through public methods
@@ -778,7 +820,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = false
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
 
             // Act & Assert - Similar to above, this is tested indirectly
             Assert.False(blobSettings.AutoCreateContainer);
@@ -801,7 +843,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
 
             // Act - Since ComputeSha256Hash is private static, we test it indirectly
             // The method is used internally and its correctness is validated through integration tests
@@ -827,7 +869,7 @@ public class BlobDocumentStoreTests
                 DefaultChunkSize = 1024,
                 AutoCreateContainer = true
             };
-            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings);
+            var sut = new BlobDocumentStore(clientFactory, documentTagStoreFactory, blobSettings, defaultTypeSettings);
 
             // Act - Since ToBlobEventStreamDocument is private static, we test it indirectly
             // The method is used internally and its correctness is validated through integration tests

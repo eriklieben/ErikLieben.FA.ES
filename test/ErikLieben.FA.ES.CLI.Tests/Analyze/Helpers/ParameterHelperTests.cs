@@ -1,8 +1,12 @@
-﻿using ErikLieben.FA.ES.CLI.Analyze.Helpers;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Runtime.InteropServices;
+using Xunit;
 
 namespace ErikLieben.FA.ES.CLI.Tests.Analyze.Helpers;
 
@@ -24,7 +28,7 @@ public class ParameterHelperTests
         var tree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "ParamAsm",
-            new[] { tree },
+            [tree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );

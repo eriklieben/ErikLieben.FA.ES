@@ -13,8 +13,9 @@ public interface IObjectDocumentFactory
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">An optional store type hint used to select an underlying provider; may be null.</param>
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob"). Only used by composite factories.</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null!);
+    Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null!, string? documentType = null!);
 
     /// <summary>
     /// Retrieves an object document or creates a new one when it does not exist.
@@ -22,8 +23,9 @@ public interface IObjectDocumentFactory
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">An optional store type hint used to select an underlying provider; may be null.</param>
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob"). Only used by composite factories.</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null!);
+    Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null!, string? documentType = null!);
 
     /// <summary>
     /// Gets the first object document that has the specified document tag.
@@ -50,6 +52,7 @@ public interface IObjectDocumentFactory
     /// </summary>
     /// <param name="document">The object document to persist.</param>
     /// <param name="store">An optional store type hint used to select an underlying provider; may be null.</param>
+    /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob"). Only used by composite factories.</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
-    Task SetAsync(IObjectDocument document, string? store = null!);
+    Task SetAsync(IObjectDocument document, string? store = null!, string? documentType = null!);
 }

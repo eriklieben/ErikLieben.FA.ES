@@ -8,6 +8,7 @@ using Microsoft.Extensions.Azure;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
+#pragma warning disable CS8602 // Dereference of possibly null reference - blobDocumentStore is always initialized in constructors
 /// <summary>
 /// Provides an Azure Blob Storage-backed implementation of <see cref="IObjectDocumentFactory"/>.
 /// </summary>
@@ -29,7 +30,7 @@ public BlobObjectDocumentFactory(
         EventStreamDefaultTypeSettings settings,
         EventStreamBlobSettings blobSettings)
     {
-        blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings);
+        this.blobDocumentStore = new BlobDocumentStore(clientFactory, documentTagStore, blobSettings, settings);
     }
 
     /// <summary>
@@ -49,18 +50,16 @@ public BlobObjectDocumentFactory(
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
-        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
-        AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
 
-        // After validation, both objectName and objectId are guaranteed to be non-null
         var objectNameLower = objectName.ToLowerInvariant();
-#pragma warning disable CS8604 // Possible null reference argument - validated above
-        var result = await blobDocumentStore.CreateAsync(objectNameLower, objectId, store);
-#pragma warning restore CS8604
+        var result = await this.blobDocumentStore!.CreateAsync(objectNameLower, objectId, store);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.CreateAsync returned null document.");
@@ -74,14 +73,15 @@ public BlobObjectDocumentFactory(
     /// <param name="objectName">The object type/name used to determine the container and path.</param>
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null)
+    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectId);
 
-        var result = await blobDocumentStore.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
+        var result = await this.blobDocumentStore!.GetAsync(objectName!.ToLowerInvariant(), objectId!, store);
         if (result is null)
         {
             throw new InvalidOperationException("BlobDocumentStore.GetAsync returned null document.");
@@ -101,7 +101,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public BlobObjectDocumentFactory(
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectDocumentTag);
         return (await blobDocumentStore.GetByDocumentByTagAsync(objectName, objectDocumentTag, documentTagStore, store))
-               ?? Enumerable.Empty<IObjectDocument>();
+               ?? [];
     }
 
     /// <summary>
@@ -142,8 +142,9 @@ public BlobObjectDocumentFactory(
     /// </summary>
     /// <param name="document">The object document to save.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null)
+    public Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(SetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfNull(document);

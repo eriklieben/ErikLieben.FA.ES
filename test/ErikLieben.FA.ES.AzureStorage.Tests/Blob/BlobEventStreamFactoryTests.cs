@@ -1,4 +1,9 @@
-﻿using Azure.Storage.Blobs;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
+using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Blob.Model;

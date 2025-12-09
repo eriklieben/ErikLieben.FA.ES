@@ -10,11 +10,16 @@ public record EventDefinition
 
     public required string EventName { get; init; }
 
+    /// <summary>
+    /// The schema version of the event. Defaults to 1 if not specified via [EventVersion] attribute.
+    /// </summary>
+    public int SchemaVersion { get; init; } = 1;
+
     public required string ActivationType { get; init; }
 
     public required bool ActivationAwaitRequired { get; init; }
 
-    public List<ParameterDefinition> Parameters { get; init; } = new();
+    public List<ParameterDefinition> Parameters { get; init; } = [];
 
-    public List<PropertyDefinition> Properties { get; init; } = new();
+    public List<PropertyDefinition> Properties { get; init; } = [];
 }

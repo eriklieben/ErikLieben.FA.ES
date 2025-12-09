@@ -1,4 +1,8 @@
-﻿using System;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,7 +28,7 @@ public class AnalyzeInheritedAggregatesTests
             var tree = CSharpSyntaxTree.ParseText("public class A{} ");
             var compilation = CSharpCompilation.Create(
                 "Dummy",
-                new[] { tree },
+                [tree],
                 References,
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var semanticModel = compilation.GetSemanticModel(tree);
@@ -290,7 +294,7 @@ namespace App.Domain {
         var tree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "DummyAsm",
-            new[] { tree },
+            [tree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var model = compilation.GetSemanticModel(tree);
@@ -305,7 +309,7 @@ namespace App.Domain {
             : SyntaxFactory.ParseSyntaxTree(code, new CSharpParseOptions(), filePath);
         var compilation = CSharpCompilation.Create(
             "TestAssembly",
-            new[] { tree },
+            [tree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         var model = compilation.GetSemanticModel(tree);
@@ -314,11 +318,12 @@ namespace App.Domain {
         return (model.GetDeclaredSymbol(classDecl), model, compilation);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

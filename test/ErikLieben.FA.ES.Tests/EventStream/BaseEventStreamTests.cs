@@ -1,5 +1,9 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;
@@ -9,6 +13,7 @@ using ErikLieben.FA.ES.Notifications;
 using ErikLieben.FA.ES.Processors;
 using ErikLieben.FA.ES.Upcasting;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.EventStream
 {
@@ -173,12 +178,12 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var events = new List<IEvent> { originalEvent };
                 dependencies.DataStore.ReadAsync(document, 0, null, chunk: null).Returns(events);
 
-                var upCaster = Substitute.For<IEventUpcaster>();
+                var upCaster = Substitute.For<IUpcastEvent>();
                 upCaster.CanUpcast(originalEvent).Returns(true);
-                upCaster.UpCast(originalEvent).Returns(new[] { upcastedEvent });
+                upCaster.UpCast(originalEvent).Returns([upcastedEvent]);
 
                 var sut = new TestEventStream(document, dependencies);
-                sut.RegisterUpcaster(upCaster);
+                sut.RegisterUpcast(upCaster);
 
                 // Act
                 var result = await sut.ReadAsync();
@@ -206,12 +211,12 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var events = new List<IEvent> { originalEvent };
                 dependencies.DataStore.ReadAsync(document, 0, null, chunk: null).Returns(events);
 
-                var upCaster = Substitute.For<IEventUpcaster>();
+                var upCaster = Substitute.For<IUpcastEvent>();
                 upCaster.CanUpcast(originalEvent).Returns(true);
                 upCaster.UpCast(originalEvent).Returns([upcastedEvent1, upcastedEvent2]);
 
                 var sut = new TestEventStream(document, dependencies);
-                sut.RegisterUpcaster(upCaster);
+                sut.RegisterUpcast(upCaster);
 
                 // Act
                 var result = await sut.ReadAsync();
@@ -428,10 +433,10 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var document = Substitute.For<IObjectDocumentWithMethods>();
                 var dependencies = Substitute.For<IStreamDependencies>();
                 var sut = new TestEventStream(document, dependencies);
-                var upcaster = Substitute.For<IEventUpcaster>();
+                var upcaster = Substitute.For<IUpcastEvent>();
 
                 // Act
-                sut.RegisterUpcaster(upcaster);
+                sut.RegisterUpcast(upcaster);
 
                 // Assert
                 Assert.Single(sut.GetUpcasters());
@@ -447,7 +452,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = new TestEventStream(document, dependencies);
 
                 // Act & Assert
-                Assert.Throws<ArgumentNullException>(() => sut.RegisterUpcaster(null!));
+                Assert.Throws<ArgumentNullException>(() => sut.RegisterUpcast(null!));
             }
         }
 
@@ -640,7 +645,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var document = Substitute.For<IObjectDocumentWithMethods>();
                 var active = Substitute.For<StreamInformation>();
                 document.Active.Returns(active);
-                active.SnapShots = new List<StreamSnapShot>();
+                active.SnapShots = [];
 
                 var dependencies = Substitute.For<IStreamDependencies>();
                 var options = new JsonSerializerOptions();
@@ -837,7 +842,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
 
             public List<IAction> GetActions() => Actions;
             public List<INotification> GetNotifications() => Notifications;
-            public List<IEventUpcaster> GetUpcasters() => UpCasters;
+            public List<IUpcastEvent> GetUpcasters() => UpCasters;
             public JsonTypeInfo? GetJsonTypeInfoSnapshot() => JsonTypeInfoSnapshot;
             public JsonTypeInfo? GetJsonTypeInfoAgg() => JsonTypeInfoAgg;
         }

@@ -25,12 +25,17 @@ public record WhenParameterValueItem
 public record WhenParameterDeclaration
 {
     public required string Name { get; init; }
-    
+
     public required string Type { get; init; }
-    
+
     public required string Namespace { get; init; }
 
     public required List<GenericArgument> GenericArguments { get; init; } = [];
+
+    /// <summary>
+    /// Indicates if this parameter type implements IExecutionContext.
+    /// </summary>
+    public bool IsExecutionContext { get; init; }
 }
 
 public record GenericArgument

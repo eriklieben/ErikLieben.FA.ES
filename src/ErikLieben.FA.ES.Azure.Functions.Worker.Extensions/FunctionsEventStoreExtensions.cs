@@ -1,49 +1,64 @@
-﻿using ErikLieben.FA.ES.Configuration;
-using ErikLieben.FA.ES.Documents;
-using ErikLieben.FA.ES.EventStream;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Converters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ErikLieben.FA.ES.Azure.Functions.Worker.Extensions;
 
 /// <summary>
-/// Provides extension methods to configure the Event Store dependencies for Azure Functions Worker.
+/// Provides extension methods to configure the Event Store bindings for Azure Functions Worker.
 /// </summary>
 public static class FunctionsEventStoreExtensions
 {
     /// <summary>
-    /// Registers Event Store services and default settings for dependency injection.
+    /// Registers the Event Store and Projection input converters for Azure Functions.
     /// </summary>
+    /// <remarks>
+    /// This registers the converters needed for the [EventStreamInput] and [ProjectionInput] bindings to work.
+    /// You should also call <c>services.ConfigureEventStore()</c> from the core ErikLieben.FA.ES package
+    /// to register the core event store services.
+    /// </remarks>
     /// <param name="services">The service collection to add registrations to.</param>
-    /// <param name="settings">The default event stream type settings used to resolve factories.</param>
-    /// <returns>The <see cref="IServiceCollection"/> instance to support fluent configuration.</returns>
-    public static IServiceCollection ConfigureEventStore(this IServiceCollection services, EventStreamDefaultTypeSettings settings)
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection ConfigureEventStoreBindings(this IServiceCollection services)
     {
-        services.AddSingleton(settings);
-        services.AddSingleton<IObjectDocumentFactory, ObjectDocumentFactory>();
-        services.RegisterKeyedDictionary<string, IObjectDocumentFactory>();
-        services.AddSingleton<IDocumentTagDocumentFactory, DocumentTagDocumentFactory>();
-        services.RegisterKeyedDictionary<string, IDocumentTagDocumentFactory>();
-        services.AddSingleton<IEventStreamFactory, EventStreamFactory>();
-        services.RegisterKeyedDictionary<string, IEventStreamFactory>();
-
+        // Register converters as IInputConverter for Azure Functions runtime discovery
+        services.AddSingleton<IInputConverter, EventStreamConverter>();
+        services.AddSingleton<IInputConverter, ProjectionConverter>();
         return services;
     }
 
     /// <summary>
-    /// Registers a keyed dictionary mapping service keys to resolved services of type <typeparamref name="T"/>.
+    /// Configures the Azure Functions Worker to use the Event Store bindings, including
+    /// input converters and output middleware.
+    /// Call this method on <see cref="IFunctionsWorkerApplicationBuilder"/> during startup.
     /// </summary>
-    /// <typeparam name="TKey">The type of the service key.</typeparam>
-    /// <typeparam name="T">The service type to resolve.</typeparam>
-    /// <param name="serviceCollection">The service collection to read existing keyed registrations from.</param>
-    private static void RegisterKeyedDictionary<TKey, T>(this IServiceCollection serviceCollection) where TKey : notnull where T : notnull
+    /// <remarks>
+    /// <para>
+    /// This registers:
+    /// <list type="bullet">
+    /// <item><description>Input converters for [EventStreamInput] and [ProjectionInput] bindings</description></item>
+    /// <item><description>Middleware for [ProjectionOutput&lt;T&gt;] to update projections after function execution</description></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// You should also call <c>services.ConfigureEventStore()</c> from the core ErikLieben.FA.ES package
+    /// to register the core event store services.
+    /// </para>
+    /// <para>
+    /// Example usage:
+    /// <code>
+    /// var builder = FunctionsApplication.CreateBuilder(args);
+    /// builder.ConfigureEventStoreBindings();
+    /// </code>
+    /// </para>
+    /// </remarks>
+    /// <param name="builder">The Functions Worker application builder.</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFunctionsWorkerApplicationBuilder ConfigureEventStoreBindings(this IFunctionsWorkerApplicationBuilder builder)
     {
-        var keys = serviceCollection
-            .Where(sd => sd.IsKeyedService && sd.ServiceType == typeof(T) && sd.ServiceKey is TKey)
-            .Select(sd => (TKey)sd.ServiceKey!)
-            .Distinct()
-            .ToList();
-
-        serviceCollection.AddTransient<IDictionary<TKey, T>>(p => keys
-            .ToDictionary(k => k, k => p.GetRequiredKeyedService<T>(k)));
+        builder.Services.ConfigureEventStoreBindings();
+        builder.UseMiddleware<ProjectionOutputMiddleware>();
+        return builder;
     }
 }

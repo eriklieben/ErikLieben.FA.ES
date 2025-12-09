@@ -1,5 +1,8 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Documents
 {

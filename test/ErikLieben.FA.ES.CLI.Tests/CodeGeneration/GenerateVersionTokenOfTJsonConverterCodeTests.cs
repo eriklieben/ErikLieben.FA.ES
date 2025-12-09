@@ -17,7 +17,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -38,7 +38,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
                 GenericType = "Guid",
                 NamespaceOfType = "System",
                 IsPartialClass = true,
-                FileLocations = new List<string> { "Demo\\Tokens\\OrderVersion.cs" }
+                FileLocations = ["Demo\\Tokens\\OrderVersion.cs"]
             },
             new VersionTokenDefinition
             {
@@ -47,7 +47,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
                 GenericType = "String",
                 NamespaceOfType = "System",
                 IsPartialClass = true,
-                FileLocations = new List<string> { "Demo\\Tokens\\AccountVersion.cs" }
+                FileLocations = ["Demo\\Tokens\\AccountVersion.cs"]
             }
         };
 
@@ -56,7 +56,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
             Name = "DemoJsonConverter",
             Namespace = "Demo.App.Json",
             IsPartialClass = true,
-            FileLocations = new List<string> { "Demo\\Serialization\\DemoJsonConverter.cs" }
+            FileLocations = ["Demo\\Serialization\\DemoJsonConverter.cs"]
         };
 
         var project = new ProjectDefinition
@@ -65,7 +65,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
             VersionTokens = tokens,
-            VersionTokenJsonConverterDefinitions = new List<VersionTokenJsonConverterDefinition> { converter }
+            VersionTokenJsonConverterDefinitions = [converter]
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -114,7 +114,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
                 GenericType = "Guid",
                 NamespaceOfType = "System",
                 IsPartialClass = true,
-                FileLocations = new List<string> { "Demo\\Tokens\\OrderVersion.cs" }
+                FileLocations = ["Demo\\Tokens\\OrderVersion.cs"]
             }
         };
 
@@ -123,7 +123,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
             Name = "NotPartialConverter",
             Namespace = "Demo.App.Json",
             IsPartialClass = false,
-            FileLocations = new List<string> { "Demo\\Serialization\\NotPartialConverter.cs" }
+            FileLocations = ["Demo\\Serialization\\NotPartialConverter.cs"]
         };
 
         var project = new ProjectDefinition
@@ -132,7 +132,7 @@ public class GenerateVersionTokenOfTJsonConverterCodeTests
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
             VersionTokens = tokens,
-            VersionTokenJsonConverterDefinitions = new List<VersionTokenJsonConverterDefinition> { converter }
+            VersionTokenJsonConverterDefinitions = [converter]
         };
 
         var (solution, outDir) = BuildSolution(project);

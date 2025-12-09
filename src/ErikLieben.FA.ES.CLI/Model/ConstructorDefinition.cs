@@ -2,5 +2,5 @@
 
 public record ConstructorDefinition
 {
-    public List<ConstructorParameter> Parameters { get; init; } = new();
+    public List<ConstructorParameter> Parameters { get; init; } = [];
 }
