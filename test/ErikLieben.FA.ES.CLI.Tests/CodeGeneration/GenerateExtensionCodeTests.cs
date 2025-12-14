@@ -910,4 +910,86 @@ public class GenerateExtensionCodeTests
         // Assert
         Assert.NotNull(sut);
     }
+
+    [Fact]
+    public async Task Generate_does_not_duplicate_generic_parameters_for_strongly_typed_ids()
+    {
+        // Arrange - Reproduces bug where StronglyTypedId<Guid> becomes StronglyTypedId<Guid>< Guid >
+        var eventProps = new List<PropertyDefinition>
+        {
+            new PropertyDefinition
+            {
+                Name = "CompanyId",
+                Type = "CompanyIdentifier",
+                Namespace = "Demo.App.Identifiers",
+                IsNullable = false,
+                SubTypes =
+                [
+                    // This simulates a StronglyTypedId<Guid> type where:
+                    // - Name already includes generics (from GetFullTypeNameIncludingGenerics)
+                    // - GenericTypes contains the type argument
+                    new PropertyGenericTypeDefinition(
+                        Name: "StronglyTypedId<Guid>",  // Already has <Guid> in the name
+                        Namespace: "ErikLieben.FA.StronglyTypedIds",
+                        GenericTypes:
+                        [
+                            // But also has Guid in GenericTypes
+                            new PropertyGenericTypeDefinition(
+                                Name: "Guid",
+                                Namespace: "System",
+                                GenericTypes: [],
+                                SubTypes: [])
+                        ],
+                        SubTypes: [])
+                ]
+            }
+        };
+
+        var aggregate = new AggregateDefinition
+        {
+            IdentifierName = "Company",
+            ObjectName = "company",
+            IdentifierType = "CompanyIdentifier",
+            IdentifierTypeNamespace = "Demo.App.Identifiers",
+            Namespace = "Demo.App.Domain",
+            IsPartialClass = true,
+            Events =
+            [
+                new EventDefinition
+                {
+                    TypeName = "CompanyCreated",
+                    Namespace = "Demo.App.Events",
+                    EventName = "Company.Created",
+                    ActivationType = "When",
+                    ActivationAwaitRequired = false,
+                    Properties = eventProps
+                }
+            ]
+        };
+
+        var project = new ProjectDefinition
+        {
+            Name = "Demo.App",
+            Namespace = "Demo.App",
+            FileLocation = "Demo.App.csproj",
+            Aggregates = [aggregate],
+            Projections = []
+        };
+
+        var (solution, outDir) = BuildSolution(project);
+        var sut = new GenerateExtensionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo.AppExtensions.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // BUG: Should generate [JsonSerializable(typeof(StronglyTypedId<Guid>))]
+        // NOT: [JsonSerializable(typeof(StronglyTypedId<Guid>< Guid >))]
+        Assert.Contains("[JsonSerializable(typeof(StronglyTypedId<Guid>))]", code);
+        Assert.DoesNotContain("StronglyTypedId<Guid>< Guid >", code);
+    }
 }

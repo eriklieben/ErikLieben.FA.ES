@@ -367,7 +367,11 @@ public async Task Generate()
         List<string> jsonSerializerCodeList,
         List<string> nameSpaceUsings)
     {
-        if (type.GenericTypes.Count != 0)
+        // Check if type.Name already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, use it as-is to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = type.Name.Contains('<') && type.Name.Contains('>');
+
+        if (type.GenericTypes.Count != 0 && !alreadyHasGenerics)
         {
             var genericSignature = BuildGenericTypeSignature(type.GenericTypes, nameSpaceUsings);
             jsonSerializerCodeList.Add($"[JsonSerializable(typeof({type.Name}<{genericSignature}>))]");
