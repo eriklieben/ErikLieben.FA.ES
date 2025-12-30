@@ -47,4 +47,23 @@ public class ObjectDocumentWithTags : ObjectDocument, IObjectDocumentWithMethods
             throw new NotImplementedException("Not supported yet");
         }
     }
+
+    /// <summary>
+    /// Removes a tag from the document using the configured tag store.
+    /// </summary>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <param name="tagType">The tag category to remove from; only <see cref="TagTypes.DocumentTag"/> is currently supported.</param>
+    /// <exception cref="NotImplementedException">Thrown when <paramref name="tagType"/> is <see cref="TagTypes.StreamTag"/>.</exception>
+    public async Task RemoveTagAsync(string tag, TagTypes tagType = TagTypes.DocumentTag)
+    {
+        if (tagType == TagTypes.DocumentTag)
+        {
+            await documentTagStore.RemoveAsync(this, tag);
+        }
+
+        if (tagType == TagTypes.StreamTag)
+        {
+            throw new NotImplementedException("Not supported yet");
+        }
+    }
 }

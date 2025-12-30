@@ -113,6 +113,34 @@ public partial class CosmosDbStreamTagStore : IDocumentTagStore
         return objectIds;
     }
 
+    /// <summary>
+    /// Removes the specified tag from the stream of the given document by deleting the tag entity from CosmosDB.
+    /// </summary>
+    /// <param name="document">The document whose stream tag should be removed.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public async Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        var container = await GetTagsContainerAsync();
+
+        var sanitizedTag = SanitizeTag(tag);
+        var tagKey = CosmosDbTagEntity.CreateTagKey(document.ObjectName, sanitizedTag);
+        var id = CosmosDbTagEntity.CreateId("stream", document.ObjectName, sanitizedTag, document.ObjectId);
+        var partitionKey = new PartitionKey(tagKey);
+
+        try
+        {
+            await container.DeleteItemAsync<CosmosDbTagEntity>(id, partitionKey);
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Tag doesn't exist, which is fine (idempotent operation)
+        }
+    }
+
     private async Task<Container> GetTagsContainerAsync()
     {
         if (tagsContainer != null)
