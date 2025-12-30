@@ -98,9 +98,46 @@ public class BlobStreamTagStore : IDocumentTagStore
     /// <param name="document">The document whose stream tag should be removed.</param>
     /// <param name="tag">The tag value to remove.</param>
     /// <returns>A task that represents the asynchronous removal operation.</returns>
-    public Task RemoveAsync(IObjectDocument document, string tag)
+    public async Task RemoveAsync(IObjectDocument document, string tag)
     {
-        throw new NotImplementedException("Stream tag removal is not yet implemented.");
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        string documentPath = $"tags/stream/{document.Active.StreamIdentifier}.json";
+        var blob = CreateBlobClient(document, documentPath);
+
+        if (!await blob.ExistsAsync())
+        {
+            // Tag doesn't exist, nothing to remove
+            return;
+        }
+
+        var properties = await blob.GetPropertiesAsync();
+        var etag = properties.Value.ETag;
+
+        var (doc, _) = await blob.AsEntityAsync(
+            BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+            new BlobRequestConditions { IfMatch = etag });
+
+        if (doc == null)
+        {
+            return;
+        }
+
+        doc.ObjectIds.Remove(document.ObjectId);
+
+        if (doc.ObjectIds.Count == 0)
+        {
+            // No more documents with this tag, delete the blob
+            await blob.DeleteIfExistsAsync(conditions: new BlobRequestConditions { IfMatch = etag });
+        }
+        else
+        {
+            // Update the blob with the remaining documents
+            await blob.SaveEntityAsync(doc,
+                BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+                new BlobRequestConditions { IfMatch = etag });
+        }
     }
 
     private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
