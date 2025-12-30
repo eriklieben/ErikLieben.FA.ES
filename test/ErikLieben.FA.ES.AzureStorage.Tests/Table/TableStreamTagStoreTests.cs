@@ -178,6 +178,124 @@ public class TableStreamTagStoreTests
             // Assert
             Assert.Empty(result);
         }
+    }
 
+    public class RemoveAsyncMethod : TableStreamTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            // Arrange
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(mockDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            // Arrange
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(mockDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            // Arrange
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(mockDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_call_delete_entity_async()
+        {
+            // Arrange
+            var mockTableServiceClient = Substitute.For<TableServiceClient>();
+            var mockTableClient = Substitute.For<TableClient>();
+
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+            var mockDocument = Substitute.For<IObjectDocument>();
+            var mockActive = Substitute.For<StreamInformation>();
+
+            mockDocument.Active.Returns(mockActive);
+            mockActive.StreamIdentifier = "stream-123";
+            mockDocument.ObjectName.Returns("TestObject");
+            mockDocument.ObjectId.Returns("obj-456");
+            mockActive.StreamTagStore = "defaultConnection";
+
+            mockClientFactory.CreateClient("defaultConnection").Returns(mockTableServiceClient);
+            mockTableServiceClient.GetTableClient(settings.DefaultStreamTagTableName).Returns(mockTableClient);
+            mockTableClient.CreateIfNotExistsAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(Response.FromValue(
+                    TableModelFactory.TableItem(settings.DefaultStreamTagTableName),
+                    Substitute.For<Response>())));
+
+            // Act
+            await sut.RemoveAsync(mockDocument, "my-tag");
+
+            // Assert
+            await mockTableClient.Received(1).DeleteEntityAsync(
+                Arg.Is<string>(pk => pk == "testobject_stream-123"),
+                Arg.Is<string>(rk => rk == "my-tag"),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_not_throw_when_entity_not_found()
+        {
+            // Arrange
+            var mockTableServiceClient = Substitute.For<TableServiceClient>();
+            var mockTableClient = Substitute.For<TableClient>();
+
+            var sut = new TableStreamTagStore(mockClientFactory, settings);
+            var mockDocument = Substitute.For<IObjectDocument>();
+            var mockActive = Substitute.For<StreamInformation>();
+
+            mockDocument.Active.Returns(mockActive);
+            mockActive.StreamIdentifier = "stream-123";
+            mockDocument.ObjectName.Returns("TestObject");
+            mockDocument.ObjectId.Returns("obj-456");
+            mockActive.StreamTagStore = "defaultConnection";
+
+            mockClientFactory.CreateClient("defaultConnection").Returns(mockTableServiceClient);
+            mockTableServiceClient.GetTableClient(settings.DefaultStreamTagTableName).Returns(mockTableClient);
+            mockTableClient.CreateIfNotExistsAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(Response.FromValue(
+                    TableModelFactory.TableItem(settings.DefaultStreamTagTableName),
+                    Substitute.For<Response>())));
+
+            mockTableClient.DeleteEntityAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>())
+                .Returns<Task<Response>>(_ => throw new RequestFailedException(404, "Entity not found"));
+
+            // Act - should not throw
+            await sut.RemoveAsync(mockDocument, "my-tag");
+
+            // Assert - verifying no exception was thrown
+            Assert.True(true);
+        }
     }
 }

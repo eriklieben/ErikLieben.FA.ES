@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Azure;
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Table;
@@ -84,6 +85,92 @@ public class TableDocumentTagStoreTests
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => sut.SetAsync(null!, "test-tag"));
+        }
+    }
+
+    public class RemoveAsync : TableDocumentTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "test-tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(objectDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_call_delete_entity_async()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            clientFactory.CreateClient("test-connection").Returns(tableServiceClient);
+            tableServiceClient.GetTableClient(settings.DefaultDocumentTagTableName).Returns(tableClient);
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert
+            await tableClient.Received(1).DeleteEntityAsync(
+                Arg.Is<string>(pk => pk == "testobject_test-tag"),
+                Arg.Is<string>(rk => rk == "test-id"),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_not_throw_when_entity_not_found()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            clientFactory.CreateClient("test-connection").Returns(tableServiceClient);
+            tableServiceClient.GetTableClient(settings.DefaultDocumentTagTableName).Returns(tableClient);
+
+            tableClient.DeleteEntityAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>())
+                .Returns<Task<Response>>(_ => throw new RequestFailedException(404, "Entity not found"));
+
+            // Act - should not throw
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert - verifying no exception was thrown
+            Assert.True(true);
         }
     }
 }

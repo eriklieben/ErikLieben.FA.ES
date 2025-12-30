@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -30,6 +31,11 @@ public partial class BlobDocumentTagStoreDocumentJsonContext : JsonSerializerCon
 
 public class BlobStreamTagStoreTests
 {
+    private static readonly JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
     private readonly IAzureClientFactory<BlobServiceClient> mockClientFactory;
     private readonly BlobServiceClient mockBlobServiceClient;
     private readonly BlobContainerClient mockContainerClient;
@@ -363,6 +369,189 @@ public class BlobStreamTagStoreTests
             // Act & Assert
             await Assert.ThrowsAsync<NotImplementedException>(() =>
                 sut.GetAsync("objectName", "tag"));
+        }
+    }
+
+    public class RemoveAsyncMethod : BlobStreamTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(mockDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(mockDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(mockDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_return_early_when_blob_does_not_exist()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+            var mockActive = Substitute.For<StreamInformation>();
+
+            mockDocument.Active.Returns(mockActive);
+            mockActive.StreamIdentifier = "stream-id";
+            mockDocument.ObjectName.Returns("object-name");
+            mockDocument.TerminatedStreams.Returns([]);
+            mockActive.StreamConnectionName = "connection";
+            mockDocument.ObjectId.Returns(Guid.NewGuid().ToString());
+
+            mockClientFactory.CreateClient("connection").Returns(mockBlobServiceClient);
+            mockBlobServiceClient.GetBlobContainerClient("object-name").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient("tags/stream/stream-id.json").Returns(mockBlobClient);
+
+            mockBlobClient.ExistsAsync().Returns(Response.FromValue(false, Substitute.For<Response>()));
+
+            // Act
+            await sut.RemoveAsync(mockDocument, "test-tag");
+
+            // Assert - should not call any other methods
+            await mockBlobClient.DidNotReceive().GetPropertiesAsync();
+        }
+
+        [Fact]
+        public async Task Should_delete_blob_when_no_documents_remain()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+            var mockActive = Substitute.For<StreamInformation>();
+            var objectId = Guid.NewGuid().ToString();
+
+            mockDocument.Active.Returns(mockActive);
+            mockActive.StreamIdentifier = "stream-id";
+            mockDocument.ObjectName.Returns("object-name");
+            mockDocument.TerminatedStreams.Returns([]);
+            mockActive.StreamConnectionName = "connection";
+            mockDocument.ObjectId.Returns(objectId);
+
+            mockClientFactory.CreateClient("connection").Returns(mockBlobServiceClient);
+            mockBlobServiceClient.GetBlobContainerClient("object-name").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient("tags/stream/stream-id.json").Returns(mockBlobClient);
+
+            mockBlobClient.ExistsAsync().Returns(Response.FromValue(true, Substitute.For<Response>()));
+
+            var blobProperties = BlobsModelFactory.BlobProperties(eTag: new ETag("test-etag"));
+            mockBlobClient.GetPropertiesAsync().Returns(Response.FromValue(blobProperties, Substitute.For<Response>()));
+
+            var existingDoc = new BlobDocumentTagStoreDocument
+            {
+                Tag = "test-tag",
+                ObjectIds = [objectId]
+            };
+            var jsonData = JsonSerializer.Serialize(existingDoc, CamelCaseOptions);
+            var jsonBytes = Encoding.UTF8.GetBytes(jsonData);
+
+            mockBlobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
+                .Returns(Task.FromResult(Substitute.For<Response>()))
+                .AndDoes(callInfo =>
+                {
+                    var stream = callInfo.Arg<MemoryStream>();
+                    stream.Write(jsonBytes, 0, jsonBytes.Length);
+                    stream.Position = 0;
+                });
+
+            // Act
+            await sut.RemoveAsync(mockDocument, "test-tag");
+
+            // Assert
+            await mockBlobClient.Received(1).DeleteIfExistsAsync(
+                Arg.Any<DeleteSnapshotsOption>(),
+                Arg.Is<BlobRequestConditions>(c => c.IfMatch.HasValue),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_update_blob_when_other_documents_remain()
+        {
+            // Arrange
+            var sut = new BlobStreamTagStore(mockClientFactory, "defaultConnection", true);
+            var mockDocument = Substitute.For<IObjectDocument>();
+            var mockActive = Substitute.For<StreamInformation>();
+            var objectId = Guid.NewGuid().ToString();
+
+            mockDocument.Active.Returns(mockActive);
+            mockActive.StreamIdentifier = "stream-id";
+            mockDocument.ObjectName.Returns("object-name");
+            mockDocument.TerminatedStreams.Returns([]);
+            mockActive.StreamConnectionName = "connection";
+            mockDocument.ObjectId.Returns(objectId);
+
+            mockClientFactory.CreateClient("connection").Returns(mockBlobServiceClient);
+            mockBlobServiceClient.GetBlobContainerClient("object-name").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient("tags/stream/stream-id.json").Returns(mockBlobClient);
+
+            mockBlobClient.ExistsAsync().Returns(Response.FromValue(true, Substitute.For<Response>()));
+
+            var blobProperties = BlobsModelFactory.BlobProperties(eTag: new ETag("test-etag"));
+            mockBlobClient.GetPropertiesAsync().Returns(Response.FromValue(blobProperties, Substitute.For<Response>()));
+
+            var existingDoc = new BlobDocumentTagStoreDocument
+            {
+                Tag = "test-tag",
+                ObjectIds = [objectId, "other-object-id"]
+            };
+            var jsonData = JsonSerializer.Serialize(existingDoc, CamelCaseOptions);
+            var jsonBytes = Encoding.UTF8.GetBytes(jsonData);
+
+            mockBlobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
+                .Returns(Task.FromResult(Substitute.For<Response>()))
+                .AndDoes(callInfo =>
+                {
+                    var stream = callInfo.Arg<MemoryStream>();
+                    stream.Write(jsonBytes, 0, jsonBytes.Length);
+                    stream.Position = 0;
+                });
+
+            var blobContentInfo = Substitute.For<BlobContentInfo>();
+            mockBlobClient.UploadAsync(Arg.Any<Stream>(), Arg.Any<BlobUploadOptions>())
+                .Returns(Response.FromValue(blobContentInfo, Substitute.For<Response>()));
+
+            // Act
+            await sut.RemoveAsync(mockDocument, "test-tag");
+
+            // Assert
+            await mockBlobClient.Received(1).UploadAsync(
+                Arg.Any<Stream>(),
+                Arg.Is<BlobUploadOptions>(opts =>
+                    opts.Conditions != null &&
+                    opts.Conditions.IfMatch.HasValue));
         }
     }
 

@@ -28,6 +28,11 @@ public class BlobDocumentTagStoreTests
         WriteIndented = true
     };
 
+    private static readonly JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private static readonly JsonSerializerOptions CaseInsensitiveOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -774,6 +779,221 @@ public class BlobDocumentTagStoreTests
                 await Assert.ThrowsAsync<DocumentConfigurationException>(() =>
                     sut.GetAsync("test-object-name", "test-tag"));
             Assert.Contains("Unable to create blobClient", exception.Message);
+        }
+    }
+
+    public class RemoveAsync : BlobDocumentTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "test-tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(objectDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_return_early_when_blob_does_not_exist()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert - should not call any other methods
+            await blobClient.DidNotReceive().GetPropertiesAsync();
+            await blobClient.DidNotReceive().DeleteIfExistsAsync(
+                Arg.Any<DeleteSnapshotsOption>(),
+                Arg.Any<BlobRequestConditions>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_delete_blob_when_no_documents_remain()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            var existingDoc = new BlobDocumentTagStoreDocument
+            {
+                Tag = "test-tag",
+                ObjectIds = ["test-object-id"]
+            };
+
+            var blobProperties = BlobsModelFactory.BlobProperties(eTag: new ETag("test-etag"));
+            var response = Response.FromValue(blobProperties, Substitute.For<Response>());
+
+            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(true, Substitute.For<Response>())));
+            blobClient.GetPropertiesAsync().Returns(Task.FromResult(response));
+
+            var jsonData = JsonSerializer.Serialize(existingDoc, CamelCaseOptions);
+            var jsonBytes = Encoding.UTF8.GetBytes(jsonData);
+
+            blobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
+                .Returns(Task.FromResult(Substitute.For<Response>()))
+                .AndDoes(callInfo =>
+                {
+                    var stream = callInfo.Arg<MemoryStream>();
+                    stream.Write(jsonBytes, 0, jsonBytes.Length);
+                    stream.Position = 0;
+                });
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert
+            await blobClient.Received(1).DeleteIfExistsAsync(
+                Arg.Any<DeleteSnapshotsOption>(),
+                Arg.Is<BlobRequestConditions>(c => c.IfMatch.HasValue),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_update_blob_when_other_documents_remain()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            var existingDoc = new BlobDocumentTagStoreDocument
+            {
+                Tag = "test-tag",
+                ObjectIds = ["test-object-id", "other-object-id"]
+            };
+
+            var blobProperties = BlobsModelFactory.BlobProperties(eTag: new ETag("test-etag"));
+            var response = Response.FromValue(blobProperties, Substitute.For<Response>());
+
+            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(true, Substitute.For<Response>())));
+            blobClient.GetPropertiesAsync().Returns(Task.FromResult(response));
+
+            var jsonData = JsonSerializer.Serialize(existingDoc, CamelCaseOptions);
+            var jsonBytes = Encoding.UTF8.GetBytes(jsonData);
+
+            blobClient.DownloadToAsync(Arg.Any<MemoryStream>(), Arg.Any<BlobRequestConditions>())
+                .Returns(Task.FromResult(Substitute.For<Response>()))
+                .AndDoes(callInfo =>
+                {
+                    var stream = callInfo.Arg<MemoryStream>();
+                    stream.Write(jsonBytes, 0, jsonBytes.Length);
+                    stream.Position = 0;
+                });
+
+            var contentInfo = BlobsModelFactory.BlobContentInfo(
+                new ETag("new-etag"),
+                DateTimeOffset.UtcNow,
+                [],
+                "1.0",
+                null,
+                null,
+                0
+            );
+            var uploadResponse = Substitute.For<Response<BlobContentInfo>>();
+            uploadResponse.Value.Returns(contentInfo);
+            blobClient.UploadAsync(Arg.Any<Stream>(), Arg.Any<BlobUploadOptions>())
+                .Returns(uploadResponse);
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert
+            await blobClient.Received(1).UploadAsync(
+                Arg.Is<Stream>(s => VerifyUploadedJsonDoesNotContainObjectId(s, "test-object-id")),
+                Arg.Is<BlobUploadOptions>(opts =>
+                    opts.Conditions != null &&
+                    opts.Conditions.IfMatch.HasValue));
+        }
+
+        private static bool VerifyUploadedJsonDoesNotContainObjectId(Stream stream, string objectIdToRemove)
+        {
+            stream.Position = 0;
+            using var reader = new StreamReader(stream);
+            var json = reader.ReadToEnd();
+            var doc = JsonSerializer.Deserialize<BlobDocumentTagStoreDocument>(json, CaseInsensitiveOptions);
+
+            return doc != null && !doc.ObjectIds.Contains(objectIdToRemove);
+        }
+
+        [Fact]
+        public async Task Should_sanitize_tag_for_filename()
+        {
+            // Arrange
+            var sut = new BlobDocumentTagStore(
+                clientFactory,
+                defaultDocumentTagType,
+                defaultConnectionName,
+                autoCreateContainer);
+
+            blobClient.ExistsAsync()
+                .Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test/tag\\with*invalid?chars");
+
+            // Assert - Verify the correct sanitized filename was used
+            blobContainerClient.Received(1).GetBlobClient("tags/document/testtagwithinvalidchars.json");
         }
     }
 

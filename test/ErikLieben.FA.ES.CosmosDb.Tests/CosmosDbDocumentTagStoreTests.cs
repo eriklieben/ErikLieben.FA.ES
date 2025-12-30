@@ -308,4 +308,97 @@ public class CosmosDbDocumentTagStoreTests
                 Arg.Any<CancellationToken>());
         }
     }
+
+    public class RemoveAsync : CosmosDbDocumentTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "test-tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(objectDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_delete_item_from_container()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+
+            var itemResponse = Substitute.For<ItemResponse<CosmosDbTagEntity>>();
+            container.DeleteItemAsync<CosmosDbTagEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>()).Returns(itemResponse);
+
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            await container.Received(1).DeleteItemAsync<CosmosDbTagEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_not_throw_when_item_not_found()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+
+            container.DeleteItemAsync<CosmosDbTagEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>())
+                .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
+
+            // Act - should not throw
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert - verifying no exception was thrown
+            Assert.True(true);
+        }
+
+        [Fact]
+        public async Task Should_sanitize_tag_with_invalid_characters()
+        {
+            var sut = new CosmosDbDocumentTagStore(cosmosClient, settings);
+
+            var itemResponse = Substitute.For<ItemResponse<CosmosDbTagEntity>>();
+            container.DeleteItemAsync<CosmosDbTagEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>()).Returns(itemResponse);
+
+            await sut.RemoveAsync(objectDocument, "test/tag#with?invalid\\chars");
+
+            // Verify the ID contains the sanitized tag
+            await container.Received(1).DeleteItemAsync<CosmosDbTagEntity>(
+                Arg.Is<string>(id => id.Contains("testtagwithinvalidchars")),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>());
+        }
+    }
 }
