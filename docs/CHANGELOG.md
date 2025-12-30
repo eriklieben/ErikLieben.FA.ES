@@ -1,3 +1,44 @@
+## [2.0.0-preview.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.1...2.0.0-preview.2) (2025-12-30)
+
+### 📚 Documentation
+
+* add markdown documentation ([046d650](https://github.com/eriklieben/ErikLieben.FA.ES/commit/046d650e2c7a9a2412c1fcae08bd66c9089c2b33))
+
+### 🐛 Bug fixes
+
+* don't generate type names that are already generic types ([8d542cd](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d542cdaea3d6e538d461dee6a0064d7408619d1))
+
+### ✨ New features
+
+* add RemoveAsync/RemoveTagAsync for document tag removal ([70dfab2](https://github.com/eriklieben/ErikLieben.FA.ES/commit/70dfab2cfa39abdc2a262a14a7b83b53166724df))
+* include live migrations and extend test cases ([040264e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/040264e5de915679aa0418138c9521315d0d0c79))
+
+### 💄 Code style adjustments
+
+* resolve sonarcloud issues ([5000d5c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5000d5c059bbe93f1e4d12107af858947eab3e45))
+* resolve sonarcloud issues ([b843f78](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b843f78c98ced401bbae307a15559230df39bf3a))
+* resolve sonarcloud issues ([43a4fe3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/43a4fe313e941e4065b0e2b03b55dd3de10bc4da))
+* resolve sonarcloud issues ([4363332](https://github.com/eriklieben/ErikLieben.FA.ES/commit/4363332ef9ce7f9ccb7329e516dfb2942b7f6a4a))
+* resolve sonarcloud issues ([e32cf7a](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e32cf7a06385a6b4d592eb030e7b7a68714d6278))
+* resolve sonarcloud issues ([8fde5a9](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8fde5a98034bdbf6bb1c1f9faddf919414d3273d))
+* resolve sonarcloud issues ([0bab9bf](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0bab9bf51109b9ebc80c7efed161e2a58b6187f5))
+* resolve sonarcloud issues ([5bb1d98](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5bb1d985a5ffc755b33ed5295ce682483355acbb))
+* resolve sonarcloud issues ([9a7d1ea](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9a7d1ea4cffa6c972448b97c4a87ec10004b3337))
+* resolve sonarcloud issues ([5722369](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5722369bab23507036df8fb5c0b3362b0615b11e))
+
+### 🧪 (Unit)test cases adjusted
+
+* add RemoveAsync test cases for all tag store implementations ([e0b9517](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e0b9517ef07086f206bddeb872a2635f79af0668))
+* extend test coverage for CosmosDb and EventStreamManagement ([6712325](https://github.com/eriklieben/ErikLieben.FA.ES/commit/67123253b6d80fe038971a281c89c51ee54dd865))
+* extend tests cases ([2d0b21e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2d0b21e568291a44b46be9be06fb5c1590219eee))
+* fix test cases for new ILogger generator ([a8c93f4](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a8c93f4df5ee8984d9d17c3a78cadd9e8654b12d))
+* fix test cases for new ILogger generator ([24e0253](https://github.com/eriklieben/ErikLieben.FA.ES/commit/24e0253aa65fdec9319832915e891e3f2d386f50))
+* improve test coverage ([a85669d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a85669df560b606d6e6753ee03e4d399c5983be9))
+* improve tests and setup usage of coverage.runsettings ([f39d2ef](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f39d2ef904faae07e9bee375be5025094fce0bb1))
+* make the tests work on linux env as well ([8d91842](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d918429fd729f7eb65d4dbb2922a3b7533ff7f6))
+* resolve test failures ([9f00af8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9f00af8d29e2dc39354548f1672b3c9a734b3104))
+* update test coverage ([f298f61](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f298f61712936af0848e08fe85070bb8deefbd0d))
+
 ## [2.0.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.0...2.0.0-preview.1) (2025-12-07)
 
 ### 🐛 Bug fixes
