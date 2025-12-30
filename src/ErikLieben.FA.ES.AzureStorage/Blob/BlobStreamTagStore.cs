@@ -92,6 +92,17 @@ public class BlobStreamTagStore : IDocumentTagStore
         throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Removes the specified tag from the stream of the given document.
+    /// </summary>
+    /// <param name="document">The document whose stream tag should be removed.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        throw new NotImplementedException("Stream tag removal is not yet implemented.");
+    }
+
     private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);

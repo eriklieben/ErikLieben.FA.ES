@@ -63,4 +63,27 @@ public class InMemoryStreamTagStore : IDocumentTagStore
 
         return Task.FromResult<IEnumerable<string>>(matchingStreams);
     }
+
+    /// <summary>
+    /// Removes the specified tag from the stream of the given document in memory.
+    /// </summary>
+    /// <param name="document">The document whose stream tag should be removed.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A completed task.</returns>
+    public Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        var objectName = document.ObjectName;
+        var streamId = document.Active.StreamIdentifier;
+
+        if (TagsByObjectName.TryGetValue(objectName, out var streamTags) &&
+            streamTags.TryGetValue(streamId, out var tags))
+        {
+            tags.Remove(tag);
+        }
+
+        return Task.CompletedTask;
+    }
 }

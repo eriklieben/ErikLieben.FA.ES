@@ -67,6 +67,13 @@ public interface IObjectDocumentWithMethods : IObjectDocument
     /// <param name="tag">The tag value to associate.</param>
     /// <param name="tagType">The tag type determining which tag store is used; default is <see cref="TagTypes.DocumentTag"/>.</param>
     public Task SetTagAsync(string tag, TagTypes tagType = TagTypes.DocumentTag);
+
+    /// <summary>
+    /// Removes a tag from this document using the configured tag store.
+    /// </summary>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <param name="tagType">The tag type determining which tag store is used; default is <see cref="TagTypes.DocumentTag"/>.</param>
+    public Task RemoveTagAsync(string tag, TagTypes tagType = TagTypes.DocumentTag);
 }
 
 /// <summary>

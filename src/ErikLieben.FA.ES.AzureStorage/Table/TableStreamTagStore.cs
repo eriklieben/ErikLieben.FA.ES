@@ -106,6 +106,32 @@ public partial class TableStreamTagStore : IDocumentTagStore
         return objectIds;
     }
 
+    /// <summary>
+    /// Removes the specified tag from the stream of the given document by deleting the tag entity from Table Storage.
+    /// </summary>
+    /// <param name="document">The document whose stream tag should be removed.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public async Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        var tableClient = await GetTableClientAsync(document);
+
+        var partitionKey = $"{document.ObjectName.ToLowerInvariant()}_{document.Active.StreamIdentifier}";
+        var sanitizedTag = SanitizeForTableKey(tag);
+
+        try
+        {
+            await tableClient.DeleteEntityAsync(partitionKey, sanitizedTag);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Tag doesn't exist, which is fine (idempotent operation)
+        }
+    }
+
     private async Task<TableClient> GetTableClientAsync(IObjectDocument objectDocument)
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);

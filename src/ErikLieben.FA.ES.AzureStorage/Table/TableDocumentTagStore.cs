@@ -109,6 +109,33 @@ public partial class TableDocumentTagStore : IDocumentTagStore
         return objectIds;
     }
 
+    /// <summary>
+    /// Removes the specified tag from the given document by deleting the tag entity from Table Storage.
+    /// </summary>
+    /// <param name="document">The document to remove the tag from.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public async Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        var tableClient = await GetTableClientAsync(document);
+
+        var sanitizedTag = SanitizeForTableKey(tag);
+        var partitionKey = $"{document.ObjectName.ToLowerInvariant()}_{sanitizedTag}";
+        var rowKey = document.ObjectId;
+
+        try
+        {
+            await tableClient.DeleteEntityAsync(partitionKey, rowKey);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Tag doesn't exist, which is fine (idempotent operation)
+        }
+    }
+
     private async Task<TableClient> GetTableClientAsync(IObjectDocument objectDocument)
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(objectDocument.ObjectName);
