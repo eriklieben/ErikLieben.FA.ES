@@ -36,9 +36,10 @@ public class InMemoryEventStreamFactory : IEventStreamFactory
         }
 
         var documentTagStore = documentTagFactory.CreateDocumentTagStore(document);
+        var streamTagStore = documentTagFactory.CreateStreamTagStore(document);
 
         return new InMemoryStream(
-            new ObjectDocumentWithTags(document, documentTagStore),
+            new ObjectDocumentWithTags(document, documentTagStore, streamTagStore),
             dataSource,
             new InMemorySnapShotStore(),
             objectDocumentFactory,

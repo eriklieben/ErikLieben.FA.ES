@@ -60,9 +60,10 @@ public BlobEventStreamFactory(
         }
 
         var documentTagStore = documentTagFactory.CreateDocumentTagStore(document);
+        var streamTagStore = documentTagFactory.CreateStreamTagStore(document);
 
         return new BlobEventStream(
-            new ObjectDocumentWithTags(document, documentTagStore),
+            new ObjectDocumentWithTags(document, documentTagStore, streamTagStore),
             new StreamDependencies
             {
                 AggregateFactory = aggregateFactory,
