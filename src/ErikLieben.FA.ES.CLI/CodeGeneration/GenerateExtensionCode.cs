@@ -336,8 +336,19 @@ public async Task Generate()
         List<string> nameSpaceUsings,
         List<string> jsonSerializerCodeList)
     {
-        var genericSignature = BuildGenericTypeSignature(prop.GenericTypes, nameSpaceUsings);
-        jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}<{genericSignature}>))]");
+        // Check if prop.Type already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, use it as-is to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = prop.Type.Contains('<') && prop.Type.Contains('>');
+
+        if (alreadyHasGenerics)
+        {
+            jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}))]");
+        }
+        else
+        {
+            var genericSignature = BuildGenericTypeSignature(prop.GenericTypes, nameSpaceUsings);
+            jsonSerializerCodeList.Add($"[JsonSerializable(typeof({prop.Type}<{genericSignature}>))]");
+        }
 
         // Process nested subtypes within generic types
         foreach (var generic in prop.GenericTypes)
