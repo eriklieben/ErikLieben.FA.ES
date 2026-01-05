@@ -1,3 +1,9 @@
+## [2.0.0-preview.6](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.5...2.0.0-preview.6) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* **live-migration:** prevent infinite loop when source stream already closed ([3520562](https://github.com/eriklieben/ErikLieben.FA.ES/commit/352056218cd615f221d9fae742df0ee983dfe052))
+
 ## [2.0.0-preview.5](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.4...2.0.0-preview.5) (2026-01-05)
 
 ### ✨ New features
