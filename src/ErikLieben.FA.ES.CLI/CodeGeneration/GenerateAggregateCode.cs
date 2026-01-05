@@ -387,7 +387,12 @@ public class GenerateAggregateCode
     internal static string BuildPropertyType(PropertyDefinition property)
     {
         var typeBuilder = new StringBuilder(property.Type);
-        if (!property.IsGeneric)
+
+        // Check if property.Type already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (!property.IsGeneric || alreadyHasGenerics)
         {
             return typeBuilder.ToString();
         }
