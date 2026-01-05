@@ -30,6 +30,17 @@ public class LiveMigrationOptions : ILiveMigrationOptions
     /// </summary>
     public int MaxIterations { get; private set; } = 0;
 
+    /// <summary>
+    /// Gets the async callback invoked for each event copied during catch-up iterations.
+    /// </summary>
+    public Func<LiveMigrationEventProgress, Task>? EventCopiedCallback { get; private set; }
+
+    /// <summary>
+    /// Gets the async callback invoked immediately before each event is appended.
+    /// When set, events are appended one at a time instead of batched.
+    /// </summary>
+    public Func<LiveMigrationEventProgress, Task>? BeforeAppendCallback { get; private set; }
+
     /// <inheritdoc/>
     public ILiveMigrationOptions WithCloseTimeout(TimeSpan timeout)
     {
@@ -77,6 +88,20 @@ public class LiveMigrationOptions : ILiveMigrationOptions
         }
 
         MaxIterations = maxIterations;
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ILiveMigrationOptions OnEventCopied(Func<LiveMigrationEventProgress, Task> callback)
+    {
+        EventCopiedCallback = callback ?? throw new ArgumentNullException(nameof(callback));
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public ILiveMigrationOptions OnBeforeAppend(Func<LiveMigrationEventProgress, Task> callback)
+    {
+        BeforeAppendCallback = callback ?? throw new ArgumentNullException(nameof(callback));
         return this;
     }
 }

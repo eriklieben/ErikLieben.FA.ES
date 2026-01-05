@@ -406,6 +406,18 @@ public static partial class LogMessages
         Message = "Updated ObjectDocument: Active stream is now {TargetStream}")]
     public static partial void ObjectDocumentUpdated(this ILogger logger, string targetStream);
 
+    [LoggerMessage(
+        EventId = 1518,
+        Level = LogLevel.Warning,
+        Message = "{EventCount} events were added during close (after version {ExpectedVersion})")]
+    public static partial void EventsAddedDuringClose(this ILogger logger, int eventCount, int expectedVersion);
+
+    [LoggerMessage(
+        EventId = 1519,
+        Level = LogLevel.Information,
+        Message = "Caught up {EventCount} late events to target stream")]
+    public static partial void LateEventsCaughtUp(this ILogger logger, int eventCount);
+
     // ===== Transformation Pipeline =====
 
     [LoggerMessage(
