@@ -1,8 +1,7 @@
-#pragma warning disable S1135 // TODO comments - tracked in project backlog
-
 namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
 using Azure.Storage.Blobs;
+using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.EventStreamManagement.Backup;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
@@ -61,15 +60,27 @@ public class AzureBlobBackupProvider : IBackupProvider
             StreamVersion = context.Document.Active.CurrentStreamVersion
         };
 
-        // Backup events - store as serialized strings for AOT compatibility
-        // The caller is responsible for providing a proper serializer for events
+        // Backup events - serialize full events using AOT-compatible JsonEventSerializerContext
         if (context.Events != null)
         {
-            backup.EventCount = context.Events.Count();
-            // Note: In a real implementation, you would use a provided event serializer
-            // For now, we store event metadata
-            backup.SerializedEvents = context.Events
-                .Select(e => $"{e.EventType}:v{e.EventVersion}")
+            var eventList = context.Events.ToList();
+            backup.EventCount = eventList.Count;
+            backup.SerializedEvents = eventList
+                .Select(e =>
+                {
+                    // Convert to JsonEvent for serialization (handles both JsonEvent and other IEvent implementations)
+                    var jsonEvent = e as JsonEvent ?? new JsonEvent
+                    {
+                        EventType = e.EventType,
+                        EventVersion = e.EventVersion,
+                        SchemaVersion = e.SchemaVersion,
+                        Payload = e.Payload,
+                        ExternalSequencer = e.ExternalSequencer,
+                        ActionMetadata = e.ActionMetadata ?? new ActionMetadata(),
+                        Metadata = e.Metadata ?? []
+                    };
+                    return JsonSerializer.Serialize(jsonEvent, JsonEventSerializerContext.Default.JsonEvent);
+                })
                 .ToList();
         }
 
@@ -160,9 +171,50 @@ public class AzureBlobBackupProvider : IBackupProvider
             throw new InvalidOperationException("Failed to deserialize backup data");
         }
 
-        logger.RestoreCompleted(handle.BackupId, backup.EventCount);
+        // Validate data store is provided
+        if (context.DataStore == null)
+        {
+            throw new InvalidOperationException("DataStore is required in RestoreContext to restore events");
+        }
 
-        // TODO: Implement actual restore logic to write events back to the data store
+        // Deserialize events from backup
+        var events = new List<IEvent>();
+        if (backup.SerializedEvents != null)
+        {
+            foreach (var serializedEvent in backup.SerializedEvents)
+            {
+                var jsonEvent = JsonSerializer.Deserialize(serializedEvent, JsonEventSerializerContext.Default.JsonEvent);
+                if (jsonEvent != null)
+                {
+                    events.Add(jsonEvent);
+                }
+            }
+        }
+
+        // Report initial progress
+        progress?.Report(new RestoreProgress
+        {
+            EventsRestored = 0,
+            TotalEvents = events.Count
+        });
+
+        // Write events to data store with preserved timestamps
+        if (events.Count > 0)
+        {
+            await context.DataStore.AppendAsync(
+                context.TargetDocument,
+                preserveTimestamp: true,
+                events.ToArray());
+        }
+
+        // Report completion
+        progress?.Report(new RestoreProgress
+        {
+            EventsRestored = events.Count,
+            TotalEvents = events.Count
+        });
+
+        logger.RestoreCompleted(handle.BackupId, backup.EventCount);
     }
 
     /// <inheritdoc/>

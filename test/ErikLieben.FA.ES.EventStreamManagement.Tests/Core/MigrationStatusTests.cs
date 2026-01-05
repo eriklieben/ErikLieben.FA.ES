@@ -85,8 +85,8 @@ public class MigrationStatusTests
             // Arrange
             var values = Enum.GetValues<MigrationStatus>();
 
-            // Assert
-            Assert.Equal(10, values.Length);
+            // Assert - includes BackingUp status added for backup phase
+            Assert.Equal(11, values.Length);
         }
     }
 }

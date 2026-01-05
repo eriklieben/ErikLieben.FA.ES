@@ -49,4 +49,9 @@ public record TerminatedStream
     /// Gets or sets the UTC date/time when the document was deleted.
     /// </summary>
     public DateTimeOffset DeletionDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom metadata associated with the terminated stream.
+    /// </summary>
+    public Dictionary<string, object>? Metadata { get; set; }
 }

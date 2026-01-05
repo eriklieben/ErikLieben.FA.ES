@@ -303,7 +303,8 @@ public class AzureBlobBackupProviderTests
         {
             // Arrange
             var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
-            var context = new RestoreContext { TargetDocument = mockDocument };
+            var mockDataStore = Substitute.For<EventStream.IDataStore>();
+            var context = new RestoreContext { TargetDocument = mockDocument, DataStore = mockDataStore };
             var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
 
             // Act & Assert
@@ -324,6 +325,33 @@ public class AzureBlobBackupProviderTests
         }
 
         [Fact]
+        public async Task Should_throw_InvalidOperationException_when_datastore_is_null()
+        {
+            // Arrange
+            var mockContainerClient = Substitute.For<BlobContainerClient>();
+            var mockBlobClient = Substitute.For<BlobClient>();
+            var mockResponse = Substitute.For<Response<BlobDownloadResult>>();
+            var backupData = CreateTestBackupJson();
+
+            mockBlobServiceClient.GetBlobContainerClient("migration-backups").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient(Arg.Any<string>()).Returns(mockBlobClient);
+            var result = BlobsModelFactory.BlobDownloadResult(content: new BinaryData(backupData));
+            mockResponse.Value.Returns(result);
+            mockBlobClient.DownloadContentAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(mockResponse));
+
+            var handle = CreateMockBackupHandle(isCompressed: false);
+            var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
+            var context = new RestoreContext { TargetDocument = mockDocument }; // No DataStore
+            var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                sut.RestoreAsync(handle, context, null));
+            Assert.Contains("DataStore is required", ex.Message);
+        }
+
+        [Fact]
         public async Task Should_download_backup_blob()
         {
             // Arrange
@@ -341,7 +369,8 @@ public class AzureBlobBackupProviderTests
 
             var handle = CreateMockBackupHandle(isCompressed: false);
             var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
-            var context = new RestoreContext { TargetDocument = mockDocument };
+            var mockDataStore = Substitute.For<EventStream.IDataStore>();
+            var context = new RestoreContext { TargetDocument = mockDocument, DataStore = mockDataStore };
             var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
 
             // Act
@@ -349,6 +378,108 @@ public class AzureBlobBackupProviderTests
 
             // Assert
             await mockBlobClient.Received(1).DownloadContentAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_restore_events_to_datastore()
+        {
+            // Arrange
+            var mockContainerClient = Substitute.For<BlobContainerClient>();
+            var mockBlobClient = Substitute.For<BlobClient>();
+            var mockResponse = Substitute.For<Response<BlobDownloadResult>>();
+            var backupData = CreateTestBackupJsonWithEvents();
+
+            mockBlobServiceClient.GetBlobContainerClient("migration-backups").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient(Arg.Any<string>()).Returns(mockBlobClient);
+            var result = BlobsModelFactory.BlobDownloadResult(content: new BinaryData(backupData));
+            mockResponse.Value.Returns(result);
+            mockBlobClient.DownloadContentAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(mockResponse));
+
+            var handle = CreateMockBackupHandle(isCompressed: false);
+            var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
+            var mockDataStore = Substitute.For<EventStream.IDataStore>();
+            var context = new RestoreContext { TargetDocument = mockDocument, DataStore = mockDataStore };
+            var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
+
+            // Act
+            await sut.RestoreAsync(handle, context, null);
+
+            // Assert
+            await mockDataStore.Received(1).AppendAsync(
+                mockDocument,
+                true,
+                Arg.Is<IEvent[]>(e => e.Length == 2));
+        }
+
+        [Fact]
+        public async Task Should_report_progress_during_restore()
+        {
+            // Arrange
+            var mockContainerClient = Substitute.For<BlobContainerClient>();
+            var mockBlobClient = Substitute.For<BlobClient>();
+            var mockResponse = Substitute.For<Response<BlobDownloadResult>>();
+            var backupData = CreateTestBackupJsonWithEvents();
+
+            mockBlobServiceClient.GetBlobContainerClient("migration-backups").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient(Arg.Any<string>()).Returns(mockBlobClient);
+            var result = BlobsModelFactory.BlobDownloadResult(content: new BinaryData(backupData));
+            mockResponse.Value.Returns(result);
+            mockBlobClient.DownloadContentAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(mockResponse));
+
+            var handle = CreateMockBackupHandle(isCompressed: false);
+            var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
+            var mockDataStore = Substitute.For<EventStream.IDataStore>();
+            var context = new RestoreContext { TargetDocument = mockDocument, DataStore = mockDataStore };
+
+            var progressReports = new List<RestoreProgress>();
+            var progress = new Progress<RestoreProgress>(p => progressReports.Add(p));
+
+            var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
+
+            // Act
+            await sut.RestoreAsync(handle, context, progress);
+
+            // Allow time for progress reports to be processed
+            await Task.Delay(100);
+
+            // Assert
+            Assert.True(progressReports.Count >= 1);
+            var lastProgress = progressReports[^1];
+            Assert.Equal(2, lastProgress.TotalEvents);
+        }
+
+        [Fact]
+        public async Task Should_not_append_when_no_events_in_backup()
+        {
+            // Arrange
+            var mockContainerClient = Substitute.For<BlobContainerClient>();
+            var mockBlobClient = Substitute.For<BlobClient>();
+            var mockResponse = Substitute.For<Response<BlobDownloadResult>>();
+            var backupData = CreateTestBackupJson(); // No events
+
+            mockBlobServiceClient.GetBlobContainerClient("migration-backups").Returns(mockContainerClient);
+            mockContainerClient.GetBlobClient(Arg.Any<string>()).Returns(mockBlobClient);
+            var result = BlobsModelFactory.BlobDownloadResult(content: new BinaryData(backupData));
+            mockResponse.Value.Returns(result);
+            mockBlobClient.DownloadContentAsync(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(mockResponse));
+
+            var handle = CreateMockBackupHandle(isCompressed: false);
+            var mockDocument = CreateMockObjectDocument("obj-123", "TestObject", 5);
+            var mockDataStore = Substitute.For<EventStream.IDataStore>();
+            var context = new RestoreContext { TargetDocument = mockDocument, DataStore = mockDataStore };
+            var sut = new AzureBlobBackupProvider(mockBlobServiceClient, mockLogger);
+
+            // Act
+            await sut.RestoreAsync(handle, context, null);
+
+            // Assert
+            await mockDataStore.DidNotReceive().AppendAsync(
+                Arg.Any<Documents.IObjectDocument>(),
+                Arg.Any<bool>(),
+                Arg.Any<IEvent[]>());
         }
     }
 
@@ -598,5 +729,42 @@ public class AzureBlobBackupProviderTests
             ""streamVersion"": 5,
             ""eventCount"": 0
         }}";
+    }
+
+    private static string CreateTestBackupJsonWithEvents(Guid? backupId = null)
+    {
+        var id = backupId ?? Guid.NewGuid();
+
+        // Create proper JsonEvent objects and serialize them correctly
+        var event1 = new JsonEvent
+        {
+            EventType = "TestEvent1",
+            EventVersion = 0,
+            Payload = "{\"value\":1}"
+        };
+        var event2 = new JsonEvent
+        {
+            EventType = "TestEvent2",
+            EventVersion = 1,
+            Payload = "{\"value\":2}"
+        };
+
+        // Serialize each event to a JSON string using the public JsonEventSerializerContext
+        var serializedEvent1 = System.Text.Json.JsonSerializer.Serialize(event1, JsonEventSerializerContext.Default.JsonEvent);
+        var serializedEvent2 = System.Text.Json.JsonSerializer.Serialize(event2, JsonEventSerializerContext.Default.JsonEvent);
+
+        // Create backup data as a dictionary and serialize it
+        var backupData = new Dictionary<string, object?>
+        {
+            ["backupId"] = id,
+            ["createdAt"] = DateTimeOffset.UtcNow,
+            ["objectId"] = "obj-123",
+            ["objectName"] = "TestObject",
+            ["streamVersion"] = 5,
+            ["eventCount"] = 2,
+            ["serializedEvents"] = new[] { serializedEvent1, serializedEvent2 }
+        };
+
+        return System.Text.Json.JsonSerializer.Serialize(backupData);
     }
 }

@@ -92,6 +92,11 @@ public class RestoreContext
     /// Gets or sets a value indicating whether to overwrite existing data.
     /// </summary>
     public bool Overwrite { get; set; }
+
+    /// <summary>
+    /// Gets or sets the data store to use for writing restored events.
+    /// </summary>
+    public EventStream.IDataStore? DataStore { get; set; }
 }
 
 /// <summary>
