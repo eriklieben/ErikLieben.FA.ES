@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.EventStreamManagement.Coordination;
 using ErikLieben.FA.ES.EventStreamManagement.Core;
 using ErikLieben.FA.ES.EventStreamManagement.Progress;
 using ErikLieben.FA.ES.EventStreamManagement.Transformation;
+using ErikLieben.FA.ES.EventStreamManagement.Verification;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 
@@ -341,6 +342,14 @@ public class MigrationExecutorTests
             var (context, lockProvider, loggerFactory) = CreateDependencies();
             context.BookClosingConfig = new BookClosingConfiguration { Reason = "Migration complete" };
 
+            // Set up document store mock for book closing
+            var mockReloadedDocument = Substitute.For<IObjectDocument>();
+            mockReloadedDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+            mockReloadedDocument.Active.Returns(context.SourceDocument.Active);
+
+            context.DocumentStore!.GetAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+                .Returns(Task.FromResult(mockReloadedDocument));
+
             context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
                 .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
 
@@ -602,5 +611,385 @@ public class MigrationExecutorTests
             // Assert - migration should succeed even without backup provider (backup is skipped)
             Assert.True(result.Success);
         }
+
+        [Fact]
+        public async Task Should_verify_event_counts_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.VerificationConfig = new VerificationConfiguration { CompareEventCounts = true };
+
+            var events = new[]
+            {
+                CreateMockEventWithPayload("Event1", 0, "{}"),
+                CreateMockEventWithPayload("Event2", 1, "{}")
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_verify_checksums_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.VerificationConfig = new VerificationConfiguration { CompareChecksums = true };
+
+            var events = new[]
+            {
+                CreateMockEventWithPayload("Event1", 0, "{\"value\":1}"),
+                CreateMockEventWithPayload("Event2", 1, "{\"value\":2}")
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_verify_stream_integrity_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.VerificationConfig = new VerificationConfiguration { VerifyStreamIntegrity = true };
+
+            var events = new[]
+            {
+                CreateMockEventWithPayload("Event1", 0, "{}"),
+                CreateMockEventWithPayload("Event2", 1, "{}")
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_fail_verification_with_fail_fast_when_custom_validation_fails()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.VerificationConfig = new VerificationConfiguration
+            {
+                FailFast = true,
+                CustomValidations =
+                [
+                    ("AlwaysFail", ctx => Task.FromResult(new ValidationResult("AlwaysFail", false, "This validation always fails")))
+                ]
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_run_custom_validation_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            var customValidationCalled = false;
+
+            context.VerificationConfig = new VerificationConfiguration
+            {
+                CustomValidations =
+                [
+                    ("CustomCheck", ctx =>
+                    {
+                        customValidationCalled = true;
+                        return Task.FromResult(new ValidationResult("CustomCheck", true, "Custom check passed"));
+                    })
+                ]
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(customValidationCalled);
+        }
+
+        [Fact]
+        public async Task Should_handle_custom_validation_exception()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+
+            context.VerificationConfig = new VerificationConfiguration
+            {
+                FailFast = true,
+                CustomValidations =
+                [
+                    ("FailingCheck", ctx => throw new Exception("Custom validation failed"))
+                ]
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_validate_transformations_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+
+            var transformer = Substitute.For<IEventTransformer>();
+            var events = new[]
+            {
+                CreateMockEventWithPayload("Event1", 0, "{}")
+            };
+
+            transformer.TransformAsync(Arg.Any<IEvent>(), Arg.Any<CancellationToken>())
+                .Returns(x => Task.FromResult(CreateMockEventWithPayload("TransformedEvent", 0, "{}")));
+
+            context.Transformer = transformer;
+            context.VerificationConfig = new VerificationConfiguration
+            {
+                ValidateTransformations = true,
+                TransformationSampleSize = 10
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_rollback_when_migration_fails_and_rollback_supported()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.SupportsRollback = true;
+
+            var backupProvider = Substitute.For<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider>();
+            var backupHandle = Substitute.For<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle>();
+            backupHandle.BackupId.Returns(Guid.NewGuid());
+
+            backupProvider.BackupAsync(
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext>(),
+                Arg.Any<IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress>?>(),
+                Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(backupHandle));
+
+            context.BackupProvider = backupProvider;
+            context.BackupConfig = new BackupConfiguration { Location = "/backups" };
+
+            // Set up failure scenario - cutover will fail due to missing document store
+            context.DocumentStore = null;
+
+            var events = new[] { CreateMockEventWithPayload("Event1", 0, "{}") };
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.False(result.Success);
+            await backupProvider.Received(1).RestoreAsync(
+                backupHandle,
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext>(),
+                Arg.Any<IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress>?>(),
+                Arg.Any<CancellationToken>());
+            Assert.True(result.Statistics.RolledBack);
+        }
+
+        [Fact]
+        public async Task Should_mark_rollback_even_without_backup()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.SupportsRollback = true;
+            // No backup provider configured
+
+            // Set up failure scenario - cutover will fail due to missing document store
+            context.DocumentStore = null;
+
+            var events = new[] { CreateMockEventWithPayload("Event1", 0, "{}") };
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.False(result.Success);
+            Assert.True(result.Statistics.RolledBack);
+        }
+
+        [Fact]
+        public async Task Should_not_rollback_when_not_supported()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.SupportsRollback = false;
+
+            var backupProvider = Substitute.For<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider>();
+            context.BackupProvider = backupProvider;
+
+            // Set up failure scenario - cutover will fail due to missing document store
+            context.DocumentStore = null;
+
+            var events = new[] { CreateMockEventWithPayload("Event1", 0, "{}") };
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.False(result.Success);
+            await backupProvider.DidNotReceive().RestoreAsync(
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle>(),
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext>(),
+                Arg.Any<IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress>?>(),
+                Arg.Any<CancellationToken>());
+            Assert.False(result.Statistics.RolledBack);
+        }
+
+        [Fact]
+        public async Task Should_perform_book_closing_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.BookClosingConfig = new BookClosingConfiguration
+            {
+                Reason = "Migration completed successfully",
+                MarkAsDeleted = true,
+                ArchiveLocation = "/archive/2024",
+                Metadata = new Dictionary<string, object>
+                {
+                    ["migratedBy"] = "automated-migration"
+                }
+            };
+
+            // Set up document with terminated stream
+            var terminatedStream = new TerminatedStream
+            {
+                StreamIdentifier = context.SourceStreamIdentifier,
+                Reason = "Initial reason"
+            };
+            var mockReloadedDocument = Substitute.For<IObjectDocument>();
+            mockReloadedDocument.TerminatedStreams.Returns(new List<TerminatedStream> { terminatedStream });
+            mockReloadedDocument.Active.Returns(context.SourceDocument.Active);
+
+            context.DocumentStore!.GetAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+                .Returns(Task.FromResult(mockReloadedDocument));
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.Equal("Migration completed successfully", terminatedStream.Reason);
+            Assert.True(terminatedStream.Deleted);
+            Assert.NotNull(terminatedStream.Metadata);
+            Assert.Equal("automated-migration", terminatedStream.Metadata["migratedBy"]);
+            Assert.Equal("/archive/2024", terminatedStream.Metadata["archiveLocation"]);
+            await context.DocumentStore.Received(2).SetAsync(Arg.Any<IObjectDocument>()); // Once for cutover, once for book closing
+        }
+
+        [Fact]
+        public async Task Should_mark_snapshot_created_when_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.BookClosingConfig = new BookClosingConfiguration
+            {
+                CreateSnapshot = true
+            };
+
+            // Set up document store mock for book closing
+            var mockReloadedDocument = Substitute.For<IObjectDocument>();
+            mockReloadedDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+            mockReloadedDocument.Active.Returns(context.SourceDocument.Active);
+
+            context.DocumentStore!.GetAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+                .Returns(Task.FromResult(mockReloadedDocument));
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+            Assert.True(result.Statistics.SnapshotCreated);
+        }
+    }
+
+    private static IEvent CreateMockEventWithPayload(string eventType, int version, string payload)
+    {
+        var mockEvent = Substitute.For<IEvent>();
+        mockEvent.EventType.Returns(eventType);
+        mockEvent.EventVersion.Returns(version);
+        mockEvent.Payload.Returns(payload);
+        return mockEvent;
     }
 }

@@ -98,4 +98,14 @@ public record MigrationStatistics
     /// Gets or sets the timestamp when migration completed.
     /// </summary>
     public DateTimeOffset? CompletedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the migration was rolled back.
+    /// </summary>
+    public bool RolledBack { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a snapshot was created during book closing.
+    /// </summary>
+    public bool SnapshotCreated { get; set; }
 }

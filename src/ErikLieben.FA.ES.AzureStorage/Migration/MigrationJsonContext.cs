@@ -51,7 +51,8 @@ internal class BackupData
     public int EventCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the serialized events.
+    /// Gets or sets the serialized events as full JSON event strings.
+    /// Each string is a complete JSON representation of a JsonEvent.
     /// </summary>
     public List<string>? SerializedEvents { get; set; }
 
