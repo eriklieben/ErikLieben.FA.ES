@@ -5,6 +5,7 @@
 namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.EventStreamManagement.Backup;
 using ErikLieben.FA.ES.EventStreamManagement.Coordination;
 using ErikLieben.FA.ES.EventStreamManagement.Progress;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,9 @@ public class MigrationExecutor
     private readonly ILogger<MigrationExecutor> logger;
     private readonly MigrationProgressTracker progressTracker;
     private readonly MigrationStatistics statistics;
+
+    // Backup handle for potential rollback
+    private IBackupHandle? backupHandle;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MigrationExecutor"/> class.
@@ -87,28 +91,193 @@ public class MigrationExecutor
 
         logger.ExecutingDryRun(context.MigrationId);
 
-        // TODO: Implement dry-run executor
-        // For now, return a simple plan
+        // Step 1: Analyze source stream
+        var sourceEvents = await context.DataStore!.ReadAsync(
+            context.SourceDocument,
+            startVersion: 0,
+            untilVersion: null,
+            chunk: null);
+
+        var eventList = sourceEvents?.ToList() ?? [];
+        var eventCount = eventList.Count;
+
+        // Calculate event type distribution
+        var eventTypeDistribution = eventList
+            .GroupBy(e => e.EventType)
+            .ToDictionary(g => g.Key, g => (long)g.Count());
+
+        // Estimate size (rough estimate based on event count)
+        var estimatedSizeBytes = eventCount * 1024L; // Assume ~1KB per event average
+
+        var sourceAnalysis = new Verification.StreamAnalysis
+        {
+            EventCount = eventCount,
+            SizeBytes = estimatedSizeBytes,
+            EventTypeDistribution = eventTypeDistribution,
+            CurrentVersion = context.SourceDocument.Active.CurrentStreamVersion
+        };
+
+        // Step 2: Simulate transformations if configured
+        var transformationSimulation = new Verification.TransformationSimulation
+        {
+            SampleSize = 0,
+            SuccessfulTransformations = 0,
+            FailedTransformations = 0,
+            Failures = []
+        };
+
+        if (context.Transformer != null && eventList.Count > 0)
+        {
+            var sampleSize = Math.Min(
+                context.VerificationConfig?.TransformationSampleSize ?? 100,
+                eventList.Count);
+
+            transformationSimulation.SampleSize = sampleSize;
+
+            // Sample events for transformation testing
+            var sampleEvents = eventList.Take(sampleSize).ToList();
+
+            foreach (var evt in sampleEvents)
+            {
+                try
+                {
+                    await context.Transformer.TransformAsync(evt, cancellationToken);
+                    transformationSimulation.SuccessfulTransformations++;
+                }
+                catch (Exception ex)
+                {
+                    transformationSimulation.FailedTransformations++;
+                    transformationSimulation.Failures.Add(new Verification.TransformationFailure
+                    {
+                        EventVersion = evt.EventVersion,
+                        EventName = evt.EventType,
+                        Error = ex.Message
+                    });
+                }
+            }
+        }
+
+        // Step 3: Estimate resources
+        var eventsPerSecond = 1000.0; // Conservative estimate
+        var estimatedDuration = TimeSpan.FromSeconds(eventCount / eventsPerSecond);
+
+        var resourceEstimate = new Verification.ResourceEstimate
+        {
+            EstimatedDuration = estimatedDuration,
+            EstimatedStorageBytes = estimatedSizeBytes,
+            EstimatedBandwidthBytes = estimatedSizeBytes * 2 // Read + Write
+        };
+
+        // Step 4: Check prerequisites
+        var prerequisites = new List<Verification.Prerequisite>();
+
+        if (context.DataStore == null)
+        {
+            prerequisites.Add(new Verification.Prerequisite
+            {
+                Name = "DataStore",
+                IsMet = false,
+                Description = "A data store must be configured for migration"
+            });
+        }
+        else
+        {
+            prerequisites.Add(new Verification.Prerequisite
+            {
+                Name = "DataStore",
+                IsMet = true,
+                Description = "Data store is configured"
+            });
+        }
+
+        if (context.DocumentStore == null)
+        {
+            prerequisites.Add(new Verification.Prerequisite
+            {
+                Name = "DocumentStore",
+                IsMet = false,
+                Description = "A document store must be configured for cutover"
+            });
+        }
+        else
+        {
+            prerequisites.Add(new Verification.Prerequisite
+            {
+                Name = "DocumentStore",
+                IsMet = true,
+                Description = "Document store is configured"
+            });
+        }
+
+        // Step 5: Identify risks
+        var risks = new List<Verification.MigrationRisk>();
+
+        if (eventCount > 10000)
+        {
+            risks.Add(new Verification.MigrationRisk
+            {
+                Category = "Performance",
+                Severity = "Medium",
+                Description = $"Large stream with {eventCount} events may take significant time",
+                Mitigations = ["Consider running during off-peak hours", "Use chunked migration"]
+            });
+        }
+
+        if (transformationSimulation.FailedTransformations > 0)
+        {
+            var failureRate = (double)transformationSimulation.FailedTransformations / transformationSimulation.SampleSize * 100;
+            risks.Add(new Verification.MigrationRisk
+            {
+                Category = "Transformation",
+                Severity = failureRate > 10 ? "High" : "Medium",
+                Description = $"{transformationSimulation.FailedTransformations} transformation failures in sample ({failureRate:F1}%)",
+                Mitigations = ["Review transformer implementation for edge cases"]
+            });
+        }
+
+        if (context.BackupConfig == null)
+        {
+            risks.Add(new Verification.MigrationRisk
+            {
+                Category = "Data Safety",
+                Severity = "High",
+                Description = "No backup configured - data loss possible on failure",
+                Mitigations = ["Configure backup before running migration"]
+            });
+        }
+
+        // Step 6: Determine feasibility
+        var allPrerequisitesMet = prerequisites.All(p => p.IsMet);
+        var noHighRisks = !risks.Any(r => r.Severity == "High");
+        var isFeasible = allPrerequisitesMet && (noHighRisks || context.BackupConfig != null);
+
+        // Step 7: Recommend phases
+        var recommendedPhases = new List<string>();
+        if (context.BackupConfig != null)
+        {
+            recommendedPhases.Add("1. Create backup of source stream");
+        }
+        recommendedPhases.Add($"{(context.BackupConfig != null ? "2" : "1")}. Copy and transform {eventCount} events");
+        if (context.VerificationConfig != null)
+        {
+            recommendedPhases.Add($"{recommendedPhases.Count + 1}. Verify migration integrity");
+        }
+        recommendedPhases.Add($"{recommendedPhases.Count + 1}. Perform cutover to target stream");
+        if (context.BookClosingConfig != null)
+        {
+            recommendedPhases.Add($"{recommendedPhases.Count + 1}. Archive source stream");
+        }
+
         var plan = new Verification.MigrationPlan
         {
             PlanId = Guid.NewGuid(),
-            SourceAnalysis = new Verification.StreamAnalysis
-            {
-                EventCount = 0,
-                SizeBytes = 0
-            },
-            TransformationSimulation = new Verification.TransformationSimulation
-            {
-                SampleSize = 0
-            },
-            ResourceEstimate = new Verification.ResourceEstimate
-            {
-                EstimatedDuration = TimeSpan.Zero
-            },
-            Prerequisites = Array.Empty<Verification.Prerequisite>(),
-            Risks = Array.Empty<Verification.MigrationRisk>(),
-            RecommendedPhases = new[] { "DryRun completed - implementation pending" },
-            IsFeasible = true
+            SourceAnalysis = sourceAnalysis,
+            TransformationSimulation = transformationSimulation,
+            ResourceEstimate = resourceEstimate,
+            Prerequisites = prerequisites.ToArray(),
+            Risks = risks.ToArray(),
+            RecommendedPhases = recommendedPhases.ToArray(),
+            IsFeasible = isFeasible
         };
 
         progressTracker.SetStatus(MigrationStatus.Completed);
@@ -173,10 +342,31 @@ public class MigrationExecutor
         try
         {
             // Step 1: Create backup (if configured)
-            if (context.BackupConfig != null)
+            if (context.BackupConfig != null && context.BackupProvider != null)
             {
                 logger.StepCreatingBackup();
-                // TODO: Implement backup
+                progressTracker.SetStatus(MigrationStatus.BackingUp);
+
+                // Read all events for backup
+                var eventsToBackup = await context.DataStore!.ReadAsync(
+                    context.SourceDocument,
+                    startVersion: 0,
+                    untilVersion: null,
+                    chunk: null);
+
+                var backupContext = new BackupContext
+                {
+                    Document = context.SourceDocument,
+                    Configuration = context.BackupConfig,
+                    Events = eventsToBackup
+                };
+
+                backupHandle = await context.BackupProvider.BackupAsync(
+                    backupContext,
+                    progress: null,
+                    cancellationToken);
+
+                logger.BackupCreated(backupHandle.BackupId);
             }
 
             // Step 2: Analyze source stream

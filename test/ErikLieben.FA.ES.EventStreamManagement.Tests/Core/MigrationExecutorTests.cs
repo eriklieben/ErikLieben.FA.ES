@@ -101,6 +101,11 @@ public class MigrationExecutorTests
             // Arrange
             var (context, lockProvider, loggerFactory) = CreateDependencies();
             context.IsDryRun = true;
+            context.BackupConfig = new BackupConfiguration { Location = "/backups" }; // Required for feasibility
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
             var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
 
             // Act
@@ -110,6 +115,7 @@ public class MigrationExecutorTests
             Assert.NotNull(result);
             Assert.True(result.Success);
             Assert.NotNull(result.Plan);
+            Assert.True(result.Plan.IsFeasible);
         }
 
         [Fact]
@@ -373,6 +379,227 @@ public class MigrationExecutorTests
             var result = await sut.ExecuteAsync(CancellationToken.None);
 
             // Assert
+            Assert.True(result.Success);
+        }
+
+        [Fact]
+        public async Task Should_dry_run_analyze_source_stream_events()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+
+            var events = new[]
+            {
+                CreateMockEvent("EventA", 1),
+                CreateMockEvent("EventA", 2),
+                CreateMockEvent("EventB", 3)
+            };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.Equal(3, result.Plan.SourceAnalysis.EventCount);
+            Assert.Equal(2, result.Plan.SourceAnalysis.EventTypeDistribution.Count);
+            Assert.Equal(2, result.Plan.SourceAnalysis.EventTypeDistribution["EventA"]);
+            Assert.Equal(1, result.Plan.SourceAnalysis.EventTypeDistribution["EventB"]);
+        }
+
+        [Fact]
+        public async Task Should_dry_run_simulate_transformations()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+
+            var events = new[]
+            {
+                CreateMockEvent("TestEvent", 1),
+                CreateMockEvent("TestEvent", 2)
+            };
+
+            var transformer = Substitute.For<IEventTransformer>();
+            var transformedEvent = CreateMockEvent("TransformedEvent", 1);
+            transformer.TransformAsync(Arg.Any<IEvent>(), Arg.Any<CancellationToken>())
+                .Returns(transformedEvent);
+
+            context.Transformer = transformer;
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.Equal(2, result.Plan.TransformationSimulation.SampleSize);
+            Assert.Equal(2, result.Plan.TransformationSimulation.SuccessfulTransformations);
+            Assert.Equal(0, result.Plan.TransformationSimulation.FailedTransformations);
+        }
+
+        [Fact]
+        public async Task Should_dry_run_record_transformation_failures()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+
+            var testEvent = CreateMockEvent("TestEvent", 1);
+            var failingEvent = CreateMockEvent("FailingEvent", 2);
+            var events = new[] { testEvent, failingEvent };
+
+            var transformer = Substitute.For<IEventTransformer>();
+            var transformedEvent = CreateMockEvent("TransformedEvent", 1);
+
+            // Set up transformer - configure before assigning to context
+            transformer.TransformAsync(testEvent, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(transformedEvent));
+            transformer.TransformAsync(failingEvent, Arg.Any<CancellationToken>())
+                .Returns<Task<IEvent>>(x => throw new Exception("Transformation failed"));
+
+            context.Transformer = transformer;
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(events));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.Equal(2, result.Plan.TransformationSimulation.SampleSize);
+            Assert.Equal(1, result.Plan.TransformationSimulation.SuccessfulTransformations);
+            Assert.Equal(1, result.Plan.TransformationSimulation.FailedTransformations);
+            Assert.Single(result.Plan.TransformationSimulation.Failures);
+            Assert.Equal("FailingEvent", result.Plan.TransformationSimulation.Failures[0].EventName);
+        }
+
+        [Fact]
+        public async Task Should_dry_run_check_prerequisites()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.Contains(result.Plan.Prerequisites, p => p.Name == "DataStore" && p.IsMet);
+            Assert.Contains(result.Plan.Prerequisites, p => p.Name == "DocumentStore" && p.IsMet);
+        }
+
+        [Fact]
+        public async Task Should_dry_run_identify_missing_backup_risk()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+            context.BackupConfig = null; // No backup configured
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.Contains(result.Plan.Risks, r => r.Category == "Data Safety" && r.Severity == "High");
+        }
+
+        [Fact]
+        public async Task Should_dry_run_be_feasible_with_backup_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.IsDryRun = true;
+            context.BackupConfig = new BackupConfiguration { Location = "/backups" };
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result.Plan);
+            Assert.True(result.Plan.IsFeasible);
+            Assert.DoesNotContain(result.Plan.Risks, r => r.Category == "Data Safety");
+        }
+
+        [Fact]
+        public async Task Should_execute_backup_when_backup_provider_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.BackupConfig = new BackupConfiguration { Location = "/backups" };
+
+            var backupProvider = Substitute.For<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider>();
+            var backupHandle = Substitute.For<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle>();
+            backupHandle.BackupId.Returns(Guid.NewGuid());
+
+            backupProvider.BackupAsync(
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext>(),
+                Arg.Any<IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress>?>(),
+                Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(backupHandle));
+
+            context.BackupProvider = backupProvider;
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert
+            Assert.True(result.Success);
+            await backupProvider.Received(1).BackupAsync(
+                Arg.Any<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext>(),
+                Arg.Any<IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress>?>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_not_execute_backup_when_backup_provider_not_configured()
+        {
+            // Arrange
+            var (context, lockProvider, loggerFactory) = CreateDependencies();
+            context.BackupConfig = new BackupConfiguration { Location = "/backups" };
+            // BackupProvider is NOT set
+
+            context.DataStore!.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(Task.FromResult<IEnumerable<IEvent>?>(Array.Empty<IEvent>()));
+
+            var sut = new MigrationExecutor(context, lockProvider, loggerFactory);
+
+            // Act
+            var result = await sut.ExecuteAsync(CancellationToken.None);
+
+            // Assert - migration should succeed even without backup provider (backup is skipped)
             Assert.True(result.Success);
         }
     }

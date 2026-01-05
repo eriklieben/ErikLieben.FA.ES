@@ -138,6 +138,30 @@ public static partial class LogMessages
         Message = "Error in heartbeat loop")]
     public static partial void HeartbeatError(this ILogger logger, Exception exception);
 
+    [LoggerMessage(
+        EventId = 1022,
+        Level = LogLevel.Information,
+        Message = "Backup created with ID {BackupId}")]
+    public static partial void BackupCreated(this ILogger logger, Guid backupId);
+
+    [LoggerMessage(
+        EventId = 1023,
+        Level = LogLevel.Information,
+        Message = "Verification completed: {SuccessCount} passed, {FailureCount} failed")]
+    public static partial void VerificationCompleted(this ILogger logger, int successCount, int failureCount);
+
+    [LoggerMessage(
+        EventId = 1024,
+        Level = LogLevel.Information,
+        Message = "Book closing completed for stream {StreamId}")]
+    public static partial void BookClosingCompleted(this ILogger logger, string streamId);
+
+    [LoggerMessage(
+        EventId = 1025,
+        Level = LogLevel.Information,
+        Message = "Rollback initiated from backup {BackupId}")]
+    public static partial void RollbackFromBackup(this ILogger logger, Guid backupId);
+
     // ===== Migration Builder =====
 
     [LoggerMessage(

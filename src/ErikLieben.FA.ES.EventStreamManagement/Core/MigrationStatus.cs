@@ -53,5 +53,10 @@ public enum MigrationStatus
     /// <summary>
     /// Migration was rolled back successfully.
     /// </summary>
-    RolledBack = 9
+    RolledBack = 9,
+
+    /// <summary>
+    /// Migration is creating a backup before processing.
+    /// </summary>
+    BackingUp = 10
 }

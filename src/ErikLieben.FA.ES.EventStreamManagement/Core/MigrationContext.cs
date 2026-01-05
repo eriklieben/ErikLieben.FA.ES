@@ -98,6 +98,11 @@ public class MigrationContext
     public IDocumentStore? DocumentStore { get; set; }
 
     /// <summary>
+    /// Gets or sets the backup provider to use for creating backups before migration.
+    /// </summary>
+    public Backup.IBackupProvider? BackupProvider { get; set; }
+
+    /// <summary>
     /// Gets or sets the timestamp when migration started.
     /// </summary>
     public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
