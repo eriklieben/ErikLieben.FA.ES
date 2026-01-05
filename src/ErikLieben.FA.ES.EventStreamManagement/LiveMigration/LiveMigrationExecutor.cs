@@ -139,14 +139,35 @@ public class LiveMigrationExecutor
         cancellationToken.ThrowIfCancellationRequested();
 
         // Check if target document already exists
-        var existingTarget = await _context.DocumentStore.GetAsync(
-            _context.SourceDocument.ObjectName,
-            _context.SourceDocument.ObjectId + "_migration_target_" + _context.TargetStreamId);
-
-        if (existingTarget == null)
+        // Note: Some document stores throw exceptions instead of returning null for non-existent documents
+        try
         {
+            var existingTarget = await _context.DocumentStore.GetAsync(
+                _context.SourceDocument.ObjectName,
+                _context.SourceDocument.ObjectId + "_migration_target_" + _context.TargetStreamId);
+
+            if (existingTarget == null)
+            {
+                _logger.TargetStreamWillBeCreated(_context.TargetStreamId);
+            }
+        }
+        catch (Exception ex) when (IsDocumentNotFoundException(ex))
+        {
+            // Document doesn't exist yet - that's fine, it will be created during the migration
             _logger.TargetStreamWillBeCreated(_context.TargetStreamId);
         }
+    }
+
+    private static bool IsDocumentNotFoundException(Exception ex)
+    {
+        // Check for common "not found" exception patterns across different document stores
+        var typeName = ex.GetType().Name.ToLowerInvariant();
+        var message = ex.Message.ToLowerInvariant();
+
+        return typeName.Contains("notfound") ||
+               message.Contains("not found") ||
+               message.Contains("does not exist") ||
+               message.Contains("404");
     }
 
     private async Task<int> CatchUpAsync(CancellationToken cancellationToken)
@@ -184,17 +205,28 @@ public class LiveMigrationExecutor
             return sourceVersion;
         }
 
-        // Apply transformations if configured
+        // Apply transformations and append events
+        // When BeforeAppendCallback is set, append one at a time; otherwise batch
+        var usePerEventAppend = _context.Options.BeforeAppendCallback != null;
         var transformedEvents = new List<IEvent>();
+        var eventsAppendedCount = 0;
+
         foreach (var evt in eventsToCopy)
         {
             IEvent transformedEvent = evt;
+            var wasTransformed = false;
+            string? originalEventType = null;
+            int? originalSchemaVersion = null;
 
             if (_context.Transformer != null)
             {
                 try
                 {
+                    originalEventType = evt.EventType;
+                    originalSchemaVersion = evt.SchemaVersion;
                     transformedEvent = await _context.Transformer.TransformAsync(evt, cancellationToken);
+                    wasTransformed = transformedEvent.EventType != evt.EventType ||
+                                     transformedEvent.SchemaVersion != evt.SchemaVersion;
                 }
                 catch (Exception ex)
                 {
@@ -203,11 +235,59 @@ public class LiveMigrationExecutor
                 }
             }
 
-            transformedEvents.Add(transformedEvent);
+            // Create progress info for callbacks
+            var progress = new LiveMigrationEventProgress
+            {
+                Iteration = _iteration,
+                EventVersion = evt.EventVersion,
+                EventType = transformedEvent.EventType,
+                WasTransformed = wasTransformed,
+                OriginalEventType = wasTransformed ? originalEventType : null,
+                OriginalSchemaVersion = wasTransformed ? originalSchemaVersion : null,
+                NewSchemaVersion = wasTransformed ? transformedEvent.SchemaVersion : null,
+                TotalEventsCopied = _totalEventsCopied + eventsAppendedCount + 1,
+                SourceVersion = sourceVersion,
+                ElapsedTime = _stopwatch.Elapsed
+            };
+
+            if (usePerEventAppend)
+            {
+                // Per-event append mode: call before-append callback, then append immediately
+                if (_context.Options.BeforeAppendCallback != null)
+                {
+                    await _context.Options.BeforeAppendCallback(progress);
+                }
+
+                await _context.DataStore.AppendAsync(
+                    _context.TargetDocument,
+                    preserveTimestamp: true,
+                    transformedEvent);
+
+                eventsAppendedCount++;
+                _totalEventsCopied++;
+
+                // Invoke per-event copied callback after append
+                if (_context.Options.EventCopiedCallback != null)
+                {
+                    await _context.Options.EventCopiedCallback(progress);
+                }
+
+                _logger.EventsCopiedToTarget(1, evt.EventVersion, evt.EventVersion);
+            }
+            else
+            {
+                // Batch mode: collect events, invoke callback, append all at end
+                if (_context.Options.EventCopiedCallback != null)
+                {
+                    await _context.Options.EventCopiedCallback(progress);
+                }
+
+                transformedEvents.Add(transformedEvent);
+            }
         }
 
-        // Write events to target stream
-        if (transformedEvents.Count > 0)
+        // Write batched events to target stream (only in batch mode)
+        if (!usePerEventAppend && transformedEvents.Count > 0)
         {
             await _context.DataStore.AppendAsync(
                 _context.TargetDocument,
@@ -215,6 +295,7 @@ public class LiveMigrationExecutor
                 transformedEvents.ToArray());
 
             _totalEventsCopied += transformedEvents.Count;
+            eventsAppendedCount = transformedEvents.Count;
 
             _logger.EventsCopiedToTarget(
                 transformedEvents.Count,
@@ -222,8 +303,8 @@ public class LiveMigrationExecutor
                 transformedEvents[^1].EventVersion);
         }
 
-        var newTargetVersion = targetVersion + transformedEvents.Count;
-        ReportProgress(transformedEvents.Count, sourceVersion, newTargetVersion);
+        var newTargetVersion = targetVersion + eventsAppendedCount;
+        ReportProgress(eventsAppendedCount, sourceVersion, newTargetVersion);
 
         return sourceVersion;
     }
@@ -232,18 +313,39 @@ public class LiveMigrationExecutor
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var targetEvents = await _context.DataStore.ReadAsync(
-            _context.TargetDocument,
-            startVersion: 0,
-            untilVersion: null,
-            chunk: null);
-
-        if (targetEvents == null || !targetEvents.Any())
+        try
         {
+            var targetEvents = await _context.DataStore.ReadAsync(
+                _context.TargetDocument,
+                startVersion: 0,
+                untilVersion: null,
+                chunk: null);
+
+            if (targetEvents == null || !targetEvents.Any())
+            {
+                return -1;
+            }
+
+            return targetEvents.Max(e => e.EventVersion);
+        }
+        catch (Exception ex) when (IsStreamNotFoundException(ex))
+        {
+            // Target stream doesn't exist yet - version is -1
             return -1;
         }
+    }
 
-        return targetEvents.Max(e => e.EventVersion);
+    private static bool IsStreamNotFoundException(Exception ex)
+    {
+        // Check for common "not found" exception patterns across different data stores
+        var typeName = ex.GetType().Name.ToLowerInvariant();
+        var message = ex.Message.ToLowerInvariant();
+
+        return typeName.Contains("notfound") ||
+               message.Contains("not found") ||
+               message.Contains("does not exist") ||
+               message.Contains("404") ||
+               message.Contains("blobnotfound");
     }
 
     private async Task<CloseAttemptResult> AttemptCloseAsync(int expectedVersion, CancellationToken cancellationToken)
@@ -302,6 +404,47 @@ public class LiveMigrationExecutor
                 closeEventJson);
 
             _logger.SourceStreamClosed(_context.SourceStreamId, expectedVersion + 1);
+
+            // Verify no events were added between our read and the close event append
+            // This catches the race condition where events are added after version check
+            var postCloseEvents = await _context.DataStore.ReadAsync(
+                _context.SourceDocument,
+                startVersion: 0,
+                untilVersion: null,
+                chunk: null);
+
+            var businessEventsAfterClose = postCloseEvents?
+                .Where(e => e.EventType != StreamClosedEvent.EventTypeName)
+                .Where(e => e.EventVersion > expectedVersion)
+                .ToList() ?? [];
+
+            if (businessEventsAfterClose.Count > 0)
+            {
+                // Events were added during the close - we need to catch them up to target
+                _logger.EventsAddedDuringClose(businessEventsAfterClose.Count, expectedVersion);
+
+                // Copy the late events to target (close event is already on source)
+                foreach (var lateEvent in businessEventsAfterClose.OrderBy(e => e.EventVersion))
+                {
+                    IEvent eventToCopy = lateEvent;
+
+                    // Apply transformation if configured
+                    if (_context.Transformer != null)
+                    {
+                        eventToCopy = await _context.Transformer.TransformAsync(lateEvent, cancellationToken);
+                    }
+
+                    await _context.DataStore.AppendAsync(
+                        _context.TargetDocument,
+                        preserveTimestamp: true,
+                        eventToCopy);
+
+                    _totalEventsCopied++;
+                    _logger.EventsCopiedToTarget(1, lateEvent.EventVersion, lateEvent.EventVersion);
+                }
+
+                _logger.LateEventsCaughtUp(businessEventsAfterClose.Count);
+            }
 
             return CloseAttemptResult.Succeeded();
         }

@@ -1252,6 +1252,238 @@ public class LiveMigrationExecutorTests
         }
     }
 
+    public class LateEventCatchUpScenarios
+    {
+        [Fact]
+        public async Task Should_catch_up_events_added_after_close_event_is_written()
+        {
+            // Arrange
+            // This test simulates the race condition where events are added to the source stream
+            // between the version check and the close event being appended.
+            // After the close event is written, the executor should verify and catch up any late events.
+            var sourceReadCount = 0;
+            var closeEventWritten = false;
+
+            var dataStore = Substitute.For<IDataStore>();
+            var appendedToTarget = new List<IEvent>();
+
+            // Track appends to target
+            dataStore.AppendAsync(
+                    Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
+                    Arg.Any<bool>(),
+                    Arg.Any<IEvent[]>())
+                .Returns(callInfo =>
+                {
+                    appendedToTarget.AddRange(callInfo.Arg<IEvent[]>());
+                    return Task.CompletedTask;
+                });
+
+            // Close event append to source
+            dataStore.AppendAsync(
+                    Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
+                    Arg.Any<bool>(),
+                    Arg.Any<IEvent[]>())
+                .Returns(callInfo =>
+                {
+                    closeEventWritten = true;
+                    return Task.CompletedTask;
+                });
+
+            dataStore.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(callInfo =>
+                {
+                    var doc = callInfo.Arg<IObjectDocument>();
+
+                    if (doc.Active.StreamIdentifier == "source-stream")
+                    {
+                        sourceReadCount++;
+
+                        // Flow:
+                        // Read 1: CatchUpAsync reads source
+                        // Read 2: AttemptCloseAsync initial verify
+                        // Close event is written -> closeEventWritten = true
+                        // Read 3: Post-close verification (my new code)
+                        // After close event is written, post-close verification read shows 3 events (v0, v1, v2)
+                        // This simulates a late event (v2) being added during the close
+                        if (closeEventWritten)
+                        {
+                            // Post-close verification: show the late event
+                            var events = new[]
+                            {
+                                CreateEvent("Event0", 0),
+                                CreateEvent("Event1", 1),
+                                CreateEvent("LateEvent", 2)  // Event added during close
+                            };
+                            return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)events);
+                        }
+
+                        // Pre-close reads: just 2 events
+                        return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)new[]
+                        {
+                            CreateEvent("Event0", 0),
+                            CreateEvent("Event1", 1)
+                        });
+                    }
+
+                    // Target stream: return what was appended
+                    if (appendedToTarget.Count > 0)
+                        return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)appendedToTarget.ToList());
+                    return Task.FromResult<IEnumerable<IEvent>?>(null);
+                });
+
+            var documentStore = Substitute.For<IDocumentStore>();
+
+            var options = new LiveMigrationOptions();
+            options.WithCatchUpDelay(TimeSpan.Zero);
+
+            var context = CreateContext(dataStore, documentStore, options);
+            var sut = new LiveMigrationExecutor(context, CreateLoggerFactory());
+
+            // Act
+            var result = await sut.ExecuteAsync();
+
+            // Assert
+            Assert.True(result.Success, $"Expected success but got error: {result.Error}");
+            // Should have copied 3 events: Event0, Event1, and the late LateEvent
+            Assert.Equal(3, result.TotalEventsCopied);
+            Assert.Contains(appendedToTarget, e => e.EventType == "LateEvent");
+        }
+
+        [Fact]
+        public async Task Should_apply_transformation_to_late_events()
+        {
+            // Arrange - same as above but with a transformer
+            var closeEventWritten = false;
+            var sourceReadCount = 0;
+
+            var transformer = Substitute.For<IEventTransformer>();
+            transformer.TransformAsync(Arg.Any<IEvent>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var evt = callInfo.Arg<IEvent>();
+                    var transformed = Substitute.For<IEvent>();
+                    transformed.EventType.Returns($"Transformed_{evt.EventType}");
+                    transformed.EventVersion.Returns(evt.EventVersion);
+                    transformed.Payload.Returns(evt.Payload);
+                    return Task.FromResult(transformed);
+                });
+
+            var dataStore = Substitute.For<IDataStore>();
+            var appendedToTarget = new List<IEvent>();
+
+            dataStore.AppendAsync(
+                    Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
+                    Arg.Any<bool>(),
+                    Arg.Any<IEvent[]>())
+                .Returns(callInfo =>
+                {
+                    appendedToTarget.AddRange(callInfo.Arg<IEvent[]>());
+                    return Task.CompletedTask;
+                });
+
+            dataStore.AppendAsync(
+                    Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
+                    Arg.Any<bool>(),
+                    Arg.Any<IEvent[]>())
+                .Returns(callInfo =>
+                {
+                    closeEventWritten = true;
+                    return Task.CompletedTask;
+                });
+
+            dataStore.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+                .Returns(callInfo =>
+                {
+                    var doc = callInfo.Arg<IObjectDocument>();
+
+                    if (doc.Active.StreamIdentifier == "source-stream")
+                    {
+                        sourceReadCount++;
+
+                        if (closeEventWritten)
+                        {
+                            // Post-close: show late event
+                            return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)new[]
+                            {
+                                CreateEvent("Event0", 0),
+                                CreateEvent("LateEvent", 1)
+                            });
+                        }
+
+                        // Pre-close: just one event
+                        return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)new[]
+                        {
+                            CreateEvent("Event0", 0)
+                        });
+                    }
+
+                    if (appendedToTarget.Count > 0)
+                        return Task.FromResult<IEnumerable<IEvent>?>((IEnumerable<IEvent>)appendedToTarget.ToList());
+                    return Task.FromResult<IEnumerable<IEvent>?>(null);
+                });
+
+            var documentStore = Substitute.For<IDocumentStore>();
+
+            var options = new LiveMigrationOptions();
+            options.WithCatchUpDelay(TimeSpan.Zero);
+
+            var sourceStreamInfo = new StreamInformation
+            {
+                StreamIdentifier = "source-stream",
+                StreamType = "blob",
+                CurrentStreamVersion = 0,
+                DataStore = "default"
+            };
+
+            var targetStreamInfo = new StreamInformation
+            {
+                StreamIdentifier = "target-stream",
+                StreamType = "blob",
+                CurrentStreamVersion = -1,
+                DataStore = "default"
+            };
+
+            var sourceDocument = Substitute.For<IObjectDocument>();
+            sourceDocument.ObjectId.Returns("test-object");
+            sourceDocument.ObjectName.Returns("TestObject");
+            sourceDocument.Active.Returns(sourceStreamInfo);
+            sourceDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+
+            var targetDocument = Substitute.For<IObjectDocument>();
+            targetDocument.ObjectId.Returns("test-object");
+            targetDocument.ObjectName.Returns("TestObject");
+            targetDocument.Active.Returns(targetStreamInfo);
+            targetDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+
+            var context = new LiveMigrationContext
+            {
+                MigrationId = Guid.NewGuid(),
+                SourceDocument = sourceDocument,
+                SourceStreamId = "source-stream",
+                TargetStreamId = "target-stream",
+                TargetDocument = targetDocument,
+                DataStore = dataStore,
+                DocumentStore = documentStore,
+                Options = options,
+                Transformer = transformer
+            };
+
+            var sut = new LiveMigrationExecutor(context, CreateLoggerFactory());
+
+            // Act
+            var result = await sut.ExecuteAsync();
+
+            // Assert
+            Assert.True(result.Success, $"Expected success but got error: {result.Error}");
+            // Should have 2 events (Event0 and LateEvent)
+            Assert.Equal(2, result.TotalEventsCopied);
+            // Verify transformer was called for both events
+            await transformer.Received(2).TransformAsync(
+                Arg.Any<IEvent>(),
+                Arg.Any<CancellationToken>());
+        }
+    }
+
     public class ConcurrentWriteScenarios
     {
         [Fact]

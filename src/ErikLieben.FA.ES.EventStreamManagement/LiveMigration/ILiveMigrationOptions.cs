@@ -50,6 +50,24 @@ public interface ILiveMigrationOptions
     /// <param name="maxIterations">The maximum number of iterations.</param>
     /// <returns>This options instance for fluent chaining.</returns>
     ILiveMigrationOptions WithMaxIterations(int maxIterations);
+
+    /// <summary>
+    /// Sets a callback invoked for each event as it is copied during catch-up iterations.
+    /// Use this to monitor individual event transformation and copying progress.
+    /// The callback is async to allow for operations like broadcasting progress.
+    /// </summary>
+    /// <param name="callback">The async callback invoked for each event copied.</param>
+    /// <returns>This options instance for fluent chaining.</returns>
+    ILiveMigrationOptions OnEventCopied(Func<LiveMigrationEventProgress, Task> callback);
+
+    /// <summary>
+    /// Sets an async callback invoked immediately before each event is appended to the target stream.
+    /// When this callback is set, events are appended one at a time (not batched).
+    /// Use this to add delays for demo/visualization purposes, or to perform per-event operations.
+    /// </summary>
+    /// <param name="callback">The async callback invoked before each event append.</param>
+    /// <returns>This options instance for fluent chaining.</returns>
+    ILiveMigrationOptions OnBeforeAppend(Func<LiveMigrationEventProgress, Task> callback);
 }
 
 /// <summary>
@@ -115,4 +133,60 @@ public enum ConvergenceFailureStrategy
     /// This is useful when you want to handle convergence failures manually.
     /// </summary>
     Fail = 1
+}
+
+/// <summary>
+/// Progress information for a single event being copied during live migration.
+/// </summary>
+public sealed record LiveMigrationEventProgress
+{
+    /// <summary>
+    /// Gets the current catch-up iteration number (1-based).
+    /// </summary>
+    public required int Iteration { get; init; }
+
+    /// <summary>
+    /// Gets the version number of the event being copied.
+    /// </summary>
+    public required int EventVersion { get; init; }
+
+    /// <summary>
+    /// Gets the event type name (after transformation if applicable).
+    /// </summary>
+    public required string EventType { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the event was transformed during copying.
+    /// </summary>
+    public required bool WasTransformed { get; init; }
+
+    /// <summary>
+    /// Gets the original event type name before transformation (null if not transformed).
+    /// </summary>
+    public string? OriginalEventType { get; init; }
+
+    /// <summary>
+    /// Gets the original schema version before transformation (null if not transformed).
+    /// </summary>
+    public int? OriginalSchemaVersion { get; init; }
+
+    /// <summary>
+    /// Gets the new schema version after transformation (null if not transformed).
+    /// </summary>
+    public int? NewSchemaVersion { get; init; }
+
+    /// <summary>
+    /// Gets the total number of events copied so far across all iterations.
+    /// </summary>
+    public required long TotalEventsCopied { get; init; }
+
+    /// <summary>
+    /// Gets the current version of the source stream.
+    /// </summary>
+    public required int SourceVersion { get; init; }
+
+    /// <summary>
+    /// Gets the elapsed time since the migration started.
+    /// </summary>
+    public required TimeSpan ElapsedTime { get; init; }
 }
