@@ -284,7 +284,11 @@ public class GenerateProjectionCode
         var builder = new StringBuilder();
         builder.Append(type.Namespace).Append('.').Append(type.Name);
 
-        if (type.GenericTypes.Count > 0)
+        // Check if type.Name already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = type.Name.Contains('<') && type.Name.Contains('>');
+
+        if (type.GenericTypes.Count > 0 && !alreadyHasGenerics)
         {
             builder.Append('<');
             for (int i = 0; i < type.GenericTypes.Count; i++)
@@ -303,7 +307,11 @@ public class GenerateProjectionCode
         var fullTypeDefBuilder = new StringBuilder();
         fullTypeDefBuilder.Append(property.Namespace).Append('.').Append(property.Type);
 
-        if (property.IsGeneric)
+        // Check if property.Type already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (property.IsGeneric && !alreadyHasGenerics)
         {
             fullTypeDefBuilder.Append('<');
             foreach (var generic in property.GenericTypes)
@@ -347,7 +355,12 @@ public class GenerateProjectionCode
     private static string BuildPropertyTypeString(PropertyDefinition property)
     {
         var typeBuilder = new StringBuilder(property.Type);
-        if (property.IsGeneric)
+
+        // Check if property.Type already includes generic parameters (e.g., "HashSet<String>")
+        // If so, don't append them again to avoid duplication
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (property.IsGeneric && !alreadyHasGenerics)
         {
             typeBuilder.Append('<');
             foreach (var generic in property.GenericTypes)
@@ -369,7 +382,11 @@ public class GenerateProjectionCode
         var typeBuilder = new StringBuilder();
         typeBuilder.Append(prop.Namespace).Append('.').Append(prop.Name);
 
-        if (prop.GenericTypes.Count != 0)
+        // Check if prop.Name already includes generic parameters (e.g., "HashSet<String>")
+        // If so, don't append them again to avoid duplication
+        var alreadyHasGenerics = prop.Name.Contains('<') && prop.Name.Contains('>');
+
+        if (prop.GenericTypes.Count != 0 && !alreadyHasGenerics)
         {
             typeBuilder.Append('<');
             foreach (var generic in prop.GenericTypes)
