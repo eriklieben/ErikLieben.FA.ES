@@ -1,3 +1,9 @@
+## [2.0.0-preview.3](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.2...2.0.0-preview.3) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* prevent duplicate generic parameters in JsonSerializable attributes ([468e131](https://github.com/eriklieben/ErikLieben.FA.ES/commit/468e1316b1bfda93f9d9d3666535959ba24ef52d))
+
 ## [2.0.0-preview.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.1...2.0.0-preview.2) (2025-12-30)
 
 ### 📚 Documentation
