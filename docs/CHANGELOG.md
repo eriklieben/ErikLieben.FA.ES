@@ -1,3 +1,9 @@
+## [2.0.0-preview.4](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.3...2.0.0-preview.4) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* prevent duplicate generic parameters in projection and aggregate code generation ([fa35522](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fa35522befb9552ec6cd9c71e229d88a9c207432))
+
 ## [2.0.0-preview.3](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.2...2.0.0-preview.3) (2026-01-05)
 
 ### 🐛 Bug fixes
