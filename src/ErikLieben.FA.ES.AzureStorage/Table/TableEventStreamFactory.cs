@@ -59,9 +59,10 @@ public class TableEventStreamFactory : IEventStreamFactory
         }
 
         var documentTagStore = documentTagFactory.CreateDocumentTagStore(document);
+        var streamTagStore = documentTagFactory.CreateStreamTagStore(document);
 
         return new TableEventStream(
-            new ObjectDocumentWithTags(document, documentTagStore),
+            new ObjectDocumentWithTags(document, documentTagStore, streamTagStore),
             new StreamDependencies
             {
                 AggregateFactory = aggregateFactory,
