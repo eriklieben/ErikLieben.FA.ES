@@ -418,6 +418,12 @@ public static partial class LogMessages
         Message = "Caught up {EventCount} late events to target stream")]
     public static partial void LateEventsCaughtUp(this ILogger logger, int eventCount);
 
+    [LoggerMessage(
+        EventId = 1520,
+        Level = LogLevel.Information,
+        Message = "Source stream {SourceStream} is already closed, skipping close")]
+    public static partial void SourceStreamAlreadyClosed(this ILogger logger, string sourceStream);
+
     // ===== Transformation Pipeline =====
 
     [LoggerMessage(

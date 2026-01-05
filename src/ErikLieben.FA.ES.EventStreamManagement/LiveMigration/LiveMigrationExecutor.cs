@@ -359,9 +359,19 @@ public class LiveMigrationExecutor
             untilVersion: null,
             chunk: null);
 
-        var currentEventList = currentEvents?
+        var allEventsList = currentEvents?.ToList() ?? [];
+
+        // Check if stream is already closed
+        var existingCloseEvent = allEventsList.FirstOrDefault(e => e.EventType == StreamClosedEvent.EventTypeName);
+        if (existingCloseEvent != null)
+        {
+            _logger.SourceStreamAlreadyClosed(_context.SourceStreamId);
+            return CloseAttemptResult.Succeeded(); // Already closed - treat as success
+        }
+
+        var currentEventList = allEventsList
             .Where(e => e.EventType != StreamClosedEvent.EventTypeName)
-            .ToList() ?? [];
+            .ToList();
 
         var actualVersion = currentEventList.Count > 0
             ? currentEventList.Max(e => e.EventVersion)
