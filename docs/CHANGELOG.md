@@ -1,3 +1,12 @@
+## [2.0.0-preview.5](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.4...2.0.0-preview.5) (2026-01-05)
+
+### ✨ New features
+
+* implement migration dry-run and backup execution ([804272b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/804272bb055e4c870c4fdf9dba1abfe254fc23c7))
+* implement migration verification, rollback, and book closing ([4ebba9e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/4ebba9e932af56be64ea3763831c6ddfa9f83447))
+* implement stream tag support ([50badb8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/50badb81954da583e525c7dffabffe63d023a016))
+* **live-migration:** add per-event callbacks for migration progress ([f7dd08f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f7dd08fd1de712ca0b66f2e037bd7d930e3f01d1))
+
 ## [2.0.0-preview.4](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.3...2.0.0-preview.4) (2026-01-05)
 
 ### 🐛 Bug fixes
