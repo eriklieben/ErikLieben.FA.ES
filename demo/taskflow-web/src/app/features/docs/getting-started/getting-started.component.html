@@ -1,0 +1,300 @@
+<div class="page-layout">
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <h1>Getting Started</h1>
+      <p class="subtitle">Build event-sourced applications with ErikLieben.FA.ES</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> What is ErikLieben.FA.ES?</h2>
+      <p class="section-description">
+        ErikLieben.FA.ES is a framework for building event-sourced applications in .NET.
+        It provides a clean, type-safe approach to implementing Domain-Driven Design with event sourcing,
+        including code generation for boilerplate, Roslyn analyzers for best practices, and
+        built-in support for Azure Blob Storage as an event store.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>memory</mat-icon>
+          <h3>Event Sourcing</h3>
+          <p>Store your domain state as a sequence of immutable events, enabling full audit trails and time travel.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>build</mat-icon>
+          <h3>Code Generation</h3>
+          <p>CLI tool generates factories, serializers, and mapping code from your domain model.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>psychology</mat-icon>
+          <h3>Roslyn Analyzers</h3>
+          <p>Catch common mistakes at compile-time with built-in analyzers that enforce best practices.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>speed</mat-icon>
+          <h3>AOT Ready</h3>
+          <p>Full Native AOT support with source-generated serializers - no reflection in hot paths.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Installation Section -->
+    <section id="installation" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Installation</h2>
+      <p class="section-description">
+        Install the core packages to get started. You'll need the main framework package,
+        a storage provider, and optionally the CLI tool for code generation.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Package Installation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="installCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>CLI Tool</strong>
+          <p>The CLI tool generates code from your domain model. Install it as a local tool in your project:</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Install CLI Tool</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cliInstallCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="doc-section">
+      <h2><mat-icon>rocket_launch</mat-icon> Quick Start</h2>
+      <p class="section-description">
+        Let's build a simple event-sourced aggregate in 4 steps. We'll create a <code>Customer</code>
+        aggregate that tracks customer registration.
+      </p>
+
+      <ol class="setup-steps">
+        <li class="step-1">
+          <strong>Define your events</strong>
+          <span>Events are immutable records that describe what happened. Use the <code>[EventName]</code> attribute
+          to decouple the type name from the stored event name.</span>
+        </li>
+        <li class="step-2">
+          <strong>Create your aggregate</strong>
+          <span>Aggregates are partial classes that inherit from <code>Aggregate</code>. They contain
+          <code>When</code> methods that apply events to update state.</span>
+        </li>
+        <li class="step-3">
+          <strong>Run code generation</strong>
+          <span>The CLI tool generates factories, serializers, and DI registration code.</span>
+        </li>
+        <li class="step-4">
+          <strong>Configure services</strong>
+          <span>Register the event store and generated factories in your DI container.</span>
+        </li>
+      </ol>
+
+      <h3>Step 1: Define Events</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>CustomerRegistered.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="eventCodeHtml()"></div>
+      </div>
+
+      <h3>Step 2: Create Aggregate</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Customer.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="aggregateCodeHtml()"></div>
+      </div>
+
+      <h3>Step 3: Generate Code</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Run CLI</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="generateCodeHtml()"></div>
+      </div>
+
+      <h3>Step 4: Configure Services</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Program.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="configCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Usage Section -->
+    <section id="usage" class="doc-section">
+      <h2><mat-icon>play_circle</mat-icon> Using Your Aggregate</h2>
+      <p class="section-description">
+        Once configured, use the generated factory to create and retrieve aggregates.
+        Commands are executed on the aggregate, which appends events to the stream.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Using the Customer Aggregate</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="usageCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Core Concepts Section -->
+    <section id="concepts" class="doc-section">
+      <h2><mat-icon>school</mat-icon> Core Concepts</h2>
+      <p class="section-description">
+        ErikLieben.FA.ES is built around these key concepts. Click each card to learn more.
+      </p>
+
+      <div class="concept-grid">
+        <a class="concept-card" routerLink="/docs/aggregates">
+          <mat-icon>category</mat-icon>
+          <h3>Aggregates</h3>
+          <p>Domain entities that encapsulate business logic and emit events when state changes.</p>
+          <span class="learn-more">Learn more <mat-icon>arrow_forward</mat-icon></span>
+        </a>
+        <a class="concept-card" routerLink="/docs/events">
+          <mat-icon>event_note</mat-icon>
+          <h3>Events</h3>
+          <p>Immutable records of facts that happened in your domain, stored as the source of truth.</p>
+          <span class="learn-more">Learn more <mat-icon>arrow_forward</mat-icon></span>
+        </a>
+        <a class="concept-card" routerLink="/docs/projections">
+          <mat-icon>view_quilt</mat-icon>
+          <h3>Projections</h3>
+          <p>Read models built by replaying events, optimized for queries and reporting.</p>
+          <span class="learn-more">Learn more <mat-icon>arrow_forward</mat-icon></span>
+        </a>
+        <a class="concept-card" routerLink="/docs/cli">
+          <mat-icon>terminal</mat-icon>
+          <h3>CLI Tool</h3>
+          <p>Code generator that creates factories, serializers, and registration code.</p>
+          <span class="learn-more">Learn more <mat-icon>arrow_forward</mat-icon></span>
+        </a>
+        <a class="concept-card" routerLink="/docs/testing">
+          <mat-icon>science</mat-icon>
+          <h3>Testing</h3>
+          <p>In-memory event store and test utilities for unit testing your domain.</p>
+          <span class="learn-more">Learn more <mat-icon>arrow_forward</mat-icon></span>
+        </a>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Framework Integration Section -->
+    <section id="frameworks" class="doc-section">
+      <h2><mat-icon>hub</mat-icon> Framework Integration</h2>
+      <p class="section-description">
+        ErikLieben.FA.ES integrates with popular .NET frameworks. Choose your hosting model:
+      </p>
+
+      <div class="integration-grid">
+        <a class="integration-card" routerLink="/usage/minimal-apis">
+          <div class="integration-icon">
+            <mat-icon>api</mat-icon>
+          </div>
+          <div class="integration-content">
+            <h3>ASP.NET Core Minimal APIs</h3>
+            <p>Attribute-based parameter binding with <code>[EventStream]</code> and <code>[Projection]</code> attributes.</p>
+          </div>
+          <mat-icon class="arrow">chevron_right</mat-icon>
+        </a>
+        <a class="integration-card" routerLink="/usage/azure-functions">
+          <div class="integration-icon">
+            <mat-icon>cloud_sync</mat-icon>
+          </div>
+          <div class="integration-content">
+            <h3>Azure Functions</h3>
+            <p>Input and output bindings for event streams and projections in isolated worker functions.</p>
+          </div>
+          <mat-icon class="arrow">chevron_right</mat-icon>
+        </a>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Packages Section -->
+    <section id="packages" class="doc-section">
+      <h2><mat-icon>inventory_2</mat-icon> Available Packages</h2>
+      <p class="section-description">
+        The framework is split into modular packages. Install only what you need.
+      </p>
+
+      <div class="package-table">
+        <div class="package-row header">
+          <span class="package-name">Package</span>
+          <span class="package-desc">Description</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES</code></span>
+          <span class="package-desc">Core framework with aggregates, events, and projections</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES.AzureStorage</code></span>
+          <span class="package-desc">Azure Blob Storage provider for event streams</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES.Testing</code></span>
+          <span class="package-desc">In-memory storage and test utilities</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES.Analyzers</code></span>
+          <span class="package-desc">Roslyn analyzers for best practices</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES.AspNetCore.MinimalApis</code></span>
+          <span class="package-desc">Minimal API parameter binding</span>
+        </div>
+        <div class="package-row">
+          <span class="package-name"><code>ErikLieben.FA.ES.Azure.Functions.Worker.Extensions</code></span>
+          <span class="package-desc">Azure Functions input/output bindings</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

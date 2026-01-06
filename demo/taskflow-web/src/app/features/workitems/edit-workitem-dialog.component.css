@@ -1,0 +1,38 @@
+mat-dialog-content {
+  min-width: 600px;
+  min-height: 400px;
+  padding-top: 20px;
+}
+
+.tab-content {
+  padding: 24px 0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.error-message {
+  padding: 12px;
+  margin-top: 16px;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+}

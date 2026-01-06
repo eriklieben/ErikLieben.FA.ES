@@ -1,0 +1,341 @@
+<div class="page-layout">
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="header">
+          <h1>Events</h1>
+          <p class="subtitle">Immutable records of facts that happened in your domain</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+          <h2><mat-icon>info</mat-icon> What are Events?</h2>
+          <p class="section-description">
+            Events are the fundamental building blocks of event sourcing. They represent <strong>facts that have happened</strong>
+            in your domain - something that already occurred and cannot be changed. Events are immutable and form the
+            source of truth for your application's state.
+          </p>
+
+          <div class="principle-grid">
+            <div class="principle-card">
+              <mat-icon>lock</mat-icon>
+              <h3>Immutable</h3>
+              <p>Events cannot be modified or deleted once stored. They represent historical facts.</p>
+            </div>
+            <div class="principle-card">
+              <mat-icon>history</mat-icon>
+              <h3>Past Tense</h3>
+              <p>Events describe what happened, not what should happen. Use past tense naming.</p>
+            </div>
+            <div class="principle-card">
+              <mat-icon>domain</mat-icon>
+              <h3>Domain-Focused</h3>
+              <p>Events capture business meaning, not technical implementation details.</p>
+            </div>
+            <div class="principle-card">
+              <mat-icon>data_object</mat-icon>
+              <h3>Self-Contained</h3>
+              <p>Each event contains all the data needed to understand what happened.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Defining Events Section -->
+        <section id="defining" class="doc-section">
+          <h2><mat-icon>add_circle</mat-icon> Defining Events</h2>
+          <p class="section-description">
+            Events are typically defined as C# records. Use the <code>[EventName]</code> attribute to decouple
+            the CLR type name from the serialized event name in storage.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Basic Event Definition</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="basicEventCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>Why Records?</strong>
+              <p>C# records provide immutability, value equality, and clean syntax for data objects -
+              perfect for events. The compiler generates <code>Equals</code>, <code>GetHashCode</code>, and <code>ToString</code> for you.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Event Naming Section -->
+        <section id="naming" class="doc-section">
+          <h2><mat-icon>label</mat-icon> Event Naming</h2>
+          <p class="section-description">
+            The <code>[EventName]</code> attribute is crucial for long-term maintainability.
+            It allows you to rename classes without breaking existing event streams.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>EventName Attribute</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="eventNameCodeHtml()"></div>
+          </div>
+
+          <h3>Naming Conventions</h3>
+          <p class="section-description">
+            Follow these conventions for consistent, meaningful event names:
+          </p>
+
+          <div class="convention-grid">
+            <div class="convention-card">
+              <h4>Format</h4>
+              <code>Entity.Action.Qualifier</code>
+              <p>Use dot-separated segments for hierarchy.</p>
+            </div>
+            <div class="convention-card">
+              <h4>Past Tense</h4>
+              <code>Customer.Registered</code>
+              <p>Events describe what happened, not commands.</p>
+            </div>
+            <div class="convention-card">
+              <h4>Specific</h4>
+              <code>Order.ItemAdded</code>
+              <p>Be specific about what changed.</p>
+            </div>
+            <div class="convention-card">
+              <h4>Versioned</h4>
+              <code>[EventVersion(2)]</code>
+              <p>Use version attribute for breaking changes.</p>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Good vs Bad Event Names</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="namingExamplesCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Event Design Section -->
+        <section id="design" class="doc-section">
+          <h2><mat-icon>design_services</mat-icon> Event Design</h2>
+          <p class="section-description">
+            Well-designed events make your system easier to understand, evolve, and debug.
+            Here are key principles for designing events:
+          </p>
+
+          <h3>Include All Relevant Data</h3>
+          <p class="section-description">
+            Events should be self-contained. Include all the data needed to understand what happened,
+            but avoid including derived or computed data.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Self-Contained Events</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="selfContainedCodeHtml()"></div>
+          </div>
+
+          <h3>Avoid Primitive Obsession</h3>
+          <p class="section-description">
+            Use strong types instead of primitives when it adds clarity.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Strong Types in Events</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="strongTypesCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Event Versioning Section -->
+        <section id="versioning" class="doc-section">
+          <h2><mat-icon>history</mat-icon> Event Versioning</h2>
+          <p class="section-description">
+            Over time, your event schema will evolve. Use the <code>[EventVersion]</code> attribute to track
+            breaking schema changes. The schema version is stored separately from the event name, keeping your
+            event names stable while supporting schema evolution.
+          </p>
+
+          <h3>Non-Breaking Changes</h3>
+          <p class="section-description">
+            Adding optional properties is safe - old events will deserialize with default values.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Adding Optional Properties</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="optionalPropsCodeHtml()"></div>
+          </div>
+
+          <h3>Breaking Changes with Schema Versions</h3>
+          <p class="section-description">
+            For breaking changes, use the <code>[EventVersion]</code> attribute to create a new version of the event.
+            Both versions can coexist - the system deserializes to the correct type based on the stored schema version.
+            Optionally, you can register an upcaster to automatically transform old versions to newer ones during read.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Event Upcasting</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="upcastingCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Serialization Section -->
+        <section id="serialization" class="doc-section">
+          <h2><mat-icon>transform</mat-icon> Serialization</h2>
+          <p class="section-description">
+            Events are serialized to JSON using System.Text.Json. The CLI tool generates
+            <code>JsonSerializerContext</code> for AOT-compatible serialization.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Generated Serializer Context</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="serializerCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>AOT Support</strong>
+              <p>The generated <code>JsonSerializerContext</code> enables Native AOT compilation and trimming.
+              No reflection is used during serialization.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Event Storage Section -->
+        <section id="storage" class="doc-section">
+          <h2><mat-icon>storage</mat-icon> Event Storage</h2>
+          <p class="section-description">
+            Events are stored in an event stream, identified by the aggregate's object name and ID.
+            Each event includes metadata like version, timestamp, and event name.
+          </p>
+
+          <div class="storage-diagram">
+            <div class="stream-header">
+              <span>Event Stream: Customer__12345</span>
+            </div>
+            <div class="event-row">
+              <span class="version">v1</span>
+              <span class="name">Customer.Registered</span>
+              <span class="data">&#123; "name": "John", "email": "..." &#125;</span>
+            </div>
+            <div class="event-row">
+              <span class="version">v2</span>
+              <span class="name">Customer.EmailUpdated</span>
+              <span class="data">&#123; "newEmail": "new&#64;email.com" &#125;</span>
+            </div>
+            <div class="event-row">
+              <span class="version">v3</span>
+              <span class="name">Customer.Deactivated</span>
+              <span class="data">&#123; "reason": "Requested" &#125;</span>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Best Practices Section -->
+        <section id="best-practices" class="doc-section">
+          <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+          <p class="section-description">
+            Follow these guidelines for well-designed events:
+          </p>
+
+          <div class="practice-grid">
+            <div class="practice-card do">
+              <div class="practice-header">
+                <mat-icon>check_circle</mat-icon>
+                <h3>Do</h3>
+              </div>
+              <ul>
+                <li>Use <code>[EventName]</code> attribute for all events</li>
+                <li>Use <code>[EventVersion]</code> for breaking schema changes</li>
+                <li>Name events in past tense (CustomerRegistered, OrderShipped)</li>
+                <li>Include all data needed to understand the event</li>
+                <li>Use records for immutability</li>
+                <li>Use strong types instead of primitives where meaningful</li>
+                <li>Register upcasters for schema version migrations</li>
+              </ul>
+            </div>
+            <div class="practice-card dont">
+              <div class="practice-header">
+                <mat-icon>cancel</mat-icon>
+                <h3>Don't</h3>
+              </div>
+              <ul>
+                <li>Include computed or derived values</li>
+                <li>Reference other aggregates by navigation properties</li>
+                <li>Include sensitive data that shouldn't be persisted</li>
+                <li>Use mutable classes for events</li>
+                <li>Change event names after deployment</li>
+                <li>Delete or modify stored events</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Complete Example Section -->
+        <section id="complete-example" class="doc-section">
+          <h2><mat-icon>integration_instructions</mat-icon> Complete Example</h2>
+          <p class="section-description">
+            A comprehensive example showing a complete set of events for an order domain.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Order Domain Events</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Navigation -->
+      <nav class="doc-nav">
+        <div class="nav-header">On this page</div>
+        <ul class="nav-list">
+          @for (item of navItems; track item.id) {
+            <li>
+              <a
+                [href]="'#' + item.id"
+                [class.active]="activeSection() === item.id"
+                (click)="scrollToSection($event, item.id)">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                {{ item.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>

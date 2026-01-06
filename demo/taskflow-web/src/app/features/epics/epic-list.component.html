@@ -1,0 +1,152 @@
+<div class="epics-container">
+  <mat-card class="epics-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>flag</mat-icon>
+        Epics
+      </mat-card-title>
+      <mat-card-subtitle>
+        Stored in Azure Table Storage
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Storage Info Banner -->
+      <div class="storage-info">
+        <mat-icon>table_chart</mat-icon>
+        <span>Epics are stored in Azure Table Storage to demonstrate the Table Storage provider. Tables: <code>epicevents</code>, <code>epicdocuments</code></span>
+      </div>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span>Loading epics...</span>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (error()) {
+        <div class="error-container">
+          <mat-icon>warning</mat-icon>
+          <span>{{ error() }}</span>
+          <button mat-raised-button color="primary" (click)="seedDemoEpics()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              Seeding...
+            } @else {
+              <mat-icon>add</mat-icon>
+              Seed Demo Epics
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (!isLoading() && !error() && epics().length === 0) {
+        <div class="empty-container">
+          <mat-icon>flag</mat-icon>
+          <h3>No Epics Found</h3>
+          <p>Get started by seeding demo epics to see the Table Storage provider in action.</p>
+          <button mat-raised-button color="primary" (click)="seedDemoEpics()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              Seeding...
+            } @else {
+              <mat-icon>add</mat-icon>
+              Seed Demo Epics
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Epics Table -->
+      @if (!isLoading() && !error() && epics().length > 0) {
+        <table mat-table [dataSource]="epics()" class="epics-table">
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let epic">
+              <a [routerLink]="['/epics', epic.epicId]" class="epic-link">
+                {{ epic.name }}
+              </a>
+            </td>
+          </ng-container>
+
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let epic">
+              <mat-chip [color]="getPriorityColor(epic.priority)" selected>
+                <mat-icon>{{ getPriorityIcon(epic.priority) }}</mat-icon>
+                {{ epic.priority }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Project Count Column -->
+          <ng-container matColumnDef="projectCount">
+            <th mat-header-cell *matHeaderCellDef>Projects</th>
+            <td mat-cell *matCellDef="let epic">
+              <span class="project-count">{{ epic.projectCount }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Target Date Column -->
+          <ng-container matColumnDef="targetDate">
+            <th mat-header-cell *matHeaderCellDef>Target Date</th>
+            <td mat-cell *matCellDef="let epic">
+              {{ formatDate(epic.targetCompletionDate) }}
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let epic">
+              @if (epic.isCompleted) {
+                <mat-chip color="primary" selected>
+                  <mat-icon>check_circle</mat-icon>
+                  Completed
+                </mat-chip>
+              } @else {
+                <mat-chip>
+                  <mat-icon>schedule</mat-icon>
+                  In Progress
+                </mat-chip>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let epic">
+              <a mat-icon-button [routerLink]="['/epics', epic.epicId]" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </a>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="table-actions">
+          <button mat-stroked-button (click)="loadEpics()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+          <button mat-stroked-button color="primary" (click)="seedDemoEpics()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>add</mat-icon>
+            }
+            Seed More Epics
+          </button>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

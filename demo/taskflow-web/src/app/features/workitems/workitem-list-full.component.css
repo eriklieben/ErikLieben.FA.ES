@@ -1,0 +1,145 @@
+.workitem-list-container {
+  padding: 24px;
+  background-color: var(--ctp-base);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-weight: 500;
+    color: var(--ctp-text);
+  }
+
+  button mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.filters-card {
+  margin-bottom: 24px;
+  background-color: var(--ctp-crust);
+  border-radius: 12px;
+  border: 1px solid var(--ctp-surface-0);
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    min-width: 150px;
+  }
+}
+
+mat-card {
+  background-color: var(--ctp-crust);
+  border-radius: 12px;
+  border: 1px solid var(--ctp-surface-0);
+}
+
+.workitem-table {
+  width: 100%;
+  background-color: transparent;
+
+  th {
+    background-color: var(--ctp-mantle);
+    color: var(--ctp-text);
+    font-weight: 600;
+    border-bottom: 2px solid var(--ctp-surface-0);
+  }
+
+  td {
+    color: var(--ctp-text);
+    border-bottom: 1px solid var(--ctp-surface-0);
+  }
+}
+
+.workitem-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--ctp-surface-0);
+  }
+}
+
+mat-chip {
+  font-weight: 600;
+}
+
+.priority-low {
+  background-color: var(--ctp-blue);
+  color: var(--ctp-base);
+}
+
+.priority-medium {
+  background-color: var(--ctp-yellow);
+  color: var(--ctp-base);
+}
+
+.priority-high {
+  background-color: var(--ctp-peach);
+  color: var(--ctp-base);
+}
+
+.priority-critical {
+  background-color: var(--ctp-red);
+  color: var(--ctp-base);
+}
+
+.status-planned {
+  background-color: var(--ctp-subtext-0);
+  color: var(--ctp-base);
+}
+
+.status-inprogress {
+  background-color: var(--ctp-yellow);
+  color: var(--ctp-base);
+}
+
+.status-completed {
+  background-color: var(--ctp-green);
+  color: var(--ctp-base);
+}
+
+.overdue {
+  color: var(--ctp-red);
+  font-weight: 600;
+}
+
+.no-deadline {
+  color: var(--ctp-overlay-0);
+  font-style: italic;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--ctp-overlay-0);
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}

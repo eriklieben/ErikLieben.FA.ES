@@ -1,0 +1,73 @@
+<mat-expansion-panel class="event-stream-panel">
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      <mat-icon>history</mat-icon>
+      View Event Stream
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>Loading events...</span>
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>info</mat-icon>
+      <div class="empty-content">
+        <p><strong>No event data available</strong></p>
+        <p>Please generate demo data to see the event stream for this project.</p>
+      </div>
+    </div>
+  } @else if (eventSummary()) {
+    <div class="event-stream">
+      <!-- First 2 events -->
+      @for (event of eventSummary()!.first; track event.version) {
+        <div class="stream-event">
+          <div class="event-marker completed"></div>
+          <div class="stream-event-content">
+            <span class="stream-event-type">{{ formatEventType(event.eventType) }}</span>
+            <span class="stream-event-time">v{{ event.version }} • {{ formatTimestamp(event.timestamp) }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Middle summary if there are more than 3 events -->
+      @if (eventSummary()!.middle > 0) {
+        <div class="stream-event summary">
+          <div class="event-marker summary"></div>
+          <div class="stream-event-content">
+            <span class="stream-summary-text">
+              <mat-icon>more_horiz</mat-icon>
+              {{ eventSummary()!.middle }} more event{{ eventSummary()!.middle === 1 ? '' : 's' }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- Last event (completion) -->
+      @if (eventSummary()!.last; as lastEvent) {
+        <div class="stream-event highlight">
+          <div class="event-marker completed highlight"></div>
+          <div class="stream-event-content">
+            <span class="stream-event-type" [class.legacy]="isLegacyEvent">
+              {{ formatEventType(lastEvent.eventType) }}
+            </span>
+            @if (eventSummary()!.completionEventType) {
+              <span class="upcaster-badge">
+                Upcasted to {{ formatEventType(eventSummary()!.completionEventType!) }}
+              </span>
+            } @else if (isNewEvent) {
+              <span class="native-badge">
+                Native event with ProjectOutcome
+              </span>
+            }
+            <span class="stream-event-time">
+              v{{ lastEvent.version }} • {{ formatTimestamp(lastEvent.timestamp) }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</mat-expansion-panel>

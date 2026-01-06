@@ -1,0 +1,102 @@
+.project-detail-container {
+  padding: 24px;
+  background-color: var(--ctp-base);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-weight: 500;
+    flex: 1;
+    color: var(--ctp-text);
+  }
+
+  button mat-icon {
+    color: var(--ctp-blue);
+  }
+
+  mat-chip {
+    font-weight: 600;
+
+    &.completed {
+      background-color: var(--ctp-green);
+      color: var(--ctp-crust);
+    }
+
+    &:not(.completed) {
+      background-color: var(--ctp-blue);
+      color: var(--ctp-crust);
+    }
+  }
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+mat-card {
+  background-color: var(--ctp-crust);
+  border-radius: 12px;
+  box-shadow: var(--ctp-shadow-md);
+  border: 1px solid var(--ctp-surface0);
+
+  mat-card-header {
+    mat-card-title {
+      color: var(--ctp-text);
+      font-weight: 600;
+    }
+  }
+
+  mat-card-content {
+    color: var(--ctp-text);
+  }
+}
+
+mat-list {
+  mat-list-item {
+    color: var(--ctp-text);
+
+    mat-icon {
+      color: var(--ctp-blue);
+    }
+  }
+}
+
+mat-divider {
+  border-top-color: var(--ctp-surface0);
+}
+
+mat-card-actions {
+  padding: 16px;
+  display: flex;
+  gap: 8px;
+
+  button {
+    color: var(--ctp-blue);
+
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: var(--ctp-overlay0);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  color: var(--ctp-overlay0);
+}

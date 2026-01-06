@@ -1,0 +1,278 @@
+<div class="upcasting-container">
+  <div class="page-header">
+    <h1>
+      <mat-icon class="header-icon">upgrade</mat-icon>
+      Event Upcasting
+    </h1>
+    <p class="subtitle">
+      Schema evolution without breaking existing event streams
+    </p>
+  </div>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>lightbulb</mat-icon>
+      <mat-card-title>What is Event Upcasting?</mat-card-title>
+      <mat-card-subtitle>Evolving your domain model over time</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Event Upcasting is a pattern that allows you to transform old event versions into new formats when reading from the event store. This enables schema evolution without migrating existing events.</p>
+
+      <h3>Key Concepts:</h3>
+      <ul>
+        <li><strong>Schema Evolution</strong> - Domain models change over time, and events must evolve too</li>
+        <li><strong>Non-Destructive</strong> - Original events remain unchanged in the eventstream</li>
+        <li><strong>Transformation on Read</strong> - Events are upcasted when loaded, not when written</li>
+        <li><strong>Backward Compatibility</strong> - New code can work with old events seamlessly using upcasters</li>
+        <li><strong>Cleaner Code</strong> - No need to keep old folding logic around for backwards compatibility</li>
+      </ul>
+
+      <h3>Real-World Example:</h3>
+      <p>In the generated demo data, the <code>Project.Completed</code> event was initially generic. Later, the domain evolved to have explicit completion types:</p>
+      <ul>
+        <li><code>ProjectOutcome.Successful</code> - Project finished as planned</li>
+        <li><code>ProjectOutcome.Cancelled</code> - Project was cancelled mid-way</li>
+        <li><code>ProjectOutcome.Failed</code> - Project failed to meet goals</li>
+        <li><code>ProjectOutcome.Delivered</code> - Project delivered to client</li>
+        <li><code>ProjectOutcome.Suspended</code> - Project paused indefinitely</li>
+      </ul>
+
+      <div class="feature-note">
+        <mat-icon>info</mat-icon>
+        <span>The <code>ProjectCompletedUpcast</code> automatically transforms old generic <code>Project.Completed</code> events into the new specific event types when the aggregate is loaded from the event store.</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Event Upcasting Demo -->
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>upgrade</mat-icon>
+      <mat-card-title>Upcasting Demo: Event Comparisons</mat-card-title>
+      <mat-card-subtitle>Review how the upcaster transforms legacy events into new event types</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading projection data...</p>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <mat-icon>error</mat-icon>
+          <p>{{ error() }}</p>
+        </div>
+      } @else {
+        <div class="demo-intro">
+          <mat-icon>info</mat-icon>
+          <p>
+            The demo data contains projects completed with both OLD and NEW events.
+            Each outcome type below shows a side-by-side comparison of how the <code>ProjectCompletedUpcast</code> transforms legacy <code>Project.Completed</code> events into specific outcome events.
+          </p>
+        </div>
+
+        <div class="outcome-comparisons">
+          @for (group of outcomeGroups(); track group.outcome) {
+            @if (group.legacy || group.modern) {
+              <div class="outcome-section">
+                <h4 class="outcome-header">
+                  <mat-icon [class]="'outcome-icon ' + group.cssClass">{{ group.icon }}</mat-icon>
+                  {{ group.outcome }} Outcome
+                </h4>
+                <div class="comparison-row">
+                  <!-- Legacy Event Column -->
+                  @if (group.legacy) {
+                    <div class="event-column legacy">
+                      <div class="column-label">
+                        <mat-icon>history</mat-icon>
+                        <span>Legacy Event (Upcasted)</span>
+                      </div>
+                      <div class="event-card">
+                        <div class="event-header">
+                          <span class="event-type">Project.Completed</span>
+                          <mat-icon class="transform-icon">arrow_forward</mat-icon>
+                          <span class="event-type upcasted">{{ getUpcastedEventType(group.legacy, group.outcome) }}</span>
+                        </div>
+                        <div class="project-name">{{ group.legacy.Name }}</div>
+                        <div class="event-age">{{ formatDate(group.legacy.InitiatedAt) }}</div>
+
+                        <mat-expansion-panel class="event-stream-panel">
+                          <mat-expansion-panel-header>
+                            <mat-panel-title>
+                              <mat-icon>history</mat-icon>
+                              View Event Stream ({{ group.legacy.TotalEventCount }} events)
+                            </mat-panel-title>
+                          </mat-expansion-panel-header>
+                          <div class="event-stream">
+                            @for (event of getNonCompletionStartEvents(group.legacy); track event.EventStreamVersion) {
+                              <div class="stream-event">
+                                <div class="event-marker"></div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type">
+                                    {{ event.EventType }}
+                                  </span>
+                                  <span class="stream-event-time">
+                                    v{{ event.EventStreamVersion }} • {{ formatDate(event.Timestamp) }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+
+                            <!-- Show gap if there are events between start and last -->
+                            @if (hasGap(group.legacy)) {
+                              <div class="stream-event gap">
+                                <div class="event-marker-zigzag">
+                                  <div class="zigzag-line"></div>
+                                </div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type gap">
+                                    <mat-icon class="gap-icon">more_horiz</mat-icon>
+                                    {{ getGapCount(group.legacy) }} more event{{ getGapCount(group.legacy) > 1 ? 's' : '' }}
+                                  </span>
+                                  <span class="stream-event-time">
+                                    Events v{{ group.legacy.EventStreamSummaryStart.length }} through v{{ group.legacy.TotalEventCount - 2 }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+
+                            <!-- Show last event if different from start events -->
+                            @if (group.legacy.EventStreamSummaryLast && shouldShowLastEvent(group.legacy)) {
+                              <div class="stream-event" [class.highlight]="isCompletionEvent(group.legacy.EventStreamSummaryLast.EventType)">
+                                <div class="event-marker completed" [class.highlight]="isCompletionEvent(group.legacy.EventStreamSummaryLast.EventType)"></div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type" [class.legacy]="isCompletionEvent(group.legacy.EventStreamSummaryLast.EventType)">
+                                    {{ group.legacy.EventStreamSummaryLast.EventType }}
+                                  </span>
+                                  @if (isCompletionEvent(group.legacy.EventStreamSummaryLast.EventType)) {
+                                    <span class="upcaster-badge">Upcasted to {{ getUpcastedEventType(group.legacy, group.outcome) }}</span>
+                                  }
+                                  <span class="stream-event-time">
+                                    v{{ group.legacy.EventStreamSummaryLast.EventStreamVersion }} • {{ formatDate(group.legacy.EventStreamSummaryLast.Timestamp) }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </mat-expansion-panel>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Modern Event Column -->
+                  @if (group.modern) {
+                    <div class="event-column new">
+                      <div class="column-label">
+                        <mat-icon>new_releases</mat-icon>
+                        <span>New Event (Native)</span>
+                      </div>
+                      <div class="event-card">
+                        <div class="event-header">
+                          <span class="event-type">{{ group.modern.EventType }}</span>
+                        </div>
+                        <div class="project-name">{{ group.modern.Name }}</div>
+                        <div class="event-age">{{ formatDate(group.modern.InitiatedAt) }}</div>
+
+                        <mat-expansion-panel class="event-stream-panel">
+                          <mat-expansion-panel-header>
+                            <mat-panel-title>
+                              <mat-icon>history</mat-icon>
+                              View Event Stream ({{ group.modern.TotalEventCount }} events)
+                            </mat-panel-title>
+                          </mat-expansion-panel-header>
+                          <div class="event-stream">
+                            @for (event of getNonCompletionStartEvents(group.modern); track event.EventStreamVersion) {
+                              <div class="stream-event">
+                                <div class="event-marker"></div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type">
+                                    {{ event.EventType }}
+                                  </span>
+                                  <span class="stream-event-time">
+                                    v{{ event.EventStreamVersion }} • {{ formatDate(event.Timestamp) }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+
+                            <!-- Show gap if there are events between start and last -->
+                            @if (hasGap(group.modern)) {
+                              <div class="stream-event gap">
+                                <div class="event-marker-zigzag">
+                                  <div class="zigzag-line"></div>
+                                </div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type gap">
+                                    <mat-icon class="gap-icon">more_horiz</mat-icon>
+                                    {{ getGapCount(group.modern) }} more event{{ getGapCount(group.modern) > 1 ? 's' : '' }}
+                                  </span>
+                                  <span class="stream-event-time">
+                                    Events v{{ group.modern.EventStreamSummaryStart.length }} through v{{ group.modern.TotalEventCount - 2 }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+
+                            <!-- Show last event if different from start events -->
+                            @if (group.modern.EventStreamSummaryLast && shouldShowLastEvent(group.modern)) {
+                              <div class="stream-event" [class.highlight]="isCompletionEvent(group.modern.EventStreamSummaryLast.EventType)">
+                                <div class="event-marker completed" [class.highlight]="isCompletionEvent(group.modern.EventStreamSummaryLast.EventType)"></div>
+                                <div class="stream-event-content">
+                                  <span class="stream-event-type" [class.new-event]="isCompletionEvent(group.modern.EventStreamSummaryLast.EventType)">
+                                    {{ group.modern.EventStreamSummaryLast.EventType }}
+                                  </span>
+                                  @if (isCompletionEvent(group.modern.EventStreamSummaryLast.EventType)) {
+                                    <span class="native-badge">Native event with ProjectOutcome.{{ group.modern.Outcome }}</span>
+                                  }
+                                  <span class="stream-event-time">
+                                    v{{ group.modern.EventStreamSummaryLast.EventStreamVersion }} • {{ formatDate(group.modern.EventStreamSummaryLast.Timestamp) }}
+                                  </span>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        </mat-expansion-panel>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Placeholder if only one type exists -->
+                  @if (!group.legacy && group.modern) {
+                    <div class="event-column placeholder">
+                      <div class="column-label">
+                        <mat-icon>history</mat-icon>
+                        <span>Legacy Event (Upcasted)</span>
+                      </div>
+                      <div class="event-card placeholder">
+                        <p>No legacy {{ group.outcome }} events in the demo data.</p>
+                      </div>
+                    </div>
+                  }
+                  @if (group.legacy && !group.modern) {
+                    <div class="event-column placeholder">
+                      <div class="column-label">
+                        <mat-icon>new_releases</mat-icon>
+                        <span>New Event (Native)</span>
+                      </div>
+                      <div class="event-card placeholder">
+                        <p>No modern {{ group.outcome }} events in the demo data.</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="demo-note">
+          <mat-icon>lightbulb</mat-icon>
+          <p>
+            The <code>ProjectCompletedUpcast</code> runs automatically when loading aggregates from the event store.
+            Old events are transformed in-memory during read operations, while the original events remain unchanged in storage.
+          </p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

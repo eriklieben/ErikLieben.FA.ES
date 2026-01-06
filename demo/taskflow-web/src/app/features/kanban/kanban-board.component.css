@@ -1,0 +1,12 @@
+.placeholder-container {
+  padding: 24px;
+}
+
+mat-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+ul {
+  margin-top: 16px;
+}

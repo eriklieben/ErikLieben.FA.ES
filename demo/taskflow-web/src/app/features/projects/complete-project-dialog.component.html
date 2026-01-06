@@ -1,0 +1,57 @@
+<h2 mat-dialog-title>Complete Project</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="form-container">
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>Project Outcome</mat-label>
+      <mat-select formControlName="outcome" required>
+        <mat-option value="Successfully delivered all planned features">
+          Successfully delivered all planned features
+        </mat-option>
+        <mat-option value="Delivered with scope adjustments">
+          Delivered with scope adjustments
+        </mat-option>
+        <mat-option value="Delivered MVP - additional features deferred">
+          Delivered MVP - additional features deferred
+        </mat-option>
+        <mat-option value="Project goals achieved ahead of schedule">
+          Project goals achieved ahead of schedule
+        </mat-option>
+        <mat-option value="Completed with lessons learned documented">
+          Completed with lessons learned documented
+        </mat-option>
+        <mat-option value="Custom...">
+          Custom...
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('outcome')?.hasError('required')">
+        Please select an outcome
+      </mat-error>
+    </mat-form-field>
+
+    @if (showCustomOutcome()) {
+      <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Custom Outcome</mat-label>
+        <textarea
+          matInput
+          formControlName="customOutcome"
+          rows="3"
+          placeholder="Describe the project outcome..."
+          required>
+        </textarea>
+        <mat-error *ngIf="form.get('customOutcome')?.hasError('required')">
+          Please enter a custom outcome
+        </mat-error>
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="!form.valid"
+    (click)="onSubmit()">
+    Complete Project
+  </button>
+</mat-dialog-actions>

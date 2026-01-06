@@ -1,0 +1,492 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Event Upcasting</h1>
+      <p class="subtitle">Handle schema evolution by transforming old event versions to new ones at read time</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Event upcasting handles schema evolution by transforming old event versions to new ones at read time.
+        This allows you to change event structures without migrating historical data.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>history</mat-icon>
+          <h3>Preserve History</h3>
+          <p>Keep all historical events unchanged in storage.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>transform</mat-icon>
+          <h3>On-the-fly Transform</h3>
+          <p>Transform old events to new schema when reading.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>undo</mat-icon>
+          <h3>Easy Rollback</h3>
+          <p>Simply remove the upcaster to revert changes.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>speed</mat-icon>
+          <h3>Quick Iteration</h3>
+          <p>No migration downtime or data reprocessing.</p>
+        </div>
+      </div>
+
+      <div class="architecture-box">
+        <h3>How Upcasting Works</h3>
+        <div class="flow-diagram">
+          <div class="flow-step">
+            <mat-icon>storage</mat-icon>
+            <span>V1 Event in Storage</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <mat-icon>transform</mat-icon>
+            <span>Upcaster V1→V2</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <mat-icon>memory</mat-icon>
+            <span>V2 Event in Memory</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <mat-icon>account_tree</mat-icon>
+            <span>Aggregate Handler</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- When to Use Section -->
+    <section id="when-to-use" class="doc-section">
+      <h2><mat-icon>help</mat-icon> When to Use Upcasting</h2>
+      <p class="section-description">
+        Choose the right approach for different schema changes:
+      </p>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Scenario</span>
+          <span class="assertion-desc">Approach</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Add optional field</span>
+          <span class="assertion-desc">No upcaster needed (use defaults)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Rename field</span>
+          <span class="assertion-desc">Upcaster transforms old to new</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Split event into multiple</span>
+          <span class="assertion-desc">Upcaster yields multiple events</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Merge fields</span>
+          <span class="assertion-desc">Upcaster combines values</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Change data type</span>
+          <span class="assertion-desc">Upcaster converts types</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Remove field</span>
+          <span class="assertion-desc">No upcaster needed (just stop using)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Add required field</span>
+          <span class="assertion-desc">Upcaster provides default value</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Interface Section -->
+    <section id="interface" class="doc-section">
+      <h2><mat-icon>code</mat-icon> IUpcastEvent Interface</h2>
+      <p class="section-description">
+        The interface every upcaster must implement:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>IUpcastEvent</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="interfaceCodeHtml()"></div>
+      </div>
+
+      <div class="method-list">
+        <div class="method-item">
+          <code>CanUpcast(IEvent)</code>
+          <p>Returns <code>true</code> if this upcaster can handle the event. Typically checks event type and version.</p>
+        </div>
+        <div class="method-item">
+          <code>UpCast(IEvent)</code>
+          <p>Transforms the old event to one or more new events. Use <code>yield return</code> for flexibility.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Basic Structure Section -->
+    <section id="basic-structure" class="doc-section">
+      <h2><mat-icon>account_tree</mat-icon> Basic Structure</h2>
+      <p class="section-description">
+        Three steps to implement event upcasting:
+      </p>
+
+      <h3>1. Create an Upcaster</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>transform</mat-icon>
+          <span>Upcaster Implementation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="upcasterCodeHtml()"></div>
+      </div>
+
+      <h3>2. Register the Upcaster</h3>
+      <p>Apply the <code>[UseUpcaster&lt;T&gt;]</code> attribute to your aggregate:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>link</mat-icon>
+          <span>Aggregate Registration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="registerCodeHtml()"></div>
+      </div>
+
+      <h3>3. Version Your Events</h3>
+      <p>Use <code>[EventVersion]</code> to track schema versions:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>tag</mat-icon>
+          <span>Event Versioning</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="versionCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Keep Old Event Types</strong>
+          <p>Never delete old event record types. They are needed for deserializing historical events
+          before the upcaster can transform them.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Common Patterns Section -->
+    <section id="patterns" class="doc-section">
+      <h2><mat-icon>pattern</mat-icon> Common Patterns</h2>
+      <p class="section-description">
+        Patterns for typical schema evolution scenarios:
+      </p>
+
+      <h3>Adding a Required Field</h3>
+      <p>Provide a default value for the new field:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>add</mat-icon>
+          <span>Add Field Pattern</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="addFieldCodeHtml()"></div>
+      </div>
+
+      <h3>Renaming Fields</h3>
+      <p>Map old field names to new ones:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>drive_file_rename_outline</mat-icon>
+          <span>Rename Field Pattern</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="renameFieldCodeHtml()"></div>
+      </div>
+
+      <h3>Splitting One Event into Multiple</h3>
+      <p>Convert a generic event into specific event types:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>call_split</mat-icon>
+          <span>Split Event Pattern</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="splitEventCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Chained Upcasters Section -->
+    <section id="chaining" class="doc-section">
+      <h2><mat-icon>link</mat-icon> Chained Upcasters</h2>
+      <p class="section-description">
+        For events that have evolved through multiple versions, chain upcasters together:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>account_tree</mat-icon>
+          <span>Multi-Version Upcasting</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="chainedCodeHtml()"></div>
+      </div>
+
+      <div class="architecture-box">
+        <h3>Version Chain Flow</h3>
+        <div class="flow-diagram">
+          <div class="flow-step">
+            <span class="version-badge">V1</span>
+            <span>Storage</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <span class="version-badge">V2</span>
+            <span>After Upcaster 1</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <span class="version-badge">V3</span>
+            <span>After Upcaster 2</span>
+          </div>
+          <mat-icon class="flow-arrow">arrow_forward</mat-icon>
+          <div class="flow-step">
+            <mat-icon>check_circle</mat-icon>
+            <span>Handler</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>tips_and_updates</mat-icon>
+        <div>
+          <strong>Order Matters</strong>
+          <p>Upcasters are applied in the order they are declared. Each upcaster should handle exactly
+          one version jump (e.g., v1→v2, not v1→v3).</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Registry Section -->
+    <section id="registry" class="doc-section">
+      <h2><mat-icon>list</mat-icon> Event Upcaster Registry</h2>
+      <p class="section-description">
+        For performance-critical scenarios, use the registry directly:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>speed</mat-icon>
+          <span>Registry API</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="registryCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>bolt</mat-icon>
+          <div>
+            <strong>Typed Delegates</strong>
+            <span>Register with strongly-typed transformation functions.</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>lock</mat-icon>
+          <div>
+            <strong>Freeze for Performance</strong>
+            <span>Call <code>Freeze()</code> after registration for optimized lookups.</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>route</mat-icon>
+          <div>
+            <strong>Multi-Version Jumps</strong>
+            <span>Automatically chains upcasters for version jumps.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Testing Section -->
+    <section id="testing" class="doc-section">
+      <h2><mat-icon>science</mat-icon> Testing Upcasters</h2>
+      <p class="section-description">
+        Test your upcasters to ensure correct transformation:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>bug_report</mat-icon>
+          <span>Unit Tests</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="testingCodeHtml()"></div>
+      </div>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Test Coverage</h3>
+          </div>
+          <ul>
+            <li>Test <code>CanUpcast</code> returns true for correct version</li>
+            <li>Test <code>CanUpcast</code> returns false for wrong version</li>
+            <li>Test transformed data has correct values</li>
+            <li>Test metadata is preserved</li>
+            <li>Test integration with aggregates</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="doc-section">
+      <h2><mat-icon>compare</mat-icon> Migration vs Upcasting</h2>
+      <p class="section-description">
+        Compare the two approaches for schema evolution:
+      </p>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Aspect</span>
+          <span class="assertion-desc">Upcasting</span>
+          <span class="assertion-desc">Migration</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Data modification</span>
+          <span class="assertion-desc">None</span>
+          <span class="assertion-desc">Rewrites events</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Performance</span>
+          <span class="assertion-desc">Read-time overhead</span>
+          <span class="assertion-desc">One-time cost</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Rollback</span>
+          <span class="assertion-desc">Easy (remove upcaster)</span>
+          <span class="assertion-desc">Complex</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Disk space</span>
+          <span class="assertion-desc">Same</span>
+          <span class="assertion-desc">May increase/decrease</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Complexity</span>
+          <span class="assertion-desc">Per-version logic</span>
+          <span class="assertion-desc">Batch operation</span>
+        </div>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="comparison-card">
+          <h3><mat-icon>transform</mat-icon> Use Upcasting When</h3>
+          <ul>
+            <li>Schema changes are additive</li>
+            <li>Historical data volume is large</li>
+            <li>You need quick iteration</li>
+            <li>Rollback capability is important</li>
+          </ul>
+        </div>
+        <div class="comparison-card">
+          <h3><mat-icon>sync</mat-icon> Use Migration When</h3>
+          <ul>
+            <li>Event names change fundamentally</li>
+            <li>Data needs consolidation</li>
+            <li>Storage optimization needed</li>
+            <li>Changing storage providers</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective upcasting:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Keep old event types for deserialization</li>
+            <li>Test upcasters with historical event data</li>
+            <li>Document version changes in comments</li>
+            <li>Use explicit version numbers</li>
+            <li>Preserve all metadata when upcasting</li>
+            <li>Run <code>dotnet faes</code> after adding upcasters</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Delete old event type definitions</li>
+            <li>Change the semantic meaning of events</li>
+            <li>Throw exceptions in upcasters</li>
+            <li>Modify original event data</li>
+            <li>Create circular upcaster chains</li>
+            <li>Skip version numbers in chains</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout warning">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>Exception Handling</strong>
+          <p>Never throw exceptions in upcasters. If transformation fails, return an empty enumerable
+          or log the issue and skip the event gracefully.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

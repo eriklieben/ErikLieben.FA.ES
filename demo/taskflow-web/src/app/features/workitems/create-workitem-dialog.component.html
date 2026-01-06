@@ -1,0 +1,79 @@
+<h2 mat-dialog-title>Plan New Work Item</h2>
+<mat-dialog-content>
+  <form [formGroup]="workItemForm">
+    <mat-form-field appearance="outline">
+      <mat-label>Project</mat-label>
+      <mat-select formControlName="projectId" required>
+        @for (project of projects; track project.projectId) {
+          <mat-option [value]="project.projectId">{{ project.name }}</mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="workItemForm.get('projectId')?.hasError('required')">
+        Project is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" placeholder="Enter work item title" required>
+      <mat-error *ngIf="workItemForm.get('title')?.hasError('required')">
+        Title is required
+      </mat-error>
+      <mat-error *ngIf="workItemForm.get('title')?.hasError('minlength')">
+        Title must be at least 5 characters
+      </mat-error>
+      <mat-error *ngIf="workItemForm.get('title')?.hasError('maxlength')">
+        Title cannot exceed 200 characters
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Enter work item description"
+        rows="4"
+        required>
+      </textarea>
+      <mat-error *ngIf="workItemForm.get('description')?.hasError('required')">
+        Description is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Priority</mat-label>
+      <mat-select formControlName="priority" required>
+        <mat-option value="Low">Low</mat-option>
+        <mat-option value="Medium">Medium</mat-option>
+        <mat-option value="High">High</mat-option>
+        <mat-option value="Critical">Critical</mat-option>
+      </mat-select>
+      <mat-error *ngIf="workItemForm.get('priority')?.hasError('required')">
+        Priority is required
+      </mat-error>
+    </mat-form-field>
+  </form>
+
+  @if (errorMessage) {
+    <div class="error-message">
+      {{ errorMessage }}
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="isSubmitting">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="workItemForm.invalid || isSubmitting">
+    @if (isSubmitting) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Plan Work Item
+    }
+  </button>
+</mat-dialog-actions>

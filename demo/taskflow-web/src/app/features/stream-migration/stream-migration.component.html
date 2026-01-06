@@ -1,0 +1,486 @@
+<div class="migration-container">
+  <div class="page-header">
+    <h1>
+      <mat-icon class="header-icon">sync_alt</mat-icon>
+      Stream Migration
+    </h1>
+    <p class="subtitle">
+      Zero-downtime event stream migration between Azure Blob storage
+    </p>
+  </div>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>lightbulb</mat-icon>
+      <mat-card-title>What is Live Stream Migration?</mat-card-title>
+      <mat-card-subtitle>Zero-downtime event stream migration with catch-up loop</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Live Migration allows you to migrate event streams <strong>while the system continues to process new events</strong>. The <code>LiveMigrationExecutor</code> uses a catch-up loop to ensure all events are copied, including those arriving during migration.</p>
+
+      <h3>The Catch-Up Loop:</h3>
+      <div class="catchup-explanation">
+        <div class="catchup-item">
+          <span class="step-badge">1</span>
+          <span><strong>Copy existing events</strong> - All events from source are copied to target</span>
+        </div>
+        <div class="catchup-item">
+          <span class="step-badge">2</span>
+          <span><strong>Catch up new events</strong> - Events that arrived during copy are also copied</span>
+        </div>
+        <div class="catchup-item">
+          <span class="step-badge">3</span>
+          <span><strong>Repeat until caught up</strong> - Continue until no new events arrive</span>
+        </div>
+        <div class="catchup-item">
+          <span class="step-badge">4</span>
+          <span><strong>Close source stream</strong> - Prevent further writes with <code>StreamClosedEvent</code></span>
+        </div>
+      </div>
+
+      <div class="feature-note highlight">
+        <mat-icon>tips_and_updates</mat-icon>
+        <span><strong>Try it!</strong> Click "Add Live Event" during the <em>Replicating</em> or <em>Tailing</em> phase to see how new events are caught up to the target stream!</span>
+      </div>
+
+      <div class="feature-note">
+        <mat-icon>info</mat-icon>
+        <span>By default, events are copied as-is. Enable "Apply Transformations" to upcast events to new schema versions using <code>IEventTransformer</code>.</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Migration Demo -->
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>play_circle</mat-icon>
+      <mat-card-title>Interactive Migration Demo</mat-card-title>
+      <mat-card-subtitle>Watch events transform in real-time and add live events during migration</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <!-- Phase Progress -->
+      <div class="phase-progress">
+        @for (phase of phases; track phase.id; let i = $index) {
+          <div class="phase-step" [class.active]="phaseIndex() >= i" [class.current]="phaseIndex() === i" [class.complete-phase]="phase.id === 'complete'">
+            <div class="phase-icon-wrapper">
+              <mat-icon>{{ phase.icon }}</mat-icon>
+            </div>
+            <div class="phase-label">{{ phase.label }}</div>
+            @if (i < phases.length - 1) {
+              <div class="phase-connector" [class.active]="phaseIndex() > i"></div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Phase Description Banner -->
+      <div class="phase-banner" [class]="migrationPhase()">
+        <mat-icon>{{ migrationPhase() === 'replicating' || migrationPhase() === 'tailing' ? 'warning' : 'info' }}</mat-icon>
+        <span>{{ getPhaseDescription() }}</span>
+      </div>
+
+      <!-- Migration Mode Toggles -->
+      <div class="migration-toggles">
+        <div class="data-mode-toggle">
+          <mat-icon>{{ applyTransformation() ? 'transform' : 'content_copy' }}</mat-icon>
+          <span class="mode-label">Apply Transformations</span>
+          <mat-slide-toggle
+            [checked]="applyTransformation()"
+            (change)="toggleTransformation()"
+            [disabled]="isRunning()"
+            matTooltip="OFF = Copy events as-is | ON = Apply schema transformations">
+          </mat-slide-toggle>
+          <span class="mode-status">{{ applyTransformation() ? 'ON' : 'OFF' }}</span>
+        </div>
+        <div class="data-mode-toggle">
+          <mat-icon>{{ slowMode() ? 'hourglass_top' : 'speed' }}</mat-icon>
+          <span class="mode-label">Slow Mode (500ms/event)</span>
+          <mat-slide-toggle
+            [checked]="slowMode()"
+            (change)="toggleSlowMode()"
+            [disabled]="isRunning()"
+            matTooltip="Add 500ms delay per event to visualize the migration process">
+          </mat-slide-toggle>
+          <span class="mode-status">{{ slowMode() ? 'SLOW' : 'FAST' }}</span>
+        </div>
+      </div>
+
+      <!-- Stream Selector -->
+      <div class="stream-selector">
+          <mat-form-field appearance="outline" class="stream-select-field">
+            <mat-label>Select Event Stream</mat-label>
+            <mat-select
+              [value]="selectedStreamId()"
+              (selectionChange)="selectStream($event.value)"
+              [disabled]="isRunning() || loadingStreams()">
+              @for (stream of availableStreams(); track stream.id) {
+                <mat-option [value]="stream.id">
+                  <div class="stream-option">
+                    <span class="stream-name">{{ stream.name }}</span>
+                    <span class="stream-meta">{{ stream.eventCount }} events</span>
+                  </div>
+                </mat-option>
+              }
+            </mat-select>
+            @if (loadingStreams()) {
+              <mat-hint>Loading available streams...</mat-hint>
+            }
+          </mat-form-field>
+          @if (selectedStream()) {
+            <div class="selected-stream-info">
+              <mat-icon>storage</mat-icon>
+              <div class="stream-details">
+                <span class="stream-name">{{ selectedStream()?.name }}</span>
+                <span class="stream-id">ID: {{ selectedStream()?.id }}</span>
+                <span class="stream-type">Type: {{ selectedStream()?.type }}</span>
+              </div>
+              <mat-chip>{{ selectedStream()?.eventCount }} events</mat-chip>
+            </div>
+          }
+        </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button mat-raised-button color="primary" (click)="startMigration()" [disabled]="isRunning() || migrationPhase() === 'complete'">
+          <mat-icon>play_arrow</mat-icon>
+          Start Migration
+        </button>
+        <button mat-raised-button color="accent" (click)="addLiveEvent()" [disabled]="!canAddLiveEvent()">
+          <mat-icon>add</mat-icon>
+          Add Live Event
+        </button>
+        <button mat-stroked-button (click)="resetMigration()">
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
+        @if (isRunning()) {
+          <div class="migration-status">
+            <mat-icon class="spinning">sync</mat-icon>
+            <span>Processing {{ eventsProcessed() }}/{{ sourceEvents().length }} events...</span>
+          </div>
+        }
+        @if (migrationPhase() === 'complete') {
+          <div class="migration-complete">
+            <mat-icon>check_circle</mat-icon>
+            <span>Migration completed successfully!</span>
+          </div>
+        }
+      </div>
+
+      @if (isRunning() || migrationPhase() === 'complete') {
+        <mat-progress-bar mode="determinate" [value]="progress()"></mat-progress-bar>
+      }
+
+      <!-- Live Migration Real-Time Status -->
+      @if (isRunning() || liveMigrationPhase() !== 'idle') {
+        <div class="live-migration-status">
+          <div class="status-header">
+            <mat-icon class="status-icon" [class.spinning]="isRunning()">{{ isRunning() ? 'sync' : 'check_circle' }}</mat-icon>
+            <span class="status-title">Live Migration Progress</span>
+            <span class="elapsed-time">
+              <mat-icon>timer</mat-icon>
+              {{ liveMigrationElapsedTime() }}
+            </span>
+          </div>
+
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="status-label">Iteration</span>
+              <span class="status-value">{{ liveMigrationIteration() }}</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Source Version</span>
+              <span class="status-value">{{ liveMigrationSourceVersion() }}</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Target Version</span>
+              <span class="status-value">{{ liveMigrationTargetVersion() }}</span>
+            </div>
+            <div class="status-item" [class.synced]="liveMigrationIsSynced()">
+              <span class="status-label">Events Behind</span>
+              <span class="status-value">
+                @if (liveMigrationIsSynced()) {
+                  <mat-icon>check_circle</mat-icon> Synced!
+                } @else {
+                  {{ liveMigrationEventsBehind() }}
+                }
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Events Copied</span>
+              <span class="status-value">{{ liveMigrationTotalEventsCopied() }}</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Transformed</span>
+              <span class="status-value">{{ liveMigrationEventsTransformed() }}</span>
+            </div>
+          </div>
+
+          <!-- Last Copied Event Animation -->
+          @if (lastCopiedEvent()) {
+            <div class="last-event-copied">
+              <mat-icon>arrow_forward</mat-icon>
+              <div class="event-info">
+                <span class="event-type">{{ lastCopiedEvent()?.eventType }}</span>
+                <span class="event-version">v{{ lastCopiedEvent()?.eventVersion }}</span>
+                @if (lastCopiedEvent()?.wasTransformed) {
+                  <span class="transformed-badge">
+                    <mat-icon>transform</mat-icon>
+                    {{ lastCopiedEvent()?.originalEventType }} v{{ lastCopiedEvent()?.originalSchemaVersion }}
+                    ->
+                    v{{ lastCopiedEvent()?.newSchemaVersion }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Recent Events List -->
+          @if (recentCopiedEvents().length > 0) {
+            <div class="recent-events">
+              <span class="recent-label">Recent Events:</span>
+              <div class="recent-list">
+                @for (event of recentCopiedEvents(); track event.eventVersion) {
+                  <span class="recent-event" [class.transformed]="event.wasTransformed">
+                    {{ event.eventType }} v{{ event.eventVersion }}
+                    @if (event.wasTransformed) {
+                      <mat-icon>transform</mat-icon>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Error Display -->
+          @if (liveMigrationError()) {
+            <div class="migration-error">
+              <mat-icon>error</mat-icon>
+              <span>{{ liveMigrationError() }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Live Event Log -->
+      @if (liveEventLogs().length > 0) {
+        <div class="live-event-log">
+          <div class="log-header">
+            <mat-icon>history</mat-icon>
+            <span>Live Event Log</span>
+          </div>
+          <div class="log-entries">
+            @for (log of liveEventLogs(); track log.id) {
+              <div class="log-entry" [class]="log.phase">
+                <div class="log-time">{{ formatTime(log.timestamp) }}</div>
+                <div class="log-event">
+                  <mat-icon>{{ getEventIcon(log.eventType) }}</mat-icon>
+                  <span class="event-type">{{ log.eventType }}</span>
+                </div>
+                <div class="log-targets">
+                  @for (target of log.writtenTo; track target) {
+                    <span class="target-badge" [class.source]="target === 'Source'" [class.target]="target === 'Target'">
+                      {{ target }}
+                    </span>
+                  }
+                </div>
+                <div class="log-message">{{ log.message }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Stream Comparison -->
+      <div class="streams-comparison">
+        <!-- Source Stream -->
+        <div class="stream-column source" [class.active-read]="readSource()" [class.inactive-read]="!readSource()">
+          <div class="stream-header">
+            <mat-icon>storage</mat-icon>
+            <span>Source Stream (v1)</span>
+            <mat-chip>{{ sourceEvents().length }} events</mat-chip>
+            @if (readSource()) {
+              <span class="read-indicator active">
+                <mat-icon>visibility</mat-icon> Reading
+              </span>
+            }
+          </div>
+          <div class="event-list">
+            @for (event of sourceEvents(); track event.id) {
+              <div class="event-item"
+                   [class.processed]="eventsProcessed() >= event.version && !event.isLiveEvent"
+                   [class.live]="event.isLiveEvent"
+                   [class.replicated]="event.isLiveEvent && event.writtenTo?.includes('target')">
+                <div class="event-marker">
+                  <mat-icon>{{ getEventIcon(event.type) }}</mat-icon>
+                </div>
+                <div class="event-content">
+                  <div class="event-type-row">
+                    <span class="event-type">{{ event.type }}</span>
+                    @if (event.isLiveEvent) {
+                      <span class="live-badge">LIVE</span>
+                    }
+                    @if (event.isLiveEvent && event.writtenTo?.includes('target')) {
+                      <span class="replicated-badge">
+                        <mat-icon>content_copy</mat-icon>
+                        Replicated
+                      </span>
+                    }
+                  </div>
+                  <div class="event-meta">
+                    <span class="version">v{{ event.version }}</span>
+                    <span class="schema">Schema v{{ event.schemaVersion }}</span>
+                    <span class="timestamp">{{ formatDate(event.timestamp) }}</span>
+                  </div>
+                  <mat-expansion-panel class="data-panel">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>Event Data</mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <pre class="event-data">{{ formatData(event.data) }}</pre>
+                  </mat-expansion-panel>
+                </div>
+                @if (eventsProcessed() >= event.version && !event.isLiveEvent) {
+                  <mat-icon class="check-icon">check</mat-icon>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Copy/Transform Arrow -->
+        <div class="transform-arrow" [class.active]="isRunning() || migrationPhase() === 'complete'">
+          <div class="arrow-content">
+            <mat-icon>east</mat-icon>
+            <span>{{ applyTransformation() ? 'Transform' : 'Copy' }}</span>
+            @if (migrationPhase() === 'replicating' || migrationPhase() === 'tailing') {
+              <div class="sync-indicator">
+                <mat-icon>sync</mat-icon>
+                <span>Syncing</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Target Stream -->
+        <div class="stream-column target" [class.active-read]="readTarget()" [class.inactive-read]="!readTarget()">
+          <div class="stream-header">
+            <mat-icon>cloud_sync</mat-icon>
+            <span>Target Stream {{ applyTransformation() ? '(v2)' : '' }}</span>
+            <mat-chip [highlighted]="targetEvents().length > 0">{{ targetEvents().length }} events</mat-chip>
+            @if (readTarget()) {
+              <span class="read-indicator active">
+                <mat-icon>visibility</mat-icon> Reading
+              </span>
+            }
+          </div>
+          <div class="event-list">
+            @if (targetEvents().length === 0) {
+              <div class="empty-state">
+                <mat-icon>hourglass_empty</mat-icon>
+                <span>Events will appear here during migration</span>
+              </div>
+            }
+            @for (event of targetEvents(); track event.id) {
+              <div class="event-item new"
+                   [class.live]="event.isLiveEvent"
+                   [class.replicated]="event.isLiveEvent && event.writtenTo?.includes('source')">
+                <div class="event-marker">
+                  <mat-icon>{{ getEventIcon(event.type) }}</mat-icon>
+                </div>
+                <div class="event-content">
+                  <div class="event-type-row">
+                    <span class="event-type">{{ event.type }}</span>
+                    @if (event.isLiveEvent) {
+                      <span class="live-badge">LIVE</span>
+                    }
+                    @if (event.isLiveEvent && event.writtenTo?.includes('source')) {
+                      <span class="replicated-badge">
+                        <mat-icon>content_copy</mat-icon>
+                        Replicated
+                      </span>
+                    }
+                  </div>
+                  <div class="event-meta">
+                    <span class="version">v{{ event.version }}</span>
+                    <span class="schema new">Schema v{{ event.schemaVersion }}</span>
+                    <span class="timestamp">{{ formatDate(event.timestamp) }}</span>
+                  </div>
+                  <mat-expansion-panel class="data-panel">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>Transformed Data</mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <pre class="event-data transformed">{{ formatData(event.data) }}</pre>
+                  </mat-expansion-panel>
+                </div>
+                <mat-icon class="new-icon">auto_awesome</mat-icon>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Replication Explanation -->
+      @if (migrationPhase() === 'replicating' || migrationPhase() === 'tailing') {
+        <div class="replication-callout">
+          <mat-icon>tips_and_updates</mat-icon>
+          <div>
+            <strong>Try adding a live event now!</strong>
+            <p>
+              @if (migrationPhase() === 'replicating') {
+                During replication, events are being copied from source to target.
+                New events written to source will be caught up before cutover.
+              } @else {
+                During tailing, we're catching up any new events that arrived during replication.
+                Once caught up, the cutover will switch the active stream.
+              }
+            </p>
+          </div>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Transformation Rules (only shown when transformation is enabled) -->
+  @if (applyTransformation()) {
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>transform</mat-icon>
+      <mat-card-title>Transformation Rules</mat-card-title>
+      <mat-card-subtitle>Schema changes applied during migration</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="transformation-grid">
+        @for (transform of transformations; track transform.eventType) {
+          <div class="transformation-card">
+            <div class="transform-header">
+              <mat-icon>{{ getEventIcon(transform.eventType) }}</mat-icon>
+              <span class="event-name">{{ transform.eventType }}</span>
+              <div class="version-badge">
+                <span class="from">v{{ transform.fromVersion }}</span>
+                <mat-icon>arrow_forward</mat-icon>
+                <span class="to">v{{ transform.toVersion }}</span>
+              </div>
+            </div>
+            <ul class="changes-list">
+              @for (change of transform.changes; track change) {
+                <li>
+                  <mat-icon>check</mat-icon>
+                  {{ change }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <div class="demo-note">
+        <mat-icon>lightbulb</mat-icon>
+        <p>
+          These transformations are implemented using <code>IEventTransformer</code> and composed into a <code>TransformationPipeline</code>.
+          The pipeline processes each event sequentially, applying all matching transformers.
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  }
+</div>

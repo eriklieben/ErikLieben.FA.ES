@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.0" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>69d1913f-cfc9-4c13-902a-ab6cfb29181f</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.Azure.Functions" Version="13.0.0-preview.1.25560.3" />
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.0.2" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.0.2" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskFlow.Api\TaskFlow.Api.csproj" />
+    <ProjectReference Include="..\TaskFlow.Functions\TaskFlow.Functions.csproj" />
+    <ProjectReference Include="..\TaskFlow.ServiceDefaults\TaskFlow.ServiceDefaults.csproj" IsAspireProjectResource="false" />
+  </ItemGroup>
+
+</Project>

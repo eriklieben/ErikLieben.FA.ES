@@ -1,0 +1,413 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Event Stream Management</h1>
+      <p class="subtitle">Zero-downtime event stream migration and transformation</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The <code>ErikLieben.FA.ES.EventStreamManagement</code> package provides production-ready capabilities
+        for zero-downtime event stream migration and transformation in distributed event-sourced systems.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>sync_alt</mat-icon>
+          <h3>Zero-Downtime Migrations</h3>
+          <p>Migrate event streams without service interruption using a 5-phase cutover strategy.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>transform</mat-icon>
+          <h3>Event Transformation</h3>
+          <p>Upcast events from old versions to new schemas with composable transformer pipelines.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>hub</mat-icon>
+          <h3>Distributed Coordination</h3>
+          <p>Prevent conflicts with Azure Blob lease-based distributed locking.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>security</mat-icon>
+          <h3>Safety Mechanisms</h3>
+          <p>Backup, verification, and rollback support for production-safe migrations.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Installation Section -->
+    <section id="installation" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Installation</h2>
+      <p class="section-description">
+        Install the core package for migration interfaces and the Azure provider for blob-based coordination.
+      </p>
+
+      <div class="package-list">
+        <div class="package-item">
+          <mat-icon>inventory_2</mat-icon>
+          <div>
+            <strong>ErikLieben.FA.ES.EventStreamManagement</strong>
+            <span>Core interfaces and implementations for migration orchestration</span>
+          </div>
+        </div>
+        <div class="package-item">
+          <mat-icon>cloud</mat-icon>
+          <div>
+            <strong>ErikLieben.FA.ES.AzureStorage</strong>
+            <span>Azure Blob Storage providers for locks, routing, and backups</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="doc-section">
+      <h2><mat-icon>rocket_launch</mat-icon> Quick Start</h2>
+      <p class="section-description">
+        Get started with a simple migration in just a few lines of code.
+      </p>
+
+      <h3>Basic Migration</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Simple Migration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="basicMigrationCodeHtml()"></div>
+      </div>
+
+      <h3>Migration with Transformation</h3>
+      <p>Use transformers to upcast events during migration:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Event Upcasting</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="transformationCodeHtml()"></div>
+      </div>
+
+      <h3>Migration with Backup and Progress</h3>
+      <p>Enable backup and progress tracking for production migrations:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Backup and Progress</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="backupCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="doc-section">
+      <h2><mat-icon>architecture</mat-icon> Architecture</h2>
+      <p class="section-description">
+        The migration follows a 5-phase cutover strategy for zero-downtime operation.
+      </p>
+
+      <div class="phase-diagram">
+        <div class="phase-item">
+          <div class="phase-number">1</div>
+          <div class="phase-content">
+            <h4>Normal</h4>
+            <p>All operations go to the original stream</p>
+          </div>
+        </div>
+        <div class="phase-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="phase-item">
+          <div class="phase-number">2</div>
+          <div class="phase-content">
+            <h4>DualWrite</h4>
+            <p>Writes go to both streams, reads from original</p>
+          </div>
+        </div>
+        <div class="phase-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="phase-item">
+          <div class="phase-number">3</div>
+          <div class="phase-content">
+            <h4>DualRead</h4>
+            <p>Writes to both, reads from new (fallback to original)</p>
+          </div>
+        </div>
+        <div class="phase-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="phase-item">
+          <div class="phase-number">4</div>
+          <div class="phase-content">
+            <h4>Cutover</h4>
+            <p>Atomic switch to new stream</p>
+          </div>
+        </div>
+        <div class="phase-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="phase-item completed">
+          <div class="phase-number">5</div>
+          <div class="phase-content">
+            <h4>BookClosed</h4>
+            <p>Old stream terminated and archived</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Saga Pattern</strong>
+          <p>The migration executes as a saga with compensation. Each step can be rolled back if a later step fails.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Live Migration Section -->
+    <section id="livemigration" class="doc-section">
+      <h2><mat-icon>sync_alt</mat-icon> Live Migration</h2>
+      <p class="section-description">
+        The <code>LiveMigrationExecutor</code> enables zero-downtime migration of event streams while the system continues
+        to process new events. It uses a catch-up loop to ensure all events are copied, including those arriving during migration.
+      </p>
+
+      <div class="info-callout">
+        <mat-icon>tips_and_updates</mat-icon>
+        <div>
+          <strong>Try the Interactive Demo!</strong>
+          <p>See live migration in action with our <a routerLink="/stream-migration">Stream Migration Demo</a>. Watch events being copied and try adding new events during the migration to see how the catch-up loop works.</p>
+        </div>
+      </div>
+
+      <h3>Basic Usage</h3>
+      <p>Create a <code>LiveMigrationContext</code> and execute the migration:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>LiveMigrationExecutor</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="liveMigrationCodeHtml()"></div>
+      </div>
+
+      <h3>How the Catch-Up Loop Works</h3>
+      <p>The migration handles events arriving during the copy process through iterative catch-up:</p>
+
+      <div class="catchup-diagram">
+        <div class="catchup-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Initial Copy</h4>
+            <p>Copy all existing events from source to target stream</p>
+          </div>
+        </div>
+        <div class="catchup-arrow"><mat-icon>arrow_downward</mat-icon></div>
+        <div class="catchup-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Catch-Up Iteration</h4>
+            <p>Copy any new events that arrived during the previous iteration</p>
+          </div>
+        </div>
+        <div class="catchup-arrow"><mat-icon>arrow_downward</mat-icon></div>
+        <div class="catchup-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Repeat Until Caught Up</h4>
+            <p>Continue iterations until no new events arrive</p>
+          </div>
+        </div>
+        <div class="catchup-arrow"><mat-icon>arrow_downward</mat-icon></div>
+        <div class="catchup-step completed">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Close Source Stream</h4>
+            <p>Write <code>StreamClosedEvent</code> to prevent further writes to source</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Catch-Up Loop Iterations</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="liveMigrationProgressCodeHtml()"></div>
+      </div>
+
+      <h3>Configuration Options</h3>
+      <p>Configure progress callbacks and event transformers:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>LiveMigrationOptions</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="liveMigrationContextCodeHtml()"></div>
+      </div>
+
+      <h3>Key Features</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>sync</mat-icon>
+          <span><strong>Catch-up loop</strong> automatically handles events arriving during migration</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>lock</mat-icon>
+          <span><strong>Optimistic concurrency</strong> detects concurrent writes and retries as needed</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>transform</mat-icon>
+          <span><strong>Event transformation</strong> optionally upcast events to new schema versions</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>block</mat-icon>
+          <span><strong>Stream closure</strong> prevents new writes to source after migration completes</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>analytics</mat-icon>
+          <span><strong>Progress reporting</strong> track migration status with detailed callbacks</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Transformation Section -->
+    <section id="transformation" class="doc-section">
+      <h2><mat-icon>transform</mat-icon> Transformation Pipeline</h2>
+      <p class="section-description">
+        Transform events during migration using composable transformer pipelines.
+      </p>
+
+      <h3>Custom Event Transformer</h3>
+      <p>Implement <code>IEventTransformer</code> for complex transformation logic:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Custom Transformer</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="customTransformerCodeHtml()"></div>
+      </div>
+
+      <h3>Built-in Transformers</h3>
+      <div class="component-list">
+        <div class="component-item">
+          <mat-icon>functions</mat-icon>
+          <div>
+            <strong>FunctionTransformer</strong>
+            <span>Simple function-based transformation for quick implementations</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>layers</mat-icon>
+          <div>
+            <strong>CompositeTransformer</strong>
+            <span>Combine multiple transformers into a single sequential pipeline</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>filter_list</mat-icon>
+          <div>
+            <strong>FilterTransformer</strong>
+            <span>Filter out events based on predicates</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Distributed Coordination Section -->
+    <section id="distributed" class="doc-section">
+      <h2><mat-icon>hub</mat-icon> Distributed Coordination</h2>
+      <p class="section-description">
+        Coordinate migrations across multiple instances using distributed locking.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Distributed Migration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="distributedCodeHtml()"></div>
+      </div>
+
+      <h3>Azure Blob Lease Locking</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>timer</mat-icon>
+          <span><strong>60-second leases</strong> with automatic renewal via heartbeat</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>favorite</mat-icon>
+          <span><strong>Configurable heartbeat</strong> interval (default 10 seconds)</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>table_chart</mat-icon>
+          <span><strong>Routing table</strong> stored in blob storage for phase coordination</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>verified</mat-icon>
+          <span><strong>Strongly consistent</strong> for coordination safety</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- AOT Compatibility Section -->
+    <section id="aot" class="doc-section">
+      <h2><mat-icon>speed</mat-icon> AOT Compatibility</h2>
+      <p class="section-description">
+        The package is fully AOT-compatible with no reflection in hot paths.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>block</mat-icon>
+          <h3>No Reflection</h3>
+          <p>All types are explicit</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>auto_awesome</mat-icon>
+          <h3>Source Generated</h3>
+          <p>JSON serialization via JsonSerializerContext</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>memory</mat-icon>
+          <h3>No Dynamic Code</h3>
+          <p>Works with Native AOT deployment</p>
+        </div>
+      </div>
+
+      <h3>User Responsibilities</h3>
+      <p>Provide AOT-compatible serializers for your event types:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>AOT-Compatible Event Serializer</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="aotCodeHtml()"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

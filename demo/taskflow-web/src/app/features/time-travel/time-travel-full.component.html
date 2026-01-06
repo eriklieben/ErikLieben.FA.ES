@@ -1,0 +1,237 @@
+<div class="time-travel-container">
+  <div class="header">
+    <div>
+      <h1>Time Travel</h1>
+      <p class="subtitle">View aggregate state at any point in time</p>
+    </div>
+  </div>
+
+  <!-- Aggregate Selection -->
+  <mat-card class="selection-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>search</mat-icon>
+      <mat-card-title>Select Aggregate</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field class="full-width">
+        <mat-label>Aggregate Type</mat-label>
+        <mat-select [(ngModel)]="selectedAggregateType" (ngModelChange)="loadAggregateList()">
+          <mat-option value="Project">Project</mat-option>
+          <mat-option value="WorkItem">WorkItem</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if (selectedAggregateType) {
+        <mat-form-field class="full-width">
+          <mat-label>{{ selectedAggregateType }} ID</mat-label>
+          <mat-select [(ngModel)]="selectedAggregateId" (ngModelChange)="loadEventStream()">
+            @for (item of aggregateList(); track item.id) {
+              <mat-option [value]="item.id">{{ item.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      @if (selectedAggregateId && events().length > 0) {
+        <button mat-raised-button color="primary" class="full-width" (click)="loadEventStream()">
+          <mat-icon>refresh</mat-icon>
+          Reload Events
+        </button>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <div class="content-grid">
+
+    <!-- Event Stream Timeline -->
+    @if (events().length > 0) {
+      <mat-card class="timeline-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>history</mat-icon>
+          <mat-card-title>Event Stream</mat-card-title>
+          <mat-card-subtitle>{{ events().length }} events found</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="time-slider">
+            <div class="slider-wrapper">
+              <mat-slider
+                [min]="1"
+                [max]="events().length"
+                [step]="1"
+                discrete
+                [displayWith]="formatSliderLabel.bind(this)">
+                <input matSliderThumb [(ngModel)]="currentEventIndex" (ngModelChange)="updateStateAtVersion()" name="eventSlider">
+              </mat-slider>
+            </div>
+            <div class="slider-info">
+              <span>Event {{ currentEventIndex }} of {{ events().length }}</span>
+              @if (currentEventIndex > 0) {
+                <span class="current-time">{{ getCurrentEventTime() }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="event-list" #eventList>
+            @for (event of events(); track $index) {
+              <div
+                class="event-item"
+                [class.active]="$index < currentEventIndex"
+                [class.current]="$index === currentEventIndex - 1"
+                [class.future]="$index >= currentEventIndex"
+                [attr.data-event-index]="$index"
+                (click)="jumpToEvent($index + 1)">
+                <div class="event-marker">
+                  <div class="event-dot"></div>
+                  @if ($index < events().length - 1) {
+                    <div class="event-line"></div>
+                  }
+                </div>
+                <div class="event-content">
+                  <div class="event-header">
+                    <span class="event-type">{{ formatEventType(event.eventType) }}</span>
+                    <span class="event-version">v{{ event.version }}</span>
+                  </div>
+                  <div class="event-time">{{ formatTimestamp(event.timestamp) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Current State Display -->
+    @if (currentState()) {
+      <mat-card class="state-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>photo_camera</mat-icon>
+          <mat-card-title>
+            State at Event {{ currentEventIndex }}
+            @if (isLoadingState()) {
+              <span class="loading-indicator">Loading...</span>
+            }
+          </mat-card-title>
+          <mat-card-subtitle>
+            @if (currentEventIndex === 0) {
+              Initial state (before any events)
+            } @else if (currentEventIndex === events().length) {
+              Current state (all events applied)
+            } @else {
+              Historical snapshot
+            }
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>code</mat-icon>
+                View State JSON
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <pre class="state-json">{{ currentState() | json }}</pre>
+          </mat-expansion-panel>
+
+          <div class="state-summary">
+            <h3>Key Properties</h3>
+            <div class="property-list">
+              @for (prop of getStateProperties(); track prop.key) {
+                <div class="property-item">
+                  <span class="property-key">{{ prop.key }}:</span>
+                  @if (prop.key === 'outcome') {
+                    <span class="outcome-badge" [attr.data-outcome]="prop.value">
+                      {{ getOutcomeLabel(prop.value) }}
+                    </span>
+                  } @else {
+                    <span class="property-value">{{ prop.value }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (getWorkItemCounts()) {
+            <div class="state-summary">
+              <h3>Work Items</h3>
+              <div class="work-item-counts">
+                <div class="count-item planned">
+                  <mat-icon>schedule</mat-icon>
+                  <div class="count-details">
+                    <span class="count-label">Planned</span>
+                    <span class="count-value">{{ getWorkItemCounts()?.planned || 0 }}</span>
+                  </div>
+                </div>
+                <div class="count-item in-progress">
+                  <mat-icon>play_circle</mat-icon>
+                  <div class="count-details">
+                    <span class="count-label">In Progress</span>
+                    <span class="count-value">{{ getWorkItemCounts()?.inProgress || 0 }}</span>
+                  </div>
+                </div>
+                <div class="count-item completed">
+                  <mat-icon>check_circle</mat-icon>
+                  <div class="count-details">
+                    <span class="count-label">Completed</span>
+                    <span class="count-value">{{ getWorkItemCounts()?.completed || 0 }}</span>
+                  </div>
+                </div>
+                <div class="count-item total">
+                  <mat-icon>inventory</mat-icon>
+                  <div class="count-details">
+                    <span class="count-label">Total</span>
+                    <span class="count-value">{{ getWorkItemCounts()?.total || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (getTeamMembers().length > 0) {
+            <div class="state-summary">
+              <h3>Team Members</h3>
+              <ul class="team-members-list">
+                @for (member of getTeamMembers(); track member.id) {
+                  <li class="team-member-item">
+                    <mat-icon>person</mat-icon>
+                    <span class="member-name">{{ member.displayName }}</span>
+                    <span class="member-role">{{ member.role }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Instructions -->
+    @if (events().length === 0) {
+      <mat-card class="instructions-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>info</mat-icon>
+          <mat-card-title>How Time Travel Works</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>Event Sourcing allows you to reconstruct the state of any aggregate at any point in time by replaying its events.</p>
+
+          <h3>Features:</h3>
+          <ul>
+            <li><strong>Event Stream Visualization</strong> - See all events in chronological order</li>
+            <li><strong>Time Slider</strong> - Navigate through time to see state changes</li>
+            <li><strong>State Reconstruction</strong> - View exact state at any event version</li>
+            <li><strong>Event Details</strong> - Inspect the data of each domain event</li>
+            <li><strong>Audit Trail</strong> - Complete history of all changes</li>
+          </ul>
+
+          <h3>To get started:</h3>
+          <ol>
+            <li>Select an aggregate type (Project or WorkItem)</li>
+            <li>Choose a specific aggregate instance</li>
+            <li>Use the slider to travel through time</li>
+            <li>Observe how the state changes with each event</li>
+          </ol>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</div>

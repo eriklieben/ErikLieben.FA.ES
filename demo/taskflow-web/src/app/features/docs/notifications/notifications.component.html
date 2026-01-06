@@ -1,0 +1,358 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Notification System</h1>
+      <p class="subtitle">React to stream document and chunk lifecycle events</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The notification system provides a way to react to stream document lifecycle events. Notifications are triggered
+        when documents or chunks are updated or closed, enabling you to implement cross-cutting concerns like caching,
+        replication, archiving, and external integrations.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>update</mat-icon>
+          <h3>Document Updated</h3>
+          <p>React when the stream document metadata changes.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>extension</mat-icon>
+          <h3>Chunk Updated</h3>
+          <p>React when new events are appended to a chunk.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>lock</mat-icon>
+          <h3>Chunk Closed</h3>
+          <p>React when a chunk is sealed and a new one created.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>webhook</mat-icon>
+          <h3>External Integration</h3>
+          <p>Send webhooks or publish to message queues.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Notification Types Section -->
+    <section id="interfaces" class="doc-section">
+      <h2><mat-icon>category</mat-icon> Notification Types</h2>
+      <p class="section-description">
+        The library provides three notification interfaces for different lifecycle events.
+      </p>
+
+      <div class="notification-list">
+        <div class="notification-item">
+          <div class="notification-icon document">
+            <mat-icon>update</mat-icon>
+          </div>
+          <div class="notification-content">
+            <h3>IStreamDocumentUpdatedNotification</h3>
+            <p>Triggered when the stream document is updated. This includes metadata changes and structural updates.</p>
+            <code>Action DocumentUpdated()</code>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-icon chunk">
+            <mat-icon>extension</mat-icon>
+          </div>
+          <div class="notification-content">
+            <h3>IStreamDocumentChunkUpdatedNotification</h3>
+            <p>Triggered when events are appended to a chunk. Use for real-time updates and cache invalidation.</p>
+            <code>Action StreamDocumentChunkUpdated()</code>
+          </div>
+        </div>
+
+        <div class="notification-item">
+          <div class="notification-icon closed">
+            <mat-icon>lock</mat-icon>
+          </div>
+          <div class="notification-content">
+            <h3>IStreamDocumentChunkClosedNotification</h3>
+            <p>Triggered when a chunk is closed (sealed). Use for archiving or post-processing complete chunks.</p>
+            <code>Func&lt;IEventStream, int, Task&gt; StreamDocumentChunkClosed()</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Marker Interface</strong>
+          <p>All notification types extend <code>INotification</code>, which is a marker interface used for service registration and discovery.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Document Updated Section -->
+    <section id="document-updated" class="doc-section">
+      <h2><mat-icon>update</mat-icon> Document Updated Notification</h2>
+      <p class="section-description">
+        The <code>IStreamDocumentUpdatedNotification</code> is triggered when the stream document itself is updated.
+        This is useful for cache invalidation, logging, or triggering downstream processes.
+      </p>
+
+      <h3>Cache Invalidation Example</h3>
+      <p>Invalidate distributed cache entries when the stream document changes:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>CacheInvalidationNotification.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="documentUpdatedCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>cached</mat-icon>
+          <span><strong>Cache invalidation</strong> - Clear cached data when source changes</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>history</mat-icon>
+          <span><strong>Audit logging</strong> - Record document modifications</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>analytics</mat-icon>
+          <span><strong>Metrics</strong> - Track update frequency and patterns</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Chunk Updated Section -->
+    <section id="chunk-updated" class="doc-section">
+      <h2><mat-icon>extension</mat-icon> Chunk Updated Notification</h2>
+      <p class="section-description">
+        The <code>IStreamDocumentChunkUpdatedNotification</code> fires when new events are written to a chunk.
+        This is the most frequently triggered notification and is ideal for real-time processing.
+      </p>
+
+      <h3>Replication Example</h3>
+      <p>Notify subscribers when new events are available:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ReplicationNotification.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="chunkUpdatedCodeHtml()"></div>
+      </div>
+
+      <h3>Projection Cache Invalidation</h3>
+      <p>Invalidate projection caches when source events change:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ProjectionCacheNotification.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cacheInvalidationCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Chunk Closed Section -->
+    <section id="chunk-closed" class="doc-section">
+      <h2><mat-icon>lock</mat-icon> Chunk Closed Notification</h2>
+      <p class="section-description">
+        The <code>IStreamDocumentChunkClosedNotification</code> is triggered when a chunk is sealed and no longer
+        accepts new events. This is ideal for archiving, compression, or batch processing.
+      </p>
+
+      <h3>Archive Example</h3>
+      <p>Archive closed chunks to cold storage:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ArchiveNotification.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="chunkClosedCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>info</mat-icon>
+        <div>
+          <strong>Async Execution</strong>
+          <p>Unlike other notifications, chunk closed notifications return an async function, allowing for long-running operations like archiving to external storage.</p>
+        </div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>archive</mat-icon>
+          <span><strong>Archiving</strong> - Move closed chunks to cold storage</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>compress</mat-icon>
+          <span><strong>Compression</strong> - Compress chunks for long-term storage</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>backup</mat-icon>
+          <span><strong>Backup</strong> - Create backups of complete chunks</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>batch_prediction</mat-icon>
+          <span><strong>Batch processing</strong> - Process complete event batches</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Registration Section -->
+    <section id="registration" class="doc-section">
+      <h2><mat-icon>app_registration</mat-icon> Registration</h2>
+      <p class="section-description">
+        Notifications are registered through dependency injection and automatically invoked by the event stream infrastructure.
+      </p>
+
+      <h3>Registration Methods</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Notification Registration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="registrationCodeHtml()"></div>
+      </div>
+
+      <div class="registration-options">
+        <div class="option-card">
+          <mat-icon>extension</mat-icon>
+          <h3>Generic Registration</h3>
+          <p>Register using <code>INotification</code> for automatic discovery of all notification types.</p>
+        </div>
+        <div class="option-card">
+          <mat-icon>tune</mat-icon>
+          <h3>Specific Registration</h3>
+          <p>Register specific notification interfaces for fine-grained control over which handlers are active.</p>
+        </div>
+      </div>
+
+      <h3>Notification Flow</h3>
+      <div class="notification-flow">
+        <div class="flow-step">
+          <span class="step-number">1</span>
+          <span class="step-label">Event Appended</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step">
+          <span class="step-number">2</span>
+          <span class="step-label">Chunk Updated</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step">
+          <span class="step-number">3</span>
+          <span class="step-label">Chunk Full?</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step">
+          <span class="step-number">4</span>
+          <span class="step-label">Chunk Closed</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Use Cases Section -->
+    <section id="usecases" class="doc-section">
+      <h2><mat-icon>lightbulb</mat-icon> Use Cases</h2>
+      <p class="section-description">
+        Common patterns and use cases for the notification system.
+      </p>
+
+      <h3>Webhook Integration</h3>
+      <p>Send webhooks to external systems when events occur:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>WebhookNotification.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="webhookCodeHtml()"></div>
+      </div>
+
+      <div class="usecase-grid">
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>cached</mat-icon>
+            <h3>Cache Invalidation</h3>
+          </div>
+          <p>Clear caches when underlying data changes to ensure consistency.</p>
+          <span class="notification-badge document">IStreamDocumentUpdatedNotification</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>sync</mat-icon>
+            <h3>Real-time Updates</h3>
+          </div>
+          <p>Push updates to connected clients via SignalR or WebSockets.</p>
+          <span class="notification-badge chunk">IStreamDocumentChunkUpdatedNotification</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>archive</mat-icon>
+            <h3>Event Archiving</h3>
+          </div>
+          <p>Archive completed chunks to cold storage for compliance.</p>
+          <span class="notification-badge closed">IStreamDocumentChunkClosedNotification</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>webhook</mat-icon>
+            <h3>Webhooks</h3>
+          </div>
+          <p>Notify external systems of changes via HTTP webhooks.</p>
+          <span class="notification-badge document">IStreamDocumentUpdatedNotification</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>message</mat-icon>
+            <h3>Message Queue</h3>
+          </div>
+          <p>Publish events to message queues for async processing.</p>
+          <span class="notification-badge chunk">IStreamDocumentChunkUpdatedNotification</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>compress</mat-icon>
+            <h3>Compression</h3>
+          </div>
+          <p>Compress sealed chunks to reduce storage costs.</p>
+          <span class="notification-badge closed">IStreamDocumentChunkClosedNotification</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

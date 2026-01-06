@@ -1,0 +1,355 @@
+<div class="page-layout">
+      <div class="main-content">
+        <div class="header">
+          <h1>Projections</h1>
+          <p class="subtitle">Read models built by replaying events, optimized for queries</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+          <h2><mat-icon>info</mat-icon> What are Projections?</h2>
+          <p class="section-description">
+            Projections are <strong>read models</strong> that transform event streams into queryable data structures.
+            While aggregates are optimized for writing (commands), projections are optimized for reading (queries).
+            They can span multiple event streams and denormalize data for efficient access.
+          </p>
+
+          <div class="comparison-grid">
+            <div class="comparison-card">
+              <h3><mat-icon>category</mat-icon> Aggregates</h3>
+              <ul>
+                <li>One stream per aggregate</li>
+                <li>Optimized for commands</li>
+                <li>Consistency boundary</li>
+                <li>Replay on every load</li>
+              </ul>
+            </div>
+            <div class="comparison-card highlight">
+              <h3><mat-icon>view_quilt</mat-icon> Projections</h3>
+              <ul>
+                <li>Can span multiple streams</li>
+                <li>Optimized for queries</li>
+                <li>Denormalized views</li>
+                <li>Persisted and updated incrementally</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Types Section -->
+        <section id="types" class="doc-section">
+          <h2><mat-icon>category</mat-icon> Projection Types</h2>
+          <p class="section-description">
+            The framework provides two projection types for different use cases:
+          </p>
+
+          <div class="type-grid">
+            <div class="type-card">
+              <div class="type-icon"><mat-icon>view_list</mat-icon></div>
+              <h3>Projection</h3>
+              <p>Single read model that processes events from one or more streams. Use for dashboards, lists, and reports.</p>
+              <div class="type-example">ActiveWorkItems, KanbanBoard</div>
+            </div>
+            <div class="type-card">
+              <div class="type-icon"><mat-icon>account_tree</mat-icon></div>
+              <h3>RoutedProjection</h3>
+              <p>Routes events to multiple destination documents. Use for per-entity projections or partitioned data.</p>
+              <div class="type-example">OrderSummary per customer</div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Basic Projection Section -->
+        <section id="basic" class="doc-section">
+          <h2><mat-icon>view_list</mat-icon> Basic Projection</h2>
+          <p class="section-description">
+            A basic projection inherits from <code>Projection</code> and defines <code>When</code> methods
+            for each event type it handles. The projection maintains a checkpoint to track which events have been processed.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Basic Projection Example</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="basicProjectionCodeHtml()"></div>
+          </div>
+
+          <h3>Key Features</h3>
+          <div class="feature-list">
+            <div class="feature-item">
+              <mat-icon>check_circle</mat-icon>
+              <div>
+                <strong>Checkpoint Tracking</strong>
+                <span>Tracks the last processed event version for each stream, enabling incremental updates.</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <mat-icon>check_circle</mat-icon>
+              <div>
+                <strong>Checkpoint Fingerprint</strong>
+                <span>SHA-256 hash of the checkpoint state - use for cache validation and ETags.</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <mat-icon>check_circle</mat-icon>
+              <div>
+                <strong>Incremental Updates</strong>
+                <span><code>UpdateToLatestVersion()</code> only processes new events since last checkpoint.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Routed Projection Section -->
+        <section id="routed" class="doc-section">
+          <h2><mat-icon>account_tree</mat-icon> Routed Projection</h2>
+          <p class="section-description">
+            <code>RoutedProjection</code> routes events to multiple destination documents based on event data.
+            This is useful for per-entity projections (e.g., one summary document per customer) or
+            partitioned read models.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Routed Projection Example</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="routedProjectionCodeHtml()"></div>
+          </div>
+
+          <h3>How Routing Works</h3>
+          <div class="routing-diagram">
+            <div class="routing-step">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <strong>Event arrives</strong>
+                <span>OrderCreated for customer "ABC"</span>
+              </div>
+            </div>
+            <mat-icon class="arrow">arrow_downward</mat-icon>
+            <div class="routing-step">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <strong>Route to destination</strong>
+                <span>GetOrAddDestination("ABC")</span>
+              </div>
+            </div>
+            <mat-icon class="arrow">arrow_downward</mat-icon>
+            <div class="routing-step">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <strong>Update destination</strong>
+                <span>CustomerOrderSummary for "ABC" is updated</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- When Methods Section -->
+        <section id="when-methods" class="doc-section">
+          <h2><mat-icon>sync_alt</mat-icon> When Methods</h2>
+          <p class="section-description">
+            Projections use the same <code>When</code> method pattern as aggregates. The CLI tool generates
+            the dispatch code.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>When Methods in Projections</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="whenMethodsCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>Idempotent Updates</strong>
+              <p>When methods may be called multiple times for the same event (e.g., during rebuilds).
+              Design them to be idempotent - producing the same result regardless of how many times they run.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Updating Projections Section -->
+        <section id="updating" class="doc-section">
+          <h2><mat-icon>refresh</mat-icon> Updating Projections</h2>
+          <p class="section-description">
+            Projections can be updated in several ways depending on your consistency requirements:
+          </p>
+
+          <div class="strategy-grid">
+            <div class="strategy-card">
+              <h3>Synchronous (After Command)</h3>
+              <p>Update immediately after a command executes. Provides strong consistency but adds latency.</p>
+              <div class="code-block compact">
+                <div class="shiki-container" [innerHTML]="syncUpdateCodeHtml()"></div>
+              </div>
+            </div>
+            <div class="strategy-card">
+              <h3>Asynchronous (Background)</h3>
+              <p>Update in a background service or timer. Eventual consistency with lower write latency.</p>
+              <div class="code-block compact">
+                <div class="shiki-container" [innerHTML]="asyncUpdateCodeHtml()"></div>
+              </div>
+            </div>
+            <div class="strategy-card">
+              <h3>On-Demand</h3>
+              <p>Update when the projection is requested. Good for rarely-accessed projections.</p>
+              <div class="code-block compact">
+                <div class="shiki-container" [innerHTML]="onDemandUpdateCodeHtml()"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Factory Pattern Section -->
+        <section id="factory" class="doc-section">
+          <h2><mat-icon>factory</mat-icon> Projection Factories</h2>
+          <p class="section-description">
+            The CLI tool generates factories for projections, similar to aggregate factories.
+            Use <code>IProjectionFactory&lt;T&gt;</code> to create and load projections.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Using Projection Factories</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="factoryCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Checkpoints Section -->
+        <section id="checkpoints" class="doc-section">
+          <h2><mat-icon>bookmark</mat-icon> Checkpoints</h2>
+          <p class="section-description">
+            Projections track their position in each event stream using checkpoints. This enables:
+          </p>
+
+          <div class="checkpoint-features">
+            <div class="checkpoint-feature">
+              <mat-icon>speed</mat-icon>
+              <div>
+                <strong>Incremental Updates</strong>
+                <p>Only process events since last checkpoint instead of replaying everything.</p>
+              </div>
+            </div>
+            <div class="checkpoint-feature">
+              <mat-icon>restore</mat-icon>
+              <div>
+                <strong>Resumability</strong>
+                <p>If processing fails, restart from the last checkpoint without data loss.</p>
+              </div>
+            </div>
+            <div class="checkpoint-feature">
+              <mat-icon>cached</mat-icon>
+              <div>
+                <strong>Cache Validation</strong>
+                <p>Use <code>CheckpointFingerprint</code> as an ETag for HTTP caching.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Working with Checkpoints</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="checkpointCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Best Practices Section -->
+        <section id="best-practices" class="doc-section">
+          <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+          <p class="section-description">
+            Follow these guidelines for effective projection design:
+          </p>
+
+          <div class="practice-grid">
+            <div class="practice-card do">
+              <div class="practice-header">
+                <mat-icon>check_circle</mat-icon>
+                <h3>Do</h3>
+              </div>
+              <ul>
+                <li>Design projections for specific query needs</li>
+                <li>Make When methods idempotent</li>
+                <li>Use RoutedProjection for per-entity views</li>
+                <li>Include checkpoint fingerprint in API responses</li>
+                <li>Consider update strategy based on consistency needs</li>
+                <li>Keep projections focused - one projection per view</li>
+              </ul>
+            </div>
+            <div class="practice-card dont">
+              <div class="practice-header">
+                <mat-icon>cancel</mat-icon>
+                <h3>Don't</h3>
+              </div>
+              <ul>
+                <li>Modify aggregate state from projections</li>
+                <li>Call external services in When methods</li>
+                <li>Store sensitive data that shouldn't be queryable</li>
+                <li>Create overly generic "god" projections</li>
+                <li>Assume projections are always up-to-date</li>
+                <li>Skip checkpoint validation in production</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Complete Example Section -->
+        <section id="complete-example" class="doc-section">
+          <h2><mat-icon>integration_instructions</mat-icon> Complete Example</h2>
+          <p class="section-description">
+            A comprehensive example showing both projection types working together.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Complete Projection Examples</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Navigation -->
+      <nav class="doc-nav">
+        <div class="nav-header">On this page</div>
+        <ul class="nav-list">
+          @for (item of navItems; track item.id) {
+            <li>
+              <a
+                [href]="'#' + item.id"
+                [class.active]="activeSection() === item.id"
+                (click)="scrollToSection($event, item.id)">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                {{ item.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>

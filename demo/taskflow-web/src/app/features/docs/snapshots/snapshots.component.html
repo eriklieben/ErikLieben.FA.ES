@@ -1,0 +1,292 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Snapshots</h1>
+      <p class="subtitle">Capture aggregate state for faster loading by skipping event replay</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Without snapshots, loading an aggregate replays all events from the beginning. For aggregates with
+        thousands of events, this can be slow. Snapshots store the aggregate state at a point in time,
+        allowing you to load the snapshot and replay only events after that version.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>speed</mat-icon>
+          <h3>Faster Loading</h3>
+          <p>Skip replaying thousands of events by loading from a recent snapshot.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>restore</mat-icon>
+          <h3>Point-in-Time</h3>
+          <p>Capture state at specific versions for recovery or auditing.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>bookmark</mat-icon>
+          <h3>Named Milestones</h3>
+          <p>Create named snapshots for significant business events.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>auto_awesome</mat-icon>
+          <h3>Automatic Usage</h3>
+          <p>Framework automatically uses latest snapshot when loading.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- When to Use Section -->
+    <section id="when-to-use" class="doc-section">
+      <h2><mat-icon>help</mat-icon> When to Use Snapshots</h2>
+      <p class="section-description">
+        Consider the event count and access patterns when deciding to use snapshots:
+      </p>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Scenario</span>
+          <span class="assertion-desc">Recommendation</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">&lt; 100 events</span>
+          <span class="assertion-desc">Usually not needed</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">100-1000 events</span>
+          <span class="assertion-desc">Consider for frequently accessed aggregates</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">&gt; 1000 events</span>
+          <span class="assertion-desc">Strongly recommended</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Time-sensitive operations</span>
+          <span class="assertion-desc">Recommended to ensure fast response</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Creating Snapshots Section -->
+    <section id="creating" class="doc-section">
+      <h2><mat-icon>add_photo_alternate</mat-icon> Creating Snapshots</h2>
+      <p class="section-description">
+        Create snapshots after significant operations or when event counts exceed thresholds.
+      </p>
+
+      <h3>In Aggregate Commands</h3>
+      <p>Create snapshots after significant state changes:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Basic Snapshot Creation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="basicSnapshotCodeHtml()"></div>
+      </div>
+
+      <h3>Named Snapshots</h3>
+      <p>Use named snapshots for milestones and checkpoints:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>bookmark</mat-icon>
+          <span>Named Snapshots</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="namedSnapshotCodeHtml()"></div>
+      </div>
+
+      <h3>Periodic Snapshots</h3>
+      <p>Create snapshots based on event count thresholds:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>schedule</mat-icon>
+          <span>Snapshot Service</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="periodicSnapshotCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Loading Section -->
+    <section id="loading" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Loading with Snapshots</h2>
+      <p class="section-description">
+        Snapshots are used automatically when loading aggregates. No code changes needed.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>auto_awesome</mat-icon>
+          <span>Automatic Snapshot Usage</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="loadingCodeHtml()"></div>
+      </div>
+
+      <h3>Retrieving Snapshots Manually</h3>
+      <p>Access snapshots directly when needed:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Manual Snapshot Retrieval</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="retrieveCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Storage Section -->
+    <section id="storage" class="doc-section">
+      <h2><mat-icon>storage</mat-icon> Storage Configuration</h2>
+      <p class="section-description">
+        Configure snapshot storage for each provider:
+      </p>
+
+      <h3>Azure Blob Storage</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cloud</mat-icon>
+          <span>Blob Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="blobConfigCodeHtml()"></div>
+      </div>
+
+      <h3>Azure Table Storage</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>table_chart</mat-icon>
+          <span>Table Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tableConfigCodeHtml()"></div>
+      </div>
+
+      <h3>Azure Cosmos DB</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>database</mat-icon>
+          <span>Cosmos DB Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cosmosConfigCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Strategies Section -->
+    <section id="strategies" class="doc-section">
+      <h2><mat-icon>psychology</mat-icon> Snapshot Strategies</h2>
+      <p class="section-description">
+        Choose the right snapshot strategy for your use case:
+      </p>
+
+      <h3>Event Count Based</h3>
+      <p>Create snapshots at regular event intervals:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>numbers</mat-icon>
+          <span>Event Count Strategy</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="eventCountStrategyCodeHtml()"></div>
+      </div>
+
+      <h3>Time Based</h3>
+      <p>Create snapshots on a schedule (daily, weekly):</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>schedule</mat-icon>
+          <span>Time-Based Strategy</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="timeBasedStrategyCodeHtml()"></div>
+      </div>
+
+      <h3>Milestone Based</h3>
+      <p>Create snapshots at business milestones:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>flag</mat-icon>
+          <span>Milestone Strategy</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="milestoneStrategyCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective snapshot usage:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Create snapshots at regular intervals (every N events)</li>
+            <li>Use named snapshots for significant milestones</li>
+            <li>Include snapshot creation in batch/background jobs</li>
+            <li>Monitor aggregate event counts</li>
+            <li>Run <code>dotnet faes</code> after modifying aggregates</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Create snapshots too frequently (storage overhead)</li>
+            <li>Rely on snapshots for data integrity (events are source of truth)</li>
+            <li>Delete events after creating snapshots</li>
+            <li>Manually modify snapshot data</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>info</mat-icon>
+        <div>
+          <strong>Events Are Source of Truth</strong>
+          <p>Snapshots are an optimization, not a replacement for events. The event stream
+          remains the authoritative source of data. Snapshots can be regenerated at any time
+          by replaying events.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

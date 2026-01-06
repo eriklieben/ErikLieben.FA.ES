@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "eriklieben.fa.es.cli": {
+      "version": "2.0.0-preview.4",
+      "commands": [
+        "faes"
+      ],
+      "rollForward": false
+    }
+  }
+}

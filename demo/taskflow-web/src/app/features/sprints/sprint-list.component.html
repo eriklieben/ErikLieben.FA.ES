@@ -1,0 +1,183 @@
+<div class="sprints-container">
+  <mat-card class="sprints-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>sprint</mat-icon>
+        Sprints
+      </mat-card-title>
+      <mat-card-subtitle>
+        Stored in Azure CosmosDB
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Storage Info Banner -->
+      <div class="storage-info">
+        <mat-icon>cloud</mat-icon>
+        <span>Sprints are stored in Azure CosmosDB to demonstrate the CosmosDB provider. Database: <code>eventstore</code>, Container: <code>events</code></span>
+      </div>
+
+      <!-- Statistics -->
+      @if (statistics()) {
+        <div class="statistics-row">
+          <div class="stat-card">
+            <mat-icon>event_note</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.totalSprints }}</span>
+              <span class="stat-label">Total Sprints</span>
+            </div>
+          </div>
+          <div class="stat-card active">
+            <mat-icon>play_arrow</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.activeSprints }}</span>
+              <span class="stat-label">Active</span>
+            </div>
+          </div>
+          <div class="stat-card completed">
+            <mat-icon>check_circle</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.completedSprints }}</span>
+              <span class="stat-label">Completed</span>
+            </div>
+          </div>
+          <div class="stat-card planned">
+            <mat-icon>schedule</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.plannedSprints }}</span>
+              <span class="stat-label">Planned</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span>Loading sprints...</span>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (error()) {
+        <div class="error-container">
+          <mat-icon>warning</mat-icon>
+          <span>{{ error() }}</span>
+          <button mat-raised-button color="primary" (click)="seedDemoSprints()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              Seeding...
+            } @else {
+              <mat-icon>add</mat-icon>
+              Seed Demo Sprints
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (!isLoading() && !error() && sprints().length === 0) {
+        <div class="empty-container">
+          <mat-icon>sprint</mat-icon>
+          <h3>No Sprints Found</h3>
+          <p>Get started by seeding demo sprints to see the CosmosDB provider in action.</p>
+          <button mat-raised-button color="primary" (click)="seedDemoSprints()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              Seeding...
+            } @else {
+              <mat-icon>add</mat-icon>
+              Seed Demo Sprints
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Sprints Table -->
+      @if (!isLoading() && !error() && sprints().length > 0) {
+        <table mat-table [dataSource]="sprints()" class="sprints-table">
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Sprint Name</th>
+            <td mat-cell *matCellDef="let sprint">
+              <span class="sprint-name">{{ sprint.name }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Dates Column -->
+          <ng-container matColumnDef="dates">
+            <th mat-header-cell *matHeaderCellDef>Duration</th>
+            <td mat-cell *matCellDef="let sprint">
+              <span class="date-range">{{ formatDateRange(sprint.startDate, sprint.endDate) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let sprint">
+              <mat-chip [color]="getStatusColor(sprint.status)" selected>
+                <mat-icon>{{ getStatusIcon(sprint.status) }}</mat-icon>
+                {{ sprint.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Work Items Column -->
+          <ng-container matColumnDef="workItems">
+            <th mat-header-cell *matHeaderCellDef>Progress</th>
+            <td mat-cell *matCellDef="let sprint">
+              <div class="progress-info">
+                <span class="progress-text">{{ sprint.completedWorkItems }}/{{ sprint.workItemCount }}</span>
+                @if (sprint.workItemCount > 0) {
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getProgressPercent(sprint)"></div>
+                  </div>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Goal Column -->
+          <ng-container matColumnDef="goal">
+            <th mat-header-cell *matHeaderCellDef>Goal</th>
+            <td mat-cell *matCellDef="let sprint">
+              <span class="sprint-goal" [matTooltip]="sprint.goal || ''">
+                {{ sprint.goal ? (sprint.goal.length > 40 ? sprint.goal.substring(0, 40) + '...' : sprint.goal) : '-' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let sprint">
+              <button mat-icon-button matTooltip="View Details (Coming Soon)" disabled>
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="table-actions">
+          <button mat-stroked-button (click)="loadSprints()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+          <button mat-stroked-button color="primary" (click)="seedDemoSprints()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>add</mat-icon>
+            }
+            Seed More Sprints
+          </button>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

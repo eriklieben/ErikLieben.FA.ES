@@ -1,0 +1,135 @@
+.users-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px 0;
+    color: var(--ctp-text);
+    font-size: 2rem;
+  }
+
+  .header-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--ctp-blue);
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--ctp-subtext-0);
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+
+  p {
+    color: var(--ctp-subtext-0);
+  }
+}
+
+.error-card {
+  background-color: var(--ctp-red);
+  color: var(--ctp-crust);
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+}
+
+.users-card {
+  background-color: var(--ctp-mantle);
+  color: var(--ctp-text);
+}
+
+.users-table {
+  width: 100%;
+  background-color: transparent;
+
+  th {
+    background-color: var(--ctp-surface-0);
+    color: var(--ctp-subtext-0);
+    font-weight: 600;
+  }
+
+  td, th {
+    padding: 16px;
+    border-bottom-color: var(--ctp-surface-0);
+  }
+
+  .mat-mdc-row:hover {
+    background-color: var(--ctp-surface-0);
+  }
+
+  .current-user-row {
+    background-color: color-mix(in srgb, var(--ctp-blue) 10%, transparent);
+  }
+}
+
+.user-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .user-avatar {
+    color: var(--ctp-subtext-0);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.current-user-chip {
+  background-color: var(--ctp-blue) !important;
+  color: var(--ctp-crust) !important;
+  font-size: 0.75rem;
+}
+
+.admin-chip {
+  background-color: var(--ctp-mauve) !important;
+  color: var(--ctp-crust) !important;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.stakeholder-chip {
+  background-color: var(--ctp-teal) !important;
+  color: var(--ctp-crust) !important;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+mat-paginator {
+  background-color: transparent;
+  color: var(--ctp-text);
+}

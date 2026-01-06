@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>
+  <mat-icon>code</mat-icon>
+  {{ data.projectionName }} JSON
+</h2>
+<mat-dialog-content>
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading projection data...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-container">
+      <mat-icon color="warn">error</mat-icon>
+      <p>{{ error() }}</p>
+    </div>
+  } @else {
+    <div class="editor-container">
+      <ngx-monaco-editor
+        [options]="editorOptions"
+        [(ngModel)]="jsonContent">
+      </ngx-monaco-editor>
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+  <button mat-raised-button color="primary" (click)="copyToClipboard()" [disabled]="loading() || !!error()">
+    <mat-icon>content_copy</mat-icon>
+    Copy JSON
+  </button>
+</mat-dialog-actions>

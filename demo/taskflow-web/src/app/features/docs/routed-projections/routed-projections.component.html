@@ -1,0 +1,292 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Routed Projections</h1>
+      <p class="subtitle">Split data across multiple destination files based on event content</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Routed projections split data across multiple destination files based on event content. Use them when
+        data needs to be partitioned for efficient querying or when data volume requires splitting.
+      </p>
+
+      <div class="architecture-box">
+        <h3>Component Structure</h3>
+        <div class="component-list">
+          <div class="component-item">
+            <mat-icon>route</mat-icon>
+            <div>
+              <strong>Router</strong>
+              <span>The main projection that receives all events and decides routing.</span>
+            </div>
+          </div>
+          <div class="component-item">
+            <mat-icon>folder</mat-icon>
+            <div>
+              <strong>Destinations</strong>
+              <span>Child projections that store partitioned data.</span>
+            </div>
+          </div>
+          <div class="component-item">
+            <mat-icon>list_alt</mat-icon>
+            <div>
+              <strong>Registry</strong>
+              <span>Tracks all destinations and their metadata.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- When to Use Section -->
+    <section id="when-to-use" class="doc-section">
+      <h2><mat-icon>help</mat-icon> When to Use Routed Projections</h2>
+      <p class="section-description">
+        Compare simple and routed projections for your use case:
+      </p>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Scenario</span>
+          <span class="assertion-desc">Projection Type</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Single dashboard</span>
+          <span class="assertion-desc">Simple Projection</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Per-user data</span>
+          <span class="assertion-desc">Routed Projection</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Per-project data</span>
+          <span class="assertion-desc">Routed Projection</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Large datasets</span>
+          <span class="assertion-desc">Routed Projection</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Sharded queries</span>
+          <span class="assertion-desc">Routed Projection</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Basic Structure Section -->
+    <section id="structure" class="doc-section">
+      <h2><mat-icon>account_tree</mat-icon> Basic Structure</h2>
+      <p class="section-description">
+        A routed projection consists of a router that manages destinations.
+      </p>
+
+      <h3>Router Definition</h3>
+      <p>The router receives events and decides where to route them:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>route</mat-icon>
+          <span>Router Projection</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="routerCodeHtml()"></div>
+      </div>
+
+      <h3>Destination Definition</h3>
+      <p>Destinations store the partitioned data:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>folder</mat-icon>
+          <span>Destination Projection</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="destinationCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Path Templates</strong>
+          <p>Use placeholders in projection paths like <code>projections/&#123;projectId&#125;/kanban.json</code>.
+          Placeholders are resolved from the metadata dictionary passed to <code>AddDestination</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Core Methods Section -->
+    <section id="core-methods" class="doc-section">
+      <h2><mat-icon>functions</mat-icon> Core Methods</h2>
+      <p class="section-description">
+        Key methods for managing destinations and routing events:
+      </p>
+
+      <h3>AddDestination</h3>
+      <p>Create new destinations when needed:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>add</mat-icon>
+          <span>Creating Destinations</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="addDestinationCodeHtml()"></div>
+      </div>
+
+      <h3>RouteToDestination</h3>
+      <p>Route events to destinations:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>send</mat-icon>
+          <span>Routing Events</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="routeToCodeHtml()"></div>
+      </div>
+
+      <h3>Querying Destinations</h3>
+      <p>Access destinations and their data:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>search</mat-icon>
+          <span>Querying</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="queryCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Patterns Section -->
+    <section id="patterns" class="doc-section">
+      <h2><mat-icon>pattern</mat-icon> Common Patterns</h2>
+      <p class="section-description">
+        Patterns for different partitioning strategies:
+      </p>
+
+      <h3>Paging Pattern</h3>
+      <p>Split users across pages for efficient loading:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>auto_stories</mat-icon>
+          <span>Pagination</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="pagingPatternCodeHtml()"></div>
+      </div>
+
+      <h3>Multi-Tenant Pattern</h3>
+      <p>Separate data by tenant for isolation:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>business</mat-icon>
+          <span>Multi-Tenancy</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tenantPatternCodeHtml()"></div>
+      </div>
+
+      <h3>Region-Based Pattern</h3>
+      <p>Partition by geographic region:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>public</mat-icon>
+          <span>Geographic Partitioning</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="regionPatternCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- API Integration Section -->
+    <section id="api-integration" class="doc-section">
+      <h2><mat-icon>api</mat-icon> ASP.NET Core Integration</h2>
+      <p class="section-description">
+        Use routed projections with Minimal APIs:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Minimal API Endpoints</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="apiIntegrationCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective routed projections:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Create destinations lazily when first event for that partition arrives</li>
+            <li>Keep router state minimal (just enough for routing decisions)</li>
+            <li>Use meaningful destination keys</li>
+            <li>Include path template metadata when creating destinations</li>
+            <li>Run <code>dotnet faes</code> after changes</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Create all possible destinations upfront</li>
+            <li>Store large data in the router</li>
+            <li>Use sequential numeric keys without purpose</li>
+            <li>Route events to non-existent destinations</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>Error Handling</strong>
+          <p>Always check that a destination exists before routing. Use
+          <code>Registry.Destinations.ContainsKey(key)</code> to verify, or create the
+          destination if it doesn't exist.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>
