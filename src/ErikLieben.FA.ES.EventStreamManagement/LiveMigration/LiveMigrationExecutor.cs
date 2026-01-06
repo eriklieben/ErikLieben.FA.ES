@@ -407,9 +407,52 @@ public class LiveMigrationExecutor
 
         try
         {
-            // Append the close event to the source stream
+            // Reload the document to get the current hash - background processes (projections, etc.)
+            // may have updated the document hash since we started the migration
+            var freshDocument = await _context.DocumentStore.GetAsync(
+                _context.SourceDocument.ObjectName,
+                _context.SourceDocument.ObjectId);
+
+            // Check if the document now points to a different stream (someone else completed migration)
+            if (freshDocument.Active.StreamIdentifier != _context.SourceStreamId)
+            {
+                _logger.SourceStreamAlreadyClosed(_context.SourceStreamId);
+                return CloseAttemptResult.Succeeded(); // Stream was already migrated by another process
+            }
+
+            // Re-read events after reload - new events may have arrived while we were reloading
+            var eventsAfterReload = await _context.DataStore.ReadAsync(
+                freshDocument,
+                startVersion: 0,
+                untilVersion: null,
+                chunk: null);
+
+            var eventsAfterReloadList = eventsAfterReload?.ToList() ?? [];
+
+            // Check again if stream was closed while we were reloading
+            var closeEventAfterReload = eventsAfterReloadList.FirstOrDefault(e => e.EventType == StreamClosedEvent.EventTypeName);
+            if (closeEventAfterReload != null)
+            {
+                _logger.SourceStreamAlreadyClosed(_context.SourceStreamId);
+                return CloseAttemptResult.Succeeded();
+            }
+
+            // Check if new business events arrived during reload
+            var currentVersion = eventsAfterReloadList
+                .Where(e => e.EventType != StreamClosedEvent.EventTypeName)
+                .Select(e => e.EventVersion)
+                .DefaultIfEmpty(-1)
+                .Max();
+
+            if (currentVersion != expectedVersion)
+            {
+                // New events arrived while reloading - need another catch-up iteration
+                return CloseAttemptResult.VersionConflict(currentVersion);
+            }
+
+            // Append the close event to the source stream using the fresh document
             await _context.DataStore.AppendAsync(
-                _context.SourceDocument,
+                freshDocument,
                 preserveTimestamp: false,
                 closeEventJson);
 
@@ -418,7 +461,7 @@ public class LiveMigrationExecutor
             // Verify no events were added between our read and the close event append
             // This catches the race condition where events are added after version check
             var postCloseEvents = await _context.DataStore.ReadAsync(
-                _context.SourceDocument,
+                freshDocument,
                 startVersion: 0,
                 untilVersion: null,
                 chunk: null);
