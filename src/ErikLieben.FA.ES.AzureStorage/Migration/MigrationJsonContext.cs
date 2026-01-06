@@ -11,6 +11,8 @@ using System.Text.Json.Serialization;
     WriteIndented = false)]
 [JsonSerializable(typeof(MigrationRoutingEntry))]
 [JsonSerializable(typeof(BackupData))]
+[JsonSerializable(typeof(BackupRegistryData))]
+[JsonSerializable(typeof(BackupRegistryEntry))]
 internal partial class MigrationJsonContext : JsonSerializerContext
 {
 }

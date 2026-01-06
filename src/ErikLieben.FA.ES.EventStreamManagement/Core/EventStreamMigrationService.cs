@@ -1,5 +1,3 @@
-#pragma warning disable S1135 // TODO comments - tracked in project backlog
-
 namespace ErikLieben.FA.ES.EventStreamManagement.Core;
 
 using ErikLieben.FA.ES.Documents;
@@ -66,11 +64,8 @@ public class EventStreamMigrationService : IEventStreamMigrationService
 
         logger.CreatingBulkMigrationBuilder(documentList.Count);
 
-        // For bulk migrations, we use the first document as the primary
-        // and handle multiple documents in the builder
-        // TODO: Implement proper bulk migration support
-        return new MigrationBuilder(
-            documentList[0],
+        return new BulkMigrationBuilder(
+            documentList,
             dataStore,
             documentStore,
             lockProvider,

@@ -11,6 +11,7 @@ using ErikLieben.FA.ES.EventStreamManagement.Events;
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(StreamClosedEvent))]
+[JsonSerializable(typeof(EventsRolledBackEvent))]
 public partial class LiveMigrationJsonContext : JsonSerializerContext
 {
 }

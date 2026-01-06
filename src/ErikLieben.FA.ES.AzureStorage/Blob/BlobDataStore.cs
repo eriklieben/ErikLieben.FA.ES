@@ -16,7 +16,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// <summary>
 /// Provides an Azure Blob Storage-backed implementation of <see cref="IDataStore"/> for reading and appending event streams.
 /// </summary>
-public class BlobDataStore : IDataStore
+public class BlobDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
@@ -220,5 +220,71 @@ public class BlobDataStore : IDataStore
         var blob = container.GetBlobClient(documentPath)
             ?? throw new DocumentConfigurationException("Unable to create blobClient.");
         return blob!;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        using var activity = ActivitySource.StartActivity("BlobDataStore.RemoveEventsForFailedCommitAsync");
+
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+
+        // Determine blob path based on chunking
+        string documentPath;
+        if (document.Active.ChunkingEnabled() && document.Active.StreamChunks.Count > 0)
+        {
+            var chunks = document.Active.StreamChunks;
+            var lastChunk = chunks[chunks.Count - 1];
+            documentPath = $"{document.Active.StreamIdentifier}-{lastChunk.ChunkIdentifier:d10}.json";
+        }
+        else
+        {
+            documentPath = $"{document.Active.StreamIdentifier}.json";
+        }
+
+        var blob = CreateBlobClient(document, documentPath);
+
+        try
+        {
+            // Get current blob with ETag for optimistic concurrency
+            var properties = await blob.GetPropertiesAsync();
+            var etag = properties.Value.ETag;
+
+            var doc = (await blob.AsEntityAsync(
+                BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+                new BlobRequestConditions { IfMatch = etag })).Item1;
+
+            if (doc?.Events == null || doc.Events.Count == 0)
+            {
+                return 0;
+            }
+
+            var originalCount = doc.Events.Count;
+
+            // Filter out events in the failed version range
+            doc.Events = doc.Events
+                .Where(e => e.EventVersion < fromVersion || e.EventVersion > toVersion)
+                .ToList();
+
+            var removed = originalCount - doc.Events.Count;
+
+            if (removed > 0)
+            {
+                // Rewrite blob with filtered events
+                await blob.SaveEntityAsync(
+                    doc,
+                    BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+                    new BlobRequestConditions { IfMatch = etag });
+            }
+
+            activity?.SetTag("RemovedCount", removed);
+            return removed;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Blob doesn't exist - nothing to clean up
+            return 0;
+        }
     }
 }

@@ -33,6 +33,7 @@
     <ProjectReference Include="..\..\src\ErikLieben.FA.ES.AzureStorage\ErikLieben.FA.ES.AzureStorage.csproj" />
     <ProjectReference Include="..\..\src\ErikLieben.FA.ES.CosmosDb\ErikLieben.FA.ES.CosmosDb.csproj" />
     <ProjectReference Include="..\..\src\ErikLieben.FA.ES.EventStreamManagement\ErikLieben.FA.ES.EventStreamManagement.csproj" />
+    <ProjectReference Include="..\..\src\ErikLieben.FA.ES.Testing\ErikLieben.FA.ES.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -94,6 +94,10 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var sourceDocument = CreateObjectDocument(sourceStreamId, "blob", "default");
         var targetDocument = CreateObjectDocument(targetStreamId, "cosmosdb", "cosmosdb");
 
+        // Configure document store mock to return source document when queried
+        _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
+            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+
         // Write test events to blob storage
         await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
         {
@@ -171,6 +175,10 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var sourceDocument = CreateObjectDocument(sourceStreamId, "blob", "default");
         var targetDocument = CreateObjectDocument(targetStreamId, "cosmosdb", "cosmosdb");
 
+        // Configure document store mock to return source document when queried
+        _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
+            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+
         // Write business events to blob storage
         await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
         {
@@ -231,6 +239,10 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var sourceDocument = CreateObjectDocument(sourceStreamId, "blob", "default");
         var targetDocument = CreateObjectDocument(targetStreamId, "cosmosdb", "cosmosdb");
 
+        // Configure document store mock to return source document when queried
+        _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
+            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+
         // Write events in specific order
         var eventTypes = new[] { "StockReceived", "StockReserved", "StockShipped", "StockReturned", "StockAdjusted" };
         for (int i = 0; i < eventTypes.Length; i++)
@@ -286,6 +298,10 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var sourceDocument = CreateObjectDocument(sourceStreamId, "blob", "default");
         var targetDocument = CreateObjectDocument(targetStreamId, "cosmosdb", "cosmosdb");
 
+        // Configure document store mock to return source document when queried
+        _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
+            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+
         // Don't write any events to source
 
         // Create migration context
@@ -308,7 +324,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var result = await executor.ExecuteAsync();
 
         // Assert
-        Assert.True(result.Success);
+        Assert.True(result.Success, $"Migration failed: {result.Error}");
         Assert.Equal(0, result.TotalEventsCopied);
         Assert.Equal(1, result.Iterations);
     }
@@ -322,6 +338,10 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         var sourceDocument = CreateObjectDocument(sourceStreamId, "blob", "default");
         var targetDocument = CreateObjectDocument(targetStreamId, "cosmosdb", "cosmosdb");
+
+        // Configure document store mock to return source document when queried
+        _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
+            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
 
         // Write events to blob storage
         for (int i = 0; i < 5; i++)
@@ -358,7 +378,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var result = await executor.ExecuteAsync();
 
         // Assert
-        Assert.True(result.Success);
+        Assert.True(result.Success, $"Migration failed: {result.Error}");
         Assert.NotEmpty(progressReports);
         Assert.All(progressReports, p => Assert.True(p.Iteration > 0));
     }
@@ -379,6 +399,12 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         objectDocument.ObjectId.Returns(streamId);
         objectDocument.Active.Returns(streamInfo);
         objectDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+        // Required for MigrationCutoverDocument creation in UpdateObjectDocumentAsync
+        objectDocument.SchemaVersion.Returns("1");
+        // Use null hashes to skip optimistic concurrency checks in BlobDataStore
+        // (null is converted to "*" which bypasses the hash comparison)
+        objectDocument.Hash.Returns((string?)null);
+        objectDocument.PrevHash.Returns((string?)null);
 
         return objectDocument;
     }
@@ -403,7 +429,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 /// Adapter that routes read/write operations to appropriate data stores based on document.
 /// Reads from source (Blob) and writes to target (CosmosDB) during migration.
 /// </summary>
-internal class MigrationDataStoreAdapter : IDataStore
+internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
 {
     private readonly IDataStore _sourceDataStore;
     private readonly IDataStore _targetDataStore;
@@ -450,5 +476,15 @@ internal class MigrationDataStoreAdapter : IDataStore
         {
             await _targetDataStore.AppendAsync(document, preserveTimestamp, evt);
         }
+    }
+
+    public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        // Route removal based on which document is being modified
+        if (document.Active.StreamIdentifier == _sourceDocument.Active.StreamIdentifier)
+        {
+            return ((IDataStoreRecovery)_sourceDataStore).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion);
+        }
+        return ((IDataStoreRecovery)_targetDataStore).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion);
     }
 }

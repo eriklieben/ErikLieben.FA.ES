@@ -154,4 +154,153 @@ public class InMemoryDataStoreTests
         // Assert
         Assert.Equal("cased__ABC", key);
     }
+
+    #region RemoveEventsForFailedCommitAsync Tests
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_remove_events_in_version_range()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
+        var e2 = new TestEvent { EventType = "E2", EventVersion = 2 };
+        var e3 = new TestEvent { EventType = "E3", EventVersion = 3 };
+        await store.AppendAsync(document, e0, e1, e2, e3);
+
+        // Act - remove versions 1 and 2
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 1, 2);
+
+        // Assert
+        Assert.Equal(2, removed);
+        var remaining = await store.ReadAsync(document);
+        Assert.NotNull(remaining);
+        var list = remaining!.ToList();
+        Assert.Equal(2, list.Count);
+        Assert.Equal("E0", list[0].EventType);
+        Assert.Equal("E3", list[1].EventType);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_return_zero_when_no_events_exist()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+
+        // Act
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 0, 5);
+
+        // Assert
+        Assert.Equal(0, removed);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_return_zero_when_versions_not_found()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        await store.AppendAsync(document, e0);
+
+        // Act - try to remove non-existent versions
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 5, 10);
+
+        // Assert
+        Assert.Equal(0, removed);
+        var remaining = await store.ReadAsync(document);
+        Assert.Single(remaining!);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_handle_partial_version_range()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        var e2 = new TestEvent { EventType = "E2", EventVersion = 2 };
+        await store.AppendAsync(document, e0, e2);
+
+        // Act - remove range 0-3 (only 0 and 2 exist)
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 0, 3);
+
+        // Assert
+        Assert.Equal(2, removed);
+        var remaining = await store.ReadAsync(document);
+        Assert.Empty(remaining!);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_handle_single_version()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
+        await store.AppendAsync(document, e0, e1);
+
+        // Act - remove only version 1
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 1, 1);
+
+        // Assert
+        Assert.Equal(1, removed);
+        var remaining = await store.ReadAsync(document);
+        Assert.Single(remaining!);
+        Assert.Equal("E0", remaining!.First().EventType);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_be_idempotent()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
+        var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
+        await store.AppendAsync(document, e0, e1);
+
+        // Act - remove version 1 twice
+        var removed1 = await store.RemoveEventsForFailedCommitAsync(document, 1, 1);
+        var removed2 = await store.RemoveEventsForFailedCommitAsync(document, 1, 1);
+
+        // Assert
+        Assert.Equal(1, removed1);
+        Assert.Equal(0, removed2); // Already removed
+        var remaining = await store.ReadAsync(document);
+        Assert.Single(remaining!);
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_preserve_events_outside_range()
+    {
+        // Arrange
+        var store = new InMemoryDataStore();
+        var document = CreateDoc();
+        for (int i = 0; i < 10; i++)
+        {
+            await store.AppendAsync(document, new TestEvent { EventType = $"E{i}", EventVersion = i });
+        }
+
+        // Act - remove middle range (3-6)
+        var removed = await store.RemoveEventsForFailedCommitAsync(document, 3, 6);
+
+        // Assert
+        Assert.Equal(4, removed);
+        var remaining = await store.ReadAsync(document);
+        var list = remaining!.ToList();
+        Assert.Equal(6, list.Count);
+        // Should have 0, 1, 2, 7, 8, 9
+        Assert.Equal("E0", list[0].EventType);
+        Assert.Equal("E1", list[1].EventType);
+        Assert.Equal("E2", list[2].EventType);
+        Assert.Equal("E7", list[3].EventType);
+        Assert.Equal("E8", list[4].EventType);
+        Assert.Equal("E9", list[5].EventType);
+    }
+
+    #endregion
 }

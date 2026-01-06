@@ -14,7 +14,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Table;
 /// <summary>
 /// Provides an Azure Table Storage-backed implementation of <see cref="IDataStore"/> for reading and appending event streams.
 /// </summary>
-public class TableDataStore : IDataStore
+public class TableDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings settings;
@@ -245,5 +245,46 @@ public class TableDataStore : IDataStore
             return $"{document.Active.StreamIdentifier}_{chunk:d10}";
         }
         return document.Active.StreamIdentifier;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        using var activity = ActivitySource.StartActivity("TableDataStore.RemoveEventsForFailedCommitAsync");
+
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+
+        var tableClient = await GetTableClientAsync(document);
+
+        // Determine chunk if chunking is enabled
+        int? chunkIdentifier = null;
+        if (document.Active.ChunkingEnabled() && document.Active.StreamChunks.Count > 0)
+        {
+            var chunks = document.Active.StreamChunks;
+            var lastChunk = chunks[chunks.Count - 1];
+            chunkIdentifier = lastChunk.ChunkIdentifier;
+        }
+
+        var partitionKey = GetPartitionKey(document, chunkIdentifier);
+        var removed = 0;
+
+        // Delete each event row individually
+        for (var version = fromVersion; version <= toVersion; version++)
+        {
+            var rowKey = $"{version:d20}";
+            try
+            {
+                await tableClient.DeleteEntityAsync(partitionKey, rowKey);
+                removed++;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                // Event doesn't exist (wasn't written) - that's fine, continue
+            }
+        }
+
+        activity?.SetTag("RemovedCount", removed);
+        return removed;
     }
 }

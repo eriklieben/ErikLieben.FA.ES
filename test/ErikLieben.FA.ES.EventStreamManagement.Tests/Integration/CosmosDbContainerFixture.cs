@@ -1,7 +1,4 @@
 using System.Text.Json;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Configurations;
-using DotNet.Testcontainers.Containers;
 using Microsoft.Azure.Cosmos;
 using Testcontainers.CosmosDb;
 
@@ -10,22 +7,21 @@ namespace ErikLieben.FA.ES.EventStreamManagement.Tests.Integration;
 /// <summary>
 /// Shared fixture for CosmosDB emulator container.
 /// Provides CosmosDB for target event streams in migration tests.
-/// Uses the vnext-preview image which works correctly in GitHub Actions.
 /// </summary>
+/// <remarks>
+/// Uses the standard CosmosDB emulator image for local testing.
+/// For CI environments with limited resources, consider using the vnext-preview image
+/// which has lower memory requirements.
+/// </remarks>
 public class CosmosDbContainerFixture : IAsyncLifetime
 {
     private readonly CosmosDbContainer _cosmosDbContainer;
 
     public CosmosDbContainerFixture()
     {
-        // Use vnext-preview image which works in GitHub Actions CI
-        // See: https://github.com/testcontainers/testcontainers-dotnet/discussions/1306
+        // Use standard CosmosDB emulator with default TestContainers configuration
+        // This uses the built-in wait strategy and SSL handling
         _cosmosDbContainer = new CosmosDbBuilder()
-            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
-            .WithCommand("--protocol", "https")
-            .WithEnvironment("ENABLE_EXPLORER", "false")
-            .WithWaitStrategy(Wait.ForUnixContainer()
-                .AddCustomWaitStrategy(new CosmosDbReadyWaitStrategy()))
             .Build();
     }
 
@@ -40,9 +36,12 @@ public class CosmosDbContainerFixture : IAsyncLifetime
         {
             ConnectionMode = ConnectionMode.Gateway,
             HttpClientFactory = () => _cosmosDbContainer.HttpClient,
+            // Use System.Text.Json to recognize [JsonPropertyName] attributes
             UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             }
         };
 
@@ -53,42 +52,5 @@ public class CosmosDbContainerFixture : IAsyncLifetime
     {
         CosmosClient?.Dispose();
         await _cosmosDbContainer.DisposeAsync();
-    }
-}
-
-/// <summary>
-/// Custom wait strategy for the CosmosDB vnext-preview emulator.
-/// Waits for the emulator to be ready by checking HTTP endpoint and adding stability delay.
-/// </summary>
-internal sealed class CosmosDbReadyWaitStrategy : IWaitUntil
-{
-    public async Task<bool> UntilAsync(IContainer container)
-    {
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-        };
-
-        using var client = new HttpClient(handler)
-        {
-            BaseAddress = new Uri($"https://{container.Hostname}:{container.GetMappedPublicPort(8081)}")
-        };
-
-        try
-        {
-            using var response = await client.GetAsync("/").ConfigureAwait(false);
-            if (response.IsSuccessStatusCode)
-            {
-                // Stability delay recommended for vnext-preview
-                await Task.Delay(1000).ConfigureAwait(false);
-                return true;
-            }
-        }
-        catch
-        {
-            // Emulator not ready yet
-        }
-
-        return false;
     }
 }

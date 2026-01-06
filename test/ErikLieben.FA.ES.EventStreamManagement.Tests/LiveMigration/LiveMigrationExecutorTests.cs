@@ -45,6 +45,12 @@ public class LiveMigrationExecutorTests
         targetDocument.Active.Returns(targetStreamInfo);
         targetDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
 
+        // Set up document store to return the source document when GetAsync is called
+        // (needed for AttemptCloseAsync which reloads the document to get fresh hash)
+        var docStore = documentStore ?? Substitute.For<IDocumentStore>();
+        docStore.GetAsync(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(sourceDocument);
+
         return new LiveMigrationContext
         {
             MigrationId = Guid.NewGuid(),
@@ -53,7 +59,7 @@ public class LiveMigrationExecutorTests
             TargetStreamId = "target-stream",
             TargetDocument = targetDocument,
             DataStore = dataStore ?? Substitute.For<IDataStore>(),
-            DocumentStore = documentStore ?? Substitute.For<IDocumentStore>(),
+            DocumentStore = docStore,
             Options = options ?? new LiveMigrationOptions()
         };
     }
@@ -719,6 +725,11 @@ public class LiveMigrationExecutorTests
             targetDocument.Active.Returns(targetStreamInfo);
             targetDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
 
+            // Set up document store to return the source document when GetAsync is called
+            // (needed for AttemptCloseAsync which reloads the document to get fresh hash)
+            documentStore.GetAsync(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(sourceDocument);
+
             return new LiveMigrationContext
             {
                 MigrationId = Guid.NewGuid(),
@@ -1069,6 +1080,9 @@ public class LiveMigrationExecutorTests
             var documentStore = Substitute.For<IDocumentStore>();
             documentStore.SetAsync(Arg.Do<IObjectDocument>(d => savedDocument = d))
                 .Returns(Task.CompletedTask);
+            // Set up document store to return the source document when GetAsync is called
+            documentStore.GetAsync(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(sourceDocument);
 
             var context = new LiveMigrationContext
             {
@@ -1128,8 +1142,6 @@ public class LiveMigrationExecutorTests
                     return Task.FromResult<IEnumerable<IEvent>?>(sourceEvents);
                 });
 
-            var documentStore = Substitute.For<IDocumentStore>();
-
             var sourceStreamInfo = new StreamInformation
             {
                 StreamIdentifier = "source-stream",
@@ -1158,6 +1170,11 @@ public class LiveMigrationExecutorTests
             targetDocument.ObjectName.Returns("TestObject");
             targetDocument.Active.Returns(targetStreamInfo);
             targetDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+
+            var documentStore = Substitute.For<IDocumentStore>();
+            // Set up document store to return the source document when GetAsync is called
+            documentStore.GetAsync(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(sourceDocument);
 
             var context = new LiveMigrationContext
             {
@@ -1422,8 +1439,6 @@ public class LiveMigrationExecutorTests
                     return Task.FromResult<IEnumerable<IEvent>?>(null);
                 });
 
-            var documentStore = Substitute.For<IDocumentStore>();
-
             var options = new LiveMigrationOptions();
             options.WithCatchUpDelay(TimeSpan.Zero);
 
@@ -1454,6 +1469,11 @@ public class LiveMigrationExecutorTests
             targetDocument.ObjectName.Returns("TestObject");
             targetDocument.Active.Returns(targetStreamInfo);
             targetDocument.TerminatedStreams.Returns(new List<TerminatedStream>());
+
+            var documentStore = Substitute.For<IDocumentStore>();
+            // Set up document store to return the source document when GetAsync is called
+            documentStore.GetAsync(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(sourceDocument);
 
             var context = new LiveMigrationContext
             {
