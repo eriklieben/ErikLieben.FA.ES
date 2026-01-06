@@ -1,0 +1,290 @@
+<div class="page-layout">
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <h1>Minimal APIs</h1>
+      <p class="subtitle">Integrate event sourcing with ASP.NET Core Minimal APIs</p>
+    </div>
+
+    <!-- Installation Section -->
+    <section id="installation" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Installation</h2>
+      <p class="section-description">
+        Install the <code>ErikLieben.FA.ES.AspNetCore.MinimalApis</code> package to get attribute-based
+        parameter binding for aggregates and projections.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Package Installation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="installCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Setup Section -->
+    <section id="setup" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Setup</h2>
+      <p class="section-description">
+        Configure the event store in your ASP.NET Core application by following these steps:
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredSetupStep() === 1" [class.focus-step-2]="hoveredSetupStep() === 2" [class.focus-step-3]="hoveredSetupStep() === 3" [class.focus-step-4]="hoveredSetupStep() === 4">
+        <li class="step-1"
+            (mouseenter)="hoveredSetupStep.set(1)"
+            (mouseleave)="hoveredSetupStep.set(null)">
+          <strong>Setup a storage client with a name</strong>
+          <span>Register an Azure Blob Storage client using <code>AddBlobServiceClient</code> and give it a name (e.g., "EventStore").</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredSetupStep.set(2)"
+            (mouseleave)="hoveredSetupStep.set(null)">
+          <strong>Configure the Blob Event Store</strong>
+          <span>Call <code>ConfigureBlobEventStore</code> with the storage client name so the event store knows which client to use.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredSetupStep.set(3)"
+            (mouseleave)="hoveredSetupStep.set(null)">
+          <strong>Register generated code</strong>
+          <span>Call the generated extension method (e.g., <code>ConfigureTaskFlowDomainFactory</code>) to register your aggregates, projections, and serializers.</span>
+        </li>
+        <li class="step-4"
+            (mouseenter)="hoveredSetupStep.set(4)"
+            (mouseleave)="hoveredSetupStep.set(null)">
+          <strong>Add Minimal API bindings</strong>
+          <span>Call <code>AddEventStoreMinimalApis()</code> to enable <code>[EventStream]</code> and <code>[Projection]</code> parameter binding.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredSetupStep() === 1" [class.focus-step-2]="hoveredSetupStep() === 2" [class.focus-step-3]="hoveredSetupStep() === 3" [class.focus-step-4]="hoveredSetupStep() === 4">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Program.cs</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="setupCodeHtml()"
+             (mouseover)="onSetupCodeHover($event)"
+             (mouseout)="hoveredSetupStep.set(null)"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Binding Section (NEW) -->
+    <section id="binding" class="doc-section">
+      <h2><mat-icon>link</mat-icon> Parameter Binding</h2>
+      <p class="section-description">
+        The <code>[EventStream]</code> and <code>[Projection]</code> attributes provide automatic
+        parameter binding, similar to <code>[FromServices]</code> or <code>[FromBody]</code>.
+        This eliminates boilerplate code for loading aggregates and projections.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredBindingStep() === 1" [class.focus-step-2]="hoveredBindingStep() === 2" [class.focus-step-3]="hoveredBindingStep() === 3" [class.focus-step-4]="hoveredBindingStep() === 4">
+        <li class="step-1"
+            (mouseenter)="hoveredBindingStep.set(1)"
+            (mouseleave)="hoveredBindingStep.set(null)">
+          <strong>[EventStream] - Basic binding</strong>
+          <span>Automatically load an aggregate from the route parameter matching the aggregate ID property name.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredBindingStep.set(2)"
+            (mouseleave)="hoveredBindingStep.set(null)">
+          <strong>[EventStream("param")] - Custom route parameter</strong>
+          <span>Specify a custom route parameter name when it doesn't match the default convention.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredBindingStep.set(3)"
+            (mouseleave)="hoveredBindingStep.set(null)">
+          <strong>[EventStream(CreateIfNotExists = true)]</strong>
+          <span>Create a new aggregate with a generated ID instead of loading an existing one.</span>
+        </li>
+        <li class="step-4"
+            (mouseenter)="hoveredBindingStep.set(4)"
+            (mouseleave)="hoveredBindingStep.set(null)">
+          <strong>[Projection] and [Projection("&#123;id&#125;")]</strong>
+          <span>Bind projections using the default blob name or a route-substituted pattern for per-entity projections.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredBindingStep() === 1" [class.focus-step-2]="hoveredBindingStep() === 2" [class.focus-step-3]="hoveredBindingStep() === 3" [class.focus-step-4]="hoveredBindingStep() === 4">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Attribute-Based Binding</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="bindingCodeHtml()"
+             (mouseover)="onBindingCodeHover($event)"
+             (mouseout)="hoveredBindingStep.set(null)"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Commands Section -->
+    <section id="commands" class="doc-section">
+      <h2><mat-icon>edit</mat-icon> Commands</h2>
+      <p class="section-description">
+        Commands load an aggregate from the event stream, execute domain logic, and persist new events.
+        The <code>[EventStream]</code> attribute handles all the boilerplate for you.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredCommandStep() === 1" [class.focus-step-2]="hoveredCommandStep() === 2" [class.focus-step-3]="hoveredCommandStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredCommandStep.set(1)"
+            (mouseleave)="hoveredCommandStep.set(null)">
+          <strong>Bind the aggregate</strong>
+          <span>Use <code>[EventStream]</code> to automatically load the aggregate from the route parameter, or <code>[EventStream(CreateIfNotExists = true)]</code> for new aggregates.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredCommandStep.set(2)"
+            (mouseleave)="hoveredCommandStep.set(null)">
+          <strong>Execute domain commands</strong>
+          <span>Call methods on the aggregate to execute commands. Events are generated and persisted automatically.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredCommandStep.set(3)"
+            (mouseleave)="hoveredCommandStep.set(null)">
+          <strong>Update projections</strong>
+          <span>Chain <code>.AndUpdateProjectionToLatest&lt;T&gt;()</code> to automatically update projections after the command succeeds.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredCommandStep() === 1" [class.focus-step-2]="hoveredCommandStep() === 2" [class.focus-step-3]="hoveredCommandStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Command Endpoints with [EventStream]</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="commandBindingCodeHtml()"
+             (mouseover)="onCommandCodeHover($event)"
+             (mouseout)="hoveredCommandStep.set(null)"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Queries Section -->
+    <section id="queries" class="doc-section">
+      <h2><mat-icon>search</mat-icon> Queries</h2>
+      <p class="section-description">
+        Queries can read directly from aggregates or from pre-computed projections.
+        Use <code>[EventStream]</code> for single entity lookups and <code>[Projection]</code> for lists and dashboards.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredQueryStep() === 1" [class.focus-step-2]="hoveredQueryStep() === 2" [class.focus-step-3]="hoveredQueryStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredQueryStep.set(1)"
+            (mouseleave)="hoveredQueryStep.set(null)">
+          <strong>Query from aggregate</strong>
+          <span>Use <code>[EventStream]</code> to load a single entity by ID. Events are replayed to rebuild current state.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredQueryStep.set(2)"
+            (mouseleave)="hoveredQueryStep.set(null)">
+          <strong>Query from projection</strong>
+          <span>Use <code>[Projection]</code> for lists, searches, and dashboards. Projections are pre-computed read models.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredQueryStep.set(3)"
+            (mouseleave)="hoveredQueryStep.set(null)">
+          <strong>Routed projections</strong>
+          <span>Use <code>[Projection("&#123;id&#125;")]</code> to load per-entity projections using route parameters in the blob name.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredQueryStep() === 1" [class.focus-step-2]="hoveredQueryStep() === 2" [class.focus-step-3]="hoveredQueryStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Query Endpoints with [EventStream] and [Projection]</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="queryBindingCodeHtml()"
+             (mouseover)="onQueryCodeHover($event)"
+             (mouseout)="hoveredQueryStep.set(null)"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Projections Section -->
+    <section id="projections" class="doc-section">
+      <h2><mat-icon>view_quilt</mat-icon> Projection Updates</h2>
+      <p class="section-description">
+        Projections are automatically updated after commands using fluent endpoint filters.
+        Chain multiple projections for comprehensive view updates.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredProjectionStep() === 1" [class.focus-step-2]="hoveredProjectionStep() === 2" [class.focus-step-3]="hoveredProjectionStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredProjectionStep.set(1)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Single projection update</strong>
+          <span>Chain <code>.AndUpdateProjectionToLatest&lt;T&gt;()</code> after your endpoint to update a projection when the command succeeds.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredProjectionStep.set(2)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Multiple projections</strong>
+          <span>Chain multiple <code>.AndUpdateProjectionToLatest&lt;T&gt;()</code> calls to update several projections in sequence.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredProjectionStep.set(3)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Routed projection updates</strong>
+          <span>Use <code>.WithProjectionOutput&lt;T&gt;("&#123;id&#125;")</code> to update per-entity projections using route parameters.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredProjectionStep() === 1" [class.focus-step-2]="hoveredProjectionStep() === 2" [class.focus-step-3]="hoveredProjectionStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Projection Updates with .AndUpdateProjectionToLatest</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="projectionBindingCodeHtml()"
+             (mouseover)="onProjectionCodeHover($event)"
+             (mouseout)="hoveredProjectionStep.set(null)"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Complete Example Section -->
+    <section id="complete-example" class="doc-section">
+      <h2><mat-icon>integration_instructions</mat-icon> Complete Example</h2>
+      <p class="section-description">
+        A full example showing how all the pieces fit together in a real API.
+        This demonstrates the clean, minimal code you can achieve with attribute binding.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Complete Order Management API</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

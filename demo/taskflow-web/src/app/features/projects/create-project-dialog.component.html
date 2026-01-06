@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>Create New Project</h2>
+<mat-dialog-content>
+  <form [formGroup]="projectForm">
+    <mat-form-field appearance="outline">
+      <mat-label>Project Name</mat-label>
+      <input matInput formControlName="name" placeholder="Enter project name" required>
+      <mat-error *ngIf="projectForm.get('name')?.hasError('required')">
+        Name is required
+      </mat-error>
+      <mat-error *ngIf="projectForm.get('name')?.hasError('minlength')">
+        Name must be at least 3 characters
+      </mat-error>
+      <mat-error *ngIf="projectForm.get('name')?.hasError('maxlength')">
+        Name cannot exceed 100 characters
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        placeholder="Enter project description"
+        rows="4"
+        required>
+      </textarea>
+      <mat-error *ngIf="projectForm.get('description')?.hasError('required')">
+        Description is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Owner ID</mat-label>
+      <input matInput formControlName="ownerId" placeholder="Enter owner ID" required>
+      <mat-error *ngIf="projectForm.get('ownerId')?.hasError('required')">
+        Owner ID is required
+      </mat-error>
+    </mat-form-field>
+  </form>
+
+  @if (errorMessage) {
+    <div class="error-message">
+      {{ errorMessage }}
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="isSubmitting">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="projectForm.invalid || isSubmitting">
+    @if (isSubmitting) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Create Project
+    }
+  </button>
+</mat-dialog-actions>

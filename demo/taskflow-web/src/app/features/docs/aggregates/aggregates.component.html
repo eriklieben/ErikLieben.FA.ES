@@ -1,0 +1,346 @@
+<div class="page-layout">
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="header">
+          <h1>Aggregates</h1>
+          <p class="subtitle">Domain entities that encapsulate business logic and emit events</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+          <h2><mat-icon>info</mat-icon> What are Aggregates?</h2>
+          <p class="section-description">
+            In event sourcing, an <strong>aggregate</strong> is a cluster of domain objects that can be treated as a single unit.
+            It's the consistency boundary for your domain - all changes to state within an aggregate happen through commands
+            that emit events. The aggregate's current state is derived by replaying (folding) all its events.
+          </p>
+
+          <div class="concept-diagram">
+            <div class="diagram-step">
+              <div class="step-icon"><mat-icon>input</mat-icon></div>
+              <div class="step-label">Command</div>
+            </div>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+            <div class="diagram-step">
+              <div class="step-icon"><mat-icon>category</mat-icon></div>
+              <div class="step-label">Aggregate</div>
+            </div>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+            <div class="diagram-step">
+              <div class="step-icon"><mat-icon>event_note</mat-icon></div>
+              <div class="step-label">Event(s)</div>
+            </div>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+            <div class="diagram-step">
+              <div class="step-icon"><mat-icon>storage</mat-icon></div>
+              <div class="step-label">Event Store</div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Base Class Section -->
+        <section id="base-class" class="doc-section">
+          <h2><mat-icon>account_tree</mat-icon> The Aggregate Base Class</h2>
+          <p class="section-description">
+            All aggregates inherit from the <code>Aggregate</code> base class. This provides the event stream,
+            folding mechanism, and snapshot support. Your aggregates must be declared <code>partial</code>
+            because the CLI tool generates companion code.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Basic Aggregate Structure</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="basicAggregateCodeHtml()"></div>
+          </div>
+
+          <div class="warning-callout">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <strong>Partial Class Required</strong>
+              <p>Aggregates must be declared <code>partial</code>. The Roslyn analyzer FAES0003 will warn you if you forget.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- ObjectName Section -->
+        <section id="object-name" class="doc-section">
+          <h2><mat-icon>label</mat-icon> Object Naming</h2>
+          <p class="section-description">
+            The <code>[ObjectName]</code> attribute decouples the CLR type name from the persisted object identifier.
+            This allows you to refactor class names without breaking existing event streams.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>ObjectName Attribute</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="objectNameCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>Best Practice</strong>
+              <p>Always use <code>[ObjectName]</code> to future-proof your domain model. If you rename the class later,
+              the events in storage will still be correctly associated.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Commands Section -->
+        <section id="commands" class="doc-section">
+          <h2><mat-icon>edit</mat-icon> Commands</h2>
+          <p class="section-description">
+            Commands are methods on your aggregate that validate business rules and emit events.
+            Use <code>Stream.Session()</code> to open a leased context for appending events atomically.
+          </p>
+
+          <ol class="setup-steps" [class.focus-step-1]="hoveredStep() === 1" [class.focus-step-2]="hoveredStep() === 2" [class.focus-step-3]="hoveredStep() === 3">
+            <li class="step-1"
+                (mouseenter)="hoveredStep.set(1)"
+                (mouseleave)="hoveredStep.set(null)">
+              <strong>Validate business rules</strong>
+              <span>Check invariants and throw if the command cannot be executed.</span>
+            </li>
+            <li class="step-2"
+                (mouseenter)="hoveredStep.set(2)"
+                (mouseleave)="hoveredStep.set(null)">
+              <strong>Open a session</strong>
+              <span>Use <code>Stream.Session()</code> to get a leased context for atomic operations.</span>
+            </li>
+            <li class="step-3"
+                (mouseenter)="hoveredStep.set(3)"
+                (mouseleave)="hoveredStep.set(null)">
+              <strong>Fold the appended event</strong>
+              <span>Use <code>Fold(context.Append(event))</code> to append and apply the event in one step.</span>
+            </li>
+          </ol>
+
+          <div class="code-block" [class.focus-step-1]="hoveredStep() === 1" [class.focus-step-2]="hoveredStep() === 2" [class.focus-step-3]="hoveredStep() === 3">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Command Methods</span>
+            </div>
+            <div class="shiki-container"
+                 [innerHTML]="commandCodeHtml()"
+                 (mouseover)="onCodeHover($event)"
+                 (mouseout)="hoveredStep.set(null)"></div>
+          </div>
+
+          <div class="warning-callout">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <strong>Always use Fold()</strong>
+              <p>The analyzer FAES0002 will warn if you call <code>Append()</code> without wrapping it in <code>Fold()</code>.
+              This ensures events are applied to state immediately.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- When Methods Section -->
+        <section id="when-methods" class="doc-section">
+          <h2><mat-icon>sync_alt</mat-icon> When Methods</h2>
+          <p class="section-description">
+            <code>When</code> methods define how each event type updates the aggregate's state.
+            They are called during <code>Fold()</code> to replay events. There are two patterns:
+          </p>
+
+          <div class="pattern-comparison">
+            <div class="pattern-card">
+              <h3>Method Signature Pattern</h3>
+              <p>Traditional approach - the event is passed as a parameter.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <mat-icon>code</mat-icon>
+                  <span>When(EventType)</span>
+                </div>
+                <div class="shiki-container" [innerHTML]="whenMethodCodeHtml()"></div>
+              </div>
+            </div>
+            <div class="pattern-card">
+              <h3>[When&lt;T&gt;] Attribute Pattern</h3>
+              <p>Modern approach - cleaner when you don't need event data.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <mat-icon>code</mat-icon>
+                  <span>[When&lt;EventType&gt;]</span>
+                </div>
+                <div class="shiki-container" [innerHTML]="whenAttributeCodeHtml()"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>Analyzer Help</strong>
+              <p>The analyzer FAES0004 suggests using the <code>[When&lt;T&gt;]</code> attribute when your When method
+              doesn't use the event parameter, avoiding unused parameter warnings.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Fold Section -->
+        <section id="fold" class="doc-section">
+          <h2><mat-icon>layers</mat-icon> The Fold Method</h2>
+          <p class="section-description">
+            <code>Fold()</code> is the core mechanism for applying events to state. When you load an aggregate,
+            all events are folded to rebuild the current state. The generated code overrides <code>Fold(IEvent)</code>
+            to dispatch to the correct <code>When</code> method.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>How Fold Works</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="foldCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Factory Pattern Section -->
+        <section id="factory" class="doc-section">
+          <h2><mat-icon>factory</mat-icon> Generated Factories</h2>
+          <p class="section-description">
+            The CLI tool generates factory interfaces and implementations for each aggregate.
+            Factories handle creating new aggregates and loading existing ones from the event stream.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Generated Factory Interface</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="factoryCodeHtml()"></div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Using the Factory</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="factoryUsageCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Snapshots Section -->
+        <section id="snapshots" class="doc-section">
+          <h2><mat-icon>photo_camera</mat-icon> Snapshots</h2>
+          <p class="section-description">
+            For aggregates with many events, replaying everything on load can be slow.
+            Snapshots store the aggregate's state at a point in time, allowing faster loading.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Snapshot Support</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="snapshotCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>When to Use Snapshots</strong>
+              <p>Only add snapshot support when you have aggregates with many events (hundreds+) and loading time
+              becomes a problem. Most aggregates don't need this optimization.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Best Practices Section -->
+        <section id="best-practices" class="doc-section">
+          <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+          <p class="section-description">
+            Follow these guidelines for effective aggregate design:
+          </p>
+
+          <div class="practice-grid">
+            <div class="practice-card do">
+              <div class="practice-header">
+                <mat-icon>check_circle</mat-icon>
+                <h3>Do</h3>
+              </div>
+              <ul>
+                <li>Keep aggregates small and focused</li>
+                <li>Use <code>[ObjectName]</code> and <code>[EventName]</code> attributes</li>
+                <li>Validate all invariants before emitting events</li>
+                <li>Make <code>When</code> methods simple and deterministic</li>
+                <li>Use <code>Fold(context.Append(...))</code> pattern</li>
+                <li>Make aggregates partial classes</li>
+              </ul>
+            </div>
+            <div class="practice-card dont">
+              <div class="practice-header">
+                <mat-icon>cancel</mat-icon>
+                <h3>Don't</h3>
+              </div>
+              <ul>
+                <li>Call external services in <code>When</code> methods</li>
+                <li>Use <code>DateTime.Now</code> in <code>When</code> methods</li>
+                <li>Throw exceptions in <code>When</code> methods</li>
+                <li>Make <code>When</code> methods async</li>
+                <li>Store derived/computed state that can be recalculated</li>
+                <li>Use <code>Append()</code> without <code>Fold()</code></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Complete Example Section -->
+        <section id="complete-example" class="doc-section">
+          <h2><mat-icon>integration_instructions</mat-icon> Complete Example</h2>
+          <p class="section-description">
+            A full example showing all aggregate features working together.
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Complete Order Aggregate</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Navigation -->
+      <nav class="doc-nav">
+        <div class="nav-header">On this page</div>
+        <ul class="nav-list">
+          @for (item of navItems; track item.id) {
+            <li>
+              <a
+                [href]="'#' + item.id"
+                [class.active]="activeSection() === item.id"
+                (click)="scrollToSection($event, item.id)">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                {{ item.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>

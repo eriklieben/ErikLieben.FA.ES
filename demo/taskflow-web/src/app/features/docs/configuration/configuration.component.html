@@ -1,0 +1,430 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Configuration Reference</h1>
+      <p class="subtitle">Complete configuration options for the ErikLieben.FA.ES event sourcing framework</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        This reference covers all configuration options for storage providers, aggregates, projections,
+        and integration settings.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>cloud</mat-icon>
+          <h3>Blob Storage</h3>
+          <p>Azure Blob Storage for event streams and projections.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>table_chart</mat-icon>
+          <h3>Table Storage</h3>
+          <p>Azure Table Storage for fast point reads.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>database</mat-icon>
+          <h3>Cosmos DB</h3>
+          <p>Azure Cosmos DB for global distribution.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>hub</mat-icon>
+          <h3>Multi-Provider</h3>
+          <p>Mix providers for different aggregates.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Basic Setup Section -->
+    <section id="basic-setup" class="doc-section">
+      <h2><mat-icon>play_arrow</mat-icon> Basic Setup</h2>
+      <p class="section-description">
+        Standard service registration for a typical application:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Program.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="basicSetupCodeHtml()"></div>
+      </div>
+
+      <h3>Event Stream Default Settings</h3>
+      <p>Configure default storage types for all components:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Default Type Settings</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="defaultSettingsCodeHtml()"></div>
+      </div>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Parameter</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>StreamType</code></span>
+          <span class="assertion-desc">Storage type for event streams</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DocumentType</code></span>
+          <span class="assertion-desc">Storage type for object documents</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DocumentTagType</code></span>
+          <span class="assertion-desc">Storage type for document tags</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>EventStreamTagType</code></span>
+          <span class="assertion-desc">Storage type for stream tags</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DocumentRefType</code></span>
+          <span class="assertion-desc">Storage type for document references</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Blob Settings Section -->
+    <section id="blob-settings" class="doc-section">
+      <h2><mat-icon>cloud</mat-icon> Azure Blob Storage Settings</h2>
+      <p class="section-description">
+        Configure Azure Blob Storage as your event store:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cloud</mat-icon>
+          <span>EventStreamBlobSettings</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="blobSettingsCodeHtml()"></div>
+      </div>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Default</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultDataStore</code></span>
+          <span class="assertion-desc">(required)</span>
+          <span class="assertion-desc">Named BlobServiceClient key</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>AutoCreateContainer</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Auto-create missing containers</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>EnableStreamChunks</code></span>
+          <span class="assertion-desc">false</span>
+          <span class="assertion-desc">Enable event stream chunking</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultChunkSize</code></span>
+          <span class="assertion-desc">1000</span>
+          <span class="assertion-desc">Events per chunk</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Table Settings Section -->
+    <section id="table-settings" class="doc-section">
+      <h2><mat-icon>table_chart</mat-icon> Azure Table Storage Settings</h2>
+      <p class="section-description">
+        Configure Azure Table Storage for fast point reads:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>table_chart</mat-icon>
+          <span>EventStreamTableSettings</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tableSettingsCodeHtml()"></div>
+      </div>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Default</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultDocumentTableName</code></span>
+          <span class="assertion-desc">"objectdocumentstore"</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultEventTableName</code></span>
+          <span class="assertion-desc">"eventstream"</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultSnapshotTableName</code></span>
+          <span class="assertion-desc">"snapshots"</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultDocumentTagTableName</code></span>
+          <span class="assertion-desc">"documenttags"</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DefaultStreamTagTableName</code></span>
+          <span class="assertion-desc">"streamtags"</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Cosmos Settings Section -->
+    <section id="cosmos-settings" class="doc-section">
+      <h2><mat-icon>database</mat-icon> Cosmos DB Settings</h2>
+      <p class="section-description">
+        Configure Azure Cosmos DB for global distribution and high throughput:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>database</mat-icon>
+          <span>EventStreamCosmosDbSettings</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cosmosSettingsCodeHtml()"></div>
+      </div>
+
+      <h3>Throughput Settings</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>speed</mat-icon>
+          <span>Throughput Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="throughputCodeHtml()"></div>
+      </div>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ManualThroughput</code></span>
+          <span class="assertion-desc">Fixed RU/s (mutually exclusive with autoscale)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>AutoscaleMaxThroughput</code></span>
+          <span class="assertion-desc">Max autoscale RU/s (min = 10%)</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Per-Aggregate Section -->
+    <section id="per-aggregate" class="doc-section">
+      <h2><mat-icon>tune</mat-icon> Per-Aggregate Configuration</h2>
+      <p class="section-description">
+        Override storage settings for specific aggregates using attributes:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Aggregate Attributes</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="perAggregateCodeHtml()"></div>
+      </div>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Attribute</span>
+          <span class="assertion-desc">Parameters</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>[EventStreamType]</code></span>
+          <span class="assertion-desc">streamType, documentType</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>[EventStreamBlobSettings]</code></span>
+          <span class="assertion-desc">connectionName</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Projections Section -->
+    <section id="projections" class="doc-section">
+      <h2><mat-icon>dashboard</mat-icon> Projection Configuration</h2>
+      <p class="section-description">
+        Configure storage for projections:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>analytics</mat-icon>
+          <span>Projection Attributes</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="projectionCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>cloud</mat-icon>
+          <div>
+            <strong>[BlobJsonProjection]</strong>
+            <span>Store projection as JSON blob in Azure Blob Storage</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>table_chart</mat-icon>
+          <div>
+            <strong>[TableProjection]</strong>
+            <span>Store projection in Azure Table Storage</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>database</mat-icon>
+          <div>
+            <strong>[CosmosDbJsonProjection]</strong>
+            <span>Store projection in Cosmos DB container</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>bookmark</mat-icon>
+          <div>
+            <strong>[ProjectionWithExternalCheckpoint]</strong>
+            <span>Store checkpoint in separate file</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Multi-Provider Section -->
+    <section id="multi-provider" class="doc-section">
+      <h2><mat-icon>hub</mat-icon> Multi-Provider Setup</h2>
+      <p class="section-description">
+        Use different storage providers for different aggregates:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>hub</mat-icon>
+          <span>Multiple Providers</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="multiProviderCodeHtml()"></div>
+      </div>
+
+      <h3>Connection Strings</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>vpn_key</mat-icon>
+          <span>appsettings.json</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="connectionStringsCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Local Development</strong>
+          <p>Use <code>"UseDevelopmentStorage=true"</code> with Azurite for local development
+          without Azure subscription costs.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Performance Section -->
+    <section id="performance" class="doc-section">
+      <h2><mat-icon>speed</mat-icon> Performance Tuning</h2>
+      <p class="section-description">
+        Optimize configuration for specific workloads:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>tune</mat-icon>
+          <span>Performance Settings</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="performanceCodeHtml()"></div>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="comparison-card">
+          <h3><mat-icon>upload</mat-icon> High-Volume Writes</h3>
+          <ul>
+            <li>Enable <code>EnableBulkExecution</code> for Cosmos DB</li>
+            <li>Enable <code>enableStreamChunks</code> for Blob</li>
+            <li>Increase <code>AutoscaleMaxThroughput</code></li>
+            <li>Use smaller <code>defaultChunkSize</code> (500)</li>
+          </ul>
+        </div>
+        <div class="comparison-card">
+          <h3><mat-icon>download</mat-icon> Read Optimization</h3>
+          <ul>
+            <li>Use Table Storage for fast point reads</li>
+            <li>Use Cosmos DB with proper partition keys</li>
+            <li>Enable <code>UseOptimisticConcurrency</code></li>
+            <li>Consider snapshots for long streams</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Development</h3>
+          </div>
+          <ul>
+            <li>Use Azurite for local development</li>
+            <li>Enable <code>autoCreateContainer: true</code></li>
+            <li>Use default throughput settings</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>rocket_launch</mat-icon>
+            <h3>Production</h3>
+          </div>
+          <ul>
+            <li>Pre-create containers/tables</li>
+            <li>Set <code>autoCreateContainer: false</code></li>
+            <li>Configure appropriate throughput</li>
+            <li>Enable chunking for large streams</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

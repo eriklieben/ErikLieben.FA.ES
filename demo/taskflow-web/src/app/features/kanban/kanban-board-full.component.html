@@ -1,0 +1,86 @@
+<div class="kanban-container">
+  <div class="header">
+    <h1>Kanban Board</h1>
+    <div class="header-actions">
+      <mat-form-field>
+        <mat-label>Select Project</mat-label>
+        <mat-select [(ngModel)]="selectedProject" (ngModelChange)="onProjectChange($event)">
+          @for (project of projects(); track project.projectId) {
+            <mat-option [value]="project.projectId">{{ project.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (availableLanguages().length > 1) {
+        <mat-form-field>
+          <mat-label>Language</mat-label>
+          <mat-select [(ngModel)]="selectedLanguage" (ngModelChange)="onLanguageChange($event)">
+            @for (lang of availableLanguages(); track lang) {
+              <mat-option [value]="lang">{{ getLanguageDisplayName(lang) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+  </div>
+
+  <div class="kanban-board">
+    @for (column of columns(); track column.id) {
+      <div class="kanban-column">
+        <div class="column-header">
+          <h2>
+            <mat-icon>{{ getColumnIcon(column.id) }}</mat-icon>
+            {{ column.title }}
+          </h2>
+          <span class="item-count">{{ column.items.length }}</span>
+        </div>
+
+        <div
+          class="column-content"
+          cdkDropList
+          [id]="column.id"
+          [cdkDropListData]="column.items"
+          [cdkDropListConnectedTo]="getConnectedLists()"
+          (cdkDropListDropped)="drop($event, column)">
+
+          @for (item of column.items; track item.workItemId) {
+            <mat-card class="kanban-card" cdkDrag>
+              <mat-card-content>
+                <div class="card-header">
+                  <mat-chip [class]="'priority-' + item.priority.toLowerCase()" class="priority-chip">
+                    {{ item.priority }}
+                  </mat-chip>
+                </div>
+
+                <h3 class="card-title">{{ item.title }}</h3>
+
+                <div class="card-footer">
+                  @if (item.assignedTo) {
+                    <div class="assignee">
+                      <mat-icon>person</mat-icon>
+                      <span>{{ item.assignedTo }}</span>
+                    </div>
+                  }
+
+                  @if (item.deadline) {
+                    <div class="deadline" [class.overdue]="isOverdue(item.deadline)">
+                      <mat-icon>event</mat-icon>
+                      <span>{{ formatDate(item.deadline) }}</span>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          @if (column.items.length === 0) {
+            <div class="empty-column">
+              <mat-icon>inbox</mat-icon>
+              <p>No items</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,372 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Stream Actions</h1>
+      <p class="subtitle">Extend event stream behavior with pre-append, post-append, and post-commit actions</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Stream Actions provide a powerful extension mechanism for the event stream lifecycle. They allow you to hook into
+        key points during event processing: before events are appended, after they're appended, and after they're committed.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>input</mat-icon>
+          <h3>Pre-Append Actions</h3>
+          <p>Validate or transform events before they're added to the stream.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>output</mat-icon>
+          <h3>Post-Append Actions</h3>
+          <p>Process events after they've been appended but before commit.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>check_circle</mat-icon>
+          <h3>Post-Commit Actions</h3>
+          <p>Execute async operations after events are durably committed.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>visibility</mat-icon>
+          <h3>Read Actions</h3>
+          <p>Hook into event reads for caching, metrics, or transformation.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Action Types Section -->
+    <section id="action-types" class="doc-section">
+      <h2><mat-icon>category</mat-icon> Action Types</h2>
+      <p class="section-description">
+        The library provides several action interfaces, each designed for specific points in the event lifecycle.
+      </p>
+
+      <div class="action-list">
+        <div class="action-item">
+          <div class="action-icon preappend">
+            <mat-icon>input</mat-icon>
+          </div>
+          <div class="action-content">
+            <h3>IPreAppendAction</h3>
+            <p>Executes <strong>before</strong> an event is appended to the stream. Use for validation, enrichment, or transformation of event data.</p>
+            <code>Func&lt;T&gt; PreAppend&lt;T&gt;(T data, JsonEvent event, IObjectDocument document)</code>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon postappend">
+            <mat-icon>output</mat-icon>
+          </div>
+          <div class="action-content">
+            <h3>IPostAppendAction</h3>
+            <p>Executes <strong>after</strong> an event is appended but before commit. Use for metrics, logging, or secondary processing.</p>
+            <code>Func&lt;T&gt; PostAppend&lt;T&gt;(T data, JsonEvent event, IObjectDocument document)</code>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon postcommit">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="action-content">
+            <h3>IAsyncPostCommitAction</h3>
+            <p>Executes <strong>asynchronously after</strong> events are committed. Use for notifications, integrations, or audit logging.</p>
+            <code>Task PostCommitAsync(IEnumerable&lt;JsonEvent&gt; events, IObjectDocument document)</code>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <div class="action-icon preread">
+            <mat-icon>visibility</mat-icon>
+          </div>
+          <div class="action-content">
+            <h3>IPreReadAction / IPostReadAction</h3>
+            <p>Execute before and after events are read from the stream. Use for caching, metrics, or read-time transformation.</p>
+            <code>T PreRead&lt;T&gt;(T data, JsonEvent event, IObjectDocument document)</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Pre-Append Actions Section -->
+    <section id="preappend" class="doc-section">
+      <h2><mat-icon>input</mat-icon> Pre-Append Actions</h2>
+      <p class="section-description">
+        Pre-append actions run before an event is added to the stream. They're ideal for validation, authorization checks,
+        or enriching events with additional data.
+      </p>
+
+      <h3>Validation Example</h3>
+      <p>Validate business rules before allowing an event to be appended:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ValidationAction.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="preAppendCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Throwing Exceptions</strong>
+          <p>If a pre-append action throws an exception, the event will not be appended and the entire operation will fail. Use this for enforcing invariants.</p>
+        </div>
+      </div>
+
+      <h3>Advanced: Business Rule Validation</h3>
+      <p>Integrate with a business rule engine for complex validation:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>BusinessRuleValidationAction.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="validationCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Post-Append Actions Section -->
+    <section id="postappend" class="doc-section">
+      <h2><mat-icon>output</mat-icon> Post-Append Actions</h2>
+      <p class="section-description">
+        Post-append actions run after an event is appended but before it's committed. They're useful for collecting metrics,
+        logging, or preparing secondary data structures.
+      </p>
+
+      <h3>Metrics Example</h3>
+      <p>Track event metrics after appending:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>MetricsAction.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="postAppendCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>analytics</mat-icon>
+          <span><strong>Metrics collection</strong> - Track event counts, types, and processing times</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>description</mat-icon>
+          <span><strong>Logging</strong> - Record events for debugging or auditing</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>cached</mat-icon>
+          <span><strong>Cache invalidation</strong> - Invalidate caches when data changes</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Post-Commit Actions Section -->
+    <section id="postcommit" class="doc-section">
+      <h2><mat-icon>check_circle</mat-icon> Post-Commit Actions</h2>
+      <p class="section-description">
+        Post-commit actions run asynchronously after events are durably committed to storage. They're perfect for
+        side effects that should only happen after successful persistence.
+      </p>
+
+      <h3>Notification Example</h3>
+      <p>Send notifications after events are committed:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>NotificationAction.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="postCommitCodeHtml()"></div>
+      </div>
+
+      <h3>Audit Logging Example</h3>
+      <p>Create audit trail entries after commit:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>AuditLogAction.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="auditCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout warning">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>Async Execution</strong>
+          <p>Post-commit actions run after the main operation completes. Errors in post-commit actions won't roll back the committed events. Handle failures appropriately (retry queues, dead letter, etc.).</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Registration Section -->
+    <section id="registration" class="doc-section">
+      <h2><mat-icon>app_registration</mat-icon> Registration</h2>
+      <p class="section-description">
+        Actions can be registered directly on event streams or through dependency injection.
+      </p>
+
+      <h3>Registration Methods</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Action Registration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="registrationCodeHtml()"></div>
+      </div>
+
+      <div class="registration-options">
+        <div class="option-card">
+          <mat-icon>stream</mat-icon>
+          <h3>Per-Stream Registration</h3>
+          <p>Register actions on specific event stream instances for fine-grained control.</p>
+        </div>
+        <div class="option-card">
+          <mat-icon>settings</mat-icon>
+          <h3>Dependency Injection</h3>
+          <p>Register actions globally via DI container for automatic application to all streams.</p>
+        </div>
+      </div>
+
+      <h3>Execution Order</h3>
+      <div class="execution-order">
+        <div class="order-step">
+          <span class="step-number">1</span>
+          <span class="step-label">Pre-Append Actions</span>
+        </div>
+        <div class="order-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="order-step">
+          <span class="step-number">2</span>
+          <span class="step-label">Event Append</span>
+        </div>
+        <div class="order-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="order-step">
+          <span class="step-number">3</span>
+          <span class="step-label">Post-Append Actions</span>
+        </div>
+        <div class="order-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="order-step">
+          <span class="step-number">4</span>
+          <span class="step-label">Commit</span>
+        </div>
+        <div class="order-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="order-step">
+          <span class="step-number">5</span>
+          <span class="step-label">Post-Commit Actions (async)</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Use Cases Section -->
+    <section id="usecases" class="doc-section">
+      <h2><mat-icon>lightbulb</mat-icon> Use Cases</h2>
+      <p class="section-description">
+        Common patterns and use cases for stream actions in production systems.
+      </p>
+
+      <div class="usecase-grid">
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>verified_user</mat-icon>
+            <h3>Authorization</h3>
+          </div>
+          <p>Pre-append: Check user permissions before allowing events to be written.</p>
+          <span class="action-badge preappend">IPreAppendAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>rule</mat-icon>
+            <h3>Validation</h3>
+          </div>
+          <p>Pre-append: Enforce business rules and data integrity constraints.</p>
+          <span class="action-badge preappend">IPreAppendAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>add_circle</mat-icon>
+            <h3>Enrichment</h3>
+          </div>
+          <p>Pre-append: Add metadata, timestamps, or correlation IDs to events.</p>
+          <span class="action-badge preappend">IPreAppendAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>analytics</mat-icon>
+            <h3>Metrics</h3>
+          </div>
+          <p>Post-append: Track event counts, latencies, and throughput.</p>
+          <span class="action-badge postappend">IPostAppendAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>notifications</mat-icon>
+            <h3>Notifications</h3>
+          </div>
+          <p>Post-commit: Send emails, SMS, or push notifications.</p>
+          <span class="action-badge postcommit">IAsyncPostCommitAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>history</mat-icon>
+            <h3>Audit Trail</h3>
+          </div>
+          <p>Post-commit: Record all changes for compliance and debugging.</p>
+          <span class="action-badge postcommit">IAsyncPostCommitAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>sync</mat-icon>
+            <h3>Integration</h3>
+          </div>
+          <p>Post-commit: Publish events to message queues or external systems.</p>
+          <span class="action-badge postcommit">IAsyncPostCommitAction</span>
+        </div>
+
+        <div class="usecase-card">
+          <div class="usecase-header">
+            <mat-icon>cached</mat-icon>
+            <h3>Caching</h3>
+          </div>
+          <p>Pre/Post-read: Implement read-through caching or cache invalidation.</p>
+          <span class="action-badge preread">IPreReadAction</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

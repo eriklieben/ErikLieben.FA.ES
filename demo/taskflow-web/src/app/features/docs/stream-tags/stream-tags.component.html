@@ -1,0 +1,279 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Stream Tags</h1>
+      <p class="subtitle">Categorize and query documents and event streams without modifying events</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Tags provide a way to categorize and query documents and event streams without modifying the events
+        themselves. The tag system supports document tags and stream tags.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>category</mat-icon>
+          <h3>Categorization</h3>
+          <p>Organize aggregates into logical groups for efficient queries.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>search</mat-icon>
+          <h3>Efficient Queries</h3>
+          <p>Query by category without full scans.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>filter_alt</mat-icon>
+          <h3>Filtering</h3>
+          <p>Filter streams by any criteria you define.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>layers</mat-icon>
+          <h3>Cross-Cutting</h3>
+          <p>Track concerns that span multiple aggregates.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Interface Section -->
+    <section id="interface" class="doc-section">
+      <h2><mat-icon>code</mat-icon> Document Tag Store Interface</h2>
+      <p class="section-description">
+        The <code>IDocumentTagStore</code> interface provides methods for managing tags:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>IDocumentTagStore</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="interfaceCodeHtml()"></div>
+      </div>
+
+      <h3>Basic Usage</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>play_arrow</mat-icon>
+          <span>Using Tags</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="usageCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Configuration Section -->
+    <section id="configuration" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Configuration</h2>
+      <p class="section-description">
+        Configure tag storage for each provider:
+      </p>
+
+      <h3>Blob Storage</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cloud</mat-icon>
+          <span>Blob Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="blobConfigCodeHtml()"></div>
+      </div>
+
+      <h3>Table Storage</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>table_chart</mat-icon>
+          <span>Table Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tableConfigCodeHtml()"></div>
+      </div>
+
+      <h3>Performance Considerations</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Storage</span>
+          <span class="assertion-desc">Performance Characteristics</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Blob</span>
+          <span class="assertion-desc">Moderate set/remove, scan-based get</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Table</span>
+          <span class="assertion-desc">Fast operations, partition-based queries</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method">Cosmos DB</span>
+          <span class="assertion-desc">Fast operations, point read support</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Patterns Section -->
+    <section id="patterns" class="doc-section">
+      <h2><mat-icon>pattern</mat-icon> Common Patterns</h2>
+      <p class="section-description">
+        Patterns for using tags effectively:
+      </p>
+
+      <h3>Status-Based Tagging</h3>
+      <p>Track aggregate status transitions:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>sync</mat-icon>
+          <span>Status Tags</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="statusTaggingCodeHtml()"></div>
+      </div>
+
+      <h3>Category Tagging</h3>
+      <p>Organize aggregates by category:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>category</mat-icon>
+          <span>Category Tags</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="categoryTaggingCodeHtml()"></div>
+      </div>
+
+      <h3>Multi-Tenant Tagging</h3>
+      <p>Isolate data by tenant:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>business</mat-icon>
+          <span>Tenant Tags</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tenantTaggingCodeHtml()"></div>
+      </div>
+
+      <h3>Tag Naming Conventions</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Pattern</span>
+          <span class="assertion-desc">Use Case</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>"priority"</code></span>
+          <span class="assertion-desc">Boolean flags</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>"status:active"</code></span>
+          <span class="assertion-desc">Enumerated values</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>"tenant:abc"</code></span>
+          <span class="assertion-desc">Multi-tenant</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>"region:us:west"</code></span>
+          <span class="assertion-desc">Hierarchical</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>"2024:Q1:sales"</code></span>
+          <span class="assertion-desc">Time-based</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Querying Section -->
+    <section id="querying" class="doc-section">
+      <h2><mat-icon>search</mat-icon> Querying with Tags</h2>
+      <p class="section-description">
+        Query documents by their tags:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>search</mat-icon>
+          <span>Tag Queries</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="queryingCodeHtml()"></div>
+      </div>
+
+      <h3>API Integration</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>api</mat-icon>
+          <span>REST Endpoints</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="apiIntegrationCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective tag usage:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Use consistent naming conventions for tags</li>
+            <li>Use prefixes to namespace related tags</li>
+            <li>Remove old tags when state changes</li>
+            <li>Keep tag names short but descriptive</li>
+            <li>Use tags for queryable categories</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Use tags for unique identifiers (use object IDs)</li>
+            <li>Store sensitive data in tags</li>
+            <li>Create too many unique tag values (impacts performance)</li>
+            <li>Rely on tags for data integrity</li>
+            <li>Use tags instead of projections for complex queries</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>High-Volume Tag Queries</strong>
+          <p>For high-volume tag queries, consider using Table or Cosmos DB for tag storage,
+          caching frequently accessed tag queries, and using projections for complex filtering.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

@@ -1,0 +1,359 @@
+/* You can add global styles to this file, and also import other style files */
+@use './theme.scss';
+@use './styles/catppuccin.scss';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--ctp-base);
+  color: var(--ctp-text);
+}
+
+body {
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Utility classes
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.gap-3 { gap: 1.5rem; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+
+.m-1 { margin: 0.5rem; }
+.m-2 { margin: 1rem; }
+.m-3 { margin: 1.5rem; }
+
+// Material overlay components (dropdowns, menus, dialogs)
+// These are rendered in CDK overlays, so they need global styles
+
+// Mat-select dropdown panel
+.mat-mdc-select-panel {
+  background-color: var(--ctp-crust) !important;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 8px;
+
+  .mat-mdc-option {
+    color: var(--ctp-text);
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active {
+      background-color: var(--ctp-surface0);
+    }
+
+    &.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+      background-color: var(--ctp-surface1);
+    }
+
+    .mdc-list-item__primary-text {
+      color: var(--ctp-text);
+    }
+  }
+}
+
+// Mat-menu dropdown
+.mat-mdc-menu-panel {
+  background-color: var(--ctp-crust) !important;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 8px;
+
+  .mat-mdc-menu-item {
+    color: var(--ctp-text);
+
+    &:hover:not([disabled]) {
+      background-color: var(--ctp-surface0);
+    }
+
+    mat-icon {
+      color: var(--ctp-blue);
+    }
+  }
+}
+
+// Mat-autocomplete panel
+.mat-mdc-autocomplete-panel {
+  background-color: var(--ctp-crust) !important;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 8px;
+
+  .mat-mdc-option {
+    color: var(--ctp-text);
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background-color: var(--ctp-surface0);
+    }
+  }
+}
+
+// Mat-dialog
+.mat-mdc-dialog-container {
+  --mdc-dialog-container-color: var(--ctp-crust) !important;
+  background-color: var(--ctp-crust) !important;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 12px;
+
+  .mdc-dialog__surface {
+    background-color: var(--ctp-crust) !important;
+  }
+
+  .mat-mdc-dialog-title,
+  h2[mat-dialog-title] {
+    color: var(--ctp-text) !important;
+  }
+
+  .mat-mdc-dialog-content,
+  mat-dialog-content {
+    color: var(--ctp-text) !important;
+  }
+
+  .mat-mdc-dialog-actions,
+  mat-dialog-actions {
+    background-color: transparent;
+  }
+
+  label {
+    color: var(--ctp-subtext1) !important;
+  }
+}
+
+// Mat-form-field
+.mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    background-color: transparent;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: transparent;
+  }
+
+  .mdc-text-field {
+    background-color: var(--ctp-surface0) !important;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .mdc-text-field--filled {
+    background-color: var(--ctp-surface0) !important;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+    background-color: var(--ctp-surface0) !important;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    .mat-mdc-form-field-hint,
+    .mat-mdc-form-field-error {
+      color: var(--ctp-subtext0);
+    }
+  }
+
+  label {
+    color: var(--ctp-subtext1) !important;
+  }
+
+  .mat-mdc-select-value,
+  .mat-mdc-select-placeholder {
+    color: var(--ctp-text);
+  }
+
+  .mat-mdc-select-arrow {
+    color: var(--ctp-text);
+  }
+
+  input,
+  textarea {
+    color: var(--ctp-text);
+    caret-color: var(--ctp-blue);
+  }
+
+  .mdc-line-ripple::before {
+    border-bottom-color: var(--ctp-surface1);
+  }
+
+  .mdc-line-ripple::after {
+    border-bottom-color: var(--ctp-blue);
+  }
+}
+
+// Tooltip
+.mat-mdc-tooltip {
+  background-color: var(--ctp-surface1);
+  color: var(--ctp-text);
+  border: 1px solid var(--ctp-surface0);
+}
+
+// Dialog backdrop
+.cdk-overlay-dark-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+// Additional dialog styling to ensure full coverage
+.cdk-overlay-pane {
+  .mat-mdc-dialog-container {
+    .mdc-dialog__container {
+      .mdc-dialog__surface {
+        background-color: var(--ctp-crust) !important;
+        color: var(--ctp-text);
+      }
+    }
+  }
+}
+
+// Global Developer Toast - Orange Warning Style
+.global-dev-toast {
+  .mdc-snackbar__surface {
+    background: linear-gradient(
+      135deg,
+      var(--ctp-peach, #f5a97f) 0%,
+      var(--ctp-red, #ed8796) 100%
+    ) !important;
+    border: 3px solid var(--ctp-red, #ed8796);
+    border-left: 8px solid var(--ctp-yellow, #eed49f);
+    box-shadow: 0 8px 24px rgba(245, 169, 127, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    position: relative;
+    overflow: hidden;
+    animation: devPulseOrange 2s ease-in-out infinite;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.15) 10px,
+        rgba(0, 0, 0, 0.15) 20px
+      );
+      pointer-events: none;
+    }
+  }
+
+  .mdc-snackbar__label {
+    color: var(--ctp-crust) !important;
+    font-weight: 900 !important;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 0.875rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+  }
+
+  .mat-mdc-button.mat-mdc-snack-bar-action {
+    color: var(--ctp-crust) !important;
+    font-weight: 900;
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    padding: 6px 12px;
+    min-width: 48px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.35);
+      transform: scale(1.05);
+    }
+
+    .mdc-button__label {
+      color: var(--ctp-crust) !important;
+      font-size: 1rem;
+    }
+  }
+}
+
+@keyframes devPulseOrange {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(250, 179, 135, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  }
+  50% {
+    box-shadow: 0 8px 28px rgba(250, 179, 135, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+                0 0 20px rgba(250, 179, 135, 0.4);
+  }
+}
+
+// Shiki Code Block Styling (used in documentation pages)
+.shiki-container {
+  pre.shiki {
+    padding: 20px 24px !important;
+    overflow-x: auto;
+    font-size: 0.875em;
+    margin: 0;
+    border-radius: 0;
+    line-height: 1.6;
+  }
+
+  pre.shiki code {
+    font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    padding: 0;
+  }
+
+  pre.shiki .line {
+    display: inline-block;
+    width: 100%;
+    padding: 2px 4px;
+    margin: 0 -4px;
+  }
+}
+
+// Projection Viewer Dialog
+.projection-viewer-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+
+    .mdc-dialog__container {
+      .mdc-dialog__surface {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        padding: 0 !important;
+      }
+    }
+  }
+
+  app-projection-viewer-dialog {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  mat-dialog-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+  }
+}

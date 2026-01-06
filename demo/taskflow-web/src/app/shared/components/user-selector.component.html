@@ -1,0 +1,22 @@
+<div class="user-selector">
+  @if (!userContext.isLoading()) {
+    <mat-form-field appearance="outline" class="user-select-field">
+      <mat-label>
+        <mat-icon class="user-icon">person</mat-icon>
+        <span>Current User (Demo)</span>
+      </mat-label>
+      <mat-select
+        [value]="userContext.currentUserId()"
+        (selectionChange)="onUserChange($event.value)">
+        @for (profile of userContext.teamMembers(); track profile.userId) {
+          <mat-option [value]="profile.userId">
+            {{ profile.displayName }}
+            @if (profile.userId === '00000000-0000-0000-0000-000000000001') {
+              <span class="admin-badge"> (Admin)</span>
+            }
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</div>

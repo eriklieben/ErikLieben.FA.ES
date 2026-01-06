@@ -1,0 +1,135 @@
+<div class="workitem-list-container">
+  <div class="header">
+    <h1>Work Items</h1>
+    <button mat-raised-button color="primary" (click)="createWorkItem()">
+      <mat-icon>add</mat-icon>
+      Plan Work Item
+    </button>
+  </div>
+
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters">
+        <mat-form-field>
+          <mat-label>Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()">
+            <mat-option value="">All</mat-option>
+            <mat-option value="Planned">Planned</mat-option>
+            <mat-option value="InProgress">In Progress</mat-option>
+            <mat-option value="Completed">Completed</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Priority</mat-label>
+          <mat-select [(ngModel)]="priorityFilter" (ngModelChange)="applyFilters()">
+            <mat-option value="">All</mat-option>
+            <mat-option value="Low">Low</mat-option>
+            <mat-option value="Medium">Medium</mat-option>
+            <mat-option value="High">High</mat-option>
+            <mat-option value="Critical">Critical</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Search</mat-label>
+          <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilters()" placeholder="Search by title...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="clearFilters()">
+          <mat-icon>clear</mat-icon>
+          Clear Filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-content>
+      <table mat-table [dataSource]="filteredWorkItems()" class="workitem-table">
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Title</th>
+          <td mat-cell *matCellDef="let item">{{ item.title }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let item">
+            <mat-chip [class]="'priority-' + item.priority.toLowerCase()">
+              {{ item.priority }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let item">
+            <mat-chip [class]="'status-' + item.status.toLowerCase()">
+              {{ getStatusDisplay(item.status) }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="assignedTo">
+          <th mat-header-cell *matHeaderCellDef>Assigned To</th>
+          <td mat-cell *matCellDef="let item">
+            {{ item.assignedTo || 'Unassigned' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="deadline">
+          <th mat-header-cell *matHeaderCellDef>Deadline</th>
+          <td mat-cell *matCellDef="let item">
+            @if (item.deadline) {
+              <span [class.overdue]="isOverdue(item.deadline)">
+                {{ formatDate(item.deadline) }}
+              </span>
+            } @else {
+              <span class="no-deadline">No deadline</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let item">
+            <button mat-icon-button [matMenuTriggerFor]="menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="viewDetails(item.workItemId)">
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </button>
+              <button mat-menu-item (click)="editWorkItem(item)">
+                <mat-icon>edit</mat-icon>
+                <span>Edit</span>
+              </button>
+              @if (item.status !== 'Completed') {
+                <button mat-menu-item (click)="completeWorkItem(item)">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Complete</span>
+                </button>
+              }
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="workitem-row"></tr>
+      </table>
+
+      @if (filteredWorkItems().length === 0) {
+        <div class="empty-state">
+          <mat-icon>assignment_late</mat-icon>
+          @if (workItems().length === 0) {
+            <p>No work items found. Plan your first work item to get started.</p>
+          } @else {
+            <p>No work items match your filters.</p>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

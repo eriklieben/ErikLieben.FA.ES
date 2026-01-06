@@ -60,9 +60,11 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         var streamId = document.Active.StreamIdentifier;
 
         // Build query with partition key for optimal RU usage
+        // Note: Using 'c.type' instead of 'c._type' because the Cosmos SDK's camelCase naming policy
+        // transforms the C# property name 'Type' to 'type', ignoring [JsonPropertyName("_type")] attributes
         var queryText = untilVersion.HasValue
-            ? "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.version <= @untilVersion AND c._type = 'event' ORDER BY c.version"
-            : "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c._type = 'event' ORDER BY c.version";
+            ? "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.version <= @untilVersion AND c.type = 'event' ORDER BY c.version"
+            : "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.type = 'event' ORDER BY c.version";
 
         var queryDefinition = new QueryDefinition(queryText)
             .WithParameter("@streamId", streamId)
@@ -230,8 +232,9 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     private static async Task CheckStreamNotClosedAsync(Container container, string streamId)
     {
         // Query for the stream closed event
+        // Note: Using 'c.type' instead of 'c._type' due to Cosmos SDK camelCase naming policy
         var query = new QueryDefinition(
-            "SELECT TOP 1 * FROM c WHERE c.streamId = @streamId AND c.eventType = 'EventStream.Closed' AND c._type = 'event'")
+            "SELECT TOP 1 * FROM c WHERE c.streamId = @streamId AND c.eventType = 'EventStream.Closed' AND c.type = 'event'")
             .WithParameter("@streamId", streamId);
 
         var queryOptions = new QueryRequestOptions

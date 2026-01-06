@@ -1,0 +1,307 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Version Tokens</h1>
+      <p class="subtitle">Compact identifiers for optimistic concurrency and checkpoint tracking</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Version tokens are compact identifiers that uniquely reference a specific version within an event stream.
+        They enable optimistic concurrency, checkpoint tracking, and cross-system event correlation.
+      </p>
+
+      <div class="token-format">
+        <h3>Token Format</h3>
+        <div class="format-box">
+          <code>&#123;ObjectName&#125;__&#123;ObjectId&#125;__&#123;StreamIdentifier&#125;__&#123;VersionString&#125;</code>
+        </div>
+        <p class="format-example">Example: <code>order__order-123__order__00000000000000000042</code></p>
+      </div>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>sync</mat-icon>
+          <h3>Optimistic Concurrency</h3>
+          <p>Detect concurrent modifications before committing changes.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>bookmark</mat-icon>
+          <h3>Checkpoint Tracking</h3>
+          <p>Track which events have been processed by projections.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>link</mat-icon>
+          <h3>Event Correlation</h3>
+          <p>Track which user or system triggered events.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>api</mat-icon>
+          <h3>API Integration</h3>
+          <p>Use as ETags in HTTP APIs for cache validation.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Creating Tokens Section -->
+    <section id="creating" class="doc-section">
+      <h2><mat-icon>add_circle</mat-icon> Creating Version Tokens</h2>
+      <p class="section-description">
+        Version tokens can be created from events, explicit values, or parsed from strings.
+      </p>
+
+      <h3>From Event and Document</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>auto_awesome</mat-icon>
+          <span>Automatic Creation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="createFromEventCodeHtml()"></div>
+      </div>
+
+      <h3>From Parts</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>build</mat-icon>
+          <span>Manual Construction</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="createFromPartsCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Properties Section -->
+    <section id="properties" class="doc-section">
+      <h2><mat-icon>list</mat-icon> Token Properties</h2>
+      <p class="section-description">
+        Version tokens expose several properties for accessing their components:
+      </p>
+
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Value</code></span>
+          <span class="assertion-desc">Full token string</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ObjectName</code></span>
+          <span class="assertion-desc">Aggregate type name (e.g., "order")</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ObjectId</code></span>
+          <span class="assertion-desc">Unique object identifier</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>StreamIdentifier</code></span>
+          <span class="assertion-desc">Event stream identifier</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Version</code></span>
+          <span class="assertion-desc">Zero-based version number (int)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>VersionString</code></span>
+          <span class="assertion-desc">Zero-padded version (20 characters)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ObjectIdentifier</code></span>
+          <span class="assertion-desc">Strongly typed object ID</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>VersionIdentifier</code></span>
+          <span class="assertion-desc">Strongly typed version ID</span>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>format_list_numbered</mat-icon>
+        <div>
+          <strong>Version String Format</strong>
+          <p>Versions are stored as 20-character zero-padded strings for proper lexicographic sorting
+          in storage. For example, version 42 becomes <code>00000000000000000042</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Use Cases Section -->
+    <section id="use-cases" class="doc-section">
+      <h2><mat-icon>lightbulb</mat-icon> Use Cases</h2>
+      <p class="section-description">
+        Version tokens are used throughout the framework for various purposes:
+      </p>
+
+      <h3>1. Optimistic Concurrency</h3>
+      <p>Detect concurrent modifications before committing changes:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>sync</mat-icon>
+          <span>Concurrency Check</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="optimisticConcurrencyCodeHtml()"></div>
+      </div>
+
+      <h3>2. Projection Checkpoints</h3>
+      <p>Track which events have been processed:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>bookmark</mat-icon>
+          <span>Checkpoint Tracking</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="checkpointCodeHtml()"></div>
+      </div>
+
+      <h3>3. Event Correlation</h3>
+      <p>Track which user or system triggered events:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>link</mat-icon>
+          <span>User Correlation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="correlationCodeHtml()"></div>
+      </div>
+
+      <h3>4. API Responses</h3>
+      <p>Return version tokens for clients to use in subsequent requests:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>api</mat-icon>
+          <span>ETag Integration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="apiResponseCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Concurrency Section -->
+    <section id="concurrency" class="doc-section">
+      <h2><mat-icon>sync</mat-icon> Concurrency Patterns</h2>
+      <p class="section-description">
+        The framework supports multiple concurrency patterns:
+      </p>
+
+      <div class="component-list">
+        <div class="component-item">
+          <mat-icon>speed</mat-icon>
+          <div>
+            <strong>Last-Write-Wins</strong>
+            <span>Don't check version - last write wins. Simplest approach for non-critical updates.</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>sync</mat-icon>
+          <div>
+            <strong>Optimistic Concurrency</strong>
+            <span>Client sends expected version via ETag header. Server validates before applying changes.</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>lock</mat-icon>
+          <div>
+            <strong>Pessimistic Locking</strong>
+            <span>Use session constraints to enforce existence requirements.</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Session Constraints</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>rule</mat-icon>
+          <span>Constraint Types</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="constraintsCodeHtml()"></div>
+      </div>
+
+      <h3>Metadata Usage</h3>
+      <p>Pass version tokens in action metadata for tracking:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>data_object</mat-icon>
+          <span>Action Metadata</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="metadataCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective version token usage:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Return version tokens in API responses</li>
+            <li>Use version tokens for optimistic concurrency</li>
+            <li>Store checkpoint tokens in projections</li>
+            <li>Include user tokens in action metadata</li>
+            <li>Validate tokens before critical operations</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Rely on version tokens alone for security</li>
+            <li>Expose internal stream identifiers unnecessarily</li>
+            <li>Assume versions are sequential (gaps may exist)</li>
+            <li>Compare tokens from different streams</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>Version Gaps</strong>
+          <p>After migrations or rollbacks, version numbers may have gaps. Don't assume versions
+          are always sequential. The version token guarantees uniqueness, not sequentiality.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

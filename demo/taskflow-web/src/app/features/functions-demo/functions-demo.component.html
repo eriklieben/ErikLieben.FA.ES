@@ -1,0 +1,513 @@
+<div class="page-layout">
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <div>
+        <h1>Azure Functions Bindings</h1>
+        <p class="subtitle">Integrate event sourcing with Azure Functions using input and output bindings</p>
+      </div>
+      <div class="health-check">
+        <button mat-stroked-button (click)="checkHealth()" [disabled]="checking()">
+          @if (checking()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon>health_and_safety</mat-icon>
+          }
+          Check Health
+        </button>
+        @if (healthStatus() !== null) {
+          <mat-chip [color]="healthStatus() ? 'primary' : 'warn'" highlighted>
+            {{ healthStatus() ? 'Connected' : 'Not Available' }}
+          </mat-chip>
+        }
+      </div>
+    </div>
+
+    <!-- Installation Section -->
+    <section id="installation" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Installation</h2>
+      <p class="section-description">
+        Install the Azure Functions Worker Extensions package to enable event sourcing bindings
+        in your isolated worker functions.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Package Installation</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="installCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Setup Section -->
+    <section id="setup" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Setup</h2>
+      <p class="section-description">
+        Configure the event store in your Azure Functions host by following these steps:
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredStep() === 1" [class.focus-step-2]="hoveredStep() === 2" [class.focus-step-3]="hoveredStep() === 3" [class.focus-step-4]="hoveredStep() === 4">
+        <li class="step-1"
+            (mouseenter)="hoveredStep.set(1)"
+            (mouseleave)="hoveredStep.set(null)">
+          <strong>Setup a storage client with a name</strong>
+          <span>Register an Azure Blob Storage client using <code>AddBlobServiceClient</code> and give it a name (e.g., "EventStore").</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredStep.set(2)"
+            (mouseleave)="hoveredStep.set(null)">
+          <strong>Configure the Blob Event Store</strong>
+          <span>Call <code>ConfigureBlobEventStore</code> with the storage client name so the event store knows which client to use.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredStep.set(3)"
+            (mouseleave)="hoveredStep.set(null)">
+          <strong>Set the default storage provider</strong>
+          <span>Call <code>ConfigureEventStore</code> to tell the framework to use the blob provider by default.</span>
+        </li>
+        <li class="step-4"
+            (mouseenter)="hoveredStep.set(4)"
+            (mouseleave)="hoveredStep.set(null)">
+          <strong>Register generated code</strong>
+          <span>Call the generated extension method (e.g., <code>ConfigureTaskFlowDomainFactory</code>) to register your aggregates, projections, and serializers.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredStep() === 1" [class.focus-step-2]="hoveredStep() === 2" [class.focus-step-3]="hoveredStep() === 3" [class.focus-step-4]="hoveredStep() === 4">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Program.cs</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="setupCodeHtml()"
+             (mouseover)="onCodeHover($event)"
+             (mouseout)="onCodeLeave()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- EventStream Binding Section -->
+    <section id="eventstream" class="doc-section">
+      <h2><mat-icon>assignment</mat-icon> EventStream Binding</h2>
+      <p class="section-description">
+        The <code>[EventStreamInput]</code> attribute automatically loads an aggregate from the event store.
+        The aggregate type is inferred from the parameter type, and all events are folded to rebuild state.
+        While it's an input binding, you can also execute commands on the aggregate and save changes back to the event store.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredEventStreamStep() === 1" [class.focus-step-2]="hoveredEventStreamStep() === 2" [class.focus-step-3]="hoveredEventStreamStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredEventStreamStep.set(1)"
+            (mouseleave)="hoveredEventStreamStep.set(null)">
+          <strong>Bind the aggregate</strong>
+          <span>Use <code>[EventStreamInput("&#123;id&#125;")]</code> to automatically load the aggregate from the event store. The ID is extracted from the route parameter.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredEventStreamStep.set(2)"
+            (mouseleave)="hoveredEventStreamStep.set(null)">
+          <strong>Execute commands</strong>
+          <span>Call methods on the aggregate to execute commands. This generates events and persists them to the event store.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredEventStreamStep.set(3)"
+            (mouseleave)="hoveredEventStreamStep.set(null)">
+          <strong>Return the updated state</strong>
+          <span>After executing commands, the aggregate reflects the new state which you can return to the caller.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredEventStreamStep() === 1" [class.focus-step-2]="hoveredEventStreamStep() === 2" [class.focus-step-3]="hoveredEventStreamStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>EventStreamInput Example</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="eventStreamCodeHtml()"
+             (mouseover)="onEventStreamCodeHover($event)"
+             (mouseout)="hoveredEventStreamStep.set(null)"></div>
+      </div>
+
+      <!-- Interactive Demo -->
+      <mat-card class="demo-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>play_circle</mat-icon>
+          <mat-card-title>Try It Out</mat-card-title>
+          <mat-card-subtitle>Load a work item using [EventStreamInput]</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="input-row">
+            <mat-form-field>
+              <mat-label>Work Item ID</mat-label>
+              <input matInput [(ngModel)]="workItemId" placeholder="Enter work item ID">
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="getWorkItem()" [disabled]="loadingWorkItem()">
+              @if (loadingWorkItem()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>search</mat-icon>
+              }
+              Get Work Item
+            </button>
+          </div>
+
+          @if (workItemResult()) {
+            <div class="result-section">
+              <h4>Result:</h4>
+              <div class="result-card">
+                <div class="result-row">
+                  <span class="label">ID:</span>
+                  <span class="value">{{ workItemResult()!.id }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Title:</span>
+                  <span class="value">{{ workItemResult()!.title || 'N/A' }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Status:</span>
+                  <mat-chip>{{ workItemResult()!.status }}</mat-chip>
+                </div>
+                <div class="result-row">
+                  <span class="label">Priority:</span>
+                  <mat-chip>{{ workItemResult()!.priority }}</mat-chip>
+                </div>
+                <div class="result-row">
+                  <span class="label">Project ID:</span>
+                  <span class="value">{{ workItemResult()!.projectId || 'N/A' }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Assigned To:</span>
+                  <span class="value">{{ workItemResult()!.assignedTo || 'Unassigned' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (workItemError()) {
+            <div class="error-message">
+              <mat-icon>error</mat-icon>
+              {{ workItemError() }}
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Projection Binding Section -->
+    <section id="projection" class="doc-section">
+      <h2><mat-icon>view_quilt</mat-icon> Projection Binding</h2>
+      <p class="section-description">
+        The <code>[ProjectionInput]</code> attribute loads a projection from blob storage.
+        Projections are pre-computed read models optimized for queries - they're updated asynchronously when events occur.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredProjectionStep() === 1" [class.focus-step-2]="hoveredProjectionStep() === 2" [class.focus-step-3]="hoveredProjectionStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredProjectionStep.set(1)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Bind the projection</strong>
+          <span>Use <code>[ProjectionInput]</code> to automatically load the projection from blob storage. The projection type is inferred from the parameter.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredProjectionStep.set(2)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Access pre-computed data</strong>
+          <span>The projection contains pre-aggregated data with properties like collections, counts, and a checkpoint fingerprint for cache validation.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredProjectionStep.set(3)"
+            (mouseleave)="hoveredProjectionStep.set(null)">
+          <strong>Return the data</strong>
+          <span>Return the projection data directly - no need to query or aggregate from events, the work is already done.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredProjectionStep() === 1" [class.focus-step-2]="hoveredProjectionStep() === 2" [class.focus-step-3]="hoveredProjectionStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ProjectionInput Example</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="projectionCodeHtml()"
+             (mouseover)="onProjectionCodeHover($event)"
+             (mouseout)="hoveredProjectionStep.set(null)"></div>
+      </div>
+
+      <!-- Interactive Demo -->
+      <mat-card class="demo-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>play_circle</mat-icon>
+          <mat-card-title>Try It Out</mat-card-title>
+          <mat-card-subtitle>Load projections using [ProjectionInput]</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="projection-buttons">
+            <button mat-raised-button color="primary" (click)="getKanbanBoard()" [disabled]="loadingKanban()">
+              @if (loadingKanban()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>view_kanban</mat-icon>
+              }
+              Get Kanban Board
+            </button>
+            <button mat-raised-button color="accent" (click)="getActiveWorkItems()" [disabled]="loadingActiveItems()">
+              @if (loadingActiveItems()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>assignment</mat-icon>
+              }
+              Get Active Work Items
+            </button>
+            <button mat-raised-button (click)="getUserProfiles()" [disabled]="loadingUserProfiles()">
+              @if (loadingUserProfiles()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>people</mat-icon>
+              }
+              Get User Profiles
+            </button>
+          </div>
+
+          @if (kanbanResult()) {
+            <div class="result-section">
+              <h4>Kanban Board Projection:</h4>
+              <div class="result-card">
+                <div class="result-row">
+                  <span class="label">Project Count:</span>
+                  <span class="value">{{ kanbanResult()!.projectCount }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Checkpoint:</span>
+                  <span class="value mono">{{ kanbanResult()!.checkpointFingerprint || 'None' }}</span>
+                </div>
+                @if (kanbanResult()!.projects && kanbanResult()!.projects!.length > 0) {
+                  <div class="result-row">
+                    <span class="label">Projects:</span>
+                    <div class="chips-list">
+                      @for (project of kanbanResult()!.projects; track project.projectId) {
+                        <mat-chip>{{ project.projectName }}</mat-chip>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (activeItemsResult()) {
+            <div class="result-section">
+              <h4>Active Work Items Projection:</h4>
+              <div class="result-card">
+                <div class="result-row">
+                  <span class="label">Active Count:</span>
+                  <span class="value">{{ activeItemsResult()!.activeCount }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Checkpoint:</span>
+                  <span class="value mono">{{ activeItemsResult()!.checkpointFingerprint || 'None' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (userProfilesResult()) {
+            <div class="result-section">
+              <h4>User Profiles Projection:</h4>
+              <div class="result-card">
+                <div class="result-row">
+                  <span class="label">Total Users:</span>
+                  <span class="value">{{ userProfilesResult()!.totalUsers }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Destinations:</span>
+                  <span class="value">{{ userProfilesResult()!.destinationCount }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Projection Output Section -->
+    <section id="output" class="doc-section">
+      <h2><mat-icon>cloud_upload</mat-icon> Projection Output</h2>
+      <p class="section-description">
+        The <code>[ProjectionOutput&lt;T&gt;]</code> attribute triggers projection updates after a function
+        completes successfully. Multiple projections can be updated by adding multiple attributes.
+      </p>
+
+      <ol class="setup-steps" [class.focus-step-1]="hoveredProjectionOutputStep() === 1" [class.focus-step-2]="hoveredProjectionOutputStep() === 2" [class.focus-step-3]="hoveredProjectionOutputStep() === 3">
+        <li class="step-1"
+            (mouseenter)="hoveredProjectionOutputStep.set(1)"
+            (mouseleave)="hoveredProjectionOutputStep.set(null)">
+          <strong>Add ProjectionOutput attributes</strong>
+          <span>Decorate your function with <code>[ProjectionOutput&lt;T&gt;]</code> for each projection you want to update. You can add multiple attributes.</span>
+        </li>
+        <li class="step-2"
+            (mouseenter)="hoveredProjectionOutputStep.set(2)"
+            (mouseleave)="hoveredProjectionOutputStep.set(null)">
+          <strong>Define your trigger</strong>
+          <span>Use any Azure Functions trigger - timer for scheduled updates, HTTP for on-demand, or event-based triggers.</span>
+        </li>
+        <li class="step-3"
+            (mouseenter)="hoveredProjectionOutputStep.set(3)"
+            (mouseleave)="hoveredProjectionOutputStep.set(null)">
+          <strong>Automatic updates on completion</strong>
+          <span>When the function completes successfully, middleware automatically loads each projection, calls <code>UpdateToLatestVersion()</code>, and saves it back.</span>
+        </li>
+      </ol>
+
+      <div class="code-block" [class.focus-step-1]="hoveredProjectionOutputStep() === 1" [class.focus-step-2]="hoveredProjectionOutputStep() === 2" [class.focus-step-3]="hoveredProjectionOutputStep() === 3">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ProjectionOutput Example</span>
+        </div>
+        <div class="shiki-container"
+             [innerHTML]="projectionOutputCodeHtml()"
+             (mouseover)="onProjectionOutputCodeHover($event)"
+             (mouseout)="hoveredProjectionOutputStep.set(null)"></div>
+      </div>
+
+      <!-- Interactive Demo -->
+      <mat-card class="demo-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>play_circle</mat-icon>
+          <mat-card-title>Try It Out</mat-card-title>
+          <mat-card-subtitle>Trigger a projection update via HTTP</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="demo-layout">
+            <!-- Before State -->
+            <div class="state-panel">
+              <h4><mat-icon>history</mat-icon> Before Update</h4>
+              <div class="state-content">
+                @if (projectionBeforeState()) {
+                  <div class="state-item">
+                    <span class="state-label">Checkpoint:</span>
+                    <span class="state-value mono">{{ projectionBeforeState()!.checkpoint || 'Empty' }}</span>
+                  </div>
+                  <div class="state-item">
+                    <span class="state-label">Projects:</span>
+                    <span class="state-value">{{ projectionBeforeState()!.projectCount }}</span>
+                  </div>
+                  <div class="state-item">
+                    <span class="state-label">Last Updated:</span>
+                    <span class="state-value">{{ projectionBeforeState()!.timestamp | date:'medium' }}</span>
+                  </div>
+                } @else {
+                  <div class="state-empty">
+                    <mat-icon>hourglass_empty</mat-icon>
+                    <span>Load current state first</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="action-panel">
+              <button mat-fab extended color="primary" (click)="refreshProjections()" [disabled]="refreshingProjections()">
+                @if (refreshingProjections()) {
+                  <mat-spinner diameter="24"></mat-spinner>
+                } @else {
+                  <mat-icon>sync</mat-icon>
+                }
+                Update Projections
+              </button>
+              <span class="action-hint">POST /api/projections/refresh</span>
+            </div>
+
+            <!-- After State -->
+            <div class="state-panel">
+              <h4><mat-icon>update</mat-icon> After Update</h4>
+              <div class="state-content">
+                @if (projectionAfterState()) {
+                  <div class="state-item" [class.changed]="projectionAfterState()!.checkpoint !== projectionBeforeState()?.checkpoint">
+                    <span class="state-label">Checkpoint:</span>
+                    <span class="state-value mono">{{ projectionAfterState()!.checkpoint || 'Empty' }}</span>
+                    @if (projectionAfterState()!.checkpoint !== projectionBeforeState()?.checkpoint) {
+                      <mat-icon class="change-icon">change_circle</mat-icon>
+                    }
+                  </div>
+                  <div class="state-item" [class.changed]="projectionAfterState()!.projectCount !== projectionBeforeState()?.projectCount">
+                    <span class="state-label">Projects:</span>
+                    <span class="state-value">{{ projectionAfterState()!.projectCount }}</span>
+                    @if (projectionAfterState()!.projectCount !== projectionBeforeState()?.projectCount) {
+                      <mat-icon class="change-icon">change_circle</mat-icon>
+                    }
+                  </div>
+                  <div class="state-item">
+                    <span class="state-label">Last Updated:</span>
+                    <span class="state-value">{{ projectionAfterState()!.timestamp | date:'medium' }}</span>
+                  </div>
+                  @if (projectionAfterState()!.eventsProcessed > 0) {
+                    <div class="events-processed">
+                      <mat-icon>check_circle</mat-icon>
+                      {{ projectionAfterState()!.eventsProcessed }} events processed
+                    </div>
+                  }
+                } @else {
+                  <div class="state-empty">
+                    <mat-icon>pending</mat-icon>
+                    <span>Trigger update to see result</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>ProjectionOutput Example</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="projectionOutputCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Complete Example Section -->
+    <section id="complete" class="doc-section">
+      <h2><mat-icon>integration_instructions</mat-icon> Complete Example</h2>
+      <p class="section-description">
+        A complete Azure Functions app showing all bindings working together.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Complete Functions App</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

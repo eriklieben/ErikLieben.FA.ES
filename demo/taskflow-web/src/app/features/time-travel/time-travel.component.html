@@ -1,0 +1,35 @@
+<div class="placeholder-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>history</mat-icon>
+      <mat-card-title>Time Travel</mat-card-title>
+      <mat-card-subtitle>View aggregate state at any point in history</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Time travel allows you to reconstruct the state of any aggregate at any version by replaying events up to that point.</p>
+
+      <h3>Key Event Sourcing Concepts:</h3>
+      <ul>
+        <li><strong>Event Replay</strong> - Reconstruct past state by replaying stored events</li>
+        <li><strong>Audit Trail</strong> - Complete history of all changes and who made them</li>
+        <li><strong>Temporal Queries</strong> - Answer questions about the past ("What was the project status on January 15th?")</li>
+        <li><strong>Event Versioning</strong> - Navigate through aggregate versions as events were applied</li>
+        <li><strong>State Snapshots</strong> - View the exact state at any event boundary</li>
+      </ul>
+
+      <h3>Features:</h3>
+      <ul>
+        <li>View project state at any historical version</li>
+        <li>See work item changes over time</li>
+        <li>Inspect team composition at different points</li>
+        <li>Understand how aggregates evolved</li>
+        <li>Debug issues by replaying event sequences</li>
+      </ul>
+
+      <div class="feature-note">
+        <mat-icon>info</mat-icon>
+        <span>This demonstrates how event sourcing provides a complete audit trail and enables temporal queries without additional infrastructure.</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

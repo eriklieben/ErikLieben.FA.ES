@@ -1,0 +1,141 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    @if (lastUpdatedText()) {
+      <div class="last-updated">
+        <mat-icon>schedule</mat-icon>
+        <span>Last updated: {{ lastUpdatedText() }}</span>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-spinner">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else if (hasNoData()) {
+    <div class="empty-state">
+      <mat-icon>analytics</mat-icon>
+      <h2>No Data Yet</h2>
+      <p>Create your first project or work item to see dashboard metrics.</p>
+    </div>
+  } @else {
+    <!-- Projects Section -->
+    <div class="section-header">
+      <mat-icon>folder</mat-icon>
+      <h2>Projects</h2>
+    </div>
+    <mat-grid-list cols="3" rowHeight="200px" gutterSize="16" class="metrics-grid">
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('totalProjectCount')">
+          <mat-card-header>
+            <mat-card-title>Total Projects</mat-card-title>
+            <mat-icon class="icon-blue">folder_open</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('totalProjectCount')">{{ totalProjectCount() }}</div>
+            <div class="metric-label">All Projects</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('activeProjectCount')">
+          <mat-card-header>
+            <mat-card-title>Active Projects</mat-card-title>
+            <mat-icon class="icon-blue">work</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('activeProjectCount')">{{ activeProjectCount() }}</div>
+            <div class="metric-label">In Progress</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('projectCompletionRate')">
+          <mat-card-header>
+            <mat-card-title>Projects Completed</mat-card-title>
+            <mat-icon class="icon-green">check_circle</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('projectCompletionRate')">{{ projectCompletionRate() }}%</div>
+            <div class="metric-label">{{ completedProjectCount() }} of {{ totalProjectCount() }} Completed</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    </mat-grid-list>
+
+    <!-- Tasks Section -->
+    <div class="section-header">
+      <mat-icon>assignment</mat-icon>
+      <h2>Tasks</h2>
+    </div>
+    <mat-grid-list cols="3" rowHeight="200px" gutterSize="16" class="metrics-grid">
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('totalWorkItemCount')">
+          <mat-card-header>
+            <mat-card-title>Total Tasks</mat-card-title>
+            <mat-icon class="icon-blue">list</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('totalWorkItemCount')">{{ totalWorkItemCount() }}</div>
+            <div class="metric-label">All Tasks</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('activeWorkItems')">
+          <mat-card-header>
+            <mat-card-title>In Progress</mat-card-title>
+            <mat-icon class="icon-yellow">play_circle</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('activeWorkItems')">{{ activeWorkItems().length }}</div>
+            <div class="metric-label">Active Tasks</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('taskCompletionRate')">
+          <mat-card-header>
+            <mat-card-title>Tasks Completed</mat-card-title>
+            <mat-icon class="icon-green">task_alt</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('taskCompletionRate')">{{ taskCompletionRate() }}%</div>
+            <div class="metric-label">{{ completedTaskCount() }} of {{ totalWorkItemCount() }} Completed</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('highPriorityCount')">
+          <mat-card-header>
+            <mat-card-title>High Priority</mat-card-title>
+            <mat-icon class="icon-red">priority_high</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('highPriorityCount')">{{ highPriorityCount() }}</div>
+            <div class="metric-label">Urgent Tasks</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+
+      <mat-grid-tile>
+        <mat-card class="dashboard-card" [class.updating]="isMetricAnimating('overdueCount')">
+          <mat-card-header>
+            <mat-card-title>Overdue</mat-card-title>
+            <mat-icon class="icon-peach">warning</mat-icon>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="metric-value" [class.updating]="isMetricAnimating('overdueCount')">{{ overdueCount() }}</div>
+            <div class="metric-label">Past Deadline</div>
+          </mat-card-content>
+        </mat-card>
+      </mat-grid-tile>
+    </mat-grid-list>
+  }
+</div>

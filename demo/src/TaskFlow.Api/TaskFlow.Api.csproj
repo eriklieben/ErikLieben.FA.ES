@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Azure.Storage.Blobs" Version="13.0.2" />
+    <PackageReference Include="Aspire.Azure.Data.Tables" Version="13.0.2" />
+    <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="13.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.11.1" />
+    <PackageReference Include="ErikLieben.FA.ES.Azure.Functions.Worker.Extensions" Version="2.0.0-preview.6" />
+    <!-- Use local project reference for testing fix -->
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.EventStreamManagement\ErikLieben.FA.ES.EventStreamManagement.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskFlow.Domain\TaskFlow.Domain.csproj" />
+    <ProjectReference Include="..\TaskFlow.ServiceDefaults\TaskFlow.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="projections\active-work-items.json" />
+    <_ContentIncludedByDefault Remove="projections\project-dashboard.json" />
+    <_ContentIncludedByDefault Remove="projections\event-upcasting-demonstration.json" />
+    <_ContentIncludedByDefault Remove="projections\user-profiles.json" />
+  </ItemGroup>
+
+</Project>

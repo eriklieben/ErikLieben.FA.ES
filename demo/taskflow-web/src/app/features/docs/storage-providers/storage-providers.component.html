@@ -1,0 +1,314 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Storage Providers</h1>
+      <p class="subtitle">Configure Azure storage backends for your event streams</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The library provides multiple Azure storage backends for persisting event streams. Each provider is optimized
+        for different use cases, offering various trade-offs between cost, performance, and features.
+      </p>
+
+      <div class="provider-grid">
+        <div class="provider-card blob">
+          <div class="provider-icon">
+            <mat-icon>cloud</mat-icon>
+          </div>
+          <h3>Azure Blob Storage</h3>
+          <p>Best for high-throughput scenarios with large event payloads. Cost-effective for storage-heavy workloads.</p>
+          <div class="provider-meta">
+            <span class="meta-badge">Lowest Cost</span>
+            <span class="meta-badge">Large Payloads</span>
+          </div>
+        </div>
+
+        <div class="provider-card table">
+          <div class="provider-icon">
+            <mat-icon>table_chart</mat-icon>
+          </div>
+          <h3>Azure Table Storage</h3>
+          <p>Best for simple key-value access patterns with fast point reads. Good balance of cost and performance.</p>
+          <div class="provider-meta">
+            <span class="meta-badge">Fast Reads</span>
+            <span class="meta-badge">Balanced</span>
+          </div>
+        </div>
+
+        <div class="provider-card cosmos">
+          <div class="provider-icon">
+            <mat-icon>public</mat-icon>
+          </div>
+          <h3>Azure Cosmos DB</h3>
+          <p>Best for global distribution and low-latency access. Ideal for mission-critical applications.</p>
+          <div class="provider-meta">
+            <span class="meta-badge">Global</span>
+            <span class="meta-badge">Low Latency</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Azure Blob Storage Section -->
+    <section id="blob-storage" class="doc-section">
+      <h2><mat-icon>cloud</mat-icon> Azure Blob Storage</h2>
+      <p class="section-description">
+        The Blob Storage provider stores events as JSON documents in Azure Blob containers. Events are organized
+        into chunks for efficient retrieval and append operations.
+      </p>
+
+      <h3>Components</h3>
+      <div class="component-list">
+        <div class="component-item">
+          <mat-icon>storage</mat-icon>
+          <div>
+            <strong>BlobEventStreamFactory</strong>
+            <span>Creates event stream instances backed by blob storage</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>description</mat-icon>
+          <div>
+            <strong>BlobDocumentStore</strong>
+            <span>Stores projection documents and aggregates</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>data_object</mat-icon>
+          <div>
+            <strong>BlobDataStore</strong>
+            <span>Generic key-value storage for application data</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>camera</mat-icon>
+          <div>
+            <strong>BlobSnapShotStore</strong>
+            <span>Stores aggregate snapshots for performance</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Setup</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Blob Storage Setup</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="blobSetupCodeHtml()"></div>
+      </div>
+
+      <h3>Configuration</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Blob Storage Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="blobConfigCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Chunked storage</strong> - Events stored in chunks for efficient retrieval</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Compression support</strong> - Optional gzip compression for storage savings</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Blob leases</strong> - Distributed locking for migrations</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Tag-based queries</strong> - Query streams by custom tags</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Azure Table Storage Section -->
+    <section id="table-storage" class="doc-section">
+      <h2><mat-icon>table_chart</mat-icon> Azure Table Storage</h2>
+      <p class="section-description">
+        The Table Storage provider uses Azure Table Storage for event persistence. Each event is stored as a
+        table entity with the object ID as partition key, enabling fast point reads.
+      </p>
+
+      <h3>Components</h3>
+      <div class="component-list">
+        <div class="component-item">
+          <mat-icon>storage</mat-icon>
+          <div>
+            <strong>TableEventStreamFactory</strong>
+            <span>Creates event stream instances backed by table storage</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>description</mat-icon>
+          <div>
+            <strong>TableDocumentStore</strong>
+            <span>Stores projection documents as table entities</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>data_object</mat-icon>
+          <div>
+            <strong>TableDataStore</strong>
+            <span>Generic key-value storage using tables</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>camera</mat-icon>
+          <div>
+            <strong>TableSnapShotStore</strong>
+            <span>Stores aggregate snapshots as table entities</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Setup</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Table Storage Setup</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tableSetupCodeHtml()"></div>
+      </div>
+
+      <h3>Configuration</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Table Storage Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="tableConfigCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Fast point reads</strong> - O(1) access by partition + row key</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Batch operations</strong> - Efficient multi-entity transactions</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Range queries</strong> - Query events by version range</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Lower cost</strong> - More economical than Cosmos DB</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Azure Cosmos DB Section -->
+    <section id="cosmosdb" class="doc-section">
+      <h2><mat-icon>public</mat-icon> Azure Cosmos DB</h2>
+      <p class="section-description">
+        The Cosmos DB provider offers enterprise-grade features including global distribution, automatic scaling,
+        and guaranteed low-latency reads. Ideal for mission-critical applications.
+      </p>
+
+      <h3>Components</h3>
+      <div class="component-list">
+        <div class="component-item">
+          <mat-icon>storage</mat-icon>
+          <div>
+            <strong>CosmosDbEventStreamFactory</strong>
+            <span>Creates event stream instances backed by Cosmos DB</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>description</mat-icon>
+          <div>
+            <strong>CosmosDbDocumentStore</strong>
+            <span>Stores projection documents in Cosmos containers</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>data_object</mat-icon>
+          <div>
+            <strong>CosmosDbDataStore</strong>
+            <span>Generic document storage with rich querying</span>
+          </div>
+        </div>
+        <div class="component-item">
+          <mat-icon>camera</mat-icon>
+          <div>
+            <strong>CosmosDbSnapShotStore</strong>
+            <span>Stores aggregate snapshots with automatic TTL</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Setup</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Cosmos DB Setup</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cosmosSetupCodeHtml()"></div>
+      </div>
+
+      <h3>Configuration</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Cosmos DB Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cosmosConfigCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Global distribution</strong> - Multi-region replication</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Automatic scaling</strong> - Autoscale throughput based on load</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Rich queries</strong> - SQL-like query language</span>
+        </div>
+        <div class="feature-item">
+          <mat-icon>check_circle</mat-icon>
+          <span><strong>Change feed</strong> - Real-time event processing</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>
