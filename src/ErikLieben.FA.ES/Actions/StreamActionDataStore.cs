@@ -1,4 +1,4 @@
-﻿using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 
 namespace ErikLieben.FA.ES.Actions;
@@ -7,7 +7,7 @@ namespace ErikLieben.FA.ES.Actions;
 /// Provides a simple wrapper around an <see cref="IDataStore"/> to facilitate stream actions.
 /// </summary>
 /// <param name="datastore">The underlying data store that performs the actual persistence and retrieval.</param>
-public class StreamActionDataStore(IDataStore datastore) : IDataStore
+public class StreamActionDataStore(IDataStore datastore) : IDataStore, IDataStoreRecovery
 {
     /// <summary>
     /// Appends the specified events to the event stream for the given document by delegating to the underlying store.
@@ -44,4 +44,8 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore
     {
         return datastore.ReadAsync(document, startVersion, untilVersion, chunk);
     }
+
+    /// <inheritdoc />
+    public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+        => ((IDataStoreRecovery)datastore).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion);
 }

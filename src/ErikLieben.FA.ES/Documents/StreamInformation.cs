@@ -113,6 +113,31 @@ public class StreamInformation : IStreamInformation
     public string SnapShotStore { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets a value indicating whether the stream is in a broken state.
+    /// </summary>
+    /// <remarks>
+    /// A stream is marked as broken when a commit fails after events may have been
+    /// partially written, and the automatic cleanup also fails. Use IStreamRepairService
+    /// from the ErikLieben.FA.ES.EventStreamManagement package to repair broken streams.
+    /// </remarks>
+    public bool IsBroken { get; set; }
+
+    /// <summary>
+    /// Gets or sets details about why the stream is broken, if applicable.
+    /// </summary>
+    public BrokenStreamInfo? BrokenInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the history of rollback operations performed on this stream.
+    /// </summary>
+    /// <remarks>
+    /// Each record represents a successful cleanup of partially written events
+    /// after a commit failure. This provides an audit trail without affecting
+    /// stream version numbering.
+    /// </remarks>
+    public List<RollbackRecord>? RollbackHistory { get; set; }
+
+    /// <summary>
     /// Gets a value indicating whether chunking is enabled.
     /// </summary>
     public bool ChunkingEnabled()

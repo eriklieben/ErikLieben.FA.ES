@@ -1,5 +1,6 @@
 ﻿using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.Notifications;
 using System.Diagnostics;
 using System.Text.Json;
@@ -136,47 +137,174 @@ public class LeasedSession : ILeasedSession
     /// Handles stream chunking if enabled and executes post-commit actions.
     /// </summary>
     /// <returns>A task representing the asynchronous commit operation.</returns>
+    /// <exception cref="CommitFailedException">
+    /// Thrown when the commit operation fails. The exception contains information
+    /// about the commit state to help with recovery, including whether events may
+    /// have been partially written to storage.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// The commit operation updates document metadata first, then appends events.
+    /// This order ensures that the document's ETag provides optimistic concurrency
+    /// control, preventing concurrent writers from both succeeding.
+    /// </para>
+    /// <para>
+    /// If a <see cref="CommitFailedException"/> is thrown with
+    /// <see cref="CommitFailedException.EventsMayBeWritten"/> set to true, some or
+    /// all events may have been persisted even though the commit failed. Callers
+    /// should reload the document to determine the actual state before retrying.
+    /// </para>
+    /// </remarks>
     public async Task CommitAsync()
     {
         using var activity = ActivitySource.StartActivity($"Session.{nameof(CommitAsync)}");
         var allEvents = Buffer.ToList();
+        var originalVersion = document.Active.CurrentStreamVersion - Buffer.Count;
         activity?.SetTag("EventCount", Buffer.Count);
+
+        // Track commit state for exception context
+        var commitState = new CommitState();
 
         try
         {
             if (!document.Active.ChunkingEnabled())
             {
-                await CommitWithoutChunkingAsync();
+                await CommitWithoutChunkingAsync(commitState);
             }
             else
             {
-                await CommitWithChunkingAsync();
+                await CommitWithChunkingAsync(commitState);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // TODO: Implement rollback functionality
-            // When rollback is implemented, this should:
-            // 1. Call dataStore.RemoveAsync(document, Events.ToArray()) to remove appended events
-            // 2. Rollback the version number
-            // 3. Wrap any rollback failures in StreamInIncorrectStateException
+            // Restore the version so the caller can retry with the same buffer.
+            document.Active.CurrentStreamVersion = originalVersion;
 
-            throw;
+            // Try automatic cleanup if events may have been written
+            if (commitState.EventsAppendStarted)
+            {
+                var cleanupFromVersion = originalVersion + 1;
+                var cleanupToVersion = originalVersion + allEvents.Count;
+
+                try
+                {
+                    var removed = await ((IDataStoreRecovery)datastore).RemoveEventsForFailedCommitAsync(
+                        document, cleanupFromVersion, cleanupToVersion);
+
+                    // Record rollback in metadata
+                    document.Active.RollbackHistory ??= [];
+                    document.Active.RollbackHistory.Add(new RollbackRecord
+                    {
+                        RolledBackAt = DateTimeOffset.UtcNow,
+                        FromVersion = cleanupFromVersion,
+                        ToVersion = cleanupToVersion,
+                        EventsRemoved = removed,
+                        OriginalError = ex.Message,
+                        OriginalExceptionType = ex.GetType().FullName
+                    });
+
+                    // Persist rollback history (best effort)
+                    try { await documentstore.SetAsync(document); } catch { /* Log but continue */ }
+
+                    // Cleanup succeeded - throw with EventsMayBeWritten = false so caller knows it's safe to retry
+                    throw new CommitFailedException(
+                        document.Active.StreamIdentifier,
+                        originalVersion,
+                        cleanupToVersion,
+                        eventsMayBeWritten: false,
+                        $"Commit failed for stream '{document.Active.StreamIdentifier}'. " +
+                        $"Automatic cleanup removed {removed} partial events. Safe to retry.",
+                        ex);
+                }
+                catch (Exception cleanupEx) when (cleanupEx is not CommitFailedException)
+                {
+                    // Cleanup failed - mark stream as broken
+                    document.Active.IsBroken = true;
+                    document.Active.BrokenInfo = new BrokenStreamInfo
+                    {
+                        BrokenAt = DateTimeOffset.UtcNow,
+                        OrphanedFromVersion = cleanupFromVersion,
+                        OrphanedToVersion = cleanupToVersion,
+                        ErrorMessage = cleanupEx.Message,
+                        OriginalExceptionType = ex.GetType().FullName,
+                        CleanupExceptionType = cleanupEx.GetType().FullName
+                    };
+
+                    // Try to persist broken state (best effort)
+                    try { await documentstore.SetAsync(document); } catch { /* Log but continue */ }
+
+                    throw new CommitCleanupFailedException(
+                        document.Active.StreamIdentifier,
+                        originalVersion,
+                        cleanupToVersion,
+                        cleanupFromVersion,
+                        cleanupToVersion,
+                        cleanupEx,
+                        ex);
+                }
+            }
+
+            // Document update failed before events were written - safe to retry
+            throw new CommitFailedException(
+                document.Active.StreamIdentifier,
+                originalVersion,
+                originalVersion + allEvents.Count,
+                eventsMayBeWritten: false,
+                $"Commit failed for stream '{document.Active.StreamIdentifier}'. " +
+                $"Document update failed before events were written. Safe to retry.",
+                ex);
         }
 
         await ExecutePostCommitActionsAsync(allEvents);
         Buffer.Clear();
     }
 
-    private async Task CommitWithoutChunkingAsync()
+    /// <summary>
+    /// Tracks commit operation state for exception handling context.
+    /// </summary>
+    private sealed class CommitState
     {
+        /// <summary>
+        /// Gets or sets a value indicating whether event append has started.
+        /// This is set to true after document update succeeds, before events are appended.
+        /// </summary>
+        public bool EventsAppendStarted { get; set; }
+    }
+
+    /// <summary>
+    /// Commits events without chunking support.
+    /// </summary>
+    /// <param name="state">State object to track commit progress.</param>
+    private async Task CommitWithoutChunkingAsync(CommitState state)
+    {
+        // IMPORTANT: Update document metadata FIRST, then append events.
+        // This order ensures the document's ETag provides optimistic concurrency
+        // control - if another writer updated the document, this will fail with
+        // a concurrency exception before any events are written.
         await documentstore.SetAsync(document);
+
+        // Document update succeeded - mark that events will be appended
+        // This flag is used for exception context if AppendAsync fails
+        state.EventsAppendStarted = true;
+
         await datastore.AppendAsync(document, [.. Buffer]);
     }
 
-    private async Task CommitWithChunkingAsync()
+    /// <summary>
+    /// Commits events with chunking support.
+    /// </summary>
+    /// <param name="state">State object to track commit progress.</param>
+    private async Task CommitWithChunkingAsync(CommitState state)
     {
-        int rowsPerPartition = document.Active.ChunkSettings?.ChunkSize ?? 1000; // TODO: what to set as default
+        // Default chunk size: 1000 events per chunk
+        // Rationale:
+        // - Keeps blob chunks at ~1-5MB (assuming ~1-5KB per event with JSON payload)
+        // - Fast read-modify-write operations for append-heavy workloads
+        // - Most streams have <1000 events and don't need chunking at all
+        // - Balances chunk management overhead vs individual chunk size
+        // - Matches defaults in EventStreamBlobSettings and EventStreamTableSettings
+        int rowsPerPartition = document.Active.ChunkSettings?.ChunkSize ?? 1000;
         int latestEventIndex = 0;
 
         while (Buffer.Count > 0)
@@ -191,7 +319,7 @@ public class LeasedSession : ILeasedSession
 
             if (eventsToAdd.Count > 0)
             {
-                await AppendEventsToCurrentChunkAsync(eventsToAdd);
+                await AppendEventsToCurrentChunkAsync(eventsToAdd, state);
             }
 
             await CreateChunkIfNeededAsync(chunkIdentifier, eventsToAdd, rowsPerPartition, latestEventIndex);
@@ -205,7 +333,12 @@ public class LeasedSession : ILeasedSession
             : 0;
     }
 
-    private async Task AppendEventsToCurrentChunkAsync(List<JsonEvent> eventsToAdd)
+    /// <summary>
+    /// Appends events to the current chunk.
+    /// </summary>
+    /// <param name="eventsToAdd">Events to append.</param>
+    /// <param name="state">State object to track commit progress.</param>
+    private async Task AppendEventsToCurrentChunkAsync(List<JsonEvent> eventsToAdd, CommitState state)
     {
         if (document.Active.StreamChunks.Count == 0)
         {
@@ -215,7 +348,15 @@ public class LeasedSession : ILeasedSession
         var lastChunk = document.Active.StreamChunks[^1];
         lastChunk.LastEventVersion = eventsToAdd[^1].EventVersion;
 
+        // IMPORTANT: Update document metadata FIRST, then append events.
+        // This order ensures the document's ETag provides optimistic concurrency
+        // control - if another writer updated the document, this will fail with
+        // a concurrency exception before any events are written.
         await documentstore.SetAsync(document);
+
+        // Document update succeeded - mark that events will be appended
+        state.EventsAppendStarted = true;
+
         await datastore.AppendAsync(document, [.. eventsToAdd]);
     }
 

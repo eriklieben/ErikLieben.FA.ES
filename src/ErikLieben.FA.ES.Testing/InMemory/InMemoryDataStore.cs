@@ -6,7 +6,7 @@ namespace ErikLieben.FA.ES.Testing.InMemory;
 /// <summary>
 /// Provides an in-memory implementation of <see cref="IDataStore"/> intended for tests.
 /// </summary>
-public class InMemoryDataStore : IDataStore
+public class InMemoryDataStore : IDataStore, IDataStoreRecovery
 {
     /// <summary>
     /// Gets the internal storage of events grouped by stream identifier and version.
@@ -107,6 +107,27 @@ public class InMemoryDataStore : IDataStore
             }
         }
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
+        if (!Store.TryGetValue(identifier, out var dict))
+        {
+            return Task.FromResult(0);
+        }
+
+        var removed = 0;
+        for (var version = fromVersion; version <= toVersion; version++)
+        {
+            if (dict.Remove(version))
+            {
+                removed++;
+            }
+        }
+
+        return Task.FromResult(removed);
     }
 
     /// <summary>

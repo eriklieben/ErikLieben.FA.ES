@@ -14,7 +14,7 @@ namespace ErikLieben.FA.ES.CosmosDb;
 /// Provides a CosmosDB-backed implementation of <see cref="IDataStore"/> for reading and appending event streams.
 /// Optimized for RU efficiency using partition key per stream for efficient reads.
 /// </summary>
-public class CosmosDbDataStore : IDataStore
+public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly CosmosClient cosmosClient;
     private readonly EventStreamCosmosDbSettings settings;
@@ -322,5 +322,38 @@ public class CosmosDbDataStore : IDataStore
         }
 
         return null;
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.RemoveEventsForFailedCommitAsync");
+
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+
+        var container = await GetEventsContainerAsync();
+        var streamId = document.Active.StreamIdentifier;
+        var removed = 0;
+
+        // Delete each event individually
+        for (var version = fromVersion; version <= toVersion; version++)
+        {
+            var id = CosmosDbEventEntity.CreateId(streamId, version);
+            try
+            {
+                await container.DeleteItemAsync<CosmosDbEventEntity>(
+                    id,
+                    new PartitionKey(streamId));
+                removed++;
+            }
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Event doesn't exist (wasn't written) - that's fine, continue
+            }
+        }
+
+        activity?.SetTag("RemovedCount", removed);
+        return removed;
     }
 }
