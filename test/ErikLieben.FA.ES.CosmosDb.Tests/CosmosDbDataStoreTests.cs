@@ -955,12 +955,21 @@ public class CosmosDbDataStoreTests
         }
     }
 
-    public class ClosedStreamCache : CosmosDbDataStoreTests
+    /// <summary>
+    /// Tests for the closed stream cache optimization.
+    /// This class does NOT inherit from CosmosDbDataStoreTests to avoid cache clearing in the base constructor
+    /// which would cause race conditions with parallel test execution.
+    /// </summary>
+    [Collection("ClosedStreamCache")]
+    public class ClosedStreamCacheTests
     {
         [Fact]
         public async Task Should_cache_closed_stream_status()
         {
-            // Create completely fresh mocks for this test to ensure no interference
+            // Clear cache at start of test to ensure clean state
+            CosmosDbDataStore.ClearClosedStreamCache();
+
+            // Create fresh mocks for this test
             var freshCosmosClient = Substitute.For<CosmosClient>();
             var freshDatabase = Substitute.For<Database>();
             var freshContainer = Substitute.For<Container>();
@@ -1019,12 +1028,20 @@ public class CosmosDbDataStoreTests
         [Fact]
         public void Should_clear_cache_when_requested()
         {
-            // Add an entry to the cache by using reflection to test the static method
+            // Clear the cache
             CosmosDbDataStore.ClearClosedStreamCache();
 
             // This verifies the method exists and doesn't throw
             Assert.True(true);
         }
+    }
+
+    /// <summary>
+    /// Collection definition to prevent parallel execution of cache-sensitive tests.
+    /// </summary>
+    [CollectionDefinition("ClosedStreamCache", DisableParallelization = true)]
+    public class ClosedStreamCacheCollection
+    {
     }
 
     public class RemoveEventsForFailedCommitAsync : CosmosDbDataStoreTests

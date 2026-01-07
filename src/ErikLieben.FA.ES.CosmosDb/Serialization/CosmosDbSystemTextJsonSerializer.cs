@@ -86,44 +86,49 @@ public class CosmosDbSystemTextJsonSerializer : CosmosLinqSerializer
                         "The generic method is required by CosmosLinqSerializer interface.")]
     public override T FromStream<T>(Stream stream)
     {
-        if (stream == null)
+        // CosmosDB SDK requires that we dispose the stream after reading.
+        // See: https://github.com/Azure/azure-cosmos-dotnet-v3/blob/master/Microsoft.Azure.Cosmos/src/Serializer/CosmosJsonSerializerWrapper.cs
+        using (stream)
         {
-            return default!;
-        }
-
-        // Check for empty stream - some streams don't support Length property
-        try
-        {
-            if (stream.CanSeek)
+            if (stream == null)
             {
-                if (stream.Length == 0)
+                return default!;
+            }
+
+            // Check for empty stream - some streams don't support Length property
+            try
+            {
+                if (stream.CanSeek)
                 {
-                    return default!;
-                }
-                // Ensure stream is at the beginning
-                if (stream.Position != 0)
-                {
-                    stream.Position = 0;
+                    if (stream.Length == 0)
+                    {
+                        return default!;
+                    }
+                    // Ensure stream is at the beginning
+                    if (stream.Position != 0)
+                    {
+                        stream.Position = 0;
+                    }
                 }
             }
-        }
-        catch (NotSupportedException)
-        {
-            // Stream doesn't support Length/Position - continue with deserialization
-        }
+            catch (NotSupportedException)
+            {
+                // Stream doesn't support Length/Position - continue with deserialization
+            }
 
-        // Use synchronous read to avoid issues with CosmosDB SDK's stream handling
-        using var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
+            // Use synchronous read to avoid issues with CosmosDB SDK's stream handling
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
 
-        if (memoryStream.Length == 0)
-        {
-            return default!;
+            if (memoryStream.Length == 0)
+            {
+                return default!;
+            }
+
+            memoryStream.Position = 0;
+            var result = JsonSerializer.Deserialize<T>(memoryStream, _options);
+            return result ?? default!;
         }
-
-        memoryStream.Position = 0;
-        var result = JsonSerializer.Deserialize<T>(memoryStream, _options);
-        return result ?? default!;
     }
 
     /// <inheritdoc />
@@ -137,6 +142,7 @@ public class CosmosDbSystemTextJsonSerializer : CosmosLinqSerializer
     {
         var stream = new MemoryStream();
         JsonSerializer.Serialize(stream, input, _options);
+        stream.Flush();
         stream.Position = 0;
         return stream;
     }
