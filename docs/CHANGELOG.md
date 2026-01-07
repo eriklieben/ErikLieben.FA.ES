@@ -1,3 +1,9 @@
+## [2.0.0-preview.8](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.7...2.0.0-preview.8) (2026-01-07)
+
+### ✨ New features
+
+* **table-storage:** add conditional payload chunking for large events ([474db9d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/474db9d26651205b4b17b4e8447abab6f39d1791))
+
 ## [2.0.0-preview.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.6...2.0.0-preview.7) (2026-01-07)
 
 ### 🐛 Bug fixes
