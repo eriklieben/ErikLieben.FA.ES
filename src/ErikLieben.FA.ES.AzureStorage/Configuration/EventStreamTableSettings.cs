@@ -43,6 +43,26 @@ public record EventStreamTableSettings
     public int DefaultChunkSize { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether large event payload chunking is enabled.
+    /// When enabled, event payloads exceeding <see cref="PayloadChunkThresholdBytes"/> will be
+    /// automatically compressed and split across multiple table rows.
+    /// </summary>
+    public bool EnableLargePayloadChunking { get; init; }
+
+    /// <summary>
+    /// Gets the payload size threshold in bytes that triggers chunking.
+    /// Payloads larger than this will be compressed and chunked. Default is 60KB (61440 bytes).
+    /// </summary>
+    public int PayloadChunkThresholdBytes { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether to compress large payloads before chunking.
+    /// Compression is applied before size checking, so payloads that compress below the threshold
+    /// will be stored in a single row. Default is true.
+    /// </summary>
+    public bool CompressLargePayloads { get; init; }
+
+    /// <summary>
     /// Gets the default table name used to store materialized object documents.
     /// </summary>
     public string DefaultDocumentTableName { get; init; }
@@ -100,6 +120,9 @@ public record EventStreamTableSettings
     /// <param name="defaultStreamChunkTableName">The default table name used to store stream chunk metadata.</param>
     /// <param name="defaultDocumentSnapShotTableName">The default table name used to store document snapshot metadata.</param>
     /// <param name="defaultTerminatedStreamTableName">The default table name used to store terminated stream metadata.</param>
+    /// <param name="enableLargePayloadChunking">True to enable automatic chunking of large event payloads.</param>
+    /// <param name="payloadChunkThresholdBytes">The payload size threshold in bytes that triggers chunking. Default is 60KB.</param>
+    /// <param name="compressLargePayloads">True to compress large payloads before chunking. Default is true.</param>
     public EventStreamTableSettings(
         string defaultDataStore,
         string? defaultDocumentStore = null,
@@ -115,7 +138,10 @@ public record EventStreamTableSettings
         string defaultStreamTagTableName = "streamtags",
         string defaultStreamChunkTableName = "streamchunks",
         string defaultDocumentSnapShotTableName = "documentsnapshots",
-        string defaultTerminatedStreamTableName = "terminatedstreams")
+        string defaultTerminatedStreamTableName = "terminatedstreams",
+        bool enableLargePayloadChunking = false,
+        int payloadChunkThresholdBytes = 60 * 1024,
+        bool compressLargePayloads = true)
     {
         ArgumentNullException.ThrowIfNull(defaultDataStore);
 
@@ -134,5 +160,8 @@ public record EventStreamTableSettings
         AutoCreateTable = autoCreateTable;
         EnableStreamChunks = enableStreamChunks;
         DefaultChunkSize = defaultChunkSize;
+        EnableLargePayloadChunking = enableLargePayloadChunking;
+        PayloadChunkThresholdBytes = payloadChunkThresholdBytes;
+        CompressLargePayloads = compressLargePayloads;
     }
 }

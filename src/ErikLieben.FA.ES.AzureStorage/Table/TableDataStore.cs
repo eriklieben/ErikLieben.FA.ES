@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Azure;
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
@@ -20,6 +22,11 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings settings;
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AzureStorage.Table");
+
+    /// <summary>
+    /// Maximum size for a single payload chunk (60KB to leave room for other entity properties).
+    /// </summary>
+    private const int MaxPayloadChunkSizeBytes = 60 * 1024;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TableDataStore"/> class.
@@ -76,7 +83,14 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         {
             await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter))
             {
-                events.Add(TableJsonEvent.FromEntity(entity));
+                // Skip payload chunk rows (they have _p{index} suffix in RowKey)
+                if (entity.PayloadChunkIndex.HasValue && entity.PayloadChunkIndex.Value > 0)
+                {
+                    continue;
+                }
+
+                var @event = await ConvertEntityToEventAsync(tableClient, entity);
+                events.Add(@event);
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
@@ -170,7 +184,16 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
                     break;
                 }
 
-                yield return TableJsonEvent.FromEntity(enumerator.Current);
+                var entity = enumerator.Current;
+
+                // Skip payload chunk rows (they have _p{index} suffix in RowKey)
+                if (entity.PayloadChunkIndex.HasValue && entity.PayloadChunkIndex.Value > 0)
+                {
+                    continue;
+                }
+
+                var @event = await ConvertEntityToEventAsync(tableClient, entity, cancellationToken);
+                yield return @event;
             }
         }
         finally
@@ -245,6 +268,64 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
                 document.Active.StreamIdentifier,
                 documentHash,
                 chunkIdentifier);
+
+            // Check if payload chunking is needed
+            if (settings.EnableLargePayloadChunking)
+            {
+                var payloadBytes = Encoding.UTF8.GetBytes(entity.Payload);
+                if (payloadBytes.Length > settings.PayloadChunkThresholdBytes)
+                {
+                    // Payload exceeds threshold, apply compression and potentially chunk
+                    byte[] dataToStore;
+                    bool isCompressed = false;
+
+                    if (settings.CompressLargePayloads)
+                    {
+                        dataToStore = CompressPayload(entity.Payload);
+                        isCompressed = true;
+                    }
+                    else
+                    {
+                        dataToStore = payloadBytes;
+                    }
+
+                    if (dataToStore.Length > MaxPayloadChunkSizeBytes)
+                    {
+                        // Still too large after compression, need to chunk
+                        var chunks = ChunkPayloadData(dataToStore);
+                        var totalChunks = chunks.Count;
+
+                        // Main entity stores first chunk
+                        entity.Payload = "{}"; // Clear payload, data is in PayloadData
+                        entity.PayloadData = chunks[0];
+                        entity.PayloadChunked = true;
+                        entity.PayloadTotalChunks = totalChunks;
+                        entity.PayloadCompressed = isCompressed;
+
+                        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
+
+                        // Add additional chunk entities
+                        for (int i = 1; i < chunks.Count; i++)
+                        {
+                            var chunkEntity = CreatePayloadChunkEntity(entity, chunks[i], i, totalChunks);
+                            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, chunkEntity));
+                        }
+                    }
+                    else
+                    {
+                        // Compressed data fits in one row
+                        entity.Payload = "{}"; // Clear payload, data is in PayloadData
+                        entity.PayloadData = dataToStore;
+                        entity.PayloadChunked = false;
+                        entity.PayloadTotalChunks = 1;
+                        entity.PayloadCompressed = isCompressed;
+
+                        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
+                    }
+
+                    continue;
+                }
+            }
 
             batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
         }
@@ -360,12 +441,42 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var partitionKey = GetPartitionKey(document, chunkIdentifier);
         var removed = 0;
 
-        // Delete each event row individually
+        // Delete each event row individually (including any payload chunk rows)
         for (var version = fromVersion; version <= toVersion; version++)
         {
             var rowKey = $"{version:d20}";
             try
             {
+                // First try to get the entity to check if it has payload chunks
+                TableEventEntity? mainEntity = null;
+                try
+                {
+                    var response = await tableClient.GetEntityAsync<TableEventEntity>(partitionKey, rowKey);
+                    mainEntity = response.Value;
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    // Event doesn't exist, continue to next version
+                    continue;
+                }
+
+                // Delete any payload chunk rows first
+                if (mainEntity.PayloadChunked == true && mainEntity.PayloadTotalChunks.HasValue)
+                {
+                    for (int i = 1; i < mainEntity.PayloadTotalChunks.Value; i++)
+                    {
+                        try
+                        {
+                            await tableClient.DeleteEntityAsync(partitionKey, $"{rowKey}_p{i}");
+                        }
+                        catch (RequestFailedException ex) when (ex.Status == 404)
+                        {
+                            // Chunk doesn't exist, continue
+                        }
+                    }
+                }
+
+                // Delete the main event row
                 await tableClient.DeleteEntityAsync(partitionKey, rowKey);
                 removed++;
             }
@@ -377,5 +488,174 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
 
         activity?.SetTag("RemovedCount", removed);
         return removed;
+    }
+
+    /// <summary>
+    /// Compresses a string payload using GZip compression.
+    /// </summary>
+    private static byte[] CompressPayload(string payload)
+    {
+        var payloadBytes = Encoding.UTF8.GetBytes(payload);
+        using var outputStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(outputStream, CompressionLevel.Optimal))
+        {
+            gzipStream.Write(payloadBytes, 0, payloadBytes.Length);
+        }
+
+        return outputStream.ToArray();
+    }
+
+    /// <summary>
+    /// Decompresses a GZip compressed payload back to a string.
+    /// </summary>
+    private static string DecompressPayload(byte[] compressedData)
+    {
+        using var inputStream = new MemoryStream(compressedData);
+        using var gzipStream = new GZipStream(inputStream, CompressionMode.Decompress);
+        using var outputStream = new MemoryStream();
+        gzipStream.CopyTo(outputStream);
+        return Encoding.UTF8.GetString(outputStream.ToArray());
+    }
+
+    /// <summary>
+    /// Splits payload data into chunks of maximum size.
+    /// </summary>
+    private static List<byte[]> ChunkPayloadData(byte[] data)
+    {
+        var chunks = new List<byte[]>();
+        var offset = 0;
+
+        while (offset < data.Length)
+        {
+            var chunkSize = Math.Min(MaxPayloadChunkSizeBytes, data.Length - offset);
+            var chunk = new byte[chunkSize];
+            Array.Copy(data, offset, chunk, 0, chunkSize);
+            chunks.Add(chunk);
+            offset += chunkSize;
+        }
+
+        return chunks;
+    }
+
+    /// <summary>
+    /// Creates a payload chunk entity for storing additional payload chunks.
+    /// </summary>
+    private static TableEventEntity CreatePayloadChunkEntity(
+        TableEventEntity mainEntity,
+        byte[] chunkData,
+        int chunkIndex,
+        int totalChunks)
+    {
+        return new TableEventEntity
+        {
+            PartitionKey = mainEntity.PartitionKey,
+            RowKey = $"{mainEntity.RowKey}_p{chunkIndex}",
+            ObjectId = mainEntity.ObjectId,
+            StreamIdentifier = mainEntity.StreamIdentifier,
+            EventVersion = mainEntity.EventVersion,
+            EventType = mainEntity.EventType,
+            SchemaVersion = mainEntity.SchemaVersion,
+            ChunkIdentifier = mainEntity.ChunkIdentifier,
+            LastObjectDocumentHash = mainEntity.LastObjectDocumentHash,
+            PayloadChunkIndex = chunkIndex,
+            PayloadData = chunkData,
+            PayloadTotalChunks = totalChunks
+        };
+    }
+
+    /// <summary>
+    /// Reassembles a chunked payload from the main entity and additional chunk rows.
+    /// </summary>
+    private async Task<string> ReassembleChunkedPayloadAsync(
+        TableClient tableClient,
+        TableEventEntity mainEntity,
+        CancellationToken cancellationToken = default)
+    {
+        if (mainEntity.PayloadChunked != true || mainEntity.PayloadTotalChunks == null)
+        {
+            // Not chunked or has compressed data in single row
+            if (mainEntity.PayloadData != null && mainEntity.PayloadData.Length > 0)
+            {
+                return mainEntity.PayloadCompressed == true
+                    ? DecompressPayload(mainEntity.PayloadData)
+                    : Encoding.UTF8.GetString(mainEntity.PayloadData);
+            }
+
+            return mainEntity.Payload;
+        }
+
+        var totalChunks = mainEntity.PayloadTotalChunks.Value;
+        var chunks = new byte[totalChunks][];
+
+        // First chunk is in the main entity
+        if (mainEntity.PayloadData != null)
+        {
+            chunks[0] = mainEntity.PayloadData;
+        }
+
+        // Fetch additional chunks
+        if (totalChunks > 1)
+        {
+            var baseRowKey = mainEntity.RowKey;
+            for (int i = 1; i < totalChunks; i++)
+            {
+                var chunkRowKey = $"{baseRowKey}_p{i}";
+                try
+                {
+                    var chunkResponse = await tableClient.GetEntityAsync<TableEventEntity>(
+                        mainEntity.PartitionKey,
+                        chunkRowKey,
+                        cancellationToken: cancellationToken);
+
+                    if (chunkResponse?.Value?.PayloadData != null)
+                    {
+                        chunks[i] = chunkResponse.Value.PayloadData;
+                    }
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    throw new InvalidOperationException(
+                        $"Missing payload chunk {i} for event version {mainEntity.EventVersion} " +
+                        $"in stream '{mainEntity.StreamIdentifier}'. Expected {totalChunks} chunks.");
+                }
+            }
+        }
+
+        // Concatenate all chunks
+        var totalLength = chunks.Sum(c => c?.Length ?? 0);
+        var combinedData = new byte[totalLength];
+        var offset = 0;
+        foreach (var chunk in chunks)
+        {
+            if (chunk != null)
+            {
+                Array.Copy(chunk, 0, combinedData, offset, chunk.Length);
+                offset += chunk.Length;
+            }
+        }
+
+        // Decompress if needed
+        return mainEntity.PayloadCompressed == true
+            ? DecompressPayload(combinedData)
+            : Encoding.UTF8.GetString(combinedData);
+    }
+
+    /// <summary>
+    /// Converts an entity to a TableJsonEvent, handling payload reassembly if needed.
+    /// </summary>
+    private async Task<TableJsonEvent> ConvertEntityToEventAsync(
+        TableClient tableClient,
+        TableEventEntity entity,
+        CancellationToken cancellationToken = default)
+    {
+        // Check if this is a chunked or compressed payload
+        if (entity.PayloadChunked == true || entity.PayloadData != null)
+        {
+            var payload = await ReassembleChunkedPayloadAsync(tableClient, entity, cancellationToken);
+            entity.Payload = payload;
+            entity.PayloadData = null; // Clear binary data after reassembly
+        }
+
+        return TableJsonEvent.FromEntity(entity);
     }
 }
