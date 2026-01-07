@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
+using ErikLieben.FA.ES.CosmosDb.Serialization;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.VersionTokenParts;
@@ -404,72 +405,6 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
 
         await SaveAsync(typedProjection, blobName, cancellationToken);
     }
-}
-
-/// <summary>
-/// CosmosDB document wrapper for storing projection data.
-/// </summary>
-internal class ProjectionDocument
-{
-    /// <summary>
-    /// The unique document ID.
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The projection name (partition key).
-    /// </summary>
-    [JsonPropertyName("projectionName")]
-    public string ProjectionName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The serialized projection JSON data.
-    /// </summary>
-    [JsonPropertyName("data")]
-    public string Data { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The last modified timestamp.
-    /// </summary>
-    [JsonPropertyName("lastModified")]
-    public DateTimeOffset LastModified { get; set; }
-}
-
-/// <summary>
-/// CosmosDB document wrapper for storing checkpoint data.
-/// </summary>
-internal class CheckpointDocument
-{
-    /// <summary>
-    /// The unique document ID.
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The projection name (partition key).
-    /// </summary>
-    [JsonPropertyName("projectionName")]
-    public string ProjectionName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The checkpoint fingerprint.
-    /// </summary>
-    [JsonPropertyName("fingerprint")]
-    public string Fingerprint { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The serialized checkpoint JSON data.
-    /// </summary>
-    [JsonPropertyName("data")]
-    public string Data { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The creation timestamp.
-    /// </summary>
-    [JsonPropertyName("createdAt")]
-    public DateTimeOffset CreatedAt { get; set; }
 }
 
 /// <summary>

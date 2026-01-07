@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -85,6 +86,75 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         return dataDocument.Events
                     .Where(e => e.EventVersion >= startVersion && (!untilVersion.HasValue || e.EventVersion <= untilVersion))
                     .ToList();
+    }
+
+    /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method yields events one at a time after loading the blob document.
+    /// While blob storage requires downloading the entire document upfront (unlike CosmosDB/Table),
+    /// streaming the results allows consumers to process events incrementally and supports
+    /// early cancellation without holding references to the full list.
+    /// </para>
+    /// <para>
+    /// For very large event streams, consider using CosmosDB or Table storage which support
+    /// true server-side pagination.
+    /// </para>
+    /// </remarks>
+    /// <param name="document">The document whose event stream is read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var activity = ActivitySource.StartActivity("BlobDataStore.ReadAsStreamAsync");
+
+        string? documentPath;
+        if (document.Active.ChunkingEnabled())
+        {
+            documentPath = $"{document.Active.StreamIdentifier}-{chunk:d10}.json";
+        }
+        else
+        {
+            documentPath = $"{document.Active.StreamIdentifier}.json";
+        }
+
+        var blob = CreateBlobClient(document, documentPath);
+
+        BlobDataStoreDocument? dataDocument;
+        try
+        {
+            dataDocument = (await blob.AsEntityAsync(BlobDataStoreDocumentContext.Default.BlobDataStoreDocument)).Item1;
+            if (dataDocument == null)
+            {
+                yield break;
+            }
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
+        {
+            yield break;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            yield break;
+        }
+
+        // Yield events one at a time to allow early cancellation and reduce memory pressure
+        foreach (var evt in dataDocument.Events
+            .Where(e => e.EventVersion >= startVersion && (!untilVersion.HasValue || e.EventVersion <= untilVersion)))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return evt;
+        }
     }
 
     /// <summary>

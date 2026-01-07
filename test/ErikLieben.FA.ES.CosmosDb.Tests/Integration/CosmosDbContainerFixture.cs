@@ -1,7 +1,7 @@
-using System.Text.Json;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
+using ErikLieben.FA.ES.CosmosDb.Configuration;
 using Microsoft.Azure.Cosmos;
 using Testcontainers.CosmosDb;
 
@@ -37,15 +37,9 @@ public class CosmosDbContainerFixture : IAsyncLifetime
     {
         await _cosmosDbContainer.StartAsync();
 
-        var cosmosClientOptions = new CosmosClientOptions
-        {
-            ConnectionMode = ConnectionMode.Gateway,
-            HttpClientFactory = () => _cosmosDbContainer.HttpClient,
-            UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            }
-        };
+        // Use the same AOT-compatible serializer as production via factory
+        var cosmosClientOptions = CosmosClientOptionsFactory.CreateForDevelopment(
+            () => _cosmosDbContainer.HttpClient);
 
         CosmosClient = new CosmosClient(ConnectionString, cosmosClientOptions);
     }

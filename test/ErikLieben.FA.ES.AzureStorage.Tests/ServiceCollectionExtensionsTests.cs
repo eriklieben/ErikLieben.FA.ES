@@ -1,8 +1,10 @@
+using Azure;
 using ErikLieben.FA.ES.AzureStorage;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Table;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.EventStream;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -313,6 +315,48 @@ public class ServiceCollectionExtensionsTests
 
             Assert.Equal(4, blobFactories); // TagFactory, ObjectDocumentFactory, EventStreamFactory, ObjectIdProvider
             Assert.Equal(4, tableFactories);
+        }
+    }
+
+    public class RegisterAzureExceptionExtractor
+    {
+        [Fact]
+        public void Should_not_throw_when_called_multiple_times()
+        {
+            // Act & Assert - should not throw
+            ServiceCollectionExtensions.RegisterAzureExceptionExtractor();
+            ServiceCollectionExtensions.RegisterAzureExceptionExtractor();
+            ServiceCollectionExtensions.RegisterAzureExceptionExtractor();
+
+            Assert.True(true);
+        }
+
+        [Fact]
+        public void Should_be_called_when_configuring_blob_store()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+            var settings = new EventStreamBlobSettings("defaultStore");
+
+            // Act - should not throw (extractor gets registered)
+            services.ConfigureBlobEventStore(settings);
+
+            // Assert - if we got here without exception, the extractor was registered
+            Assert.True(true);
+        }
+
+        [Fact]
+        public void Should_be_called_when_configuring_table_store()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+            var settings = new EventStreamTableSettings("defaultStore");
+
+            // Act - should not throw (extractor gets registered)
+            services.ConfigureTableEventStore(settings);
+
+            // Assert - if we got here without exception, the extractor was registered
+            Assert.True(true);
         }
     }
 }

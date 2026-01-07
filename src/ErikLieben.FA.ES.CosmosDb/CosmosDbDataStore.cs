@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.CompilerServices;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Exceptions;
 using ErikLieben.FA.ES.CosmosDb.Model;
@@ -20,6 +21,19 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     private readonly EventStreamCosmosDbSettings settings;
     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.CosmosDb");
     private Container? eventsContainer;
+
+    /// <summary>
+    /// Cache of stream IDs that are known to be closed.
+    /// Once a stream is closed, it remains closed forever, so we can cache this
+    /// to avoid querying CosmosDB on every append (saves 1 RU per append).
+    /// </summary>
+    /// <remarks>
+    /// This is a simple HashSet rather than a time-based cache because:
+    /// - Closed streams never reopen (immutable property)
+    /// - Memory usage is minimal (just stream ID strings)
+    /// - Cleared on application restart (safe default)
+    /// </remarks>
+    private static readonly HashSet<string> ClosedStreamCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CosmosDbDataStore"/> class.
@@ -60,11 +74,11 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         var streamId = document.Active.StreamIdentifier;
 
         // Build query with partition key for optimal RU usage
-        // Note: Using 'c.type' instead of 'c._type' because the Cosmos SDK's camelCase naming policy
-        // transforms the C# property name 'Type' to 'type', ignoring [JsonPropertyName("_type")] attributes
+        // Note: Using 'c._type' because our custom System.Text.Json serializer respects
+        // the [JsonPropertyName("_type")] attribute on CosmosDbEventEntity.Type
         var queryText = untilVersion.HasValue
-            ? "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.version <= @untilVersion AND c.type = 'event' ORDER BY c.version"
-            : "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.type = 'event' ORDER BY c.version";
+            ? "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.version <= @untilVersion AND c._type = 'event' ORDER BY c.version"
+            : "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c._type = 'event' ORDER BY c.version";
 
         var queryDefinition = new QueryDefinition(queryText)
             .WithParameter("@streamId", streamId)
@@ -108,6 +122,100 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     }
 
     /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method is optimized for reading large event streams without loading all events into memory.
+    /// Events are yielded as they are retrieved from CosmosDB, enabling efficient processing of
+    /// streams with millions of events while minimizing memory allocation.
+    /// </para>
+    /// <para>
+    /// Uses CosmosDB's native pagination to fetch events in batches, yielding each event as soon
+    /// as it's available rather than waiting for the entire result set.
+    /// </para>
+    /// </remarks>
+    /// <param name="document">The document whose event stream is read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier (not used for CosmosDB, kept for interface compatibility).</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.ReadAsStreamAsync");
+
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+
+        Container container;
+        try
+        {
+            container = await GetEventsContainerAsync();
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            yield break;
+        }
+
+        var streamId = document.Active.StreamIdentifier;
+
+        // Build query with partition key for optimal RU usage
+        var queryText = untilVersion.HasValue
+            ? "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c.version <= @untilVersion AND c._type = 'event' ORDER BY c.version"
+            : "SELECT * FROM c WHERE c.streamId = @streamId AND c.version >= @startVersion AND c._type = 'event' ORDER BY c.version";
+
+        var queryDefinition = new QueryDefinition(queryText)
+            .WithParameter("@streamId", streamId)
+            .WithParameter("@startVersion", startVersion);
+
+        if (untilVersion.HasValue)
+        {
+            queryDefinition = queryDefinition.WithParameter("@untilVersion", untilVersion.Value);
+        }
+
+        var queryOptions = new QueryRequestOptions
+        {
+            PartitionKey = new PartitionKey(streamId),
+            MaxItemCount = settings.StreamingPageSize > 0 ? settings.StreamingPageSize : 100
+        };
+
+        FeedIterator<CosmosDbEventEntity>? iterator = null;
+        try
+        {
+            iterator = container.GetItemQueryIterator<CosmosDbEventEntity>(queryDefinition, requestOptions: queryOptions);
+            while (iterator.HasMoreResults)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                FeedResponse<CosmosDbEventEntity> response;
+                try
+                {
+                    response = await iterator.ReadNextAsync(cancellationToken);
+                }
+                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    yield break;
+                }
+
+                foreach (var entity in response)
+                {
+                    yield return CosmosDbJsonEvent.FromEntity(entity);
+                }
+            }
+        }
+        finally
+        {
+            iterator?.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Appends the specified events to the event stream of the given document in CosmosDB.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
@@ -126,7 +234,6 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// <returns>A task that represents the asynchronous append operation.</returns>
     public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
     {
-        Console.WriteLine($"[COSMOSDB-DATASTORE] AppendAsync called with {events.Length} events for stream {document.Active.StreamIdentifier}");
         using var activity = ActivitySource.StartActivity("CosmosDbDataStore.AppendAsync");
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -231,10 +338,19 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
 
     private static async Task CheckStreamNotClosedAsync(Container container, string streamId)
     {
+        // Check cache first to avoid unnecessary CosmosDB query (saves 1 RU per append)
+        if (ClosedStreamCache.Contains(streamId))
+        {
+            throw new EventStreamClosedException(
+                streamId,
+                $"Cannot append events to closed stream '{streamId}'. " +
+                "The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+
         // Query for the stream closed event
-        // Note: Using 'c.type' instead of 'c._type' due to Cosmos SDK camelCase naming policy
+        // Note: Using 'c._type' because our custom serializer respects [JsonPropertyName("_type")]
         var query = new QueryDefinition(
-            "SELECT TOP 1 * FROM c WHERE c.streamId = @streamId AND c.eventType = 'EventStream.Closed' AND c.type = 'event'")
+            "SELECT TOP 1 * FROM c WHERE c.streamId = @streamId AND c.eventType = 'EventStream.Closed' AND c._type = 'event'")
             .WithParameter("@streamId", streamId);
 
         var queryOptions = new QueryRequestOptions
@@ -249,11 +365,32 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
             var response = await iterator.ReadNextAsync();
             if (response.Count > 0)
             {
+                // Cache this closed status - streams never reopen
+                lock (ClosedStreamCache)
+                {
+                    ClosedStreamCache.Add(streamId);
+                }
+
                 throw new EventStreamClosedException(
                     streamId,
                     $"Cannot append events to closed stream '{streamId}'. " +
                     "The stream was closed and may have a continuation stream. Please retry on the active stream.");
             }
+        }
+    }
+
+    /// <summary>
+    /// Clears the closed stream cache. Primarily intended for testing scenarios.
+    /// </summary>
+    /// <remarks>
+    /// In production, this should rarely be needed as closed streams remain closed.
+    /// However, it can be useful after database resets in test environments.
+    /// </remarks>
+    public static void ClearClosedStreamCache()
+    {
+        lock (ClosedStreamCache)
+        {
+            ClosedStreamCache.Clear();
         }
     }
 

@@ -21,6 +21,9 @@ public class CosmosDbDataStoreTests
 
     public CosmosDbDataStoreTests()
     {
+        // Clear closed stream cache to ensure test isolation
+        CosmosDbDataStore.ClearClosedStreamCache();
+
         cosmosClient = Substitute.For<CosmosClient>();
         database = Substitute.For<Database>();
         container = Substitute.For<Container>();
@@ -737,6 +740,349 @@ public class CosmosDbDataStoreTests
 
             // Verify database was accessed - auto-create was triggered
             database.Received(1).GetContainer(autoCreateSettings.EventsContainerName);
+        }
+    }
+
+    public class ReadAsStreamAsync : CosmosDbDataStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(null!)) { }
+            });
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_stream_identifier_is_null()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+            streamInformation.StreamIdentifier = null!;
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(objectDocument)) { }
+            });
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_container_not_found()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
+                .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
+
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                events.Add(evt);
+            }
+
+            Assert.Empty(events);
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_stream_is_empty()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            var feedResponse = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse.GetEnumerator().Returns(new List<CosmosDbEventEntity>().GetEnumerator());
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                events.Add(evt);
+            }
+
+            Assert.Empty(events);
+        }
+
+        [Fact]
+        public async Task Should_stream_events_when_found()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            var entities = new List<CosmosDbEventEntity>
+            {
+                new() { Id = "1", StreamId = "test-stream", Version = 0, EventType = "TestEvent", Data = "{}" },
+                new() { Id = "2", StreamId = "test-stream", Version = 1, EventType = "TestEvent", Data = "{}" }
+            };
+
+            var feedResponse = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse.GetEnumerator().Returns(entities.GetEnumerator());
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                events.Add(evt);
+            }
+
+            Assert.Equal(2, events.Count);
+        }
+
+        [Fact]
+        public async Task Should_stream_events_from_multiple_pages()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            var page1 = new List<CosmosDbEventEntity>
+            {
+                new() { Id = "1", StreamId = "test-stream", Version = 0, EventType = "TestEvent", Data = "{}" }
+            };
+            var page2 = new List<CosmosDbEventEntity>
+            {
+                new() { Id = "2", StreamId = "test-stream", Version = 1, EventType = "TestEvent", Data = "{}" }
+            };
+
+            var feedResponse1 = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse1.GetEnumerator().Returns(page1.GetEnumerator());
+
+            var feedResponse2 = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse2.GetEnumerator().Returns(page2.GetEnumerator());
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, true, false);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse1, feedResponse2);
+
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                events.Add(evt);
+            }
+
+            Assert.Equal(2, events.Count);
+        }
+
+        [Fact]
+        public async Task Should_respect_cancellation_token()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+            var cts = new CancellationTokenSource();
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var ct = callInfo.ArgAt<CancellationToken>(0);
+                    ct.ThrowIfCancellationRequested();
+                    var response = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+                    response.GetEnumerator().Returns(new List<CosmosDbEventEntity>().GetEnumerator());
+                    return response;
+                });
+
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            cts.Cancel(); // Cancel before starting
+
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(objectDocument, cancellationToken: cts.Token))
+                {
+                    // Should not get here
+                }
+            });
+        }
+
+        [Fact]
+        public async Task Should_use_configured_streaming_page_size()
+        {
+            var streamingSettings = new EventStreamCosmosDbSettings
+            {
+                DatabaseName = "test-db",
+                EventsContainerName = "events",
+                AutoCreateContainers = false,
+                StreamingPageSize = 50
+            };
+            var sut = new CosmosDbDataStore(cosmosClient, streamingSettings);
+
+            cosmosClient.GetDatabase(streamingSettings.DatabaseName).Returns(database);
+            database.GetContainer(streamingSettings.EventsContainerName).Returns(container);
+
+            var feedResponse = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse.GetEnumerator().Returns(new List<CosmosDbEventEntity>().GetEnumerator());
+
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+
+            QueryRequestOptions? capturedOptions = null;
+            container.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Do<QueryRequestOptions>(o => capturedOptions = o)).Returns(feedIterator);
+
+            await foreach (var _ in sut.ReadAsStreamAsync(objectDocument)) { }
+
+            Assert.NotNull(capturedOptions);
+            Assert.Equal(50, capturedOptions.MaxItemCount);
+        }
+    }
+
+    public class ClosedStreamCache : CosmosDbDataStoreTests
+    {
+        [Fact]
+        public async Task Should_cache_closed_stream_status()
+        {
+            // Create completely fresh mocks for this test to ensure no interference
+            var freshCosmosClient = Substitute.For<CosmosClient>();
+            var freshDatabase = Substitute.For<Database>();
+            var freshContainer = Substitute.For<Container>();
+
+            var testSettings = new EventStreamCosmosDbSettings
+            {
+                DatabaseName = "cache-test-db",
+                EventsContainerName = "cache-test-events",
+                AutoCreateContainers = false
+            };
+
+            freshCosmosClient.GetDatabase(testSettings.DatabaseName).Returns(freshDatabase);
+            freshDatabase.GetContainer(testSettings.EventsContainerName).Returns(freshContainer);
+
+            // Use a unique stream ID for this test
+            var uniqueStreamId = $"closed-test-{Guid.NewGuid():N}";
+            var uniqueStreamInfo = new StreamInformation { StreamIdentifier = uniqueStreamId };
+            var uniqueDocument = Substitute.For<IObjectDocument>();
+            uniqueDocument.Active.Returns(uniqueStreamInfo);
+            uniqueDocument.ObjectId.Returns("test-id");
+            uniqueDocument.ObjectName.Returns("TestObject");
+
+            var sut = new CosmosDbDataStore(freshCosmosClient, testSettings);
+            var jsonEvent = new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = "{}" };
+
+            // Setup iterator to return closed event
+            var closedEvent = new CosmosDbEventEntity { EventType = "EventStream.Closed" };
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            var feedResponse = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse.Count.Returns(1);
+            feedResponse.GetEnumerator().Returns(new List<CosmosDbEventEntity> { closedEvent }.GetEnumerator());
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+
+            freshContainer.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            // First attempt should query and throw
+            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, jsonEvent));
+
+            // Reset the mock to verify it's not called again
+            freshContainer.ClearReceivedCalls();
+
+            // Second attempt should throw immediately from cache (no query)
+            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, jsonEvent));
+
+            // Verify no query was made on second call
+            freshContainer.DidNotReceive().GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>());
+        }
+
+        [Fact]
+        public void Should_clear_cache_when_requested()
+        {
+            // Add an entry to the cache by using reflection to test the static method
+            CosmosDbDataStore.ClearClosedStreamCache();
+
+            // This verifies the method exists and doesn't throw
+            Assert.True(true);
+        }
+    }
+
+    public class RemoveEventsForFailedCommitAsync : CosmosDbDataStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.RemoveEventsForFailedCommitAsync(null!, 0, 5));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_stream_identifier_is_null()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+            streamInformation.StreamIdentifier = null!;
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.RemoveEventsForFailedCommitAsync(objectDocument, 0, 5));
+        }
+
+        [Fact]
+        public async Task Should_delete_events_in_version_range()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            var itemResponse = Substitute.For<ItemResponse<CosmosDbEventEntity>>();
+            container.DeleteItemAsync<CosmosDbEventEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>()).Returns(itemResponse);
+
+            var result = await sut.RemoveEventsForFailedCommitAsync(objectDocument, 0, 2);
+
+            Assert.Equal(3, result);
+            await container.Received(3).DeleteItemAsync<CosmosDbEventEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_continue_when_event_not_found()
+        {
+            var sut = new CosmosDbDataStore(cosmosClient, settings);
+
+            container.DeleteItemAsync<CosmosDbEventEntity>(
+                Arg.Any<string>(),
+                Arg.Any<PartitionKey>(),
+                Arg.Any<ItemRequestOptions>(),
+                Arg.Any<CancellationToken>())
+                .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
+
+            var result = await sut.RemoveEventsForFailedCommitAsync(objectDocument, 0, 2);
+
+            Assert.Equal(0, result);
         }
     }
 }

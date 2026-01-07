@@ -719,6 +719,198 @@ public class TableDataStoreTests
         }
     }
 
+    public class ReadAsStreamAsyncMethod : TableDataStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            var sut = CreateSut();
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(null!)) { }
+            });
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_stream_identifier_is_null()
+        {
+            var sut = CreateSut();
+            var document = Substitute.For<IObjectDocument>();
+            var streamInfo = new StreamInformation { StreamIdentifier = null! };
+            document.Active.Returns(streamInfo);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(document)) { }
+            });
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_stream_is_empty()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Act
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(document))
+            {
+                events.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(events);
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_table_not_found()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateThrowingAsyncPageable<TableEventEntity>(new RequestFailedException(404, "Table not found")));
+
+            // Act
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(document))
+            {
+                events.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(events);
+        }
+
+        [Fact]
+        public async Task Should_stream_events_in_order()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            var entities = new List<TableEventEntity>
+            {
+                CreateEventEntity(streamIdentifier, 0),
+                CreateEventEntity(streamIdentifier, 1),
+                CreateEventEntity(streamIdentifier, 2)
+            };
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(entities));
+
+            // Act
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(document))
+            {
+                events.Add(evt);
+            }
+
+            // Assert
+            Assert.Equal(3, events.Count);
+        }
+
+        [Fact]
+        public async Task Should_respect_cancellation_token()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var cts = new CancellationTokenSource();
+
+            // Setup to throw cancellation when query is made with cancelled token
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var ct = callInfo.ArgAt<CancellationToken>(3);
+                    ct.ThrowIfCancellationRequested();
+                    return AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>());
+                });
+
+            cts.Cancel(); // Cancel before starting
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(document, cancellationToken: cts.Token))
+                {
+                    // Should not get here
+                }
+            });
+        }
+
+        [Fact]
+        public async Task Should_apply_start_version_filter()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+
+            string? capturedFilter = null;
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Do<string>(f => capturedFilter = f), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Act
+            await foreach (var _ in sut.ReadAsStreamAsync(document, startVersion: 5)) { }
+
+            // Assert
+            Assert.NotNull(capturedFilter);
+            Assert.Contains("RowKey ge '00000000000000000005'", capturedFilter);
+        }
+
+        [Fact]
+        public async Task Should_apply_until_version_filter()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+
+            string? capturedFilter = null;
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Do<string>(f => capturedFilter = f), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Act
+            await foreach (var _ in sut.ReadAsStreamAsync(document, startVersion: 0, untilVersion: 10)) { }
+
+            // Assert
+            Assert.NotNull(capturedFilter);
+            Assert.Contains("RowKey le '00000000000000000010'", capturedFilter);
+        }
+
+        [Fact]
+        public async Task Should_use_chunk_partition_key_when_specified()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id", chunkingEnabled: true);
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            string? capturedFilter = null;
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Do<string>(f => capturedFilter = f), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Act
+            await foreach (var _ in sut.ReadAsStreamAsync(document, chunk: 5)) { }
+
+            // Assert
+            Assert.NotNull(capturedFilter);
+            Assert.Contains($"{streamIdentifier}_0000000005", capturedFilter);
+        }
+    }
+
     #region Helper Methods
 
     protected static AsyncPageable<T> CreateAsyncPageable<T>(IEnumerable<T> items) where T : notnull

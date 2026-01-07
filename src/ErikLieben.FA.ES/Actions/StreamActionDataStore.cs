@@ -46,6 +46,17 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore, IDataStor
     }
 
     /// <inheritdoc />
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
+    {
+        return datastore.ReadAsStreamAsync(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
         => ((IDataStoreRecovery)datastore).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion);
 }
