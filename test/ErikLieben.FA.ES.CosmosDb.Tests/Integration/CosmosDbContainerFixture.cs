@@ -80,8 +80,9 @@ internal sealed class CosmosDbReadyWaitStrategy : IWaitUntil
             using var response = await client.GetAsync("/").ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {
-                // Stability delay recommended for vnext-preview
-                await Task.Delay(1000).ConfigureAwait(false);
+                // Stability delay recommended for vnext-preview - use longer delay
+                // to ensure eventual consistency is stable before tests run
+                await Task.Delay(3000).ConfigureAwait(false);
                 return true;
             }
         }

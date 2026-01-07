@@ -471,11 +471,31 @@ internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
         }
 
         // For CosmosDB target: append events one at a time because
-        // the vnext-preview emulator doesn't support transactional batches
+        // the vnext-preview emulator doesn't support transactional batches.
+        // Handle conflicts gracefully - due to eventual consistency in the emulator,
+        // retry loops might attempt to re-append events that already exist.
         foreach (var evt in events)
         {
-            await _targetDataStore.AppendAsync(document, preserveTimestamp, evt);
+            try
+            {
+                await _targetDataStore.AppendAsync(document, preserveTimestamp, evt);
+            }
+            catch (Exception ex) when (IsVersionConflict(ex))
+            {
+                // Event already exists with this version - this can happen due to
+                // eventual consistency causing the migration to retry appending events
+                // that were already written. Skip since the event is already there.
+            }
         }
+    }
+
+    private static bool IsVersionConflict(Exception ex)
+    {
+        // Check for common version conflict indicators across exception types
+        var message = ex.Message.ToLowerInvariant();
+        return message.Contains("conflict") ||
+               message.Contains("already exists") ||
+               message.Contains("same version");
     }
 
     public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
