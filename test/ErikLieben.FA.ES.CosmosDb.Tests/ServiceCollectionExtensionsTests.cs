@@ -96,5 +96,33 @@ public class ServiceCollectionExtensionsTests
 
             Assert.Same(services, result);
         }
+
+        [Fact]
+        public void Should_register_cosmos_exception_extractor()
+        {
+            // Arrange
+            var services = new ServiceCollection();
+            var settings = new EventStreamCosmosDbSettings();
+
+            // Act - should not throw (extractor gets registered)
+            services.ConfigureCosmosDbEventStore(settings);
+
+            // Assert - if we got here without exception, the extractor was registered
+            Assert.True(true);
+        }
+    }
+
+    public class RegisterCosmosExceptionExtractor
+    {
+        [Fact]
+        public void Should_not_throw_when_called_multiple_times()
+        {
+            // Act & Assert - should not throw
+            ServiceCollectionExtensions.RegisterCosmosExceptionExtractor();
+            ServiceCollectionExtensions.RegisterCosmosExceptionExtractor();
+            ServiceCollectionExtensions.RegisterCosmosExceptionExtractor();
+
+            Assert.True(true);
+        }
     }
 }

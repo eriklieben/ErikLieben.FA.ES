@@ -458,6 +458,16 @@ internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
         return _targetDataStore.ReadAsync(document, startVersion, untilVersion, chunk);
     }
 
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
+    {
+        // Route reads based on which document is being read
+        if (document.Active.StreamIdentifier == _sourceDocument.Active.StreamIdentifier)
+        {
+            return _sourceDataStore.ReadAsStreamAsync(document, startVersion, untilVersion, chunk, cancellationToken);
+        }
+        return _targetDataStore.ReadAsStreamAsync(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
     public Task AppendAsync(IObjectDocument document, params IEvent[] events)
         => AppendAsync(document, preserveTimestamp: false, events);
 

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -102,6 +103,32 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
         return await pipeline.ExecuteAsync(
             async ct => await inner.ReadAsync(document, startVersion, untilVersion, chunk),
             CancellationToken.None);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// <para>
+    /// Note: Retry resilience is NOT applied to the streaming read operation.
+    /// This is because retrying would restart enumeration from the beginning,
+    /// which could cause duplicate event processing.
+    /// </para>
+    /// <para>
+    /// For resilient streaming reads, consider implementing retry logic at the
+    /// consumer level using the startVersion parameter to resume from where
+    /// enumeration failed.
+    /// </para>
+    /// </remarks>
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Note: We pass through directly without retry wrapping.
+        // Retrying a streaming read would restart from the beginning,
+        // potentially causing duplicate event processing.
+        return inner.ReadAsStreamAsync(document, startVersion, untilVersion, chunk, cancellationToken);
     }
 
     /// <inheritdoc />

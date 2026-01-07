@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System.Runtime.CompilerServices;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 
 namespace ErikLieben.FA.ES.Testing.InMemory;
@@ -73,6 +74,43 @@ public class InMemoryDataStore : IDataStore, IDataStoreRecovery
 
         var storedEvents = dict.Values.ToList();
         return Task.FromResult<IEnumerable<IEvent>?>(storedEvents);
+    }
+
+    /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <param name="document">The document whose events are read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+#pragma warning restore CS1998
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);
+
+        var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
+
+        if (!Store.TryGetValue(identifier, out var dict))
+        {
+            yield break;
+        }
+
+        foreach (var evt in dict.Values
+            .Where(e => e.EventVersion >= startVersion && (!untilVersion.HasValue || e.EventVersion <= untilVersion))
+            .OrderBy(e => e.EventVersion))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return evt;
+        }
     }
 
     /// <summary>

@@ -77,6 +77,24 @@ public class ResilientDataStoreTests : IDisposable
             return Task.FromResult<IEnumerable<IEvent>?>(StoredEvents.Where(e => e.EventVersion >= startVersion));
         }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+        public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+            IObjectDocument document,
+            int startVersion = 0,
+            int? untilVersion = null,
+            int? chunk = null,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+#pragma warning restore CS1998
+        {
+            ReadCallCount++;
+            if (readExceptions.TryDequeue(out var ex) && ex != null)
+                throw ex;
+            foreach (var evt in StoredEvents.Where(e => e.EventVersion >= startVersion))
+            {
+                yield return evt;
+            }
+        }
+
         public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
         {
             RemoveCallCount++;

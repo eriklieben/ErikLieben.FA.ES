@@ -509,4 +509,93 @@ public class BlobDataStoreTests
             blobServiceClient.Received(1).GetBlobContainerClient("testobject");
         }
     }
+
+    public class ReadAsStreamAsync : BlobDataStoreTests
+    {
+        [Fact]
+        public async Task Should_yield_no_events_when_blob_does_not_exist()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Not found", BlobErrorCode.BlobNotFound.ToString(), null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            var eventsList = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                eventsList.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(eventsList);
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_container_not_found()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Container not found", "ContainerNotFound", null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            var eventsList = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                eventsList.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(eventsList);
+        }
+
+        [Fact]
+        public async Task Should_respect_cancellation_token()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var cts = new CancellationTokenSource();
+
+            // Setup blob to throw when trying to download with cancelled token
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .Returns<Task>(callInfo =>
+                {
+                    cts.Token.ThrowIfCancellationRequested();
+                    return Task.CompletedTask;
+                });
+
+            cts.Cancel(); // Cancel before starting
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(objectDocument, cancellationToken: cts.Token))
+                {
+                    // Should not get here
+                }
+            });
+        }
+
+        [Fact]
+        public async Task Should_use_non_chunked_path()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Not found", BlobErrorCode.BlobNotFound.ToString(), null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            await foreach (var _ in sut.ReadAsStreamAsync(objectDocument)) { }
+
+            // Assert
+            containerClient.Received(1).GetBlobClient("test-stream.json");
+        }
+    }
 }

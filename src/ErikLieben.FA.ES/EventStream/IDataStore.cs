@@ -34,4 +34,32 @@ public interface IDataStore
     /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
     Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null,
         int? chunk = null);
+
+    /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method is optimized for reading large event streams without loading all events into memory.
+    /// Events are yielded as they are retrieved from the underlying storage, enabling efficient
+    /// processing of streams with millions of events.
+    /// </para>
+    /// <para>
+    /// Unlike <see cref="ReadAsync"/>, this method does not return null for non-existent streams;
+    /// it simply yields no events. Use <see cref="ReadAsync"/> if you need to distinguish between
+    /// an empty stream and a non-existent stream.
+    /// </para>
+    /// </remarks>
+    /// <param name="document">The document whose events are read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+    IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        CancellationToken cancellationToken = default);
 }

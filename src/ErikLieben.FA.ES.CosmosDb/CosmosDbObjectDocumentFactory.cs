@@ -52,7 +52,6 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
     public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
     {
-        Console.WriteLine($"[COSMOSDB-FACTORY] GetOrCreateAsync: objectName={objectName}, objectId={objectId}, store={store}, documentType={documentType}");
         using var activity = ActivitySource.StartActivity($"CosmosDbObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
         ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
         ArgumentException.ThrowIfNullOrWhiteSpace(objectId);
@@ -65,7 +64,6 @@ public class CosmosDbObjectDocumentFactory : IObjectDocumentFactory
             throw new InvalidOperationException("CosmosDbDocumentStore.CreateAsync returned null document.");
         }
 
-        Console.WriteLine($"[COSMOSDB-FACTORY] Created document: StreamIdentifier={result.Active.StreamIdentifier}, DocumentType={result.Active.DocumentType}, StreamType={result.Active.StreamType}");
         return result;
     }
 

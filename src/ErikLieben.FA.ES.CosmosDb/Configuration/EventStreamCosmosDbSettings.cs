@@ -142,6 +142,14 @@ public record EventStreamCosmosDbSettings
     /// Default: true.
     /// </summary>
     public bool UseOptimisticConcurrency { get; init; } = true;
+
+    /// <summary>
+    /// The page size for streaming reads via <see cref="CosmosDbDataStore.ReadAsStreamAsync"/>.
+    /// Controls how many events are fetched per CosmosDB query page.
+    /// Higher values reduce round-trips but increase memory per page.
+    /// Default: 100.
+    /// </summary>
+    public int StreamingPageSize { get; init; } = 100;
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Data.Tables;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
@@ -89,6 +90,96 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         }
 
         return events.OrderBy(e => e.EventVersion).ToList();
+    }
+
+    /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method is optimized for reading large event streams without loading all events into memory.
+    /// Events are yielded as they are retrieved from Azure Table Storage, enabling efficient processing
+    /// of streams with millions of events while minimizing memory allocation.
+    /// </para>
+    /// <para>
+    /// Uses Azure Table Storage's native async pagination to fetch events in batches.
+    /// </para>
+    /// </remarks>
+    /// <param name="document">The document whose event stream is read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var activity = ActivitySource.StartActivity("TableDataStore.ReadAsStreamAsync");
+
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+
+        TableClient tableClient;
+        try
+        {
+            tableClient = await GetTableClientAsync(document);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            yield break;
+        }
+
+        var partitionKey = GetPartitionKey(document, chunk);
+
+        var startRowKey = $"{startVersion:d20}";
+        var endRowKey = untilVersion.HasValue ? $"{untilVersion.Value:d20}" : null;
+
+        string filter;
+        if (endRowKey != null)
+        {
+            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}' and RowKey le '{endRowKey}'";
+        }
+        else
+        {
+            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}'";
+        }
+
+        // Use await foreach to stream results directly from Azure Table Storage
+        IAsyncEnumerator<TableEventEntity>? enumerator = null;
+        try
+        {
+            enumerator = tableClient.QueryAsync<TableEventEntity>(filter, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
+            while (true)
+            {
+                bool hasNext;
+                try
+                {
+                    hasNext = await enumerator.MoveNextAsync();
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    yield break;
+                }
+
+                if (!hasNext)
+                {
+                    break;
+                }
+
+                yield return TableJsonEvent.FromEntity(enumerator.Current);
+            }
+        }
+        finally
+        {
+            if (enumerator != null)
+            {
+                await enumerator.DisposeAsync();
+            }
+        }
     }
 
     /// <summary>
