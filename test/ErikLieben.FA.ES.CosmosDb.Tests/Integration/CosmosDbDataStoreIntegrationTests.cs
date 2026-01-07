@@ -60,8 +60,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = """{"message":"Hello"}""" });
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "TestEvent", EventVersion = 1, Payload = """{"message":"World"}""" });
 
-        // Assert
-        var readEvents = await sut.ReadAsync(objectDocument);
+        // Assert - use retry helper for eventual consistency
+        var readEvents = await ReadWithRetryAsync(sut, objectDocument);
         Assert.NotNull(readEvents);
         Assert.Equal(2, readEvents.Count());
     }
@@ -80,7 +80,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
 
         // Act - read from version 1 (skip first event at version 0)
-        var readEvents = await sut.ReadAsync(objectDocument, startVersion: 1);
+        // Use retry helper for eventual consistency
+        var readEvents = await ReadWithRetryAsync(sut, objectDocument, startVersion: 1);
 
         // Assert
         Assert.NotNull(readEvents);
@@ -101,7 +102,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
 
         // Act - read until version 1 (include first two events)
-        var readEvents = await sut.ReadAsync(objectDocument, untilVersion: 1);
+        // Use retry helper for eventual consistency
+        var readEvents = await ReadWithRetryAsync(sut, objectDocument, untilVersion: 1);
 
         // Assert
         Assert.NotNull(readEvents);
@@ -142,8 +144,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
             });
         }
 
-        // Assert
-        var readEvents = await sut.ReadAsync(objectDocument);
+        // Assert - use retry helper for eventual consistency
+        var readEvents = await ReadWithRetryAsync(sut, objectDocument);
         Assert.NotNull(readEvents);
         Assert.Equal(10, readEvents.Count());
     }
@@ -161,8 +163,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Second", EventVersion = 1, Payload = """{"order":2}""" });
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Third", EventVersion = 2, Payload = """{"order":3}""" });
 
-        // Act
-        var readEvents = (await sut.ReadAsync(objectDocument))?.ToList();
+        // Act - use retry helper for eventual consistency
+        var readEvents = (await ReadWithRetryAsync(sut, objectDocument))?.ToList();
 
         // Assert
         Assert.NotNull(readEvents);
@@ -184,14 +186,40 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = "{}" });
         await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = "{}" });
 
-        // Act
-        var readEvents = (await sut.ReadAsync(objectDocument))?.ToList();
+        // Act - use retry helper for eventual consistency
+        var readEvents = (await ReadWithRetryAsync(sut, objectDocument))?.ToList();
 
         // Assert - versions should be preserved as 0, 1, 2
         Assert.NotNull(readEvents);
         Assert.Equal(0, readEvents[0].EventVersion);
         Assert.Equal(1, readEvents[1].EventVersion);
         Assert.Equal(2, readEvents[2].EventVersion);
+    }
+
+    /// <summary>
+    /// Reads events with retry logic to handle eventual consistency in the vnext-preview emulator.
+    /// The emulator uses eventual consistency, so reads immediately after writes may not see the data.
+    /// </summary>
+    private static async Task<IEnumerable<IEvent>?> ReadWithRetryAsync(
+        CosmosDbDataStore dataStore,
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int maxRetries = 10,
+        int delayMs = 200)
+    {
+        for (int i = 0; i < maxRetries; i++)
+        {
+            var result = await dataStore.ReadAsync(document, startVersion, untilVersion);
+            if (result != null)
+            {
+                return result;
+            }
+
+            await Task.Delay(delayMs);
+        }
+
+        return null;
     }
 
     private static IObjectDocument CreateObjectDocument(string streamId)
