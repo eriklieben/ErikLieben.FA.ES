@@ -911,6 +911,588 @@ public class TableDataStoreTests
         }
     }
 
+    public class PayloadChunkingAppendTests : TableDataStoreTests
+    {
+        private EventStreamTableSettings CreateChunkingSettings(
+            bool enableChunking = true,
+            int thresholdBytes = 100, // Low threshold for testing
+            bool compressPayloads = true)
+        {
+            return new EventStreamTableSettings(
+                "test-connection",
+                enableLargePayloadChunking: enableChunking,
+                payloadChunkThresholdBytes: thresholdBytes,
+                compressLargePayloads: compressPayloads);
+        }
+
+        private static TableJsonEvent CreateLargePayloadEvent(int version, int payloadSizeBytes)
+        {
+            // Create a payload of approximately the specified size
+            var payload = new string('x', payloadSizeBytes);
+            return new TableJsonEvent
+            {
+                EventVersion = version,
+                EventType = "LargeEvent",
+                SchemaVersion = 1,
+                Payload = $"{{\"data\":\"{payload}\"}}",
+                ActionMetadata = new ActionMetadata(),
+                Metadata = new Dictionary<string, string>()
+            };
+        }
+
+        [Fact]
+        public async Task Should_not_chunk_small_payloads_when_chunking_enabled()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings(thresholdBytes: 1000);
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var smallEvent = CreateTableJsonEvent(0); // Small payload
+
+            SetupEmptyStreamQuery();
+
+            var capturedActions = new List<TableTransactionAction>();
+            EventTableClient.SubmitTransactionAsync(
+                Arg.Do<IEnumerable<TableTransactionAction>>(actions => capturedActions.AddRange(actions)),
+                Arg.Any<CancellationToken>())
+                .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
+
+            // Act
+            await sut.AppendAsync(document, smallEvent);
+
+            // Assert - Should have exactly 1 entity (no chunking)
+            Assert.Single(capturedActions);
+            var entity = capturedActions[0].Entity as TableEventEntity;
+            Assert.NotNull(entity);
+            Assert.Null(entity.PayloadChunked);
+            Assert.Null(entity.PayloadData);
+        }
+
+        [Fact]
+        public async Task Should_compress_large_payload_when_compression_enabled()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings(thresholdBytes: 100, compressPayloads: true);
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            // Create event with repetitive payload that compresses well
+            var largeEvent = CreateLargePayloadEvent(0, 200);
+
+            SetupEmptyStreamQuery();
+
+            var capturedActions = new List<TableTransactionAction>();
+            EventTableClient.SubmitTransactionAsync(
+                Arg.Do<IEnumerable<TableTransactionAction>>(actions => capturedActions.AddRange(actions)),
+                Arg.Any<CancellationToken>())
+                .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
+
+            // Act
+            await sut.AppendAsync(document, largeEvent);
+
+            // Assert - Should have compressed data
+            Assert.Single(capturedActions);
+            var entity = capturedActions[0].Entity as TableEventEntity;
+            Assert.NotNull(entity);
+            Assert.True(entity.PayloadCompressed);
+            Assert.NotNull(entity.PayloadData);
+            Assert.Equal("{}", entity.Payload); // Original payload cleared
+        }
+
+        [Fact]
+        public async Task Should_chunk_very_large_payload_into_multiple_rows()
+        {
+            // Arrange - Use very low threshold and disable compression to force chunking
+            var settings = CreateChunkingSettings(thresholdBytes: 50, compressPayloads: false);
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            // Create a larger payload that won't fit in single chunk (60KB limit per chunk)
+            var largeEvent = CreateLargePayloadEvent(0, 200);
+
+            SetupEmptyStreamQuery();
+
+            var capturedActions = new List<TableTransactionAction>();
+            EventTableClient.SubmitTransactionAsync(
+                Arg.Do<IEnumerable<TableTransactionAction>>(actions => capturedActions.AddRange(actions)),
+                Arg.Any<CancellationToken>())
+                .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
+
+            // Act
+            await sut.AppendAsync(document, largeEvent);
+
+            // Assert - Should have multiple entities (main + chunks)
+            Assert.True(capturedActions.Count >= 1);
+
+            var mainEntity = capturedActions[0].Entity as TableEventEntity;
+            Assert.NotNull(mainEntity);
+            Assert.Equal("00000000000000000000", mainEntity.RowKey);
+
+            if (capturedActions.Count > 1)
+            {
+                // Verify chunk row keys follow _p{index} pattern
+                Assert.True(mainEntity.PayloadChunked);
+                Assert.NotNull(mainEntity.PayloadTotalChunks);
+                Assert.Equal(capturedActions.Count, mainEntity.PayloadTotalChunks);
+
+                for (int i = 1; i < capturedActions.Count; i++)
+                {
+                    var chunkEntity = capturedActions[i].Entity as TableEventEntity;
+                    Assert.NotNull(chunkEntity);
+                    Assert.Equal($"00000000000000000000_p{i}", chunkEntity.RowKey);
+                    Assert.Equal(i, chunkEntity.PayloadChunkIndex);
+                }
+            }
+        }
+
+        [Fact]
+        public async Task Should_set_payload_metadata_correctly_for_chunked_events()
+        {
+            // Arrange - Settings that will cause chunking
+            var settings = CreateChunkingSettings(thresholdBytes: 50, compressPayloads: false);
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var largeEvent = CreateLargePayloadEvent(0, 200);
+
+            SetupEmptyStreamQuery();
+
+            var capturedActions = new List<TableTransactionAction>();
+            EventTableClient.SubmitTransactionAsync(
+                Arg.Do<IEnumerable<TableTransactionAction>>(actions => capturedActions.AddRange(actions)),
+                Arg.Any<CancellationToken>())
+                .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
+
+            // Act
+            await sut.AppendAsync(document, largeEvent);
+
+            // Assert
+            var mainEntity = capturedActions[0].Entity as TableEventEntity;
+            Assert.NotNull(mainEntity);
+
+            if (mainEntity.PayloadChunked == true)
+            {
+                Assert.NotNull(mainEntity.PayloadTotalChunks);
+                Assert.True(mainEntity.PayloadTotalChunks > 0);
+                Assert.NotNull(mainEntity.PayloadData);
+                Assert.Equal("{}", mainEntity.Payload);
+            }
+        }
+
+        [Fact]
+        public async Task Should_not_chunk_when_chunking_disabled()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings(enableChunking: false, thresholdBytes: 10);
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var largeEvent = CreateLargePayloadEvent(0, 100);
+
+            SetupEmptyStreamQuery();
+
+            var capturedActions = new List<TableTransactionAction>();
+            EventTableClient.SubmitTransactionAsync(
+                Arg.Do<IEnumerable<TableTransactionAction>>(actions => capturedActions.AddRange(actions)),
+                Arg.Any<CancellationToken>())
+                .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
+
+            // Act
+            await sut.AppendAsync(document, largeEvent);
+
+            // Assert - Should have exactly 1 entity with original payload (no chunking)
+            Assert.Single(capturedActions);
+            var entity = capturedActions[0].Entity as TableEventEntity;
+            Assert.NotNull(entity);
+            Assert.Null(entity.PayloadChunked);
+            Assert.Null(entity.PayloadData);
+            Assert.Contains("data", entity.Payload);
+        }
+
+        private void SetupEmptyStreamQuery()
+        {
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+        }
+    }
+
+    public class PayloadChunkingReadTests : TableDataStoreTests
+    {
+        private EventStreamTableSettings CreateChunkingSettings()
+        {
+            return new EventStreamTableSettings(
+                "test-connection",
+                enableLargePayloadChunking: true,
+                payloadChunkThresholdBytes: 100,
+                compressLargePayloads: true);
+        }
+
+        [Fact]
+        public async Task Should_skip_payload_chunk_rows_when_reading()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            // Create main event and chunk rows
+            var mainEvent = CreateEventEntity(streamIdentifier, 0);
+            var chunkRow = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000_p1",
+                PayloadChunkIndex = 1,
+                PayloadData = new byte[] { 1, 2, 3 }
+            };
+
+            var entities = new List<TableEventEntity> { mainEvent, chunkRow };
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(entities));
+
+            // Act
+            var result = (await sut.ReadAsync(document))?.ToList();
+
+            // Assert - Should only return the main event, not the chunk row
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.Equal(0, result[0].EventVersion);
+        }
+
+        [Fact]
+        public async Task Should_decompress_compressed_payload()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings();
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            // Create a compressed payload
+            var originalPayload = "{\"key\":\"value\"}";
+            var compressedData = CompressString(originalPayload);
+
+            var entity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000",
+                ObjectId = "test-id",
+                StreamIdentifier = streamIdentifier,
+                EventVersion = 0,
+                EventType = "TestEvent",
+                SchemaVersion = 1,
+                Payload = "{}",
+                PayloadData = compressedData,
+                PayloadCompressed = true,
+                PayloadChunked = false,
+                PayloadTotalChunks = 1,
+                LastObjectDocumentHash = "*"
+            };
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(new[] { entity }));
+
+            // Act
+            var result = (await sut.ReadAsync(document))?.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            var jsonEvent = result[0] as JsonEvent;
+            Assert.NotNull(jsonEvent);
+            Assert.Equal(originalPayload, jsonEvent.Payload);
+        }
+
+        [Fact]
+        public async Task Should_reassemble_chunked_payload()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings();
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            // Create chunked payload data
+            var originalPayload = "{\"key\":\"value\",\"data\":\"test\"}";
+            var payloadBytes = System.Text.Encoding.UTF8.GetBytes(originalPayload);
+            var chunk1 = payloadBytes.Take(15).ToArray();
+            var chunk2 = payloadBytes.Skip(15).ToArray();
+
+            var mainEntity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000",
+                ObjectId = "test-id",
+                StreamIdentifier = streamIdentifier,
+                EventVersion = 0,
+                EventType = "TestEvent",
+                SchemaVersion = 1,
+                Payload = "{}",
+                PayloadData = chunk1,
+                PayloadCompressed = false,
+                PayloadChunked = true,
+                PayloadTotalChunks = 2,
+                LastObjectDocumentHash = "*"
+            };
+
+            var chunkEntity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000_p1",
+                PayloadChunkIndex = 1,
+                PayloadData = chunk2,
+                PayloadTotalChunks = 2
+            };
+
+            // Setup query to return main entity (chunk rows are filtered)
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(new[] { mainEntity }));
+
+            // Setup GetEntityAsync to return chunk when requested
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier,
+                "00000000000000000000_p1",
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(chunkEntity, Substitute.For<Response>()));
+
+            // Act
+            var result = (await sut.ReadAsync(document))?.ToList();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Single(result);
+            var jsonEvent = result[0] as JsonEvent;
+            Assert.NotNull(jsonEvent);
+            Assert.Equal(originalPayload, jsonEvent.Payload);
+        }
+
+        [Fact]
+        public async Task Should_throw_when_chunk_is_missing()
+        {
+            // Arrange
+            var settings = CreateChunkingSettings();
+            var sut = new TableDataStore(ClientFactory, settings);
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            var mainEntity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000",
+                ObjectId = "test-id",
+                StreamIdentifier = streamIdentifier,
+                EventVersion = 0,
+                EventType = "TestEvent",
+                SchemaVersion = 1,
+                Payload = "{}",
+                PayloadData = new byte[] { 1, 2, 3 },
+                PayloadCompressed = false,
+                PayloadChunked = true,
+                PayloadTotalChunks = 2,
+                LastObjectDocumentHash = "*"
+            };
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(new[] { mainEntity }));
+
+            // Setup GetEntityAsync to throw 404 (chunk not found)
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<CancellationToken>())
+                .Throws(new RequestFailedException(404, "Chunk not found"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() => sut.ReadAsync(document));
+        }
+
+        private static byte[] CompressString(string input)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(input);
+            using var outputStream = new System.IO.MemoryStream();
+            using (var gzipStream = new System.IO.Compression.GZipStream(outputStream, System.IO.Compression.CompressionLevel.Optimal))
+            {
+                gzipStream.Write(bytes, 0, bytes.Length);
+            }
+            return outputStream.ToArray();
+        }
+    }
+
+    public class PayloadChunkingReadAsStreamTests : TableDataStoreTests
+    {
+        [Fact]
+        public async Task Should_skip_payload_chunk_rows_when_streaming()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            // Create main event and chunk rows
+            var mainEvent = CreateEventEntity(streamIdentifier, 0);
+            var chunkRow = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000_p1",
+                PayloadChunkIndex = 1,
+                PayloadData = new byte[] { 1, 2, 3 }
+            };
+
+            var entities = new List<TableEventEntity> { mainEvent, chunkRow };
+
+            EventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(entities));
+
+            // Act
+            var events = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(document))
+            {
+                events.Add(evt);
+            }
+
+            // Assert - Should only return the main event, not the chunk row
+            Assert.Single(events);
+            Assert.Equal(0, events[0].EventVersion);
+        }
+    }
+
+    public class RemoveEventsForFailedCommitAsyncMethod : TableDataStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            var sut = CreateSut();
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.RemoveEventsForFailedCommitAsync(null!, 0, 5));
+        }
+
+        [Fact]
+        public async Task Should_return_zero_when_no_events_exist()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Throws(new RequestFailedException(404, "Not found"));
+
+            // Act
+            var result = await sut.RemoveEventsForFailedCommitAsync(document, 0, 2);
+
+            // Assert
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
+        public async Task Should_delete_events_in_version_range()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            var entity0 = CreateEventEntity(streamIdentifier, 0);
+            var entity1 = CreateEventEntity(streamIdentifier, 1);
+            var entity2 = CreateEventEntity(streamIdentifier, 2);
+
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier, "00000000000000000000", Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(entity0, Substitute.For<Response>()));
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier, "00000000000000000001", Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(entity1, Substitute.For<Response>()));
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier, "00000000000000000002", Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(entity2, Substitute.For<Response>()));
+
+            // Act
+            var result = await sut.RemoveEventsForFailedCommitAsync(document, 0, 2);
+
+            // Assert
+            Assert.Equal(3, result);
+            await EventTableClient.Received(3).DeleteEntityAsync(
+                streamIdentifier, Arg.Any<string>(), Arg.Any<ETag>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_delete_payload_chunk_rows_when_event_is_chunked()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            var chunkedEntity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000",
+                ObjectId = "test-id",
+                StreamIdentifier = streamIdentifier,
+                EventVersion = 0,
+                EventType = "TestEvent",
+                PayloadChunked = true,
+                PayloadTotalChunks = 3
+            };
+
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier, "00000000000000000000", Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(chunkedEntity, Substitute.For<Response>()));
+
+            // Act
+            var result = await sut.RemoveEventsForFailedCommitAsync(document, 0, 0);
+
+            // Assert
+            Assert.Equal(1, result);
+            // Should delete main row + 2 chunk rows (chunks 1 and 2)
+            await EventTableClient.Received(1).DeleteEntityAsync(
+                streamIdentifier, "00000000000000000000", Arg.Any<ETag>(), Arg.Any<CancellationToken>());
+            await EventTableClient.Received(1).DeleteEntityAsync(
+                streamIdentifier, "00000000000000000000_p1", Arg.Any<ETag>(), Arg.Any<CancellationToken>());
+            await EventTableClient.Received(1).DeleteEntityAsync(
+                streamIdentifier, "00000000000000000000_p2", Arg.Any<ETag>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_continue_when_chunk_row_not_found()
+        {
+            // Arrange
+            var sut = CreateSut();
+            var document = CreateMockDocument("TestObject", "test-id");
+            var streamIdentifier = document.Active.StreamIdentifier;
+
+            var chunkedEntity = new TableEventEntity
+            {
+                PartitionKey = streamIdentifier,
+                RowKey = "00000000000000000000",
+                ObjectId = "test-id",
+                StreamIdentifier = streamIdentifier,
+                EventVersion = 0,
+                EventType = "TestEvent",
+                PayloadChunked = true,
+                PayloadTotalChunks = 2
+            };
+
+            EventTableClient.GetEntityAsync<TableEventEntity>(
+                streamIdentifier, "00000000000000000000", Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(Response.FromValue(chunkedEntity, Substitute.For<Response>()));
+
+            // Chunk deletion returns 404
+            EventTableClient.DeleteEntityAsync(
+                streamIdentifier, "00000000000000000000_p1", Arg.Any<ETag>(), Arg.Any<CancellationToken>())
+                .Throws(new RequestFailedException(404, "Chunk not found"));
+
+            // Act & Assert - Should not throw
+            var result = await sut.RemoveEventsForFailedCommitAsync(document, 0, 0);
+
+            Assert.Equal(1, result);
+        }
+    }
+
     #region Helper Methods
 
     protected static AsyncPageable<T> CreateAsyncPageable<T>(IEnumerable<T> items) where T : notnull
