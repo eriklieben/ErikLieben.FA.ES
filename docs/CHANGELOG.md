@@ -1,3 +1,17 @@
+## [2.0.0-preview.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.6...2.0.0-preview.7) (2026-01-07)
+
+### 🐛 Bug fixes
+
+* **live-migration:** reload document before close to prevent hash conflict ([37995c8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/37995c8cdd4e22a93c4c6f33955f07165b0fc00b))
+* **tests:** resolve CosmosDB integration test failures in CI ([bbff8fb](https://github.com/eriklieben/ErikLieben.FA.ES/commit/bbff8fb7954ac0a0524c7bc52e1f7277bf1aeda7))
+* **tests:** resolve serializer stream disposal and test parallelism ([246e942](https://github.com/eriklieben/ErikLieben.FA.ES/commit/246e9423bfc2bcafe853c57d30eebc623c285f5f))
+
+### ✨ New features
+
+* add TaskFlow demo application and comprehensive documentation ([abb3c7c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/abb3c7cc9f86f25d3cf39e38a6698f1e838d2f94))
+* production readiness features for v2.0.0 ([0209f91](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0209f91aacd0f686554f10e76c4c474042e9e970))
+* **scale:** add streaming reads, closed stream cache, and AOT serialization ([798ddb8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/798ddb8405d9d3ea29b278d7bc657699cc6312cd))
+
 ## [2.0.0-preview.6](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.5...2.0.0-preview.6) (2026-01-05)
 
 ### 🐛 Bug fixes
