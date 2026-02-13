@@ -360,4 +360,107 @@ public class GenerateProjectionCodeTests
         // External checkpoint flag used in HasExternalCheckpoint override
         Assert.Contains("protected override bool HasExternalCheckpoint => false;", code);
     }
+
+    [Fact]
+    public async Task Generate_does_not_emit_empty_using_when_property_has_empty_namespace()
+    {
+        // Arrange — reproduces Bug 1: empty using statement (using ;)
+        var projection = new ProjectionDefinition
+        {
+            Name = "Inventory",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
+                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                // Property with empty namespace — triggers "using ;" bug
+                new() { Name = "Name", Type = "string", Namespace = "", IsNullable = false },
+                new() { Name = "Count", Type = "int", Namespace = "System", IsNullable = false },
+            },
+            Events = new List<ProjectionEventDefinition>(),
+            FileLocations = new List<string> { "Demo\\Inventory.cs" }
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "Inventory.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Must NOT contain "using ;" (empty using directive)
+        Assert.DoesNotContain("using ;", code);
+        // Valid usings should still be present
+        Assert.Contains("using ErikLieben.FA.ES;", code);
+    }
+
+    [Fact]
+    public async Task Generate_includes_extra_constructor_params_in_LoadFromJson_without_trailing_comma()
+    {
+        // Arrange — reproduces Bug 2: trailing comma and missing constructor arguments
+        var projection = new ProjectionDefinition
+        {
+            Name = "HomeProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors = new List<ConstructorDefinition>
+            {
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter { Name = "documentFactory", Type = "IObjectDocumentFactory", Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false },
+                        new ConstructorParameter { Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES", IsNullable = false },
+                        new ConstructorParameter { Name = "fooService", Type = "IFooService", Namespace = "Demo.App.Services", IsNullable = false },
+                        new ConstructorParameter { Name = "barService", Type = "IBarService", Namespace = "Demo.App.Services", IsNullable = false },
+                        new ConstructorParameter { Name = "bazService", Type = "IBazService", Namespace = "Demo.App.Services", IsNullable = false },
+                    ]
+                }
+            },
+            Properties = new List<PropertyDefinition>
+            {
+                new() { Name = "Title", Type = "string", Namespace = "System", IsNullable = false },
+            },
+            Events = new List<ProjectionEventDefinition>(),
+            FileLocations = new List<string> { "Demo\\HomeProjection.cs" }
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "HomeProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Must NOT contain trailing comma before closing paren: ", )"
+        Assert.DoesNotContain(", )", code);
+
+        // LoadFromJson signature should include extra constructor parameters
+        Assert.Contains("IFooService fooService", code);
+        Assert.Contains("IBarService barService", code);
+        Assert.Contains("IBazService bazService", code);
+
+        // Constructor call should pass them through
+        Assert.Contains("fooService", code);
+        Assert.Contains("barService", code);
+        Assert.Contains("bazService", code);
+    }
 }

@@ -1,0 +1,222 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - vnext
+
+concurrency:
+  group: pr-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# Minimal top-level permissions, defined per job
+permissions: {}
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read  # Required for checkout
+
+    outputs:
+      coverage-artifact: ${{ steps.upload.outputs.artifact-id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0  # Full history for SonarCloud
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests with coverage
+        run: |
+          dotnet test --configuration Release --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Upload coverage artifact
+        id: upload
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-${{ github.event.pull_request.number }}
+          path: coverage/**/coverage.opencover.xml
+          retention-days: 1
+
+      - name: Generate Job Summary
+        if: always()
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build & Test" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** $HEAD_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** $BASE_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> Coverage report and security analysis require approval and run in a separate job." >> $GITHUB_STEP_SUMMARY
+
+  security-analysis:
+    name: Security Analysis (SonarCloud & Snyk)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    environment: elevation-approved  # Requires approval for fork PRs to access secrets
+
+    permissions:
+      contents: read  # Required for checkout
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Java (for SonarCloud)
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Install SonarCloud scanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: coverage-${{ github.event.pull_request.number }}
+          path: coverage
+
+      # SonarCloud Analysis
+      - name: Begin SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"eriklieben_ErikLieben.FA.ES" \
+            /o:"eriklieben" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
+            /d:sonar.pullrequest.key="$PR_NUMBER" \
+            /d:sonar.pullrequest.branch="$HEAD_REF" \
+            /d:sonar.pullrequest.base="$BASE_REF"
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: End SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      # Coverage Report Generation (requires license)
+      - name: Generate coverage report
+        env:
+          REPORTGENERATOR_LICENSE: ${{ secrets.REPORTGENERATOR_LICENSE }}
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:"coverage/**/coverage.opencover.xml" \
+            -targetdir:"coverage/report" \
+            -reporttypes:"HtmlInline_AzurePipelines;Cobertura;MarkdownSummaryGithub" \
+            -title:"ErikLieben.FA.ES Coverage Report" \
+            -license:"$REPORTGENERATOR_LICENSE"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-report-${{ github.event.pull_request.number }}
+          path: coverage/report
+          retention-days: 30
+
+      - name: Add coverage summary to job
+        run: cat coverage/report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+      # Snyk Security Scanning (results visible in Snyk dashboard)
+      - name: Setup Snyk
+        uses: snyk/actions/setup@9adf32b1121593767fc3c057af55b55db032dc04 # master
+
+      - name: Snyk Open Source (dependency vulnerabilities)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test --file=ErikLieben.FA.ES.sln || true
+        continue-on-error: true
+
+      - name: Snyk Code (SAST)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk code test || true
+        continue-on-error: true
+
+      - name: Monitor project in Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk monitor --file=ErikLieben.FA.ES.sln || true
+        continue-on-error: true
+
+      - name: Generate Job Summary
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.head_ref }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Security Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR:** #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** $HEAD_REF" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Reports" >> $GITHUB_STEP_SUMMARY
+          echo "- [SonarCloud](https://sonarcloud.io/project/overview?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Snyk Dashboard](https://app.snyk.io)" >> $GITHUB_STEP_SUMMARY
