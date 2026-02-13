@@ -21,6 +21,7 @@ internal record ProjectionCodeComponents(
     string FoldMethod,
     string WhenParameterValueBindingCode,
     StringBuilder CtorCode,
+    List<ConstructorParameter> ExtraCtorParams,
     string CheckpointJsonAnnotation,
     string JsonBlobFactoryCode,
     StringBuilder PropertyCode,
@@ -79,8 +80,10 @@ public class GenerateProjectionCode
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
         var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
-        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, generatorVersion);
-        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput);
+        var (ctorCode, extraCtorParams) = SelectBestConstructorAndGenerateCode(projection);
+        var (getExtra, ctorInputExtra) = GenerateExtraCtorParamsForFactory(extraCtorParams);
+        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra, generatorVersion);
+        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra);
         // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
         var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
             ? jsonBlobFactoryCode
@@ -88,15 +91,14 @@ public class GenerateProjectionCode
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, generatorVersion);
         var foldMethod = GenerateFoldMethod(projection, postWhenAllDummyCode);
-        var ctorCode = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
-        var deserializationCode = GenerateDeserializationCode(projection, ctorCode.ToString());
+        var deserializationCode = GenerateDeserializationCode(projection, ctorCode.ToString(), extraCtorParams);
         var createDestinationInstanceCode = GenerateCreateDestinationInstanceMethod(projection);
         var routedProjectionSerializationCode = GenerateRoutedProjectionSerializationMethods();
 
         var codeComponents = new ProjectionCodeComponents(
-            foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
+            foldMethod, whenParameterValueBindingCode, ctorCode, extraCtorParams, checkpointJsonAnnotation,
             combinedFactoryCode, propertyCode, serializableCode, deserializationCode, createDestinationInstanceCode,
             routedProjectionSerializationCode);
 
@@ -437,7 +439,36 @@ public class GenerateProjectionCode
         return (getBuilder.ToString(), ctorInputBuilder.ToString());
     }
 
-    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string version)
+    private static (string get, string ctorInput) GenerateExtraCtorParamsForFactory(List<ConstructorParameter> extraParams)
+    {
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+        foreach (var param in extraParams)
+        {
+            getBuilder.AppendLine($"            var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};");
+            ctorInputBuilder.Append($", {param.Name}!");
+        }
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
+
+    private static (string serviceProviderParam, string newMethodBody, string loadFromJsonBody) BuildFactoryMethodBodies(
+        string projectionName, string get, string ctorInput, string getExtra, string ctorInputExtra)
+    {
+        var needsServiceProvider = !string.IsNullOrEmpty(get);
+        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+
+        var newMethodBody = needsServiceProvider
+            ? $"{get}            return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+
+        var loadFromJsonBody = !string.IsNullOrEmpty(getExtra)
+            ? $"{getExtra}            return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
+            : $"return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+
+        return (serviceProviderParam, newMethodBody, loadFromJsonBody);
+    }
+
+    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra, string version)
     {
         if (projection.BlobProjection == null)
         {
@@ -451,15 +482,11 @@ public class GenerateProjectionCode
         // Check if this is a routed projection
         if (projection is RoutedProjectionDefinition routedProjection && routedProjection.IsRoutedProjection)
         {
-            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get);
+            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, getExtra, ctorInputExtra);
         }
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
-
-        var newMethodBody = needsServiceProvider
-            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
-            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
 
         return $$"""
                  /// <summary>
@@ -494,13 +521,13 @@ public class GenerateProjectionCode
                      /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
                      protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
                      {
-                         return {{projection.Name}}.LoadFromJson(json, documentFactory, eventStreamFactory);
+                         {{loadFromJsonBody}}
                      }
                  }
                 """;
     }
 
-    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput)
+    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra)
     {
         if (projection.CosmosDbProjection == null)
         {
@@ -511,12 +538,8 @@ public class GenerateProjectionCode
         usings.Add("ErikLieben.FA.ES.CosmosDb.Configuration");
         usings.Add("Microsoft.Azure.Cosmos");
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
-
-        var newMethodBody = needsServiceProvider
-            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
-            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
 
         return $$"""
                  /// <summary>
@@ -556,21 +579,21 @@ public class GenerateProjectionCode
                      /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
                      protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
                      {
-                         return {{projection.Name}}.LoadFromJson(json, documentFactory, eventStreamFactory);
+                         {{loadFromJsonBody}}
                      }
                  }
                 """;
     }
 
-    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get)
+    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string getExtra, string ctorInputExtra)
     {
         usings.Add("ErikLieben.FA.ES.Projections");
         usings.Add("System.Text");
         usings.Add("System.Text.Json");
         usings.Add("System.IO");
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+        var (serviceProviderParam, _, loadMainBody) = BuildFactoryMethodBodies(
+            projection.Name, get, string.Empty, getExtra, ctorInputExtra);
 
         var destinationType = projection.DestinationType ?? "Projection";
 
@@ -605,7 +628,7 @@ public class GenerateProjectionCode
                          IObjectDocumentFactory documentFactory,
                          IEventStreamFactory eventStreamFactory)
                      {
-                         return {{projection.Name}}.LoadFromJson(json, documentFactory, eventStreamFactory);
+                         {{loadMainBody}}
                      }
 
                      /// <summary>
@@ -1021,18 +1044,19 @@ public class GenerateProjectionCode
         return foldCode.ToString();
     }
 
-    private static StringBuilder SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
+    private static (StringBuilder CtorCode, List<ConstructorParameter> ExtraParams) SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
     {
         var ctorCode = new StringBuilder();
+        var extraParams = new List<ConstructorParameter>();
 
         var bestMatch = RankConstructorsByPropertyMatch(projection, SpecialDependencies).FirstOrDefault();
 
         if (bestMatch != null)
         {
-            GenerateConstructorParameters(bestMatch.Constructor, projection, ctorCode);
+            GenerateConstructorParameters(bestMatch.Constructor, projection, ctorCode, extraParams);
         }
 
-        return ctorCode;
+        return (ctorCode, extraParams);
     }
 
     private static List<dynamic> RankConstructorsByPropertyMatch(ProjectionDefinition projection, string[] specialDependencies)
@@ -1072,8 +1096,9 @@ public class GenerateProjectionCode
     }
 
     private static void GenerateConstructorParameters(ConstructorDefinition constructor, ProjectionDefinition projection,
-        StringBuilder ctorCode)
+        StringBuilder ctorCode, List<ConstructorParameter> extraParams)
     {
+        var args = new List<string>();
         foreach (var parameter in constructor.Parameters)
         {
             if (parameter.Type is "IObjectDocumentFactory" or "IEventStreamFactory")
@@ -1081,10 +1106,10 @@ public class GenerateProjectionCode
                 switch (parameter.Type)
                 {
                     case "IObjectDocumentFactory":
-                        ctorCode.Append("documentFactory");
+                        args.Add("documentFactory");
                         break;
                     case "IEventStreamFactory":
-                        ctorCode.Append("eventStreamFactory");
+                        args.Add("eventStreamFactory");
                         break;
                 }
             }
@@ -1092,21 +1117,21 @@ public class GenerateProjectionCode
             {
                 var name = projection.Properties.FirstOrDefault(p =>
                     p.Name.Equals(parameter.Name, StringComparison.InvariantCultureIgnoreCase))?.Name;
-                if (name is null)
+                if (name is not null)
                 {
-                    continue;
+                    args.Add("obj." + name);
                 }
-                ctorCode.Append("obj." + name);
-            }
-
-            if (parameter != constructor.Parameters[^1])
-            {
-                ctorCode.Append(", ");
+                else
+                {
+                    args.Add(parameter.Name);
+                    extraParams.Add(parameter);
+                }
             }
         }
+        ctorCode.Append(string.Join(", ", args));
     }
 
-    private static string GenerateDeserializationCode(ProjectionDefinition projection, string ctorParams)
+    private static string GenerateDeserializationCode(ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
     {
         var code = new StringBuilder();
 
@@ -1175,22 +1200,21 @@ public class GenerateProjectionCode
         var ctorParamsWithValues = ctorParams;
         if (ctorParams.Contains("documentFactory, eventStreamFactory"))
         {
-            // Extract additional parameters beyond the standard factories
-            var extraParams = new List<string>();
+            var args = new List<string> { "documentFactory", "eventStreamFactory" };
+
+            // Add property-matched params as deserialized locals with null-forgiving operator
             foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint"))
             {
-                var varName = ToCamelCase(property.Name);
-                var paramMatch = $", {varName}";
-                if (ctorParams.Contains(paramMatch))
+                if (ctorParams.Contains($"obj.{property.Name}"))
                 {
-                    extraParams.Add($", {varName}");
+                    args.Add($"{ToCamelCase(property.Name)}!");
                 }
             }
 
-            if (extraParams.Count > 0)
-            {
-                ctorParamsWithValues = "documentFactory, eventStreamFactory" + string.Join("", extraParams.Select(p => $"{p}!"));
-            }
+            // Add extra constructor params (passed through from LoadFromJson method signature)
+            args.AddRange(extraCtorParams.Select(p => p.Name));
+
+            ctorParamsWithValues = string.Join(", ", args);
         }
 
         code.AppendLine($"                                var instance = new {projection.Name}({ctorParamsWithValues});");
@@ -1317,12 +1341,24 @@ public class GenerateProjectionCode
         string? path,
         string version)
     {
+        // Add namespaces for extra constructor params
+        foreach (var param in components.ExtraCtorParams.Where(p => !string.IsNullOrWhiteSpace(p.Namespace)))
+        {
+            if (!usings.Contains(param.Namespace))
+            {
+                usings.Add(param.Namespace);
+            }
+        }
+
         var code = new StringBuilder();
 
         foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
         }
+
+        var extraParamDeclarations = string.Join("", components.ExtraCtorParams
+            .Select(p => $", {p.Type} {p.Name}"));
 
         code.AppendLine("");
         code.AppendLine($$"""
@@ -1356,7 +1392,7 @@ public class GenerateProjectionCode
 
                               [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
                               [ExcludeFromCodeCoverage]
-                              public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                              public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory{{extraParamDeclarations}})
                               {
                                 {{components.DeserializationCode}}
                               }

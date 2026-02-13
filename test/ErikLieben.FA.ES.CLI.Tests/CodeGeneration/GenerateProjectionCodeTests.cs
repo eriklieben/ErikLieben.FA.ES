@@ -1116,4 +1116,141 @@ public class GenerateProjectionCodeTests
         // CosmosDB factory class should be partial to allow user-defined extensions
         Assert.Contains("public partial class CosmosPartialProjectionFactory(", code);
     }
+
+    [Fact]
+    public async Task Generate_includes_extra_constructor_params_in_LoadFromJson_without_trailing_comma()
+    {
+        // Arrange – projection whose constructor has extra DI services that don't match any property
+        var projection = new ProjectionDefinition
+        {
+            Name = "HomeProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "fooService", Type = "IFooService", Namespace = "Demo.App.Services",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "barService", Type = "IBarService", Namespace = "Demo.App.Services",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "bazService", Type = "IBazService", Namespace = "Demo.App.Services",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties =
+            [
+                new() { Name = "Title", Type = "String", Namespace = "System", IsNullable = false }
+            ],
+            Events = [],
+            FileLocations = ["Demo\\HomeProjection.cs"]
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "HomeProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Static LoadFromJson signature must include extra params
+        Assert.Contains("IFooService fooService", code);
+        Assert.Contains("IBarService barService", code);
+        Assert.Contains("IBazService bazService", code);
+
+        // Must NOT have trailing comma or empty param slot
+        Assert.DoesNotContain(", )", code);
+        Assert.DoesNotContain(",,", code);
+
+        // Constructor call must include all three extra services
+        Assert.Contains("fooService", code);
+        Assert.Contains("barService", code);
+        Assert.Contains("bazService", code);
+    }
+
+    [Fact]
+    public async Task Generate_blob_factory_LoadFromJson_passes_extra_params_via_service_provider()
+    {
+        // Arrange – projection with blob factory and extra DI constructor params
+        var projection = new ProjectionDefinition
+        {
+            Name = "OrderProjection",
+            Namespace = "Demo.App.Projections",
+            ExternalCheckpoint = false,
+            Constructors =
+            [
+                new()
+                {
+                    Parameters =
+                    [
+                        new ConstructorParameter
+                        {
+                            Name = "documentFactory", Type = "IObjectDocumentFactory",
+                            Namespace = "ErikLieben.FA.ES.Documents", IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "eventStreamFactory", Type = "IEventStreamFactory", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "pricingService", Type = "IPricingService", Namespace = "Demo.App.Services",
+                            IsNullable = false
+                        }
+                    ]
+                }
+            ],
+            Properties = [],
+            Events = [],
+            BlobProjection = new BlobProjectionDefinition { Container = "orders", Connection = "BlobStorage" },
+            FileLocations = ["Demo\\OrderProjection.cs"]
+        };
+
+        var (solution, outDir) = BuildSolution(projection);
+        var sut = new GenerateProjectionCode(solution, new Config(), outDir);
+
+        // Act
+        await sut.Generate();
+
+        // Assert
+        var generatedPath = Path.Combine(outDir, "Demo", "OrderProjection.Generated.cs");
+        Assert.True(File.Exists(generatedPath));
+        var code = await File.ReadAllTextAsync(generatedPath);
+
+        // Static LoadFromJson should include extra param in signature
+        Assert.Contains("IPricingService pricingService", code);
+
+        // Factory's LoadFromJson override should resolve extra deps via serviceProvider and forward them
+        var factorySection = code.Substring(code.IndexOf("OrderProjectionFactory"));
+        Assert.Contains("LoadFromJson", factorySection);
+        Assert.Contains("OrderProjection.LoadFromJson(json, documentFactory, eventStreamFactory", factorySection);
+        Assert.Contains("pricingService", factorySection);
+    }
 }
