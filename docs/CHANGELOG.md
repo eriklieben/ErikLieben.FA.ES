@@ -1,3 +1,17 @@
+## [1.3.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.3.7) (2026-02-13)
+
+### 🐛 Bug fixes
+
+* emit valid C# for projections with empty namespaces and extra constructor parameters ([#61](https://github.com/eriklieben/ErikLieben.FA.ES/issues/61)) ([0381530](https://github.com/eriklieben/ErikLieben.FA.ES/commit/03815306077057c0eabb7ba33dd013c3245ec0cc))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency Azure.Identity to 1.17.1 ([#53](https://github.com/eriklieben/ErikLieben.FA.ES/issues/53)) ([f529cc2](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f529cc25ebad095d76397b8f8092597188a9b20b))
+* **deps:** Update dependency dotnet-sdk to 9.0.308 ([#47](https://github.com/eriklieben/ErikLieben.FA.ES/issues/47)) ([5396e25](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5396e25db9527a1eb3d823126208dfd082b934d7))
+* **deps:** Update dependency Spectre.Console to 0.54.0 ([#52](https://github.com/eriklieben/ErikLieben.FA.ES/issues/52)) ([c87055d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/c87055d3069151bfbdc7d847375bebd57159e699))
+* **deps:** Update dependency Spectre.Console.Testing to 0.54.0 ([#51](https://github.com/eriklieben/ErikLieben.FA.ES/issues/51)) ([3de4d3b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/3de4d3b857b320ef2abb311ba92eee8439cfd457))
+* **deps:** Update dependency System.Formats.Asn1 to 9.0.11 ([#48](https://github.com/eriklieben/ErikLieben.FA.ES/issues/48)) ([49c4ae4](https://github.com/eriklieben/ErikLieben.FA.ES/commit/49c4ae469746409b08d54c91925ddd645787353d))
+
 ## [1.3.6](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.5...v1.3.6) (2025-11-12)
 
 ### 🐛 Bug fixes
