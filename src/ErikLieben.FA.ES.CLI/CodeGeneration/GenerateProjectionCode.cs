@@ -17,6 +17,7 @@ internal record ProjectionCodeComponents(
     string FoldMethod,
     string WhenParameterValueBindingCode,
     StringBuilder CtorCode,
+    List<ConstructorParameter> ExtraCtorParams,
     string CheckpointJsonAnnotation,
     string JsonBlobFactoryCode,
     StringBuilder PropertyCode,
@@ -75,11 +76,11 @@ public class GenerateProjectionCode
         var postWhenCode = GeneratePostWhenCode(projection);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, version);
         var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, version);
-        var ctorCode = SelectBestConstructorAndGenerateCode(projection);
+        var (ctorCode, extraCtorParams) = SelectBestConstructorAndGenerateCode(projection);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
 
         var codeComponents = new ProjectionCodeComponents(
-            foldMethod, whenParameterValueBindingCode, ctorCode, checkpointJsonAnnotation,
+            foldMethod, whenParameterValueBindingCode, ctorCode, extraCtorParams, checkpointJsonAnnotation,
             jsonBlobFactoryCode, propertyCode, serializableCode);
 
         await AssembleAndWriteCode(projection, usings, codeComponents, path, solution.Generator?.Version ?? "1.0.0");
@@ -376,19 +377,20 @@ public class GenerateProjectionCode
                   """;
     }
 
-    private static StringBuilder SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
+    private static (StringBuilder CtorCode, List<ConstructorParameter> ExtraParams) SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
     {
         var ctorCode = new StringBuilder();
+        var extraParams = new List<ConstructorParameter>();
         var specialDependencies = new[] { "IObjectDocumentFactory", "IEventStreamFactory" };
 
         var bestMatch = RankConstructorsByPropertyMatch(projection, specialDependencies).FirstOrDefault();
 
         if (bestMatch != null)
         {
-            GenerateConstructorParameters(bestMatch.Constructor, projection, ctorCode);
+            GenerateConstructorParameters(bestMatch.Constructor, projection, ctorCode, extraParams);
         }
 
-        return ctorCode;
+        return (ctorCode, extraParams);
     }
 
     private static List<dynamic> RankConstructorsByPropertyMatch(ProjectionDefinition projection, string[] specialDependencies)
@@ -428,8 +430,10 @@ public class GenerateProjectionCode
     }
 
     private static void GenerateConstructorParameters(ConstructorDefinition constructor, ProjectionDefinition projection,
-        StringBuilder ctorCode)
+        StringBuilder ctorCode, List<ConstructorParameter> extraParams)
     {
+        var args = new List<string>();
+
         foreach (var parameter in constructor.Parameters)
         {
             if (parameter.Type is "IObjectDocumentFactory" or "IEventStreamFactory")
@@ -437,10 +441,10 @@ public class GenerateProjectionCode
                 switch (parameter.Type)
                 {
                     case "IObjectDocumentFactory":
-                        ctorCode.Append("documentFactory");
+                        args.Add("documentFactory");
                         break;
                     case "IEventStreamFactory":
-                        ctorCode.Append("eventStreamFactory");
+                        args.Add("eventStreamFactory");
                         break;
                 }
             }
@@ -448,18 +452,19 @@ public class GenerateProjectionCode
             {
                 var name = projection.Properties.FirstOrDefault(p =>
                     p.Name.Equals(parameter.Name, StringComparison.InvariantCultureIgnoreCase))?.Name;
-                if (name is null)
+                if (name is not null)
                 {
-                    continue;
+                    args.Add("obj." + name);
                 }
-                ctorCode.Append("obj." + name);
-            }
-
-            if (parameter != constructor.Parameters[^1])
-            {
-                ctorCode.Append(", ");
+                else
+                {
+                    args.Add(parameter.Name);
+                    extraParams.Add(parameter);
+                }
             }
         }
+
+        ctorCode.Append(string.Join(", ", args));
     }
 
     private static async Task AssembleAndWriteCode(
@@ -469,9 +474,20 @@ public class GenerateProjectionCode
         string? path,
         string version)
     {
+        var extraParamDeclarations = string.Join("", components.ExtraCtorParams
+            .Select(p => $", {p.Type} {p.Name}"));
+
+        foreach (var p in components.ExtraCtorParams.Where(p => !string.IsNullOrWhiteSpace(p.Namespace)))
+        {
+            if (!usings.Contains(p.Namespace))
+            {
+                usings.Add(p.Namespace);
+            }
+        }
+
         var code = new StringBuilder();
 
-        foreach (var namespaceName in usings.Distinct().Order())
+        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
         }
@@ -508,7 +524,7 @@ public class GenerateProjectionCode
 
                               [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
                               [ExcludeFromCodeCoverage]
-                              public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                              public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory{{extraParamDeclarations}})
                               {
                                 var obj = JsonSerializer.Deserialize(json, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
                                 if (obj is null) {
