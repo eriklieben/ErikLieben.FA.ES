@@ -451,6 +451,23 @@ public class GenerateProjectionCode
         return (getBuilder.ToString(), ctorInputBuilder.ToString());
     }
 
+    private static (string serviceProviderParam, string newMethodBody, string loadFromJsonBody) BuildFactoryMethodBodies(
+        string projectionName, string get, string ctorInput, string getExtra, string ctorInputExtra)
+    {
+        var needsServiceProvider = !string.IsNullOrEmpty(get);
+        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+
+        var newMethodBody = needsServiceProvider
+            ? $"{get}            return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+
+        var loadFromJsonBody = !string.IsNullOrEmpty(getExtra)
+            ? $"{getExtra}            return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
+            : $"return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+
+        return (serviceProviderParam, newMethodBody, loadFromJsonBody);
+    }
+
     private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra, string version)
     {
         if (projection.BlobProjection == null)
@@ -468,16 +485,8 @@ public class GenerateProjectionCode
             return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, getExtra, ctorInputExtra);
         }
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
-
-        var newMethodBody = needsServiceProvider
-            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
-            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
-
-        var loadFromJsonBody = !string.IsNullOrEmpty(getExtra)
-            ? $"{getExtra}            return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
-            : $"return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
 
         return $$"""
                  /// <summary>
@@ -529,16 +538,8 @@ public class GenerateProjectionCode
         usings.Add("ErikLieben.FA.ES.CosmosDb.Configuration");
         usings.Add("Microsoft.Azure.Cosmos");
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
-
-        var newMethodBody = needsServiceProvider
-            ? $"{get}            return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});"
-            : $"return new {projection.Name}(objectDocumentFactory, eventStreamFactory{ctorInput});";
-
-        var loadFromJsonBody = !string.IsNullOrEmpty(getExtra)
-            ? $"{getExtra}            return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
-            : $"return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
 
         return $$"""
                  /// <summary>
@@ -591,12 +592,8 @@ public class GenerateProjectionCode
         usings.Add("System.Text.Json");
         usings.Add("System.IO");
 
-        var needsServiceProvider = !string.IsNullOrEmpty(get);
-        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
-
-        var loadMainBody = !string.IsNullOrEmpty(getExtra)
-            ? $"{getExtra}            return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
-            : $"return {projection.Name}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+        var (serviceProviderParam, _, loadMainBody) = BuildFactoryMethodBodies(
+            projection.Name, get, string.Empty, getExtra, ctorInputExtra);
 
         var destinationType = projection.DestinationType ?? "Projection";
 
