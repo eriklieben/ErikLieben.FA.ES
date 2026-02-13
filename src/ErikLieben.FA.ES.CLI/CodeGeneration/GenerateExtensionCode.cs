@@ -117,7 +117,7 @@ public async Task Generate()
         }
 
         var ss = new StringBuilder();
-        foreach (var @namespace in jsonNamespaces.Distinct().Order())
+        foreach (var @namespace in jsonNamespaces.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().Order())
         {
             ss.AppendLine($"using {@namespace};");
         }
