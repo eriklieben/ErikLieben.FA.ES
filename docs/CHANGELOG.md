@@ -98,6 +98,12 @@
 
 * combined changes for v2 ([159acf3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/159acf3de8acc75c92587e17aca3f671cd082e83))
 
+## [1.3.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.3.7) (2026-02-13)
+
+### 🐛 Bug fixes
+
+* emit valid C# for projections with empty namespaces and extra constructor parameters ([#61](https://github.com/eriklieben/ErikLieben.FA.ES/issues/61)) ([0381530](https://github.com/eriklieben/ErikLieben.FA.ES/commit/03815306077057c0eabb7ba33dd013c3245ec0cc))
+
 ### ⬆️ Dependency updates
 
 * **deps:** Update dependency Azure.Identity to 1.17.1 ([#53](https://github.com/eriklieben/ErikLieben.FA.ES/issues/53)) ([f529cc2](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f529cc25ebad095d76397b8f8092597188a9b20b))
