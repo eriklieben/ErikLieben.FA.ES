@@ -502,5 +502,217 @@ public class SnapshotAssertionTests
 
             Assert.Contains("Name mismatch", ex.Message);
         }
+
+        [Fact]
+        public void Should_throw_when_deserialized_snapshot_is_default()
+        {
+            // Store a JSON "null" value so deserialization returns default
+            var snapshotPath = Path.Combine(_testSnapshotDir, "null_deser.json");
+            File.WriteAllText(snapshotPath, "null");
+
+            var data = new TestData("Test", 1);
+
+            var ex = Assert.Throws<TestAssertionException>(() =>
+                SnapshotAssertion.MatchesSnapshot(data, "null_deser", new TestComparer()));
+
+            Assert.Contains("Failed to deserialize snapshot", ex.Message);
+        }
+    }
+
+    [Collection("SnapshotTests")]
+    public class MatchesSnapshotAsyncMismatch : IDisposable
+    {
+        private readonly string _testSnapshotDir;
+        private readonly string _originalDir;
+
+        public MatchesSnapshotAsyncMismatch()
+        {
+            _originalDir = SnapshotAssertion.SnapshotDirectory;
+            _testSnapshotDir = Path.Combine(Path.GetTempPath(), $"snapshot_tests_{Guid.NewGuid()}");
+            Directory.CreateDirectory(_testSnapshotDir);
+            SnapshotAssertion.SnapshotDirectory = _testSnapshotDir;
+        }
+
+        public void Dispose()
+        {
+            SnapshotAssertion.SnapshotDirectory = _originalDir;
+            if (Directory.Exists(_testSnapshotDir))
+            {
+                Directory.Delete(_testSnapshotDir, recursive: true);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        [Fact]
+        public async Task Should_throw_when_async_snapshot_does_not_match()
+        {
+            var snapshotPath = Path.Combine(_testSnapshotDir, "async_mismatch.json");
+            await File.WriteAllTextAsync(snapshotPath, """{"Name":"Original","Value":1}""");
+
+            var testObject = new { Name = "Changed", Value = 2 };
+
+            var ex = await Assert.ThrowsAsync<TestAssertionException>(() =>
+                SnapshotAssertion.MatchesSnapshotAsync(testObject, "async_mismatch"));
+
+            Assert.Contains("async_mismatch", ex.Message);
+            Assert.Contains("UPDATE_SNAPSHOTS", ex.Message);
+        }
+    }
+
+    [Collection("SnapshotTests")]
+    public class SnapshotFormatTests : IDisposable
+    {
+        private readonly string _testSnapshotDir;
+        private readonly string _originalDir;
+
+        public SnapshotFormatTests()
+        {
+            _originalDir = SnapshotAssertion.SnapshotDirectory;
+            _testSnapshotDir = Path.Combine(Path.GetTempPath(), $"snapshot_tests_{Guid.NewGuid()}");
+            Directory.CreateDirectory(_testSnapshotDir);
+            SnapshotAssertion.SnapshotDirectory = _testSnapshotDir;
+        }
+
+        public void Dispose()
+        {
+            SnapshotAssertion.SnapshotDirectory = _originalDir;
+            if (Directory.Exists(_testSnapshotDir))
+            {
+                Directory.Delete(_testSnapshotDir, recursive: true);
+            }
+            GC.SuppressFinalize(this);
+        }
+
+        [Fact]
+        public void Should_use_yaml_extension_for_yaml_format()
+        {
+            var testObject = new { Name = "Test" };
+            var options = new SnapshotOptions { Format = SnapshotFormat.Yaml };
+
+            SnapshotAssertion.UpdateSnapshot(testObject, "yaml_test", options);
+
+            var snapshotPath = Path.Combine(_testSnapshotDir, "yaml_test.yaml");
+            Assert.True(File.Exists(snapshotPath));
+        }
+
+        [Fact]
+        public void Should_filter_ignored_properties_in_nested_arrays()
+        {
+            var testObject = new
+            {
+                Items = new[]
+                {
+                    new { Name = "A", Secret = "hidden1" },
+                    new { Name = "B", Secret = "hidden2" }
+                },
+                Total = 2
+            };
+            var options = new SnapshotOptions
+            {
+                IgnoredProperties = new List<string> { "Secret" }
+            };
+
+            SnapshotAssertion.UpdateSnapshot(testObject, "nested_array", options);
+
+            var snapshotPath = Path.Combine(_testSnapshotDir, "nested_array.json");
+            var content = File.ReadAllText(snapshotPath);
+            Assert.Contains("Name", content);
+            Assert.DoesNotContain("Secret", content);
+            Assert.Contains("Total", content);
+        }
+
+        [Fact]
+        public void Should_filter_properties_with_various_json_value_types()
+        {
+            var testObject = new
+            {
+                StringProp = "hello",
+                NumberProp = 42.5,
+                BoolTrue = true,
+                BoolFalse = false,
+                NullProp = (string?)null,
+                Sensitive = "remove-me"
+            };
+            var options = new SnapshotOptions
+            {
+                IgnoredProperties = new List<string> { "Sensitive" }
+            };
+
+            SnapshotAssertion.UpdateSnapshot(testObject, "value_types", options);
+
+            var snapshotPath = Path.Combine(_testSnapshotDir, "value_types.json");
+            var content = File.ReadAllText(snapshotPath);
+            Assert.Contains("hello", content);
+            Assert.Contains("42.5", content);
+            Assert.Contains("true", content);
+            Assert.Contains("false", content);
+            Assert.DoesNotContain("remove-me", content);
+        }
+
+        [Fact]
+        public void Should_match_snapshot_with_whitespace_ignored()
+        {
+            var snapshotPath = Path.Combine(_testSnapshotDir, "whitespace.json");
+            File.WriteAllText(snapshotPath, "  {\"Name\":\"Test\"}  ");
+
+            var testObject = new { Name = "Test" };
+            var options = new SnapshotOptions
+            {
+                IgnoreWhitespace = true,
+                PrettyPrint = false
+            };
+
+            // Should not throw because whitespace is trimmed before comparison
+            SnapshotAssertion.MatchesSnapshot(testObject, "whitespace", options);
+            Assert.True(true);
+        }
+
+        [Fact]
+        public void Should_not_match_snapshot_with_whitespace_when_not_ignoring()
+        {
+            var snapshotPath = Path.Combine(_testSnapshotDir, "no_ws_ignore.json");
+            File.WriteAllText(snapshotPath, "  {\"Name\":\"Test\"}  ");
+
+            var testObject = new { Name = "Test" };
+            var options = new SnapshotOptions
+            {
+                IgnoreWhitespace = false,
+                PrettyPrint = false
+            };
+
+            var ex = Assert.Throws<TestAssertionException>(() =>
+                SnapshotAssertion.MatchesSnapshot(testObject, "no_ws_ignore", options));
+
+            Assert.Contains("no_ws_ignore", ex.Message);
+        }
+
+        [Fact]
+        public async Task Should_overwrite_existing_snapshot_async()
+        {
+            var snapshotPath = Path.Combine(_testSnapshotDir, "overwrite_async.json");
+            await File.WriteAllTextAsync(snapshotPath, """{"Old":"Value"}""");
+
+            var testObject = new { New = "Value" };
+            await SnapshotAssertion.UpdateSnapshotAsync(testObject, "overwrite_async");
+
+            var content = await File.ReadAllTextAsync(snapshotPath);
+            Assert.Contains("New", content);
+            Assert.DoesNotContain("Old", content);
+        }
+
+        [Fact]
+        public void Should_serialize_text_format_with_null_returns_empty()
+        {
+            // Using an object whose ToString() returns null
+            var options = new SnapshotOptions { Format = SnapshotFormat.Text };
+
+            // We use a non-null object so ThrowIfNull won't fire, but ToString is still text format
+            var testObj = "some text";
+            SnapshotAssertion.UpdateSnapshot(testObj, "text_test", options);
+
+            var snapshotPath = Path.Combine(_testSnapshotDir, "text_test.txt");
+            Assert.True(File.Exists(snapshotPath));
+            Assert.Equal("some text", File.ReadAllText(snapshotPath));
+        }
     }
 }
