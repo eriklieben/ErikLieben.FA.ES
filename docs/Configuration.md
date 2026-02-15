@@ -4,7 +4,56 @@ This document covers all configuration options for the ErikLieben.FA.ES event so
 
 ## Service Registration
 
-### Basic Setup
+### Fluent Builder Setup (Recommended)
+
+The fluent builder API provides a clean, discoverable way to configure event sourcing:
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+
+// 1. Register Azure clients
+builder.Services.AddAzureClients(clientBuilder =>
+{
+    clientBuilder.AddBlobServiceClient(connectionString).WithName("Store");
+});
+
+// 2. Configure event sourcing with fluent API
+builder.Services.AddFaes(faes => faes
+    .UseDefaultStorage("blob")
+    .UseBlobStorage(new EventStreamBlobSettings("Store", autoCreateContainer: true))
+);
+
+// 3. Register your domain (generated)
+builder.Services.ConfigureMyDomainFactory();
+```
+
+#### Multiple Storage Providers
+
+```csharp
+builder.Services.AddFaes(faes => faes
+    .UseDefaultStorage("blob")
+    .UseBlobStorage(new EventStreamBlobSettings("Store"))
+    .UseTableStorage(new EventStreamTableSettings("Tables"))
+    .UseCosmosDb(new EventStreamCosmosDbSettings { DatabaseName = "eventstore" })
+);
+```
+
+#### With Health Checks
+
+```csharp
+builder.Services.AddFaes(faes => faes
+    .UseDefaultStorage("blob")
+    .UseBlobStorage(new EventStreamBlobSettings("Store"))
+    .AddBlobHealthCheck("Store")
+    .UseCosmosDb(cosmosSettings)
+    .AddCosmosDbHealthCheck()
+);
+```
+
+### Classic Setup
+
+The traditional configuration approach is still supported:
 
 ```csharp
 // Program.cs
