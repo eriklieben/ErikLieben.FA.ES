@@ -1,0 +1,140 @@
+# ErikLieben.FA.ES - Event Sourcing Library for .NET
+
+> An event sourcing framework with code generation, multiple storage providers, and AOT support.
+
+## Quick Reference
+
+- Package: `ErikLieben.FA.ES`
+- CLI Tool: `dotnet faes`
+- Target: .NET 9+, AOT-compatible
+- Storage: Azure Blob, Table, CosmosDB
+
+## Essential Patterns
+
+### Creating an Aggregate
+
+```csharp
+// 1. Mark class with [Aggregate] and make it partial
+[Aggregate]
+public partial class Order : Aggregate
+{
+    public Order(IEventStream stream) : base(stream) { }
+
+    // 2. Public properties for state (private setters)
+    public string? CustomerId { get; private set; }
+    public decimal Total { get; private set; }
+    public bool IsShipped { get; private set; }
+
+    // 3. Command methods that append events using Fold(context.Append(...))
+    public async Task CreateOrder(string customerId)
+    {
+        await Stream.Session(context =>
+            Fold(context.Append(new OrderCreated(customerId, DateTime.UtcNow))));
+    }
+
+    // 4. When methods to apply events to state (called by generated Fold)
+    private void When(OrderCreated @event)
+    {
+        CustomerId = @event.CustomerId;
+    }
+}
+```
+
+### Creating Events
+
+```csharp
+// Use record types with [EventName] attribute
+[EventName("Order.Created")]
+public record OrderCreated(string CustomerId, DateTime CreatedAt);
+
+[EventName("Order.Shipped")]
+public record OrderShipped(string TrackingNumber, DateTime ShippedAt);
+```
+
+### Creating a Projection
+
+```csharp
+[BlobJsonProjection("projections")]
+public partial class OrderDashboard : Projection
+{
+    public int TotalOrders { get; private set; }
+    public decimal TotalRevenue { get; private set; }
+
+    // When methods receive events from multiple aggregates
+    private void When(OrderCreated @event)
+    {
+        TotalOrders++;
+    }
+
+    private void When(OrderCompleted @event)
+    {
+        TotalRevenue += @event.Amount;
+    }
+}
+```
+
+## Critical Rules
+
+1. **Always run `dotnet faes` after adding/modifying aggregates, events, or projections**
+2. **Always use `Fold(context.Append(...))` - never just `context.Append(...)`**
+3. **Classes must be `partial` - the CLI generates the other half**
+4. **Events are immutable records - never modify after creation**
+5. **State changes only happen in When methods, triggered by Fold**
+
+## Common Mistakes to Avoid
+
+- DO NOT call `context.Append()` without wrapping in `Fold()`
+- DO NOT make aggregate classes non-partial
+- DO NOT modify state directly in command methods
+- DO NOT forget to run `dotnet faes` after changes
+- DO NOT use mutable types in events
+
+## Storage Configuration
+
+```csharp
+// Blob Storage (default)
+services.ConfigureBlobEventStore(new EventStreamBlobSettings("Store"));
+
+// Table Storage
+[EventStreamType("table", "table")]
+public partial class MyAggregate : Aggregate { }
+
+// CosmosDB
+[EventStreamType("cosmosdb", "cosmosdb")]
+public partial class MyAggregate : Aggregate { }
+```
+
+## CLI Commands
+
+```bash
+dotnet faes              # Generate code for all aggregates/projections
+dotnet faes watch        # Watch mode - regenerate on file changes
+dotnet faes --with-diff  # Show what will be generated
+```
+
+## Documentation
+
+- Getting Started: docs/GettingStarted.md
+- Aggregates: docs/Aggregates.md
+- Projections: docs/Projections.md
+- Testing: docs/Testing.md
+- Storage Providers: docs/StorageProviders.md
+- Event Upcasting: docs/EventUpcasting.md
+- Live Migration: docs/LiveMigration.md
+
+## Project Structure
+
+```
+src/
+  ErikLieben.FA.ES/                    # Core library
+  ErikLieben.FA.ES.Analyzers/          # Roslyn analyzers
+  ErikLieben.FA.ES.AspNetCore.MinimalApis/  # ASP.NET Core integration
+  ErikLieben.FA.ES.AzureStorage/       # Blob & Table storage
+  ErikLieben.FA.ES.CosmosDb/           # CosmosDB storage
+  ErikLieben.FA.ES.CLI/                # Code generation CLI
+  ErikLieben.FA.ES.Testing/            # Test utilities
+  ErikLieben.FA.ES.EventStreamManagement/  # Migration tools
+demo/
+  src/TaskFlow.Domain/                 # Example domain with aggregates
+  src/TaskFlow.Api/                    # Example API endpoints
+```

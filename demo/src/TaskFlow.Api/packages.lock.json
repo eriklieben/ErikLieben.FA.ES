@@ -589,6 +589,7 @@
       "taskflow.servicedefaults": {
         "type": "Project",
         "dependencies": {
+          "ErikLieben.FA.ES": "[1.0.0, )",
           "Microsoft.Extensions.Http.Resilience": "[10.0.0, )",
           "Microsoft.Extensions.ServiceDiscovery": "[10.0.0, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.14.0, )",

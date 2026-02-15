@@ -46,6 +46,9 @@
     <MicrosoftCodeAnalysisCSharpVersion>4.14.0</MicrosoftCodeAnalysisCSharpVersion>
     <MicrosoftCodeAnalysisAnalyzersVersion>4.14.0</MicrosoftCodeAnalysisAnalyzersVersion>
 
+    <!-- Health checks -->
+    <MicrosoftExtensionsDiagnosticsHealthChecksVersion>9.0.4</MicrosoftExtensionsDiagnosticsHealthChecksVersion>
+
     <!-- Other packages -->
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
     <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>

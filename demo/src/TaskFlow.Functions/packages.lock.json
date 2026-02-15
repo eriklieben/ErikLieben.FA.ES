@@ -70,6 +70,18 @@
           "Microsoft.Bcl.AsyncInterfaces": "10.0.0"
         }
       },
+      "Microsoft.Azure.Functions.Worker.Extensions.DurableTask": {
+        "type": "Direct",
+        "requested": "[1.1.6, )",
+        "resolved": "1.1.6",
+        "contentHash": "VJySN/EZXN/ZmX4HAWttGiCFhoFCKFWEFR890pBHALbLS/JvngKo8g3cV4SeeunuF18y1RqNkY+qS+C+0CxzvA==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker.Core": "1.16.0",
+          "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
+          "Microsoft.DurableTask.Client.Grpc": "1.3.0",
+          "Microsoft.DurableTask.Worker.Grpc": "1.3.0"
+        }
+      },
       "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore": {
         "type": "Direct",
         "requested": "[2.1.0, )",
@@ -167,6 +179,11 @@
           "Azure.Storage.Common": "12.22.0",
           "System.Memory.Data": "6.0.0"
         }
+      },
+      "Castle.Core": {
+        "type": "Transitive",
+        "resolved": "5.0.0",
+        "contentHash": "edc8jjyXqzzy8jFdhs36FZdwmlDDTgqPb2Zy1Q5F/f2uAc88bu/VS/0Tpvgupmpl9zJOvOo5ZizVANb0ltN1NQ=="
       },
       "ErikLieben.FA.Results": {
         "type": "Transitive",
@@ -287,6 +304,17 @@
           "System.Configuration.ConfigurationManager": "6.0.0"
         }
       },
+      "Microsoft.Azure.DurableTask.Core": {
+        "type": "Transitive",
+        "resolved": "2.17.1",
+        "contentHash": "zKtXC0wxGxOoAGPi5B0TT0f6mqjave2USL/Q7rJOwf+xVg+axiYpU4kad5muvzib4IeikOBfqWqs/xOFOKqR6w==",
+        "dependencies": {
+          "Castle.Core": "5.0.0",
+          "Newtonsoft.Json": "13.0.1",
+          "System.Reactive.Compatibility": "4.4.1",
+          "System.Reactive.Core": "4.4.1"
+        }
+      },
       "Microsoft.Azure.Functions.Extensions": {
         "type": "Transitive",
         "resolved": "1.1.0",
@@ -369,6 +397,59 @@
         "type": "Transitive",
         "resolved": "1.1.0",
         "contentHash": "J2G1k+u5unBV+aYcwxo94ip16Rkp65pgWFb0R6zwJipzWNMgvqlWeuI7/+R+e8bob66LnSG+llLJ+z8wI94cHg=="
+      },
+      "Microsoft.DurableTask.Abstractions": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "0XPzrwMAlYQJ5vuK1hN4FJl4tjJAVCHJLgl865sUfWMVZiUqbo+NEn8DmabFgq490aQABgYR7Uw1p3aVRwEpJw==",
+        "dependencies": {
+          "Microsoft.Azure.DurableTask.Core": "2.17.1",
+          "Microsoft.Bcl.AsyncInterfaces": "6.0.0"
+        }
+      },
+      "Microsoft.DurableTask.Client": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "9XkZ9RmTG7Ow3YE4bkt3NG2dm3KsU5qrc22gQOdiYZ/KwE5lTfFX1nXXelZifYsQe8eELL9gfreVFNUvLqSPcQ==",
+        "dependencies": {
+          "Microsoft.DurableTask.Abstractions": "1.3.0"
+        }
+      },
+      "Microsoft.DurableTask.Client.Grpc": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "TDlTWOpkLHtdvv9uk38n2zZZfdfplVQeat9T+GG8gLTZnGF9OphkwrNzGSi025/CUxfGaEOG5BHwPdehr4UOzA==",
+        "dependencies": {
+          "Microsoft.DurableTask.Client": "1.3.0",
+          "Microsoft.DurableTask.Grpc": "1.3.0"
+        }
+      },
+      "Microsoft.DurableTask.Grpc": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "U0Q+EiOpPoaX1zUPDZSlwXdnKeEoqbaLuJgtqWXwwMqlqPJw14LSc8U6V3+moEZYtcDJgxrxaq7NsGXemyZ2pg==",
+        "dependencies": {
+          "Google.Protobuf": "3.21.12",
+          "Grpc.Net.Client": "2.52.0"
+        }
+      },
+      "Microsoft.DurableTask.Worker": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "Z3OEiYqvQNDm1De+QAc0lGhhhrmPDqQI/1seh87bivyvIICAY7341eeyXrrB/i2QN2d2TNua6FOI1v6cRgIz+Q==",
+        "dependencies": {
+          "Microsoft.DurableTask.Abstractions": "1.3.0"
+        }
+      },
+      "Microsoft.DurableTask.Worker.Grpc": {
+        "type": "Transitive",
+        "resolved": "1.3.0",
+        "contentHash": "9vSK+KddTCtac99RroJkb+r64hJ6K9rYSPoEroB3Y4MYy/LYYe7e9y5rLUoUs1oHkyHPn2uhOHuaWv1c5AMJog==",
+        "dependencies": {
+          "Microsoft.DurableTask.Abstractions": "1.3.0",
+          "Microsoft.DurableTask.Grpc": "1.3.0",
+          "Microsoft.DurableTask.Worker": "1.3.0"
+        }
       },
       "Microsoft.Extensions.AmbientMetadata.Application": {
         "type": "Transitive",
@@ -633,6 +714,63 @@
         "resolved": "8.0.1",
         "contentHash": "BVYuec3jV23EMRDeR7Dr1/qhx7369dZzJ9IWy2xylvb4YfXsrUxspWc4UWYid/tj4zZK58uGZqn2WQiaDMhmAg=="
       },
+      "System.Reactive": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "iSTPeWR9HJhGoNV4WhVlvofuiTjpok1i4E3LPgMdbMqf3jKhFlT9HAlO32lb52NLppWC/4dZQFfUzTytvyXBmw=="
+      },
+      "System.Reactive.Compatibility": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "Ad2/TBOBV0/45pzccpbQj2vo3S85uipF/PfqkbQUnH0vOtBqrXd1eqWtky5YTXq/WIRU1HF62HFSOdXiNC+E4A==",
+        "dependencies": {
+          "System.Reactive.Core": "4.4.1",
+          "System.Reactive.Interfaces": "4.4.1",
+          "System.Reactive.Linq": "4.4.1",
+          "System.Reactive.PlatformServices": "4.4.1",
+          "System.Reactive.Providers": "4.4.1"
+        }
+      },
+      "System.Reactive.Core": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "YQHJOt8hZvwFelIIfs19t8Jhz5P6NS1ZZccbVUuE1LFyoFZjaUecdYIYykgXzpyj5Rl40XC3xkyuuhHRaAln2w==",
+        "dependencies": {
+          "System.Reactive": "4.4.1"
+        }
+      },
+      "System.Reactive.Interfaces": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "Pk++rL2lxe6yhBEzgc9eJWR57YxYxtAmcz9U0JdKyHEzTLqba3B7MhhYrpN2ToTPVRyJJzxMdPdLieIJvlsACg==",
+        "dependencies": {
+          "System.Reactive": "4.4.1"
+        }
+      },
+      "System.Reactive.Linq": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "wyOVuUyHmPV667REPwcZjFjOlRLX6qSGVcXMye0qUqBAWFB3bu1RO1XLGWZTnf0d67DQHV69kw7tAtTh+4EYyQ==",
+        "dependencies": {
+          "System.Reactive": "4.4.1"
+        }
+      },
+      "System.Reactive.PlatformServices": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "jVF40bEwEES1DpDxI8pRcVEkH/TztFCOSToMYIK6TNE5QojsQljfvZd6jaDG4jRZ9hkoMYyUbkeSDYG/1ldPDg==",
+        "dependencies": {
+          "System.Reactive": "4.4.1"
+        }
+      },
+      "System.Reactive.Providers": {
+        "type": "Transitive",
+        "resolved": "4.4.1",
+        "contentHash": "K9RDgMHsuceX8QTk5ALCgYpexA9qcMsIi4K97Eigqcz9hD6fa4Smrjy8F/m6YdVJZFsBGaZ3uwj+d0loAdMfbA==",
+        "dependencies": {
+          "System.Reactive": "4.4.1"
+        }
+      },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -689,6 +827,7 @@
       "taskflow.servicedefaults": {
         "type": "Project",
         "dependencies": {
+          "ErikLieben.FA.ES": "[1.0.0, )",
           "Microsoft.Extensions.Http.Resilience": "[10.0.0, )",
           "Microsoft.Extensions.ServiceDiscovery": "[10.0.0, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.14.0, )",

@@ -169,6 +169,12 @@
         "dependencies": {
           "Polly.Core": "8.4.2"
         }
+      },
+      "eriklieben.fa.es": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.Extensions.Resilience": "[10.0.0, )"
+        }
       }
     }
   }

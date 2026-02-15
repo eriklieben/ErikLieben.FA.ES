@@ -99,8 +99,10 @@ Requirements: .NET 9.0 or .NET 10.0
 
 | Topic | Description |
 |-------|-------------|
+| [Configuration](docs/Configuration.md) | Service registration and fluent builder API |
 | [Storage Providers](docs/StorageProviders.md) | Azure Blob, Table, and Cosmos DB setup |
 | [Concurrency](docs/Concurrency.md) | Optimistic concurrency and constraints |
+| [Result Types](docs/ResultTypes.md) | Explicit error handling with `Result<T>` |
 | [Testing](docs/Testing.md) | AggregateTestBuilder and Given-When-Then patterns |
 | [Minimal APIs](docs/MinimalApis.md) | `[EventStream]` and `[Projection]` bindings |
 | [Stream Actions](docs/StreamActions.md) | Append, read, and fold operations |
@@ -108,6 +110,7 @@ Requirements: .NET 9.0 or .NET 10.0
 | [Live Migration](docs/LiveMigration.md) | Migrating event streams without downtime |
 | [Event Stream Management](docs/EventStreamManagement.md) | Stream rollover and archiving |
 | [Analyzer Rules](docs/AnalyzerRules.md) | Code analyzers and diagnostics |
+| [v2.0 Migration](docs/v2_migration.md) | Breaking changes and upgrade guide |
 | [Changelog](docs/CHANGELOG.md) | Version history and release notes |
 
 ### Exception Reference

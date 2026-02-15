@@ -85,3 +85,20 @@ artifacts/
 *.aspnetcache/*
 *.aspnetcache/
 *.aspnetcache/
+
+# Windows artifacts
+nul
+NUL
+
+# Claude Code temporary directories
+tmpclaude-*
+
+# Benchmark artifacts
+BenchmarkDotNet.Artifacts/
+
+# Code generation backup
+*.bak.json
+
+# SonarCloud local scripts
+sonarcloud-pr-report.md
+sonarcloud-pr.ps1
