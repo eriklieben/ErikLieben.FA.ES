@@ -52,6 +52,28 @@ public interface IProjectionFactory<T> where T : Projection
     Task<DateTimeOffset?> GetLastModifiedAsync(
         string? blobName = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sets the operational status of the projection.
+    /// Use this to coordinate rebuild operations with inline updates.
+    /// </summary>
+    /// <param name="status">The new status to set.</param>
+    /// <param name="blobName">Optional blob name. If not provided, uses a default name based on the projection type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task SetStatusAsync(
+        ProjectionStatus status,
+        string? blobName = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the current operational status of the projection without loading the full projection state.
+    /// </summary>
+    /// <param name="blobName">Optional blob name. If not provided, uses a default name based on the projection type.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The current projection status, or <see cref="ProjectionStatus.Active"/> if the projection doesn't exist.</returns>
+    Task<ProjectionStatus> GetStatusAsync(
+        string? blobName = null,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -86,6 +108,27 @@ public interface IProjectionFactory
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SaveProjectionAsync(
         Projection projection,
+        string? blobName = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sets the operational status of the projection.
+    /// </summary>
+    /// <param name="status">The new status to set.</param>
+    /// <param name="blobName">Optional blob name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task SetStatusAsync(
+        ProjectionStatus status,
+        string? blobName = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the current operational status of the projection.
+    /// </summary>
+    /// <param name="blobName">Optional blob name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The current projection status.</returns>
+    Task<ProjectionStatus> GetStatusAsync(
         string? blobName = null,
         CancellationToken cancellationToken = default);
 }

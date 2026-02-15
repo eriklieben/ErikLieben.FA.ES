@@ -1,7 +1,7 @@
-﻿using ErikLieben.FA.ES.Configuration;
+using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Exceptions;
+using ErikLieben.FA.ES.Observability;
 using Microsoft.Extensions.Options;
-using System.Diagnostics;
 
 namespace ErikLieben.FA.ES.Documents;
 
@@ -14,7 +14,6 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     private readonly EventStreamDefaultTypeSettings settings;
     private readonly IDocumentTagDocumentFactory documentTagDocumentFactory;
     private readonly Configuration.IAggregateStorageRegistry? aggregateStorageRegistry;
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ObjectDocumentFactory"/> class.
@@ -46,9 +45,16 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectId">The object identifier.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
-    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetAsync)}");
+        using var activity = FaesInstrumentation.Core.StartActivity("ObjectDocument.Get");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ObjectName, objectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, objectId);
+        }
+
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
@@ -58,7 +64,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         var factoryType = (documentType ?? settings.DocumentType).ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            return objectDocumentFactory.GetAsync(objectName, objectId, targetStore);
+            return objectDocumentFactory.GetAsync(objectName, objectId, targetStore, cancellationToken: cancellationToken);
         }
 
         throw new UnableToFindDocumentFactoryException(
@@ -73,11 +79,16 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectId">The object identifier.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
-    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity($"ObjectDocument.{nameof(GetOrCreateAsync)}");
-        activity?.AddTag("ObjectName", objectName);
-        activity?.AddTag("ObjectId", objectId);
+        using var activity = FaesInstrumentation.Core.StartActivity("ObjectDocument.GetOrCreate");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ObjectName, objectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, objectId);
+        }
+
         ArgumentException.ThrowIfNullOrEmpty(objectName);
         ArgumentException.ThrowIfNullOrEmpty(objectId);
 
@@ -87,7 +98,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         var factoryType = (documentType ?? settings.DocumentType).ToLowerInvariant();
         if (objectDocumentFactories.TryGetValue(factoryType, out var objectDocumentFactory))
         {
-            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, targetStore);
+            return objectDocumentFactory.GetOrCreateAsync(objectName, objectId, targetStore, cancellationToken: cancellationToken);
         }
 
         throw new UnableToFindDocumentFactoryException(
@@ -102,8 +113,9 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
     /// <param name="store">Optional store name for loading the document. If not provided, uses the default document store.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         var targetDocumentTagStore = documentTagStore ?? settings.DocumentTagType;
         var documentTagStoreInstance = this.documentTagDocumentFactory.CreateDocumentTagStore(targetDocumentTagStore);
@@ -115,7 +127,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
              return null;
          }
 
-         return await this.GetAsync(objectName, objectId, store);
+         return await this.GetAsync(objectName, objectId, store, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -125,8 +137,9 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
     /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         var targetDocumentTagStore = documentTagStore ?? settings.DocumentTagType;
         var documentTagStoreInstance = this.documentTagDocumentFactory.CreateDocumentTagStore(targetDocumentTagStore);
@@ -135,7 +148,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
         var documents = new List<IObjectDocument>();
         foreach (var objectId in objectIds.Where(objectId => !string.IsNullOrWhiteSpace(objectId)))
         {
-            documents.Add(await this.GetAsync(objectName, objectId, store));
+            documents.Add(await this.GetAsync(objectName, objectId, store, cancellationToken: cancellationToken));
         }
 
         return documents;
@@ -147,9 +160,16 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="document">The object document to persist.</param>
     /// <param name="store">An optional named connection (e.g., "Store2") to pass through to the underlying provider.</param>
     /// <param name="documentType">An optional document type to override the default factory selection (e.g., "table", "blob").</param>
-    public async Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null)
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    public async Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("ObjectDocument.SetAsync");
+        using var activity = FaesInstrumentation.Core.StartActivity("ObjectDocument.Set");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
+
         ArgumentNullException.ThrowIfNull(document);
 
         // Use document's own DocumentType if set, otherwise use parameter or default
@@ -161,7 +181,7 @@ public class ObjectDocumentFactory : IObjectDocumentFactory
 
         if (objectDocumentFactories.TryGetValue(factoryType, out IObjectDocumentFactory? objectDocumentFactory))
         {
-            await objectDocumentFactory.SetAsync(document, store);
+            await objectDocumentFactory.SetAsync(document, store, cancellationToken: cancellationToken);
         }
         else
         {

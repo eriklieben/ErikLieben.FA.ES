@@ -267,7 +267,7 @@ public class BlobDataStoreTests
             var sut = new BlobDataStore(clientFactory, false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(null!, events));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(null!, default, events));
         }
 
         // [Fact]
@@ -288,7 +288,7 @@ public class BlobDataStoreTests
             var sut = new BlobDataStore(clientFactory, false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, Array.Empty<IEvent>()));
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, default, Array.Empty<IEvent>()));
         }
 
         [Fact]
@@ -306,7 +306,7 @@ public class BlobDataStoreTests
                 .Returns(uploadResponse);
 
             // Act
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             // Assert
             await blobClient.Received(1).UploadAsync(
@@ -426,7 +426,7 @@ public class BlobDataStoreTests
                 .Returns(uploadResponse);
 
             // Act
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             // Assert
             containerClient.Received(1).GetBlobClient("test-stream.json");

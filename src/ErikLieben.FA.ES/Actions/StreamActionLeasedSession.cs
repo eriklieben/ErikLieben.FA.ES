@@ -39,20 +39,22 @@ public class StreamActionLeasedSession(ILeasedSession session) : ILeasedSession
     /// <summary>
     /// Commits the buffered operations for the leased session.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the commit has finished.</returns>
-    public Task CommitAsync()
+    public Task CommitAsync(CancellationToken cancellationToken = default)
     {
-        return session.CommitAsync();
+        return session.CommitAsync(cancellationToken);
     }
 
     /// <summary>
     /// Determines whether the specified stream is terminated.
     /// </summary>
     /// <param name="streamIdentifier">The identifier of the stream.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns true when the stream is terminated; otherwise, false.</returns>
-    public Task<bool> IsTerminatedASync(string streamIdentifier)
+    public Task<bool> IsTerminatedAsync(string streamIdentifier, CancellationToken cancellationToken = default)
     {
-        return session.IsTerminatedASync(streamIdentifier);
+        return session.IsTerminatedAsync(streamIdentifier, cancellationToken);
     }
 
     /// <summary>
@@ -60,9 +62,10 @@ public class StreamActionLeasedSession(ILeasedSession session) : ILeasedSession
     /// </summary>
     /// <param name="startVersion">The start version to read from (inclusive). Defaults to 0.</param>
     /// <param name="untilVersion">The optional end version to read until (inclusive).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the sequence of events, or null when no events are found.</returns>
-    public Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null, CancellationToken cancellationToken = default)
     {
-        return session.ReadAsync(startVersion, untilVersion);
+        return session.ReadAsync(startVersion, untilVersion, cancellationToken);
     }
 }

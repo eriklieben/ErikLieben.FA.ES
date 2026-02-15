@@ -13,11 +13,12 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore, IDataStor
     /// Appends the specified events to the event stream for the given document by delegating to the underlying store.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
     {
-        return datastore.AppendAsync(document, events);
+        return datastore.AppendAsync(document, cancellationToken, events);
     }
 
     /// <summary>
@@ -25,11 +26,12 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore, IDataStor
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
     /// <param name="preserveTimestamp">When true, preserves the original timestamp from events (useful for migrations).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
-        return datastore.AppendAsync(document, preserveTimestamp, events);
+        return datastore.AppendAsync(document, preserveTimestamp, cancellationToken, events);
     }
 
     /// <summary>
@@ -39,10 +41,11 @@ public class StreamActionDataStore(IDataStore datastore) : IDataStore, IDataStor
     /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
     /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
-    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
     {
-        return datastore.ReadAsync(document, startVersion, untilVersion, chunk);
+        return datastore.ReadAsync(document, startVersion, untilVersion, chunk, cancellationToken);
     }
 
     /// <inheritdoc />

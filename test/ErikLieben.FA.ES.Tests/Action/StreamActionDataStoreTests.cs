@@ -23,10 +23,10 @@ namespace ErikLieben.FA.ES.Tests.Action
                 var sut = new StreamActionDataStore(mockDataStore);
 
                 // Act
-                await sut.AppendAsync(document, events);
+                await sut.AppendAsync(document, default, events);
 
                 // Assert
-                await mockDataStore.Received(1).AppendAsync(document, events);
+                await mockDataStore.Received(1).AppendAsync(document, default, events);
             }
 
             [Fact]
@@ -43,10 +43,10 @@ namespace ErikLieben.FA.ES.Tests.Action
                 var sut = new StreamActionDataStore(mockDataStore);
 
                 // Act
-                await sut.AppendAsync(document, events);
+                await sut.AppendAsync(document, default, events);
 
                 // Assert
-                await mockDataStore.Received(1).AppendAsync(document, events);
+                await mockDataStore.Received(1).AppendAsync(document, default, events);
             }
 
             [Fact]
@@ -59,10 +59,10 @@ namespace ErikLieben.FA.ES.Tests.Action
                 var sut = new StreamActionDataStore(mockDataStore);
 
                 // Act
-                await sut.AppendAsync(document, events);
+                await sut.AppendAsync(document, default, events);
 
                 // Assert
-                await mockDataStore.Received(1).AppendAsync(document, events);
+                await mockDataStore.Received(1).AppendAsync(document, default, events);
             }
         }
 

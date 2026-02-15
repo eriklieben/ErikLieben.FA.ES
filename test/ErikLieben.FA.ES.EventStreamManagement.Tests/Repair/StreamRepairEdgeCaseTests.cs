@@ -83,7 +83,7 @@ public class StreamRepairEdgeCaseTests
         // Add only events 0-4 (orphaned events 5-10 are already gone)
         for (int i = 0; i < 5; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act
@@ -116,7 +116,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // First repair succeeds
@@ -147,7 +147,7 @@ public class StreamRepairEdgeCaseTests
         // Add 20 events
         for (int i = 0; i < 20; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - perform multiple repairs
@@ -193,7 +193,7 @@ public class StreamRepairEdgeCaseTests
         };
         document.Active.RollbackHistory = [existingRecord];
 
-        await dataStore.AppendAsync(document, new TestEvent { EventVersion = 0 });
+        await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = 0 });
 
         // Act
         await service.RepairBrokenStreamAsync(document, 0, 0);
@@ -283,7 +283,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 8; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
         document.Active.CurrentStreamVersion = 7;
 
@@ -349,7 +349,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 11; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Verify broken state before repair
@@ -386,7 +386,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 8; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act
@@ -415,7 +415,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 10; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - manual repair with explicit range
@@ -447,7 +447,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 8; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - manual repair with range that covers orphaned versions
@@ -475,7 +475,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 11; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - manual repair with partial range (doesn't cover all orphaned)
@@ -501,7 +501,7 @@ public class StreamRepairEdgeCaseTests
         var service = CreateService(dataStore, documentStore);
         var document = CreateDoc();
 
-        await dataStore.AppendAsync(document, new TestEvent { EventVersion = 0 });
+        await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = 0 });
 
         var reason = "Administrative cleanup per ticket JIRA-1234";
 
@@ -529,7 +529,7 @@ public class StreamRepairEdgeCaseTests
 
         for (int i = 0; i < 10; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - perform repairs with small delays

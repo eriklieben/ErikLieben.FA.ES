@@ -40,37 +40,42 @@ public interface IAggregateFactory<T> : IAggregateCovarianceFactory<T> where T :
     /// Creates a new aggregate with the specified identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the created aggregate.</returns>
-    Task<T> CreateAsync(string id);
+    Task<T> CreateAsync(string id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an existing aggregate by identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
     /// <param name="upToVersion">Optional: The maximum event version to fold (inclusive). If null, loads all events to current state.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetAsync(string id, int? upToVersion = null);
+    Task<T> GetAsync(string id, int? upToVersion = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the first aggregate tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the aggregate instance, or null if not found.</returns>
-    Task<T?> GetFirstByDocumentTag(string tag);
+    Task<T?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all aggregates tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the matching aggregate instances.</returns>
-    Task<IEnumerable<T>> GetAllByDocumentTag(string tag);
+    Task<IEnumerable<T>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the aggregate together with its backing document.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns a tuple with the aggregate and its document.</returns>
-    Task<(T, IObjectDocument)> GetWithDocumentAsync(string id);
+    Task<(T, IObjectDocument)> GetWithDocumentAsync(string id, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -84,35 +89,40 @@ public interface IAggregateFactory<T,TId> : IAggregateCovarianceFactory<T> where
     /// Creates a new aggregate with the specified identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the created aggregate.</returns>
-    Task<T> CreateAsync(TId id);
+    Task<T> CreateAsync(TId id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets an existing aggregate by identifier.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
     /// <param name="upToVersion">Optional: The maximum event version to fold (inclusive). If null, loads all events to current state.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the aggregate instance.</returns>
-    Task<T> GetAsync(TId id, int? upToVersion = null);
+    Task<T> GetAsync(TId id, int? upToVersion = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the first aggregate tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the aggregate instance, or null if not found.</returns>
-    Task<T?> GetFirstByDocumentTag(string tag);
+    Task<T?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all aggregates tagged with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag value.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns the matching aggregate instances.</returns>
-    Task<IEnumerable<T>> GetAllByDocumentTag(string tag);
+    Task<IEnumerable<T>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the aggregate together with its backing document.
     /// </summary>
     /// <param name="id">The identifier of the aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that returns a tuple with the aggregate and its document.</returns>
-    Task<(T, IObjectDocument)> GetWithDocumentAsync(TId id);
+    Task<(T, IObjectDocument)> GetWithDocumentAsync(TId id, CancellationToken cancellationToken = default);
 }

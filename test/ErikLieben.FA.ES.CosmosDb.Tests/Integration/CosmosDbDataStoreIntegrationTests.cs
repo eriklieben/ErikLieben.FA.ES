@@ -57,8 +57,8 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
 
         // Append events individually (vnext-preview emulator doesn't support transactional batch)
         // See: https://github.com/Azure/azure-cosmos-db-emulator-docker/issues/170
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = """{"message":"Hello"}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "TestEvent", EventVersion = 1, Payload = """{"message":"World"}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = """{"message":"Hello"}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "TestEvent", EventVersion = 1, Payload = """{"message":"World"}""" });
 
         // Assert - use retry helper for eventual consistency
         var readEvents = await ReadWithRetryAsync(sut, objectDocument);
@@ -75,9 +75,9 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         var objectDocument = CreateObjectDocument("test-stream-002");
 
         // Append events individually (vnext-preview emulator doesn't support transactional batch)
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = """{"seq":1}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = """{"seq":2}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = """{"seq":1}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = """{"seq":2}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
 
         // Act - read from version 1 (skip first event at version 0)
         // Use retry helper for eventual consistency
@@ -97,9 +97,9 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         var objectDocument = CreateObjectDocument("test-stream-003");
 
         // Append events individually (vnext-preview emulator doesn't support transactional batch)
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = """{"seq":1}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = """{"seq":2}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = """{"seq":1}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = """{"seq":2}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = """{"seq":3}""" });
 
         // Act - read until version 1 (include first two events)
         // Use retry helper for eventual consistency
@@ -136,7 +136,7 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         // Using 10 events instead of 50 to reduce test execution time
         for (int i = 0; i < 10; i++)
         {
-            await sut.AppendAsync(objectDocument, new JsonEvent
+            await sut.AppendAsync(objectDocument, default, new JsonEvent
             {
                 EventType = "TestEvent",
                 EventVersion = i,
@@ -159,9 +159,9 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         var objectDocument = CreateObjectDocument("test-stream-order");
 
         // Append events individually (vnext-preview emulator doesn't support transactional batch)
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "First", EventVersion = 0, Payload = """{"order":1}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Second", EventVersion = 1, Payload = """{"order":2}""" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Third", EventVersion = 2, Payload = """{"order":3}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "First", EventVersion = 0, Payload = """{"order":1}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Second", EventVersion = 1, Payload = """{"order":2}""" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Third", EventVersion = 2, Payload = """{"order":3}""" });
 
         // Act - use retry helper for eventual consistency
         var readEvents = (await ReadWithRetryAsync(sut, objectDocument))?.ToList();
@@ -182,9 +182,9 @@ public class CosmosDbDataStoreIntegrationTests : IAsyncLifetime
         var objectDocument = CreateObjectDocument("test-stream-versions");
 
         // Append events individually (vnext-preview emulator doesn't support transactional batch)
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = "{}" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = "{}" });
-        await sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = "{}" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event1", EventVersion = 0, Payload = "{}" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event2", EventVersion = 1, Payload = "{}" });
+        await sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Event3", EventVersion = 2, Payload = "{}" });
 
         // Act - use retry helper for eventual consistency
         var readEvents = (await ReadWithRetryAsync(sut, objectDocument))?.ToList();

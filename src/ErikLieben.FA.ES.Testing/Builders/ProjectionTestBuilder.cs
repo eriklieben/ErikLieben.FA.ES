@@ -255,7 +255,7 @@ public class ProjectionTestBuilder<TProjection> where TProjection : Projection
                 document.Active.CurrentStreamVersion = events.Max(e => e.EventVersion);
 
                 // Add events directly to the in-memory data store (bypasses type registry)
-                await _context.DataStore.AppendAsync(document, [.. events]);
+                await _context.DataStore.AppendAsync(document, CancellationToken.None, [.. events]);
 
                 // Update projection to this stream's version
                 var versionToken = new VersionToken(events[^1], document);

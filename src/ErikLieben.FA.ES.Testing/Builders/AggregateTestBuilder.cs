@@ -277,7 +277,7 @@ public class AggregateTestBuilder<TAggregate> where TAggregate : IBase
             document.Active.CurrentStreamVersion = _givenEvents.Max(e => e.EventVersion);
 
             // Add events directly to the in-memory data store
-            await _context.DataStore.AppendAsync(document, [.. _givenEvents]);
+            await _context.DataStore.AppendAsync(document, CancellationToken.None, [.. _givenEvents]);
         }
 
         // Get event stream for the object

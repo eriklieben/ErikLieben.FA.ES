@@ -27,8 +27,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <param name="documentType">Unused in this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    public Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
         return blobDocumentStore.CreateAsync(objectName.ToLowerInvariant(), objectId);
     }
@@ -40,8 +41,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Unused in this implementation.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public async Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         var documentId = (await this.documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList().FirstOrDefault();
         if (string.IsNullOrWhiteSpace(documentId))
@@ -49,7 +51,7 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
             return null!;
         }
 
-        return await GetAsync(objectName, documentId, store);
+        return await GetAsync(objectName, documentId, store, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -59,14 +61,15 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Unused in this implementation.</param>
     /// <param name="store">Unused in this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         var documentIds = (await this.documentTagStore.GetAsync(objectName, objectDocumentTag)).ToList();
         var documents = new List<IObjectDocument>();
         foreach (var documentId in documentIds)
         {
-            documents.Add(await GetAsync(objectName, documentId, store));
+            documents.Add(await GetAsync(objectName, documentId, store, cancellationToken: cancellationToken));
         }
         return documents;
     }
@@ -78,8 +81,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <param name="documentType">Unused in this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    public Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
         return blobDocumentStore.GetAsync(objectName.ToLowerInvariant(), objectId);
     }
@@ -90,8 +94,9 @@ public class InMemoryObjectDocumentFactory : IObjectDocumentFactory
     /// <param name="document">The object document to persist.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <param name="documentType">Unused in this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A completed task.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null!, string? documentType = null)
+    public Task SetAsync(IObjectDocument document, string? store = null!, string? documentType = null, CancellationToken cancellationToken = default)
     {
         return blobDocumentStore.SetAsync(document);
     }

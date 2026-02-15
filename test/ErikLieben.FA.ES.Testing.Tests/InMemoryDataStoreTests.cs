@@ -56,7 +56,7 @@ public class InMemoryDataStoreTests
         var e2 = new JsonEvent { EventType = "E2", EventVersion = 1, Payload = JsonSerializer.Serialize(new { b = 2 }) };
 
         // Act
-        await store.AppendAsync(document, e1, e2);
+        await store.AppendAsync(document, default, e1, e2);
         var result = await store.ReadAsync(document);
 
         // Assert
@@ -90,7 +90,7 @@ public class InMemoryDataStoreTests
         var document = CreateDoc();
         var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
         var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
-        await store.AppendAsync(document, e0, e1);
+        await store.AppendAsync(document, default, e0, e1);
         var key = InMemoryDataStore.GetStoreKey(document.ObjectName, document.ObjectId);
 
         // Sanity
@@ -112,7 +112,7 @@ public class InMemoryDataStoreTests
         // Arrange
         var store = new InMemoryDataStore();
         var document = CreateDoc();
-        await store.AppendAsync(document, new TestEvent { EventVersion = 0 }, new TestEvent { EventVersion = 1 });
+        await store.AppendAsync(document, default, new TestEvent { EventVersion = 0 }, new TestEvent { EventVersion = 1 });
         var key = InMemoryDataStore.GetStoreKey(document.ObjectName, document.ObjectId);
 
         // Act
@@ -167,7 +167,7 @@ public class InMemoryDataStoreTests
         var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
         var e2 = new TestEvent { EventType = "E2", EventVersion = 2 };
         var e3 = new TestEvent { EventType = "E3", EventVersion = 3 };
-        await store.AppendAsync(document, e0, e1, e2, e3);
+        await store.AppendAsync(document, default, e0, e1, e2, e3);
 
         // Act - remove versions 1 and 2
         var removed = await store.RemoveEventsForFailedCommitAsync(document, 1, 2);
@@ -203,7 +203,7 @@ public class InMemoryDataStoreTests
         var store = new InMemoryDataStore();
         var document = CreateDoc();
         var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
-        await store.AppendAsync(document, e0);
+        await store.AppendAsync(document, default, e0);
 
         // Act - try to remove non-existent versions
         var removed = await store.RemoveEventsForFailedCommitAsync(document, 5, 10);
@@ -222,7 +222,7 @@ public class InMemoryDataStoreTests
         var document = CreateDoc();
         var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
         var e2 = new TestEvent { EventType = "E2", EventVersion = 2 };
-        await store.AppendAsync(document, e0, e2);
+        await store.AppendAsync(document, default, e0, e2);
 
         // Act - remove range 0-3 (only 0 and 2 exist)
         var removed = await store.RemoveEventsForFailedCommitAsync(document, 0, 3);
@@ -241,7 +241,7 @@ public class InMemoryDataStoreTests
         var document = CreateDoc();
         var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
         var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
-        await store.AppendAsync(document, e0, e1);
+        await store.AppendAsync(document, default, e0, e1);
 
         // Act - remove only version 1
         var removed = await store.RemoveEventsForFailedCommitAsync(document, 1, 1);
@@ -261,7 +261,7 @@ public class InMemoryDataStoreTests
         var document = CreateDoc();
         var e0 = new TestEvent { EventType = "E0", EventVersion = 0 };
         var e1 = new TestEvent { EventType = "E1", EventVersion = 1 };
-        await store.AppendAsync(document, e0, e1);
+        await store.AppendAsync(document, default, e0, e1);
 
         // Act - remove version 1 twice
         var removed1 = await store.RemoveEventsForFailedCommitAsync(document, 1, 1);
@@ -282,7 +282,7 @@ public class InMemoryDataStoreTests
         var document = CreateDoc();
         for (int i = 0; i < 10; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventType = $"E{i}", EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventType = $"E{i}", EventVersion = i });
         }
 
         // Act - remove middle range (3-6)

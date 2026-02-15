@@ -56,7 +56,7 @@ public class DataStoreRemovalEdgeCaseTests
         // Add events 0-4
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - remove same range twice
@@ -81,7 +81,7 @@ public class DataStoreRemovalEdgeCaseTests
         // Add events 0-9
         for (int i = 0; i < 10; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - remove overlapping ranges
@@ -128,7 +128,7 @@ public class DataStoreRemovalEdgeCaseTests
         // Add only 3 events (0, 1, 2)
         for (int i = 0; i < 3; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - try to remove range that goes beyond stream
@@ -155,7 +155,7 @@ public class DataStoreRemovalEdgeCaseTests
         // Add only 3 events (stored at keys 0, 1, 2)
         for (int i = 0; i < 3; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - try to remove range beyond stored events
@@ -177,7 +177,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act
@@ -200,7 +200,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - remove all
@@ -227,7 +227,7 @@ public class DataStoreRemovalEdgeCaseTests
         // Add events 0-9
         for (int i = 0; i < 10; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i, Payload = $"Event{i}" });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i, Payload = $"Event{i}" });
         }
 
         // Act - remove middle section creating gap
@@ -254,7 +254,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 10; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Remove 4-6
@@ -289,16 +289,16 @@ public class DataStoreRemovalEdgeCaseTests
         // Add events 0-4
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Remove 3-4
         await store.RemoveEventsForFailedCommitAsync(document, 3, 4);
 
         // Act - append new events (simulating retry with same versions)
-        await store.AppendAsync(document, new TestEvent { EventVersion = 3, Payload = "Retry3" });
-        await store.AppendAsync(document, new TestEvent { EventVersion = 4, Payload = "Retry4" });
-        await store.AppendAsync(document, new TestEvent { EventVersion = 5, Payload = "New5" });
+        await store.AppendAsync(document, default, new TestEvent { EventVersion = 3, Payload = "Retry3" });
+        await store.AppendAsync(document, default, new TestEvent { EventVersion = 4, Payload = "Retry4" });
+        await store.AppendAsync(document, default, new TestEvent { EventVersion = 5, Payload = "New5" });
 
         // Assert
         var events = await store.ReadAsync(document);
@@ -320,8 +320,8 @@ public class DataStoreRemovalEdgeCaseTests
         // Add events to both
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(doc1, new TestEvent { EventVersion = i });
-            await store.AppendAsync(doc2, new TestEvent { EventVersion = i });
+            await store.AppendAsync(doc1, default, new TestEvent { EventVersion = i });
+            await store.AppendAsync(doc2, default, new TestEvent { EventVersion = i });
         }
 
         // Act - remove from doc1 only
@@ -350,7 +350,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent
+            await store.AppendAsync(document, default, new TestEvent
             {
                 EventVersion = i,
                 EventType = $"Type{i}",
@@ -387,7 +387,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - from > to (inverted range)
@@ -409,7 +409,7 @@ public class DataStoreRemovalEdgeCaseTests
 
         for (int i = 0; i < 5; i++)
         {
-            await store.AppendAsync(document, new TestEvent { EventVersion = i });
+            await store.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - negative versions shouldn't match anything

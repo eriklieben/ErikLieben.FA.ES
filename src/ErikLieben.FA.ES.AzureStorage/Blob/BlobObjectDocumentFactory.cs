@@ -51,8 +51,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectId">The identifier of the object to retrieve or create.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
     /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The existing or newly created <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    public async Task<IObjectDocument> GetOrCreateAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetOrCreateAsync)}");
         ArgumentException.ThrowIfNullOrWhiteSpace(objectName);
@@ -74,8 +75,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectId">The identifier of the object to retrieve.</param>
     /// <param name="store">Optional store name override. If not provided, uses the default document store.</param>
     /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded <see cref="IObjectDocument"/>.</returns>
-    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null)
+    public async Task<IObjectDocument> GetAsync(string objectName, string objectId, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
@@ -111,8 +113,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
     /// <param name="store">Optional store name for loading the document. If not provided, uses the default document store.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching document or null when none is found.</returns>
-    public Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public Task<IObjectDocument?> GetFirstByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetByDocumentTagAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
@@ -127,8 +130,9 @@ public BlobObjectDocumentFactory(
     /// <param name="objectDocumentTag">The document tag value to match.</param>
     /// <param name="documentTagStore">Optional document tag store name. If not provided, uses the default document tag store.</param>
     /// <param name="store">Optional store name for loading the documents. If not provided, uses the default document store.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>An enumerable of matching documents; empty when none found.</returns>
-    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null)
+    public async Task<IEnumerable<IObjectDocument>> GetByObjectDocumentTag(string objectName, string objectDocumentTag, string? documentTagStore = null, string? store = null, CancellationToken cancellationToken = default)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(GetByDocumentTagAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(objectName);
@@ -143,8 +147,9 @@ public BlobObjectDocumentFactory(
     /// <param name="document">The object document to save.</param>
     /// <param name="store">Unused in this implementation.</param>
     /// <param name="documentType">Ignored for BlobObjectDocumentFactory (already blob-specific).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
-    public Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null)
+    public Task SetAsync(IObjectDocument document, string? store = null, string? documentType = null, CancellationToken cancellationToken = default)
     {
         using var activity = ActivitySource.StartActivity($"BlobObjectDocumentFactory.{nameof(SetAsync)}");
         AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfNull(document);

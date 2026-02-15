@@ -198,7 +198,7 @@ public class StreamRepairService : IStreamRepairService
             document.Active.CurrentStreamVersion + 1,
             markerEvent);
 
-        await dataStore.AppendAsync(document, streamEvent);
+        await dataStore.AppendAsync(document, default, streamEvent);
 
         // Update the document version
         document.Active.CurrentStreamVersion++;

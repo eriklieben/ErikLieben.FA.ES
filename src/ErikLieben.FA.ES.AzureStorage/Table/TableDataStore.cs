@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -10,6 +9,7 @@ using ErikLieben.FA.ES.AzureStorage.Table.Model;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Observability;
 using Microsoft.Extensions.Azure;
 
 namespace ErikLieben.FA.ES.AzureStorage.Table;
@@ -21,7 +21,6 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings settings;
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AzureStorage.Table");
 
     /// <summary>
     /// Maximum size for a single payload chunk (60KB to leave room for other entity properties).
@@ -50,14 +49,23 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
     /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
     public async Task<IEnumerable<IEvent>?> ReadAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
-        int? chunk = null)
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("TableDataStore.ReadAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("TableDataStore.Read");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureTable);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -81,7 +89,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var events = new List<IEvent>();
         try
         {
-            await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter))
+            await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter, cancellationToken: cancellationToken))
             {
                 // Skip payload chunk rows (they have _p{index} suffix in RowKey)
                 if (entity.PayloadChunkIndex.HasValue && entity.PayloadChunkIndex.Value > 0)
@@ -89,7 +97,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
                     continue;
                 }
 
-                var @event = await ConvertEntityToEventAsync(tableClient, entity);
+                var @event = await ConvertEntityToEventAsync(tableClient, entity, cancellationToken);
                 events.Add(@event);
             }
         }
@@ -132,7 +140,14 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         int? chunk = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("TableDataStore.ReadAsStreamAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("TableDataStore.ReadAsStream");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureTable);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -209,21 +224,31 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// Appends the specified events to the event stream of the given document in Azure Table Storage.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
-        => AppendAsync(document, preserveTimestamp: false, events);
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
+        => AppendAsync(document, preserveTimestamp: false, cancellationToken, events);
 
     /// <summary>
     /// Appends the specified events to the event stream of the given document in Azure Table Storage.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
     /// <param name="preserveTimestamp">When true, preserves the original timestamp from TableJsonEvent sources (useful for migrations).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
-        using var activity = ActivitySource.StartActivity("TableDataStore.AppendAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("TableDataStore.Append");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureTable);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.EventCount, events?.Length ?? 0);
+        }
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
@@ -235,7 +260,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var tableClient = await GetTableClientAsync(document);
 
         // Check if stream is closed by looking for the last event
-        await CheckStreamNotClosedAsync(tableClient, document);
+        await CheckStreamNotClosedAsync(tableClient, document, cancellationToken);
 
         int? chunkIdentifier = null;
         if (document.Active.ChunkingEnabled())
@@ -338,7 +363,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             for (int i = 0; i < batch.Count; i += batchSize)
             {
                 var batchSlice = batch.Skip(i).Take(batchSize).ToList();
-                await tableClient.SubmitTransactionAsync(batchSlice);
+                await tableClient.SubmitTransactionAsync(batchSlice, cancellationToken);
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 409)
@@ -355,7 +380,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         }
     }
 
-    private static async Task CheckStreamNotClosedAsync(TableClient tableClient, IObjectDocument document)
+    private static async Task CheckStreamNotClosedAsync(TableClient tableClient, IObjectDocument document, CancellationToken cancellationToken = default)
     {
         int? chunkIdentifier = null;
         if (document.Active.ChunkingEnabled())
@@ -371,7 +396,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var filter = $"PartitionKey eq '{partitionKey}'";
 
         TableEventEntity? lastEvent = null;
-        await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter))
+        await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter, cancellationToken: cancellationToken))
         {
             if (lastEvent == null || entity.EventVersion > lastEvent.EventVersion)
             {
@@ -422,7 +447,14 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// <inheritdoc />
     public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
     {
-        using var activity = ActivitySource.StartActivity("TableDataStore.RemoveEventsForFailedCommitAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("TableDataStore.RemoveEventsForFailedCommit");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureTable);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -486,7 +518,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             }
         }
 
-        activity?.SetTag("RemovedCount", removed);
+        activity?.SetTag(FaesSemanticConventions.EventCount, removed);
         return removed;
     }
 

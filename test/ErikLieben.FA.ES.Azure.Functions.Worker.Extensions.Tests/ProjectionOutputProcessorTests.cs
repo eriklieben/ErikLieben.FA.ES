@@ -86,6 +86,12 @@ public class ProjectionOutputProcessorTests
 
         public Task<DateTimeOffset?> GetLastModifiedAsync(string? blobName = null, CancellationToken cancellationToken = default)
             => Task.FromResult<DateTimeOffset?>(DateTimeOffset.UtcNow);
+
+        public Task SetStatusAsync(ProjectionStatus status, string? blobName = null, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<ProjectionStatus> GetStatusAsync(string? blobName = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(ProjectionStatus.Active);
     }
 
     public class Constructor : ProjectionOutputProcessorTests

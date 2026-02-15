@@ -1,4 +1,6 @@
 ﻿using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Observability;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -263,10 +265,28 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <param name="token">The version token that identifies the object and target version.</param>
     /// <param name="context">Optional execution context for nested projections; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
-    public async Task UpdateToVersion(VersionToken token, IExecutionContext? context = null)
+    /// <returns>A result indicating whether the update was processed or skipped due to projection status.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when required factories are not initialized.</exception>
+    public async Task<ProjectionUpdateResult> UpdateToVersion(VersionToken token, IExecutionContext? context = null)
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
+            activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
+            activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
+            activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
+        }
+
+        // Check if projection should process updates based on status
+        if (!ShouldProcessUpdates())
+        {
+            return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
+        }
+
         if (DocumentFactory == null)
         {
             throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
@@ -279,13 +299,18 @@ public abstract class Projection : IProjectionBase
         // Guard clause to reduce nesting and cognitive complexity
         if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
-            return;
+            return ProjectionUpdateResult.Success;
         }
 
         var startIdx = -1;
         if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
         {
             startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+        }
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StartVersion, startIdx);
         }
 
         var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
@@ -308,7 +333,24 @@ public abstract class Projection : IProjectionBase
             CheckpointFingerprint = GenerateCheckpointFingerprint();
         }
 
+        // Record metrics
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
+        }
+
+        if (timer != null)
+        {
+            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+            FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
+            if (events.Count > 0)
+            {
+                FaesMetrics.RecordProjectionEventsFolded(events.Count, GetType().Name);
+            }
+        }
+
         await PostWhenAll(document);
+        return ProjectionUpdateResult.Success;
     }
 
     /// <summary>
@@ -318,12 +360,29 @@ public abstract class Projection : IProjectionBase
     /// <param name="token">The version token that identifies the object and target version.</param>
     /// <param name="context">Optional execution context carrying the parent event and correlation; may be null.</param>
     /// <param name="data">Optional auxiliary data made available during folding; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the parent event in the context equals the current event, indicating a processing loop.</exception>
-    public async Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
+    /// <returns>A result indicating whether the update was processed or skipped due to projection status.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when required factories are not initialized or when a processing loop is detected.</exception>
+    public async Task<ProjectionUpdateResult> UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
         where T: class
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
+            activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
+            activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
+            activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
+        }
+
+        // Check if projection should process updates based on status
+        if (!ShouldProcessUpdates())
+        {
+            return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
+        }
+
         if (DocumentFactory == null)
         {
             throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
@@ -335,13 +394,18 @@ public abstract class Projection : IProjectionBase
 
         if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
-            return;
+            return ProjectionUpdateResult.Success;
         }
 
         var startIdx = -1;
         if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
         {
             startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+        }
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StartVersion, startIdx);
         }
 
         var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
@@ -369,6 +433,24 @@ public abstract class Projection : IProjectionBase
             CheckpointFingerprint = GenerateCheckpointFingerprint();
             await PostWhenAll(document);
         }
+
+        // Record metrics
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
+        }
+
+        if (timer != null)
+        {
+            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+            FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
+            if (events.Count > 0)
+            {
+                FaesMetrics.RecordProjectionEventsFolded(events.Count, GetType().Name);
+            }
+        }
+
+        return ProjectionUpdateResult.Success;
     }
 
     /// <summary>
@@ -441,4 +523,143 @@ public abstract class Projection : IProjectionBase
     [JsonPropertyName("$checkpointFingerprint")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? CheckpointFingerprint { get; set; }
+
+    /// <summary>
+    /// Gets or sets the operational status of this projection.
+    /// When <see cref="ProjectionStatus.Rebuilding"/>, inline updates are skipped (the rebuild process will handle them).
+    /// When <see cref="ProjectionStatus.Disabled"/>, all updates are skipped.
+    /// </summary>
+    [JsonPropertyName("$status")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ProjectionStatus Status { get; set; } = ProjectionStatus.Active;
+
+    /// <summary>
+    /// Gets or sets when the status was last changed.
+    /// </summary>
+    [JsonPropertyName("$statusChangedAt")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? StatusChangedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets metadata about an ongoing or completed rebuild.
+    /// </summary>
+    [JsonPropertyName("$rebuildInfo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RebuildInfo? RebuildInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the schema version stored in this projection instance.
+    /// This value is compared against <see cref="CodeSchemaVersion"/> to detect when a rebuild is needed.
+    /// </summary>
+    [JsonPropertyName("$schemaVersion")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int SchemaVersion { get; set; } = 1;
+
+    /// <summary>
+    /// Gets the schema version defined in code via the <see cref="Attributes.ProjectionVersionAttribute"/>.
+    /// Generated code overrides this property with the actual attribute value.
+    /// </summary>
+    [JsonIgnore]
+    public virtual int CodeSchemaVersion => 1;
+
+    /// <summary>
+    /// Gets whether the stored schema version differs from the code schema version,
+    /// indicating that a rebuild may be needed to apply new projection logic.
+    /// </summary>
+    [JsonIgnore]
+    public bool NeedsSchemaUpgrade => SchemaVersion != CodeSchemaVersion;
+
+    /// <summary>
+    /// Determines whether this projection should process updates based on its current status.
+    /// Override this method to customize status checking behavior.
+    /// </summary>
+    /// <returns>True if updates should be processed; false if they should be skipped.</returns>
+    protected virtual bool ShouldProcessUpdates() => Status == ProjectionStatus.Active;
+
+    /// <summary>
+    /// Sets the projection status with automatic timestamp update.
+    /// </summary>
+    /// <param name="status">The new status.</param>
+    public void SetStatus(ProjectionStatus status)
+    {
+        if (Status != status)
+        {
+            Status = status;
+            StatusChangedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    /// <summary>
+    /// Starts a rebuild, setting status to <see cref="ProjectionStatus.Rebuilding"/> and initializing rebuild info.
+    /// </summary>
+    /// <param name="strategy">The rebuild strategy to use.</param>
+    /// <param name="sourceVersion">The source schema version (for blue-green).</param>
+    public void StartRebuild(RebuildStrategy strategy, int sourceVersion = 0)
+    {
+        SetStatus(ProjectionStatus.Rebuilding);
+        RebuildInfo = RebuildInfo.Start(strategy, sourceVersion, CheckpointFingerprint);
+    }
+
+    /// <summary>
+    /// Transitions to catch-up phase after initial rebuild (blocking strategy).
+    /// </summary>
+    public void StartCatchUp()
+    {
+        if (Status != ProjectionStatus.Rebuilding)
+        {
+            throw new InvalidOperationException($"Cannot start catch-up from status {Status}. Must be Rebuilding.");
+        }
+
+        SetStatus(ProjectionStatus.CatchingUp);
+        RebuildInfo = RebuildInfo?.WithProgress();
+    }
+
+    /// <summary>
+    /// Marks the rebuild as ready (blue-green strategy).
+    /// </summary>
+    public void MarkReady()
+    {
+        if (Status is not (ProjectionStatus.Rebuilding or ProjectionStatus.CatchingUp))
+        {
+            throw new InvalidOperationException($"Cannot mark ready from status {Status}. Must be Rebuilding or CatchingUp.");
+        }
+
+        SetStatus(ProjectionStatus.Ready);
+        RebuildInfo = RebuildInfo?.WithCompletion();
+    }
+
+    /// <summary>
+    /// Activates the projection, typically after a rebuild completes.
+    /// </summary>
+    public void Activate()
+    {
+        SetStatus(ProjectionStatus.Active);
+        RebuildInfo = RebuildInfo?.WithCompletion();
+    }
+
+    /// <summary>
+    /// Archives the projection (for blue-green rollback retention).
+    /// </summary>
+    public void Archive()
+    {
+        SetStatus(ProjectionStatus.Archived);
+    }
+
+    /// <summary>
+    /// Marks the projection as failed with an error message.
+    /// </summary>
+    /// <param name="error">The error message.</param>
+    public void MarkFailed(string error)
+    {
+        SetStatus(ProjectionStatus.Failed);
+        RebuildInfo = RebuildInfo?.WithError(error);
+    }
+
+    /// <summary>
+    /// Disables the projection.
+    /// </summary>
+    public void Disable()
+    {
+        SetStatus(ProjectionStatus.Disabled);
+    }
 }

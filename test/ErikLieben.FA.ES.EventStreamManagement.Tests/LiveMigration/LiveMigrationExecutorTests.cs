@@ -189,6 +189,7 @@ public class LiveMigrationExecutorTests
             await dataStore.Received().AppendAsync(
                 Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                 Arg.Any<bool>(),
+                Arg.Any<CancellationToken>(),
                 Arg.Any<IEvent[]>());
         }
 
@@ -210,6 +211,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -222,6 +224,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -339,6 +342,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -346,6 +350,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -596,6 +601,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -606,6 +612,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -656,6 +663,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -666,6 +674,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -766,6 +775,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .ThrowsAsync(new IOException("Storage unavailable"));
 
@@ -820,12 +830,14 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(_ =>
                 {
@@ -874,12 +886,14 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(_ =>
                 {
@@ -940,6 +954,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -950,6 +965,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -995,6 +1011,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1005,6 +1022,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -1124,12 +1142,14 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Do<IEvent[]>(events => closeEvent = events.FirstOrDefault()))
                 .Returns(Task.CompletedTask);
 
@@ -1225,6 +1245,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1235,6 +1256,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 
@@ -1288,6 +1310,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1299,6 +1322,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1391,6 +1415,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1401,6 +1426,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1523,6 +1549,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "target-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(callInfo =>
                 {
@@ -1535,6 +1562,7 @@ public class LiveMigrationExecutorTests
             dataStore.AppendAsync(
                     Arg.Is<IObjectDocument>(d => d.Active.StreamIdentifier == "source-stream"),
                     Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>(),
                     Arg.Any<IEvent[]>())
                 .Returns(Task.CompletedTask);
 

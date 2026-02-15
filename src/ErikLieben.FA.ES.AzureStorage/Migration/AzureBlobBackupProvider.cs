@@ -204,6 +204,7 @@ public class AzureBlobBackupProvider : IBackupProvider
             await context.DataStore.AppendAsync(
                 context.TargetDocument,
                 preserveTimestamp: true,
+                CancellationToken.None,
                 events.ToArray());
         }
 

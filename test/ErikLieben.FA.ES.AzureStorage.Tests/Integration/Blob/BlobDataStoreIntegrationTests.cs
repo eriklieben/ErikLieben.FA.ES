@@ -60,7 +60,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         };
 
         // Act
-        await _dataStore!.AppendAsync(document, eventToAppend);
+        await _dataStore!.AppendAsync(document, default, eventToAppend);
         var events = (await _dataStore.ReadAsync(document))?.ToList();
 
         // Assert
@@ -78,7 +78,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         var document = CreateObjectDocument(streamId);
 
         // Act - append first event
-        await _dataStore!.AppendAsync(document, new JsonEvent
+        await _dataStore!.AppendAsync(document, default, new JsonEvent
         {
             EventType = "OrderCreated",
             EventVersion = 0,
@@ -86,14 +86,14 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         });
 
         // Append more events
-        await _dataStore.AppendAsync(document, new JsonEvent
+        await _dataStore.AppendAsync(document, default, new JsonEvent
         {
             EventType = "OrderItemAdded",
             EventVersion = 1,
             Payload = """{"product":"Widget","quantity":5}"""
         });
 
-        await _dataStore.AppendAsync(document, new JsonEvent
+        await _dataStore.AppendAsync(document, default, new JsonEvent
         {
             EventType = "OrderShipped",
             EventVersion = 2,
@@ -119,7 +119,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
 
         for (int i = 0; i < 5; i++)
         {
-            await _dataStore!.AppendAsync(document, new JsonEvent
+            await _dataStore!.AppendAsync(document, default, new JsonEvent
             {
                 EventType = $"Event{i}",
                 EventVersion = i,
@@ -147,7 +147,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
 
         for (int i = 0; i < 5; i++)
         {
-            await _dataStore!.AppendAsync(document, new JsonEvent
+            await _dataStore!.AppendAsync(document, default, new JsonEvent
             {
                 EventType = $"Event{i}",
                 EventVersion = i,
@@ -175,7 +175,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
 
         for (int i = 0; i < 10; i++)
         {
-            await _dataStore!.AppendAsync(document, new JsonEvent
+            await _dataStore!.AppendAsync(document, default, new JsonEvent
             {
                 EventType = $"Event{i}",
                 EventVersion = i,
@@ -224,7 +224,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         };
 
         // Act - append with preserveTimestamp = true
-        await _dataStore!.AppendAsync(document, preserveTimestamp: true, eventWithTimestamp);
+        await _dataStore!.AppendAsync(document, preserveTimestamp: true, cancellationToken: default, eventWithTimestamp);
         var events = (await _dataStore.ReadAsync(document))?.ToList();
 
         // Assert
@@ -244,7 +244,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         var document = CreateObjectDocument(streamId);
 
         // Append some events first
-        await _dataStore!.AppendAsync(document, new JsonEvent
+        await _dataStore!.AppendAsync(document, default, new JsonEvent
         {
             EventType = "SomeEvent",
             EventVersion = 0,
@@ -252,7 +252,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         });
 
         // Close the stream
-        await _dataStore.AppendAsync(document, new JsonEvent
+        await _dataStore.AppendAsync(document, default, new JsonEvent
         {
             EventType = "EventStream.Closed",
             EventVersion = 1,
@@ -262,7 +262,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         // Act & Assert - try to append after closure
         await Assert.ThrowsAsync<EventStreamClosedException>(async () =>
         {
-            await _dataStore.AppendAsync(document, new JsonEvent
+            await _dataStore.AppendAsync(document, default, new JsonEvent
             {
                 EventType = "AfterCloseEvent",
                 EventVersion = 2,
@@ -287,7 +287,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         };
 
         // Act
-        await _dataStore!.AppendAsync(document, largeEvent);
+        await _dataStore!.AppendAsync(document, default, largeEvent);
         var events = (await _dataStore.ReadAsync(document))?.ToList();
 
         // Assert
@@ -313,7 +313,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
             .ToArray();
 
         // Act - append all events at once
-        await _dataStore!.AppendAsync(document, events);
+        await _dataStore!.AppendAsync(document, default, events);
         var readEvents = (await _dataStore.ReadAsync(document))?.ToList();
 
         // Assert
@@ -336,7 +336,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
         {
-            await _dataStore!.AppendAsync(document, Array.Empty<IEvent>());
+            await _dataStore!.AppendAsync(document, default, Array.Empty<IEvent>());
         });
     }
 

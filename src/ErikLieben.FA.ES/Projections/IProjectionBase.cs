@@ -39,8 +39,8 @@ public interface IProjectionBase
     /// <param name="token">The version token that identifies the object and target version.</param>
     /// <param name="context">Optional execution context carrying the parent event; may be null.</param>
     /// <param name="data">Optional auxiliary data used during folding; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
+    /// <returns>A result indicating whether the update was processed or skipped due to projection status.</returns>
+    Task<ProjectionUpdateResult> UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
         where T : class;
 
     /// <summary>

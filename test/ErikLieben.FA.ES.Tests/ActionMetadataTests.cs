@@ -81,4 +81,30 @@ public class ActionMetadataTests
         // Assert
         Assert.Equal("{\"EventOccuredAt\":" + JsonSerializer.Serialize(dateTime) + "}", result);
     }
+
+    [Fact]
+    public void Should_return_a_json_string_with_the_IdempotentKey_when_serializing_an_ActionMetadata_with_an_IdempotentKey()
+    {
+        // Arrange
+        var sut = new ActionMetadata(IdempotentKey: "order__123__stream__00000000000000000005#SendConfirmation");
+
+        // Act
+        var result = JsonSerializer.Serialize(sut);
+
+        // Assert
+        Assert.Equal("{\"IdempotentKey\":\"order__123__stream__00000000000000000005#SendConfirmation\"}", result);
+    }
+
+    [Fact]
+    public void Should_omit_IdempotentKey_from_json_when_null()
+    {
+        // Arrange
+        var sut = new ActionMetadata(CorrelationId: "test-correlation");
+
+        // Act
+        var result = JsonSerializer.Serialize(sut);
+
+        // Assert
+        Assert.DoesNotContain("IdempotentKey", result);
+    }
 }

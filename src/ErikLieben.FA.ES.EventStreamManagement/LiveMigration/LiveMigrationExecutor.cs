@@ -261,6 +261,7 @@ public class LiveMigrationExecutor
                 await _context.DataStore.AppendAsync(
                     _context.TargetDocument,
                     preserveTimestamp: true,
+                    cancellationToken: default,
                     transformedEvent);
 
                 eventsAppendedCount++;
@@ -292,6 +293,7 @@ public class LiveMigrationExecutor
             await _context.DataStore.AppendAsync(
                 _context.TargetDocument,
                 preserveTimestamp: true,
+                cancellationToken: default,
                 transformedEvents.ToArray());
 
             _totalEventsCopied += transformedEvents.Count;
@@ -454,6 +456,7 @@ public class LiveMigrationExecutor
             await _context.DataStore.AppendAsync(
                 freshDocument,
                 preserveTimestamp: false,
+                cancellationToken: default,
                 closeEventJson);
 
             _logger.SourceStreamClosed(_context.SourceStreamId, expectedVersion + 1);
@@ -490,6 +493,7 @@ public class LiveMigrationExecutor
                     await _context.DataStore.AppendAsync(
                         _context.TargetDocument,
                         preserveTimestamp: true,
+                        cancellationToken: default,
                         eventToCopy);
 
                     _totalEventsCopied++;

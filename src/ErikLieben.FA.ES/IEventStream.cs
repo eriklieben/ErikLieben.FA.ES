@@ -14,6 +14,18 @@ namespace ErikLieben.FA.ES;
 public interface IEventStream
 {
     /// <summary>
+    /// Gets the current version of the event stream.
+    /// Returns -1 if the stream has no events (new stream).
+    /// </summary>
+    int CurrentVersion { get; }
+
+    /// <summary>
+    /// Gets the unique identifier for this event stream.
+    /// Used for checkpoint tracking and decision validation.
+    /// </summary>
+    string StreamIdentifier { get; }
+
+    /// <summary>
     /// Gets settings that control behavior of the event stream (e.g., stream type and JSON serializers).
     /// </summary>
     public IEventStreamSettings Settings { get; }
@@ -114,16 +126,21 @@ public interface IEventStream
     /// <param name="startVersion">The starting version (inclusive); default 0.</param>
     /// <param name="untilVersion">The last version to read (inclusive); null for end of stream.</param>
     /// <param name="useExternalSequencer">True to use external sequencing when available.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A read-only collection of events.</returns>
     Task<IReadOnlyCollection<IEvent>> ReadAsync(
-        int startVersion = 0, int? untilVersion = null, bool useExternalSequencer = false);
+        int startVersion = 0,
+        int? untilVersion = null,
+        bool useExternalSequencer = false,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Executes a session with a leased stream context applying the given constraint.
     /// </summary>
     /// <param name="context">The work to execute within the leased session.</param>
     /// <param name="constraint">The constraint applied to the session; default is loose.</param>
-    Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose);
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a snapshot of the aggregate at the specified version.
@@ -131,15 +148,17 @@ public interface IEventStream
     /// <typeparam name="T">The aggregate base type to snapshot.</typeparam>
     /// <param name="untilVersion">The version up to which the snapshot is taken.</param>
     /// <param name="name">An optional name or version of the snapshot type.</param>
-    Task Snapshot<T>(int untilVersion, string? name = null) where T : class, IBase;
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    Task Snapshot<T>(int untilVersion, string? name = null, CancellationToken cancellationToken = default) where T : class, IBase;
 
     /// <summary>
     /// Retrieves a snapshot of the aggregate, if available.
     /// </summary>
     /// <param name="version">The version the snapshot was taken at.</param>
     /// <param name="name">An optional name or version of the snapshot type.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The snapshot object when found; otherwise null.</returns>
-    Task<object?> GetSnapShot(int version, string? name = null);
+    Task<object?> GetSnapShot(int version, string? name = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sets the snapshot type info used to serialize/deserialize snapshots.

@@ -30,21 +30,24 @@ public interface ILeasedSession
     /// <summary>
     /// Commits all buffered events to the event stream.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous commit operation.</returns>
-    Task CommitAsync();
+    Task CommitAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if a stream is terminated (has reached a terminal state).
     /// </summary>
     /// <param name="streamIdentifier">The identifier of the stream to check.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>True if the stream is terminated, otherwise false.</returns>
-    Task<bool> IsTerminatedASync(string streamIdentifier);
+    Task<bool> IsTerminatedAsync(string streamIdentifier, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads events from the stream within the specified version range.
     /// </summary>
     /// <param name="startVersion">The starting version (inclusive). Defaults to 0.</param>
     /// <param name="untilVersion">The ending version (inclusive). If null, reads to the latest version.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The collection of events, or null if none found.</returns>
-    Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null);
+    Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null, CancellationToken cancellationToken = default);
 }

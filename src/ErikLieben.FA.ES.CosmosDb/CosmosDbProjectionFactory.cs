@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.Serialization;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Observability;
 using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.VersionTokenParts;
 using Microsoft.Azure.Cosmos;
@@ -107,9 +108,18 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("CosmosDbProjectionFactory.GetOrCreate");
+
         blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, projectionName);
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbName, _settings.DatabaseName);
+        }
 
         var container = await GetProjectionsContainerAsync();
 
@@ -133,12 +143,22 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
                     }
                 }
 
+                if (activity?.IsAllDataRequested == true)
+                {
+                    activity.SetTag(FaesSemanticConventions.LoadedFromCache, true);
+                }
+
                 return projection;
             }
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             // Document doesn't exist, return new instance
+        }
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.LoadedFromCache, false);
         }
 
         return New();
@@ -155,11 +175,21 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("CosmosDbProjectionFactory.Save");
+
         ArgumentNullException.ThrowIfNull(projection);
 
         blobName ??= typeof(T).Name;
         var projectionName = typeof(T).Name;
         var partitionKey = new PartitionKey(projectionName);
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, projectionName);
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbName, _settings.DatabaseName);
+            activity.SetTag(FaesSemanticConventions.ProjectionStatus, projection.Status.ToString());
+        }
 
         var container = await GetProjectionsContainerAsync();
 
@@ -404,6 +434,88 @@ public abstract class CosmosDbProjectionFactory<T> : IProjectionFactory<T>, IPro
         }
 
         await SaveAsync(typedProjection, blobName, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public virtual async Task SetStatusAsync(
+        ProjectionStatus status,
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        blobName ??= typeof(T).Name;
+        var projectionName = typeof(T).Name;
+        var partitionKey = new PartitionKey(projectionName);
+
+        var container = await GetProjectionsContainerAsync();
+
+        try
+        {
+            // Try to read existing document
+            var response = await container.ReadItemAsync<ProjectionDocument>(
+                blobName,
+                partitionKey,
+                cancellationToken: cancellationToken);
+
+            // Update status
+            var document = response.Resource;
+            document.Status = (int)status;
+            document.StatusUpdatedAt = DateTimeOffset.UtcNow;
+
+            await container.ReplaceItemAsync(
+                document,
+                blobName,
+                partitionKey,
+                cancellationToken: cancellationToken);
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Create minimal document with just status
+            var document = new ProjectionDocument
+            {
+                Id = blobName,
+                ProjectionName = projectionName,
+                Data = "{}",
+                LastModified = DateTimeOffset.UtcNow,
+                Status = (int)status,
+                StatusUpdatedAt = DateTimeOffset.UtcNow
+            };
+
+            await container.CreateItemAsync(
+                document,
+                partitionKey,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<ProjectionStatus> GetStatusAsync(
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        blobName ??= typeof(T).Name;
+        var projectionName = typeof(T).Name;
+        var partitionKey = new PartitionKey(projectionName);
+
+        var container = await GetProjectionsContainerAsync();
+
+        try
+        {
+            var response = await container.ReadItemAsync<ProjectionDocument>(
+                blobName,
+                partitionKey,
+                cancellationToken: cancellationToken);
+
+            if (response.Resource.Status.HasValue)
+            {
+                return (ProjectionStatus)response.Resource.Status.Value;
+            }
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Document doesn't exist
+        }
+
+        return ProjectionStatus.Active;
     }
 }
 

@@ -221,6 +221,18 @@ public class ProjectionDocument
     /// </summary>
     [JsonPropertyName("lastModified")]
     public DateTimeOffset LastModified { get; set; }
+
+    /// <summary>
+    /// The operational status of the projection (as integer for AOT compatibility).
+    /// </summary>
+    [JsonPropertyName("status")]
+    public int? Status { get; set; }
+
+    /// <summary>
+    /// When the status was last updated.
+    /// </summary>
+    [JsonPropertyName("statusUpdatedAt")]
+    public DateTimeOffset? StatusUpdatedAt { get; set; }
 }
 
 /// <summary>

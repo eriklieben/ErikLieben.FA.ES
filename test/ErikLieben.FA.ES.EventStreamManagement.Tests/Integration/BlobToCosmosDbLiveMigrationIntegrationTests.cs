@@ -99,19 +99,19 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
             .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
 
         // Write test events to blob storage
-        await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
+        await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
         {
             EventType = "OrderCreated",
             EventVersion = 0,
             Payload = """{"orderId":"ORD-001","customer":"Alice"}"""
         });
-        await _blobDataStore.AppendAsync(sourceDocument, new JsonEvent
+        await _blobDataStore.AppendAsync(sourceDocument, default, new JsonEvent
         {
             EventType = "OrderItemAdded",
             EventVersion = 1,
             Payload = """{"orderId":"ORD-001","product":"Widget","quantity":5}"""
         });
-        await _blobDataStore.AppendAsync(sourceDocument, new JsonEvent
+        await _blobDataStore.AppendAsync(sourceDocument, default, new JsonEvent
         {
             EventType = "OrderShipped",
             EventVersion = 2,
@@ -180,13 +180,13 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
             .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
 
         // Write business events to blob storage
-        await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
+        await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
         {
             EventType = "CustomerRegistered",
             EventVersion = 0,
             Payload = """{"customerId":"CUST-001","name":"Bob"}"""
         });
-        await _blobDataStore.AppendAsync(sourceDocument, new JsonEvent
+        await _blobDataStore.AppendAsync(sourceDocument, default, new JsonEvent
         {
             EventType = "CustomerVerified",
             EventVersion = 1,
@@ -247,7 +247,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         var eventTypes = new[] { "StockReceived", "StockReserved", "StockShipped", "StockReturned", "StockAdjusted" };
         for (int i = 0; i < eventTypes.Length; i++)
         {
-            await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
+            await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
             {
                 EventType = eventTypes[i],
                 EventVersion = i,
@@ -346,7 +346,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         // Write events to blob storage
         for (int i = 0; i < 5; i++)
         {
-            await _blobDataStore!.AppendAsync(sourceDocument, new JsonEvent
+            await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
             {
                 EventType = $"Event{i}",
                 EventVersion = i,
@@ -448,14 +448,14 @@ internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
         _targetDocument = targetDocument;
     }
 
-    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
     {
         // Route reads based on which document is being read
         if (document.Active.StreamIdentifier == _sourceDocument.Active.StreamIdentifier)
         {
-            return _sourceDataStore.ReadAsync(document, startVersion, untilVersion, chunk);
+            return _sourceDataStore.ReadAsync(document, startVersion, untilVersion, chunk, cancellationToken);
         }
-        return _targetDataStore.ReadAsync(document, startVersion, untilVersion, chunk);
+        return _targetDataStore.ReadAsync(document, startVersion, untilVersion, chunk, cancellationToken);
     }
 
     public IAsyncEnumerable<IEvent> ReadAsStreamAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
@@ -468,15 +468,15 @@ internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
         return _targetDataStore.ReadAsStreamAsync(document, startVersion, untilVersion, chunk, cancellationToken);
     }
 
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
-        => AppendAsync(document, preserveTimestamp: false, events);
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
+        => AppendAsync(document, preserveTimestamp: false, cancellationToken, events);
 
-    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
         // Route appends based on which document is being written
         if (document.Active.StreamIdentifier == _sourceDocument.Active.StreamIdentifier)
         {
-            await _sourceDataStore.AppendAsync(document, preserveTimestamp, events);
+            await _sourceDataStore.AppendAsync(document, preserveTimestamp, cancellationToken, events);
             return;
         }
 
@@ -488,7 +488,7 @@ internal class MigrationDataStoreAdapter : IDataStore, IDataStoreRecovery
         {
             try
             {
-                await _targetDataStore.AppendAsync(document, preserveTimestamp, evt);
+                await _targetDataStore.AppendAsync(document, preserveTimestamp, cancellationToken, evt);
             }
             catch (Exception ex) when (IsVersionConflict(ex))
             {

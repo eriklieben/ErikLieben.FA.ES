@@ -1,4 +1,3 @@
-﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Storage.Blobs;
@@ -9,6 +8,7 @@ using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Observability;
 using Microsoft.Extensions.Azure;
 using BlobDataStoreDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobDataStoreDocumentContext;
 
@@ -21,7 +21,6 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.AzureStorage");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlobDataStore"/> class.
@@ -44,15 +43,27 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
     /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
     /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
     /// <exception cref="BlobDocumentStoreContainerNotFoundException">Thrown when the configured container does not exist.</exception>
     public async Task<IEnumerable<IEvent>?> ReadAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
-        int? chunk = null)
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("BlobDataStore.ReadAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.Read");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.StartVersion, startVersion);
+        }
 
         string? documentPath = null;
         if (document.Active.ChunkingEnabled())
@@ -78,14 +89,26 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         }
         catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
         {
+            FaesInstrumentation.RecordException(activity, ex);
             throw new BlobDocumentStoreContainerNotFoundException(
                 $"The container by the name '{document.ObjectName?.ToLowerInvariant()}' is not found. " +
                 "Create a container in your deployment or create it by hand, it's not created for you.",
             ex);
         }
-        return dataDocument.Events
+
+        var result = dataDocument.Events
                     .Where(e => e.EventVersion >= startVersion && (!untilVersion.HasValue || e.EventVersion <= untilVersion))
                     .ToList();
+
+        // Record metrics
+        if (timer != null)
+        {
+            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+            FaesMetrics.RecordStorageReadDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, document.ObjectName);
+        }
+        activity?.SetTag(FaesSemanticConventions.EventCount, result.Count);
+
+        return result;
     }
 
     /// <summary>
@@ -116,7 +139,14 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         int? chunk = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("BlobDataStore.ReadAsStreamAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.ReadAsStream");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         string? documentPath;
         if (document.Active.ChunkingEnabled())
@@ -161,27 +191,40 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
     /// Appends the specified events to the event stream of the given document in Azure Blob Storage.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="document"/> or its stream identifier is null.</exception>
     /// <exception cref="ArgumentException">Thrown when no events are provided.</exception>
     /// <exception cref="BlobDataStoreProcessingException">Thrown when optimistic concurrency or persistence operations fail.</exception>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
-        => AppendAsync(document, preserveTimestamp: false, events);
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
+        => AppendAsync(document, preserveTimestamp: false, cancellationToken, events);
 
     /// <summary>
     /// Appends the specified events to the event stream of the given document in Azure Blob Storage.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
     /// <param name="preserveTimestamp">When true, preserves the original timestamp from BlobJsonEvent sources (useful for migrations).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="document"/> or its stream identifier is null.</exception>
     /// <exception cref="ArgumentException">Thrown when no events are provided.</exception>
     /// <exception cref="BlobDataStoreProcessingException">Thrown when optimistic concurrency or persistence operations fail.</exception>
-    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
-        using var activity = ActivitySource.StartActivity("BlobDataStore.AppendAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.Append");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.EventCount, events?.Length ?? 0);
+        }
+
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
@@ -207,7 +250,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
 
         var blob = CreateBlobClient(document, documentPath);
 
-        if (!await blob.ExistsAsync())
+        if (!await blob.ExistsAsync(cancellationToken))
         {
             var newDoc = new BlobDataStoreDocument {
                 ObjectId = document.ObjectId,
@@ -226,16 +269,24 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             }
             catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
             {
+                FaesInstrumentation.RecordException(activity, ex);
                 var containerName = blob.BlobContainerName;
                 throw new BlobDocumentStoreContainerNotFoundException(
                     $"The container by the name '{containerName}' is not found. " +
                     $"Please create it or adjust the config setting: 'EventStream:Blob:DefaultDocumentContainerName'",
                 ex);
             }
+
+            // Record metrics for new blob
+            if (timer != null)
+            {
+                var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+                FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, document.ObjectName);
+            }
             return;
         }
 
-        var properties = await blob.GetPropertiesAsync();
+        var properties = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
         var etag = properties.Value.ETag;
 
         // Download the document with the same tag, so that we're sure it's not overriden in the meantime
@@ -267,6 +318,13 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         await blob.SaveEntityAsync(doc,
             BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
             new BlobRequestConditions { IfMatch = etag });
+
+        // Record metrics for existing blob update
+        if (timer != null)
+        {
+            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+            FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, document.ObjectName);
+        }
     }
 
     private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
@@ -295,7 +353,14 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
     /// <inheritdoc />
     public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
     {
-        using var activity = ActivitySource.StartActivity("BlobDataStore.RemoveEventsForFailedCommitAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.RemoveEventsForFailedCommit");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -348,7 +413,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
                     new BlobRequestConditions { IfMatch = etag });
             }
 
-            activity?.SetTag("RemovedCount", removed);
+            activity?.SetTag(FaesSemanticConventions.EventCount, removed);
             return removed;
         }
         catch (RequestFailedException ex) when (ex.Status == 404)

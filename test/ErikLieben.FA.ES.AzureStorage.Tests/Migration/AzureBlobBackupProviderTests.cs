@@ -409,6 +409,7 @@ public class AzureBlobBackupProviderTests
             await mockDataStore.Received(1).AppendAsync(
                 mockDocument,
                 true,
+                Arg.Any<CancellationToken>(),
                 Arg.Is<IEvent[]>(e => e.Length == 2));
         }
 
@@ -479,6 +480,7 @@ public class AzureBlobBackupProviderTests
             await mockDataStore.DidNotReceive().AppendAsync(
                 Arg.Any<Documents.IObjectDocument>(),
                 Arg.Any<bool>(),
+                Arg.Any<CancellationToken>(),
                 Arg.Any<IEvent[]>());
         }
     }

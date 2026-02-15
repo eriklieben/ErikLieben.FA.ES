@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Observability;
 using ErikLieben.FA.ES.Projections;
 using Microsoft.Extensions.Azure;
 using System.Diagnostics.CodeAnalysis;
@@ -102,7 +103,16 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("BlobProjectionFactory.GetOrCreate");
+
         blobName ??= $"{typeof(T).Name}.json";
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, typeof(T).Name);
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbName, _containerOrPath);
+        }
 
         var containerClient = await GetContainerClientAsync();
         var blobClient = containerClient.GetBlobClient(blobName);
@@ -125,8 +135,18 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
                     }
                 }
 
+                if (activity?.IsAllDataRequested == true)
+                {
+                    activity.SetTag(FaesSemanticConventions.LoadedFromCache, true);
+                }
+
                 return projection;
             }
+        }
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.LoadedFromCache, false);
         }
 
         return New();
@@ -143,9 +163,19 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         string? blobName = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = FaesInstrumentation.Projections.StartActivity("BlobProjectionFactory.Save");
+
         ArgumentNullException.ThrowIfNull(projection);
 
         blobName ??= $"{typeof(T).Name}.json";
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.ProjectionType, typeof(T).Name);
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
+            activity.SetTag(FaesSemanticConventions.DbName, _containerOrPath);
+            activity.SetTag(FaesSemanticConventions.ProjectionStatus, projection.Status.ToString());
+        }
 
         var containerClient = await GetContainerClientAsync();
         var blobClient = containerClient.GetBlobClient(blobName);
@@ -314,4 +344,109 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
 
         await SaveAsync(typedProjection, blobName, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public virtual async Task SetStatusAsync(
+        ProjectionStatus status,
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        blobName ??= $"{typeof(T).Name}.json";
+
+        var containerClient = await GetContainerClientAsync();
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            // Create a minimal projection with the status set
+            var statusJson = JsonSerializer.Serialize(new { Status = status }, StatusOnlyJsonContext.Default.StatusOnly);
+            var statusBytes = Encoding.UTF8.GetBytes(statusJson);
+            await blobClient.UploadAsync(new BinaryData(statusBytes), overwrite: true, cancellationToken);
+            return;
+        }
+
+        // Read existing projection, update status, and save back
+        var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
+        var json = downloadResult.Value.Content.ToString();
+
+        // Parse and update status using JsonDocument
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        // Build a new JSON object with the updated status
+        using var stream = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Name == "$status")
+                {
+                    writer.WriteNumber("$status", (int)status);
+                }
+                else
+                {
+                    property.WriteTo(writer);
+                }
+            }
+            // If $status wasn't in the original, add it
+            if (!root.TryGetProperty("$status", out _))
+            {
+                writer.WriteNumber("$status", (int)status);
+            }
+            writer.WriteEndObject();
+        }
+
+        var updatedJson = Encoding.UTF8.GetString(stream.ToArray());
+        var bytes = Encoding.UTF8.GetBytes(updatedJson);
+        await blobClient.UploadAsync(new BinaryData(bytes), overwrite: true, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<ProjectionStatus> GetStatusAsync(
+        string? blobName = null,
+        CancellationToken cancellationToken = default)
+    {
+        blobName ??= $"{typeof(T).Name}.json";
+
+        var containerClient = await GetContainerClientAsync();
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return ProjectionStatus.Active;
+        }
+
+        // Read just enough to get the status property
+        var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
+        var json = downloadResult.Value.Content.ToString();
+
+        using var document = JsonDocument.Parse(json);
+        if (document.RootElement.TryGetProperty("$status", out var statusElement))
+        {
+            if (statusElement.TryGetInt32(out var statusValue))
+            {
+                return (ProjectionStatus)statusValue;
+            }
+        }
+
+        return ProjectionStatus.Active;
+    }
+}
+
+/// <summary>
+/// Helper type for serializing just the status property.
+/// </summary>
+internal record StatusOnly
+{
+    [System.Text.Json.Serialization.JsonPropertyName("$status")]
+    public ProjectionStatus Status { get; init; }
+}
+
+/// <summary>
+/// JSON serializer context for status-only serialization.
+/// </summary>
+[System.Text.Json.Serialization.JsonSerializable(typeof(StatusOnly))]
+internal partial class StatusOnlyJsonContext : System.Text.Json.Serialization.JsonSerializerContext
+{
 }

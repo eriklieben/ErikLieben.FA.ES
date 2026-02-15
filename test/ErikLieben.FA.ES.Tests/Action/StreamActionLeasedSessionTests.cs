@@ -93,7 +93,7 @@ namespace ErikLieben.FA.ES.Tests.Action
             }
         }
 
-        public class IsTerminatedASync
+        public class IsTerminatedAsync
         {
             [Fact]
             public async Task Should_delegate_to_underlying_session()
@@ -101,15 +101,15 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var streamIdentifier = "streamId";
-                mockSession.IsTerminatedASync(streamIdentifier).Returns(Task.FromResult(true));
+                mockSession.IsTerminatedAsync(streamIdentifier).Returns(Task.FromResult(true));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamIdentifier);
+                var result = await sut.IsTerminatedAsync(streamIdentifier);
 
                 // Assert
                 Assert.True(result);
-                await mockSession.Received(1).IsTerminatedASync(streamIdentifier);
+                await mockSession.Received(1).IsTerminatedAsync(streamIdentifier);
             }
         }
 

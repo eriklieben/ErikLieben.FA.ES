@@ -540,7 +540,7 @@ public class MigrationExecutor
                 targetStreamInfo);
 
             // Write all events to the target stream
-            await context.DataStore.AppendAsync(targetDocument, targetEvents.ToArray());
+            await context.DataStore.AppendAsync(targetDocument, default, targetEvents.ToArray());
 
             logger.WroteEventsToTarget(targetEvents.Count, context.TargetStreamIdentifier);
         }

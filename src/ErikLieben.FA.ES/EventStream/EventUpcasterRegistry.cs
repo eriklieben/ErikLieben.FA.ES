@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using ErikLieben.FA.ES.Observability;
 
 namespace ErikLieben.FA.ES.EventStream;
 
@@ -93,8 +94,23 @@ public class EventUpcasterRegistry
     /// <returns>The upcasted event data and the final schema version.</returns>
     public (object Data, int SchemaVersion) UpcastToVersion(string eventName, int currentVersion, int targetVersion, object eventData)
     {
+        // Only create activity if upcasting is actually needed
+        if (currentVersion >= targetVersion)
+        {
+            return (eventData, currentVersion);
+        }
+
+        using var activity = FaesInstrumentation.Core.StartActivity("EventUpcaster.UpcastToVersion");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.EventName, eventName);
+            activity.SetTag(FaesSemanticConventions.UpcastFromVersion, currentVersion);
+            activity.SetTag(FaesSemanticConventions.UpcastToVersion, targetVersion);
+        }
+
         var data = eventData;
         var version = currentVersion;
+        var upcastCount = 0;
 
         while (version < targetVersion)
         {
@@ -106,6 +122,14 @@ public class EventUpcasterRegistry
 
             data = upcaster.Upcast(data);
             version = upcaster.ToVersion;
+            upcastCount++;
+        }
+
+        // Record metrics for completed upcasts
+        if (upcastCount > 0)
+        {
+            FaesMetrics.RecordUpcast(eventName, currentVersion, version);
+            activity?.SetTag("faes.upcast.count", upcastCount);
         }
 
         return (data, version);

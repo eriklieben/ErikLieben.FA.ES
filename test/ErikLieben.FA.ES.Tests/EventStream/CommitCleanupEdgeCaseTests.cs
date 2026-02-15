@@ -84,7 +84,7 @@ public class CommitCleanupEdgeCaseTests
         // Document succeeds, append fails
         dependencies.DocumentFactory.SetAsync(Arg.Any<IObjectDocument>())
             .Returns(Task.CompletedTask);
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Network timeout"));
 
         // Cleanup succeeds
@@ -115,7 +115,7 @@ public class CommitCleanupEdgeCaseTests
             sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 11 + i });
         }
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new TimeoutException("Storage timeout"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(3));
@@ -157,7 +157,7 @@ public class CommitCleanupEdgeCaseTests
         var sut = CreateSut(dependencies);
         sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 6 });
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(1));
@@ -189,7 +189,7 @@ public class CommitCleanupEdgeCaseTests
         var originalException = new InvalidOperationException("Append failed");
         var cleanupException = new InvalidOperationException("Storage unavailable");
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(originalException);
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(cleanupException);
@@ -225,7 +225,7 @@ public class CommitCleanupEdgeCaseTests
         var originalException = new TimeoutException("Original timeout");
         var cleanupException = new InvalidOperationException("Cleanup also failed");
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(originalException);
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(cleanupException);
@@ -265,7 +265,7 @@ public class CommitCleanupEdgeCaseTests
                 return Task.CompletedTask;
             });
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Append failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(new InvalidOperationException("Cleanup failed"));
@@ -300,7 +300,7 @@ public class CommitCleanupEdgeCaseTests
                 return Task.CompletedTask;
             });
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Append failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(new InvalidOperationException("Cleanup failed"));
@@ -330,7 +330,7 @@ public class CommitCleanupEdgeCaseTests
             sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 11 + i });
         }
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(5));
@@ -355,7 +355,7 @@ public class CommitCleanupEdgeCaseTests
             sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 11 + i });
         }
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(new InvalidOperationException("Cleanup also failed"));
@@ -379,7 +379,7 @@ public class CommitCleanupEdgeCaseTests
         int capturedFromVersion = 0;
         int capturedToVersion = 0;
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(
             Arg.Any<IObjectDocument>(),
@@ -411,7 +411,7 @@ public class CommitCleanupEdgeCaseTests
         int capturedFromVersion = 0;
         int capturedToVersion = 0;
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(
             Arg.Any<IObjectDocument>(),
@@ -490,7 +490,7 @@ public class CommitCleanupEdgeCaseTests
         var sut = CreateSut(dependencies);
         sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 6 });
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed before writing"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(0)); // No events were actually there
@@ -519,7 +519,7 @@ public class CommitCleanupEdgeCaseTests
             sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 11 + i });
         }
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed midway"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(2)); // Only 2 of 5 events existed
@@ -549,7 +549,7 @@ public class CommitCleanupEdgeCaseTests
         sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 4 });
         sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 5 });
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new InvalidOperationException("Failed"));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(3));
@@ -577,7 +577,7 @@ public class CommitCleanupEdgeCaseTests
         sut.Buffer.Add(new JsonEvent { EventType = "Test", EventVersion = 6 });
 
         var specificErrorMessage = "Network timeout after 30 seconds connecting to storage.blob.core.windows.net";
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(new TimeoutException(specificErrorMessage));
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .Returns(Task.FromResult(1));
@@ -603,7 +603,7 @@ public class CommitCleanupEdgeCaseTests
         var originalException = new InvalidOperationException("First failure");
         var cleanupException = new TimeoutException("Cleanup timeout");
 
-        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+        dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
             .ThrowsAsync(originalException);
         ((IDataStoreRecovery)dependencies.DataStore).RemoveEventsForFailedCommitAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int>())
             .ThrowsAsync(cleanupException);

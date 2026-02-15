@@ -18,9 +18,10 @@ public class InMemoryDataStore : IDataStore, IDataStoreRecovery
     /// Appends the specified events to the in-memory event stream for the given document.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order.</param>
     /// <returns>A completed task.</returns>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
     {
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
         foreach (var @event in events)
@@ -44,12 +45,13 @@ public class InMemoryDataStore : IDataStore, IDataStoreRecovery
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
     /// <param name="preserveTimestamp">Ignored for in-memory storage.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order.</param>
     /// <returns>A completed task.</returns>
-    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
         // In-memory storage doesn't modify timestamps, so just delegate to the regular method
-        return AppendAsync(document, events);
+        return AppendAsync(document, cancellationToken, events);
     }
 
     /// <summary>
@@ -59,8 +61,9 @@ public class InMemoryDataStore : IDataStore, IDataStoreRecovery
     /// <param name="startVersion">The zero-based version to start reading from (inclusive). Ignored by this implementation.</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end. Ignored by this implementation.</param>
     /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise. Ignored by this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or an empty sequence when the stream does not exist.</returns>
-    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);

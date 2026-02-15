@@ -1,8 +1,8 @@
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Observability;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
@@ -32,7 +32,6 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
     private readonly IDataStore inner;
     private readonly ResiliencePipeline pipeline;
     private readonly ILogger<ResilientDataStore>? logger;
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.ResilientDataStore");
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ResilientDataStore"/> class.
@@ -75,21 +74,25 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
     }
 
     /// <inheritdoc />
-    public async Task AppendAsync(IObjectDocument document, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
     {
-        using var activity = ActivitySource.StartActivity("ResilientDataStore.AppendAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Append");
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
         await pipeline.ExecuteAsync(
-            async ct => await inner.AppendAsync(document, events),
-            CancellationToken.None);
+            async ct => await inner.AppendAsync(document, ct, events),
+            cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
-        using var activity = ActivitySource.StartActivity("ResilientDataStore.AppendAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Append");
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
         await pipeline.ExecuteAsync(
-            async ct => await inner.AppendAsync(document, preserveTimestamp, events),
-            CancellationToken.None);
+            async ct => await inner.AppendAsync(document, preserveTimestamp, ct, events),
+            cancellationToken);
     }
 
     /// <inheritdoc />
@@ -97,12 +100,15 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
-        int? chunk = null)
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("ResilientDataStore.ReadAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Read");
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
         return await pipeline.ExecuteAsync(
-            async ct => await inner.ReadAsync(document, startVersion, untilVersion, chunk),
-            CancellationToken.None);
+            async ct => await inner.ReadAsync(document, startVersion, untilVersion, chunk, ct),
+            cancellationToken);
     }
 
     /// <inheritdoc />
@@ -137,7 +143,9 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
         int fromVersion,
         int toVersion)
     {
-        using var activity = ActivitySource.StartActivity("ResilientDataStore.RemoveEventsForFailedCommitAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.RemoveEventsForFailedCommit");
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
         return await pipeline.ExecuteAsync(
             async ct => await ((IDataStoreRecovery)inner).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion),
             CancellationToken.None);

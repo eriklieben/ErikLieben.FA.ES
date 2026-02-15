@@ -83,7 +83,7 @@ public class StreamRepairServiceTests
         var document = CreateDoc(isBroken: true, brokenInfo: brokenInfo);
 
         // Add some events (0, 1 are valid, 2-4 are orphaned)
-        await dataStore.AppendAsync(document,
+        await dataStore.AppendAsync(document, default,
             new TestEvent { EventVersion = 0 },
             new TestEvent { EventVersion = 1 },
             new TestEvent { EventVersion = 2 },
@@ -165,7 +165,7 @@ public class StreamRepairServiceTests
         var service = CreateService(dataStore, documentStore);
         var document = CreateDoc();
 
-        await dataStore.AppendAsync(document,
+        await dataStore.AppendAsync(document, default,
             new TestEvent { EventVersion = 0 },
             new TestEvent { EventVersion = 1 },
             new TestEvent { EventVersion = 2 },
@@ -200,7 +200,7 @@ public class StreamRepairServiceTests
         };
         var document = CreateDoc(isBroken: true, brokenInfo: brokenInfo);
 
-        await dataStore.AppendAsync(document,
+        await dataStore.AppendAsync(document, default,
             new TestEvent { EventVersion = 0 },
             new TestEvent { EventVersion = 1 },
             new TestEvent { EventVersion = 2 });
@@ -228,7 +228,7 @@ public class StreamRepairServiceTests
             new RollbackRecord { FromVersion = 5, ToVersion = 7, EventsRemoved = 3 }
         ];
 
-        await dataStore.AppendAsync(document,
+        await dataStore.AppendAsync(document, default,
             new TestEvent { EventVersion = 0 },
             new TestEvent { EventVersion = 1 });
 
@@ -354,7 +354,7 @@ public class StreamRepairServiceTests
         // Add 10 events
         for (int i = 0; i < 10; i++)
         {
-            await dataStore.AppendAsync(document, new TestEvent { EventVersion = i });
+            await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = i });
         }
 
         // Act - perform multiple repairs
@@ -382,7 +382,7 @@ public class StreamRepairServiceTests
         var service = CreateService(dataStore, documentStore);
         var document = CreateDoc();
 
-        await dataStore.AppendAsync(document, new TestEvent { EventVersion = 0 });
+        await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = 0 });
 
         var beforeRepair = DateTimeOffset.UtcNow;
 
@@ -412,7 +412,7 @@ public class StreamRepairServiceTests
         };
         var document = CreateDoc(isBroken: true, brokenInfo: brokenInfo);
 
-        await dataStore.AppendAsync(document, new TestEvent { EventVersion = 0 });
+        await dataStore.AppendAsync(document, default, new TestEvent { EventVersion = 0 });
 
         // Act
         var result = await service.RepairBrokenStreamAsync(document);

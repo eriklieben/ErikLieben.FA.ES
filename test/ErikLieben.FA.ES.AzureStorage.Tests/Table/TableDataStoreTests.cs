@@ -364,7 +364,7 @@ public class TableDataStoreTests
         {
             var sut = CreateSut();
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                sut.AppendAsync(null!, CreateTableJsonEvent(0)));
+                sut.AppendAsync(null!, default, CreateTableJsonEvent(0)));
         }
 
         [Fact]
@@ -374,7 +374,7 @@ public class TableDataStoreTests
             var document = CreateMockDocument("TestObject", "test-id");
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                sut.AppendAsync(document));
+                sut.AppendAsync(document, default));
         }
 
         [Fact]
@@ -384,7 +384,7 @@ public class TableDataStoreTests
             var document = CreateMockDocument("TestObject", "test-id");
 
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                sut.AppendAsync(document, Array.Empty<IEvent>()));
+                sut.AppendAsync(document, default, Array.Empty<IEvent>()));
         }
 
         [Fact]
@@ -403,7 +403,7 @@ public class TableDataStoreTests
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() =>
-                sut.AppendAsync(document, nonJsonEvent));
+                sut.AppendAsync(document, default, nonJsonEvent));
         }
 
         [Fact]
@@ -417,7 +417,7 @@ public class TableDataStoreTests
             SetupEmptyStreamQuery();
 
             // Act
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert
             await EventTableClient.Received(1).SubmitTransactionAsync(
@@ -436,7 +436,7 @@ public class TableDataStoreTests
             SetupEmptyStreamQuery();
 
             // Act
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert - Should call twice: once for first 100, once for remaining 50
             await EventTableClient.Received(2).SubmitTransactionAsync(
@@ -459,7 +459,7 @@ public class TableDataStoreTests
 
             // Act & Assert
             await Assert.ThrowsAsync<TableDataStoreProcessingException>(() =>
-                sut.AppendAsync(document, events));
+                sut.AppendAsync(document, default, events));
         }
 
         [Fact]
@@ -477,7 +477,7 @@ public class TableDataStoreTests
 
             // Act & Assert
             await Assert.ThrowsAsync<TableDocumentStoreTableNotFoundException>(() =>
-                sut.AppendAsync(document, events));
+                sut.AppendAsync(document, default, events));
         }
 
         [Fact]
@@ -498,7 +498,7 @@ public class TableDataStoreTests
 
             // Act & Assert
             await Assert.ThrowsAsync<EventStreamClosedException>(() =>
-                sut.AppendAsync(document, events));
+                sut.AppendAsync(document, default, events));
         }
 
         [Fact]
@@ -518,7 +518,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert
             Assert.NotNull(capturedAction);
@@ -545,7 +545,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert
             Assert.NotNull(capturedAction);
@@ -571,7 +571,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert
             Assert.NotNull(capturedAction);
@@ -605,7 +605,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, @event);
+            await sut.AppendAsync(document, default, @event);
 
             // Assert
             Assert.NotNull(capturedAction);
@@ -635,7 +635,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, @event);
+            await sut.AppendAsync(document, default, @event);
 
             // Assert
             Assert.NotNull(capturedAction);
@@ -661,7 +661,7 @@ public class TableDataStoreTests
                 .Returns(CreateAsyncPageable(streamEvents));
 
             // Act & Assert - should not throw
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             Assert.True(true);
         }
@@ -689,7 +689,7 @@ public class TableDataStoreTests
                 .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
 
             // Act - should not throw
-            await sut.AppendAsync(document, events);
+            await sut.AppendAsync(document, default, events);
 
             // Assert - verify transaction was submitted
             await EventTableClient.Received(1).SubmitTransactionAsync(
@@ -710,7 +710,7 @@ public class TableDataStoreTests
                 .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
 
             // Act - should not throw
-            await sut.AppendAsync(document, preserveTimestamp: true, events);
+            await sut.AppendAsync(document, preserveTimestamp: true, cancellationToken: default, events);
 
             // Assert - verify transaction was submitted
             await EventTableClient.Received(1).SubmitTransactionAsync(
@@ -958,7 +958,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, smallEvent);
+            await sut.AppendAsync(document, default, smallEvent);
 
             // Assert - Should have exactly 1 entity (no chunking)
             Assert.Single(capturedActions);
@@ -987,7 +987,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, largeEvent);
+            await sut.AppendAsync(document, default, largeEvent);
 
             // Assert - Should have compressed data
             Assert.Single(capturedActions);
@@ -1017,7 +1017,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, largeEvent);
+            await sut.AppendAsync(document, default, largeEvent);
 
             // Assert - Should have multiple entities (main + chunks)
             Assert.True(capturedActions.Count >= 1);
@@ -1061,7 +1061,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, largeEvent);
+            await sut.AppendAsync(document, default, largeEvent);
 
             // Assert
             var mainEntity = capturedActions[0].Entity as TableEventEntity;
@@ -1094,7 +1094,7 @@ public class TableDataStoreTests
                 .Returns(Substitute.For<Response<IReadOnlyList<Response>>>());
 
             // Act
-            await sut.AppendAsync(document, largeEvent);
+            await sut.AppendAsync(document, default, largeEvent);
 
             // Assert - Should have exactly 1 entity with original payload (no chunking)
             Assert.Single(capturedActions);

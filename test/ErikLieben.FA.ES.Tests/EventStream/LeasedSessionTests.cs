@@ -422,7 +422,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 // Assert
                 await dependencies.DocumentFactory.Received(1).SetAsync(dependencies.Document);
                 await dependencies.DataStore.Received(1)
-                    .AppendAsync(Arg.Any<IObjectDocument>(), Arg.Is<IEvent[]>(e => e.Length == 2));
+                    .AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Is<IEvent[]>(e => e.Length == 2));
                 ;
                 Assert.Empty(sut.Buffer);
             }
@@ -471,7 +471,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
 
                 // Assert
                 await dependencies.DocumentFactory.Received(2).SetAsync(dependencies.Document);
-                await dependencies.DataStore.Received(1).AppendAsync(dependencies.Document, Arg.Any<IEvent[]>());
+                await dependencies.DataStore.Received(1).AppendAsync(dependencies.Document, Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>());
             }
 
             [Fact]
@@ -498,7 +498,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 // Assert
                 Assert.Equal(1, streamChunk.LastEventVersion);
                 await dependencies.DocumentFactory.Received(1).SetAsync(dependencies.Document);
-                await dependencies.DataStore.Received(1).AppendAsync(dependencies.Document, Arg.Any<IEvent[]>());
+                await dependencies.DataStore.Received(1).AppendAsync(dependencies.Document, Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>());
             }
 
             [Fact]
@@ -608,7 +608,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 sut.Buffer.Add(new JsonEvent { EventType = "TestEvent", EventVersion = 6 });
 
                 var innerException = new InvalidOperationException("Event append failed");
-                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
                     .Returns(Task.FromException(innerException));
 
                 // Cleanup succeeds (returns removed count)
@@ -684,7 +684,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 dependencies.DocumentFactory.SetAsync(Arg.Any<IObjectDocument>())
                     .Returns(Task.CompletedTask)
                     .AndDoes(_ => callOrder.Add("DocumentStore"));
-                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
                     .Returns(Task.CompletedTask)
                     .AndDoes(_ => callOrder.Add("DataStore"));
 
@@ -724,7 +724,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = CreateSut(dependencies);
                 sut.Buffer.Add(new JsonEvent { EventType = "TestEvent", EventVersion = 1 });
 
-                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
                     .Returns(Task.FromException(new InvalidOperationException("Partial write")));
 
                 // Cleanup succeeds
@@ -785,7 +785,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 sut.Buffer.Add(new JsonEvent { EventType = "TestEvent", EventVersion = 1 });
 
                 var innerException = new InvalidOperationException("Chunking event append failed");
-                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
                     .Returns(Task.FromException(innerException));
 
                 // Cleanup succeeds
@@ -918,7 +918,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 }
 
                 var callCount = 0;
-                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<IEvent[]>())
+                dependencies.DataStore.AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Any<IEvent[]>())
                     .Returns(_ =>
                     {
                         callCount++;
@@ -955,7 +955,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
 
                 // Assert - should complete without calling stores
                 await dependencies.DocumentFactory.Received(1).SetAsync(Arg.Any<IObjectDocument>());
-                await dependencies.DataStore.Received(1).AppendAsync(Arg.Any<IObjectDocument>(), Arg.Is<IEvent[]>(e => e.Length == 0));
+                await dependencies.DataStore.Received(1).AppendAsync(Arg.Any<IObjectDocument>(), Arg.Any<CancellationToken>(), Arg.Is<IEvent[]>(e => e.Length == 0));
             }
 
         }
@@ -973,7 +973,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 dependencies.Document.TerminatedStreams.Returns([new() { StreamIdentifier = streamIdentifier }]);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamIdentifier);
+                var result = await sut.IsTerminatedAsync(streamIdentifier);
 
                 // Assert
                 Assert.True(result);
@@ -990,7 +990,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 dependencies.Document.TerminatedStreams.Returns([]);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamIdentifier);
+                var result = await sut.IsTerminatedAsync(streamIdentifier);
 
                 // Assert
                 Assert.False(result);
@@ -1007,7 +1007,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = CreateSut(dependencies);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamId);
+                var result = await sut.IsTerminatedAsync(streamId);
 
                 // Assert
                 Assert.True(result);
@@ -1025,7 +1025,7 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 var sut = CreateSut(dependencies);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamId);
+                var result = await sut.IsTerminatedAsync(streamId);
 
                 // Assert
                 Assert.False(result);

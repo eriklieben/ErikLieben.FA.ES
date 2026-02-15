@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Runtime.CompilerServices;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
@@ -7,6 +6,7 @@ using ErikLieben.FA.ES.CosmosDb.Model;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Observability;
 using Microsoft.Azure.Cosmos;
 
 namespace ErikLieben.FA.ES.CosmosDb;
@@ -19,7 +19,6 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
 {
     private readonly CosmosClient cosmosClient;
     private readonly EventStreamCosmosDbSettings settings;
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES.CosmosDb");
     private Container? eventsContainer;
 
     /// <summary>
@@ -58,14 +57,23 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
     /// <param name="chunk">The chunk identifier (not used for CosmosDB, kept for interface compatibility).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or null when the stream does not exist.</returns>
     public async Task<IEnumerable<IEvent>?> ReadAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
-        int? chunk = null)
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.ReadAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbDataStore.Read");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -101,7 +109,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
             using var iterator = container.GetItemQueryIterator<CosmosDbEventEntity>(queryDefinition, requestOptions: queryOptions);
             while (iterator.HasMoreResults)
             {
-                var response = await iterator.ReadNextAsync();
+                var response = await iterator.ReadNextAsync(cancellationToken);
                 foreach (var entity in response)
                 {
                     events.Add(CosmosDbJsonEvent.FromEntity(entity));
@@ -148,7 +156,14 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         int? chunk = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.ReadAsStreamAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbDataStore.ReadAsStream");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -219,10 +234,11 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// Appends the specified events to the event stream of the given document in CosmosDB.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
-        => AppendAsync(document, preserveTimestamp: false, events);
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
+        => AppendAsync(document, preserveTimestamp: false, cancellationToken, events);
 
     /// <summary>
     /// Appends the specified events to the event stream of the given document in CosmosDB.
@@ -230,11 +246,20 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
     /// <param name="preserveTimestamp">When true, preserves the original timestamp from source events (useful for migrations).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order; must contain at least one event.</param>
     /// <returns>A task that represents the asynchronous append operation.</returns>
-    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
+    public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
-        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.AppendAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbDataStore.Append");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.EventCount, events?.Length ?? 0);
+        }
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
@@ -247,7 +272,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         var streamId = document.Active.StreamIdentifier;
 
         // Check if stream is closed
-        await CheckStreamNotClosedAsync(container, streamId);
+        await CheckStreamNotClosedAsync(container, streamId, cancellationToken);
 
         // Convert events to CosmosDB entities
         var cosmosEvents = events
@@ -274,7 +299,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         try
         {
             var partitionKey = new PartitionKey(streamId);
-            await WriteEventsAsync(container, cosmosEvents, partitionKey, streamId);
+            await WriteEventsAsync(container, cosmosEvents, partitionKey, streamId, cancellationToken);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
         {
@@ -294,17 +319,18 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         Container container,
         List<CosmosDbEventEntity> cosmosEvents,
         PartitionKey partitionKey,
-        string streamId)
+        string streamId,
+        CancellationToken cancellationToken)
     {
         if (cosmosEvents.Count == 1)
         {
-            await container.CreateItemAsync(cosmosEvents[0], partitionKey);
+            await container.CreateItemAsync(cosmosEvents[0], partitionKey, cancellationToken: cancellationToken);
             return;
         }
 
         if (cosmosEvents.Count <= settings.MaxBatchSize)
         {
-            await ExecuteBatchAsync(container, cosmosEvents, partitionKey, streamId);
+            await ExecuteBatchAsync(container, cosmosEvents, partitionKey, streamId, cancellationToken);
             return;
         }
 
@@ -312,7 +338,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         for (int i = 0; i < cosmosEvents.Count; i += settings.MaxBatchSize)
         {
             var batchEvents = cosmosEvents.Skip(i).Take(settings.MaxBatchSize).ToList();
-            await ExecuteBatchAsync(container, batchEvents, partitionKey, streamId);
+            await ExecuteBatchAsync(container, batchEvents, partitionKey, streamId, cancellationToken);
         }
     }
 
@@ -320,7 +346,8 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         Container container,
         List<CosmosDbEventEntity> events,
         PartitionKey partitionKey,
-        string streamId)
+        string streamId,
+        CancellationToken cancellationToken)
     {
         var batch = container.CreateTransactionalBatch(partitionKey);
         foreach (var evt in events)
@@ -328,7 +355,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
             batch.CreateItem(evt);
         }
 
-        var batchResponse = await batch.ExecuteAsync();
+        var batchResponse = await batch.ExecuteAsync(cancellationToken);
         if (!batchResponse.IsSuccessStatusCode)
         {
             throw new CosmosDbProcessingException(
@@ -336,7 +363,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         }
     }
 
-    private static async Task CheckStreamNotClosedAsync(Container container, string streamId)
+    private static async Task CheckStreamNotClosedAsync(Container container, string streamId, CancellationToken cancellationToken)
     {
         // Check cache first to avoid unnecessary CosmosDB query (saves 1 RU per append)
         if (ClosedStreamCache.Contains(streamId))
@@ -362,7 +389,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
         using var iterator = container.GetItemQueryIterator<CosmosDbEventEntity>(query, requestOptions: queryOptions);
         if (iterator.HasMoreResults)
         {
-            var response = await iterator.ReadNextAsync();
+            var response = await iterator.ReadNextAsync(cancellationToken);
             if (response.Count > 0)
             {
                 // Cache this closed status - streams never reopen
@@ -467,7 +494,14 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// <inheritdoc />
     public async Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
     {
-        using var activity = ActivitySource.StartActivity("CosmosDbDataStore.RemoveEventsForFailedCommitAsync");
+        using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbDataStore.RemoveEventsForFailedCommit");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
+            activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        }
 
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
@@ -493,7 +527,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
             }
         }
 
-        activity?.SetTag("RemovedCount", removed);
+        activity?.SetTag(FaesSemanticConventions.EventCount, removed);
         return removed;
     }
 }

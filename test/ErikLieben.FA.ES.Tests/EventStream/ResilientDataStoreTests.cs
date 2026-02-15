@@ -57,7 +57,7 @@ public class ResilientDataStoreTests : IDisposable
                 removeExceptions.Enqueue(ex);
         }
 
-        public Task AppendAsync(IObjectDocument document, params IEvent[] events)
+        public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
         {
             AppendCallCount++;
             if (appendExceptions.TryDequeue(out var ex) && ex != null)
@@ -66,10 +66,10 @@ public class ResilientDataStoreTests : IDisposable
             return Task.CompletedTask;
         }
 
-        public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, params IEvent[] events)
-            => AppendAsync(document, events);
+        public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
+            => AppendAsync(document, cancellationToken, events);
 
-        public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null)
+        public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
         {
             ReadCallCount++;
             if (readExceptions.TryDequeue(out var ex) && ex != null)
@@ -169,7 +169,7 @@ public class ResilientDataStoreTests : IDisposable
         var testEvent = new TestEvent { EventVersion = 0 };
 
         // Act
-        await resilient.AppendAsync(document, testEvent);
+        await resilient.AppendAsync(document, default, testEvent);
 
         // Assert
         Assert.Equal(2, inner.AppendCallCount); // First failed, second succeeded
@@ -191,7 +191,7 @@ public class ResilientDataStoreTests : IDisposable
         var document = new TestDocument();
 
         // Act
-        await resilient.AppendAsync(document, new TestEvent());
+        await resilient.AppendAsync(document, default, new TestEvent());
 
         // Assert
         Assert.Equal(3, inner.AppendCallCount);
@@ -211,7 +211,7 @@ public class ResilientDataStoreTests : IDisposable
         var document = new TestDocument();
 
         // Act
-        await resilient.AppendAsync(document, new TestEvent());
+        await resilient.AppendAsync(document, default, new TestEvent());
 
         // Assert
         Assert.Equal(2, inner.AppendCallCount);
@@ -230,7 +230,7 @@ public class ResilientDataStoreTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<TransientHttpException>(() =>
-            resilient.AppendAsync(document, new TestEvent()));
+            resilient.AppendAsync(document, default, new TestEvent()));
         Assert.Equal(1, inner.AppendCallCount); // No retries
     }
 
@@ -247,7 +247,7 @@ public class ResilientDataStoreTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<TransientHttpException>(() =>
-            resilient.AppendAsync(document, new TestEvent()));
+            resilient.AppendAsync(document, default, new TestEvent()));
         Assert.Equal(1, inner.AppendCallCount); // No retries for conflict
     }
 
@@ -264,7 +264,7 @@ public class ResilientDataStoreTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<TransientHttpException>(() =>
-            resilient.AppendAsync(document, new TestEvent()));
+            resilient.AppendAsync(document, default, new TestEvent()));
         Assert.Equal(1, inner.AppendCallCount);
     }
 
@@ -285,7 +285,7 @@ public class ResilientDataStoreTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAsync<TimeoutException>(() =>
-            resilient.AppendAsync(document, new TestEvent()));
+            resilient.AppendAsync(document, default, new TestEvent()));
         Assert.Equal(4, inner.AppendCallCount); // 1 initial + 3 retries
     }
 
@@ -382,7 +382,7 @@ public class ResilientDataStoreTests : IDisposable
 
         // Act & Assert - should fail because max retries is 2 (1 initial + 2 retries = 3 attempts)
         await Assert.ThrowsAsync<TimeoutException>(() =>
-            resilient.AppendAsync(document, new TestEvent()));
+            resilient.AppendAsync(document, default, new TestEvent()));
         Assert.Equal(3, inner.AppendCallCount);
     }
 
@@ -452,7 +452,7 @@ public class ResilientDataStoreTests : IDisposable
         var testEvent = new TestEvent { EventVersion = 0 };
 
         // Act
-        await resilient.AppendAsync(document, preserveTimestamp: true, testEvent);
+        await resilient.AppendAsync(document, preserveTimestamp: true, cancellationToken: default, testEvent);
 
         // Assert
         Assert.Equal(1, inner.AppendCallCount);

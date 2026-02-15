@@ -261,7 +261,7 @@ public class CosmosDbDataStoreTests
         {
             var sut = new CosmosDbDataStore(cosmosClient, settings);
             // Note: Code accesses document.Active before null check, causing NullReferenceException
-            await Assert.ThrowsAnyAsync<Exception>(() => sut.AppendAsync(null!, new JsonEvent { EventType = "Test", EventVersion = 0 }));
+            await Assert.ThrowsAnyAsync<Exception>(() => sut.AppendAsync(null!, default, new JsonEvent { EventType = "Test", EventVersion = 0 }));
         }
 
         [Fact]
@@ -269,14 +269,14 @@ public class CosmosDbDataStoreTests
         {
             var sut = new CosmosDbDataStore(cosmosClient, settings);
             streamInformation.StreamIdentifier = null!;
-            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(objectDocument, new JsonEvent { EventType = "Test", EventVersion = 0 }));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(objectDocument, default, new JsonEvent { EventType = "Test", EventVersion = 0 }));
         }
 
         [Fact]
         public async Task Should_throw_argument_exception_when_no_events_provided()
         {
             var sut = new CosmosDbDataStore(cosmosClient, settings);
-            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, Array.Empty<IEvent>()));
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, default, Array.Empty<IEvent>()));
         }
 
         [Fact]
@@ -298,7 +298,7 @@ public class CosmosDbDataStoreTests
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
 
-            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, nonJsonEvent));
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, default, nonJsonEvent));
         }
 
         [Fact]
@@ -324,7 +324,7 @@ public class CosmosDbDataStoreTests
             container.CreateItemAsync(Arg.Any<CosmosDbEventEntity>(), Arg.Any<PartitionKey>(), Arg.Any<ItemRequestOptions>(), Arg.Any<CancellationToken>())
                 .Returns(itemResponse);
 
-            await sut.AppendAsync(objectDocument, jsonEvent);
+            await sut.AppendAsync(objectDocument, default, jsonEvent);
 
             await container.Received(1).CreateItemAsync(
                 Arg.Any<CosmosDbEventEntity>(),
@@ -353,7 +353,7 @@ public class CosmosDbDataStoreTests
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
 
-            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(objectDocument, jsonEvent));
+            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(objectDocument, default, jsonEvent));
         }
 
         [Fact]
@@ -378,7 +378,7 @@ public class CosmosDbDataStoreTests
             container.CreateItemAsync(Arg.Any<CosmosDbEventEntity>(), Arg.Any<PartitionKey>(), Arg.Any<ItemRequestOptions>(), Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Conflict", HttpStatusCode.Conflict, 0, "", 0));
 
-            await Assert.ThrowsAsync<CosmosDbProcessingException>(() => sut.AppendAsync(objectDocument, jsonEvent));
+            await Assert.ThrowsAsync<CosmosDbProcessingException>(() => sut.AppendAsync(objectDocument, default, jsonEvent));
         }
 
         [Fact]
@@ -403,7 +403,7 @@ public class CosmosDbDataStoreTests
             container.CreateItemAsync(Arg.Any<CosmosDbEventEntity>(), Arg.Any<PartitionKey>(), Arg.Any<ItemRequestOptions>(), Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
 
-            await Assert.ThrowsAsync<CosmosDbContainerNotFoundException>(() => sut.AppendAsync(objectDocument, jsonEvent));
+            await Assert.ThrowsAsync<CosmosDbContainerNotFoundException>(() => sut.AppendAsync(objectDocument, default, jsonEvent));
         }
 
         [Fact]
@@ -435,7 +435,7 @@ public class CosmosDbDataStoreTests
             batch.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(batchResponse);
             container.CreateTransactionalBatch(Arg.Any<PartitionKey>()).Returns(batch);
 
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             container.Received(1).CreateTransactionalBatch(Arg.Any<PartitionKey>());
             batch.Received(2).CreateItem(Arg.Any<CosmosDbEventEntity>(), Arg.Any<TransactionalBatchItemRequestOptions>());
@@ -471,7 +471,7 @@ public class CosmosDbDataStoreTests
             batch.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(batchResponse);
             container.CreateTransactionalBatch(Arg.Any<PartitionKey>()).Returns(batch);
 
-            await Assert.ThrowsAsync<CosmosDbProcessingException>(() => sut.AppendAsync(objectDocument, events));
+            await Assert.ThrowsAsync<CosmosDbProcessingException>(() => sut.AppendAsync(objectDocument, default, events));
         }
 
         [Fact]
@@ -508,7 +508,7 @@ public class CosmosDbDataStoreTests
             container.CreateItemAsync(Arg.Do<CosmosDbEventEntity>(e => capturedEntity = e), Arg.Any<PartitionKey>(), Arg.Any<ItemRequestOptions>(), Arg.Any<CancellationToken>())
                 .Returns(itemResponse);
 
-            await sut.AppendAsync(objectDocument, jsonEvent);
+            await sut.AppendAsync(objectDocument, default, jsonEvent);
 
             Assert.NotNull(capturedEntity);
             Assert.Equal(3600, capturedEntity.Ttl);
@@ -545,7 +545,7 @@ public class CosmosDbDataStoreTests
             container.CreateItemAsync(Arg.Do<CosmosDbEventEntity>(e => capturedEntity = e), Arg.Any<PartitionKey>(), Arg.Any<ItemRequestOptions>(), Arg.Any<CancellationToken>())
                 .Returns(itemResponse);
 
-            await sut.AppendAsync(objectDocument, preserveTimestamp: true, cosmosEvent);
+            await sut.AppendAsync(objectDocument, preserveTimestamp: true, cancellationToken: default, cosmosEvent);
 
             Assert.NotNull(capturedEntity);
             Assert.Equal(originalTimestamp, capturedEntity.Timestamp);
@@ -591,7 +591,7 @@ public class CosmosDbDataStoreTests
             batch.ExecuteAsync(Arg.Any<CancellationToken>()).Returns(batchResponse);
             container.CreateTransactionalBatch(Arg.Any<PartitionKey>()).Returns(batch);
 
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             // Should create 2 batches: first with 2 events, second with 1 event
             container.Received(2).CreateTransactionalBatch(Arg.Any<PartitionKey>());
@@ -1010,13 +1010,13 @@ public class CosmosDbDataStoreTests
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
 
             // First attempt should query and throw
-            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, jsonEvent));
+            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, default, jsonEvent));
 
             // Reset the mock to verify it's not called again
             freshContainer.ClearReceivedCalls();
 
             // Second attempt should throw immediately from cache (no query)
-            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, jsonEvent));
+            await Assert.ThrowsAsync<EventStreamClosedException>(() => sut.AppendAsync(uniqueDocument, default, jsonEvent));
 
             // Verify no query was made on second call
             freshContainer.DidNotReceive().GetItemQueryIterator<CosmosDbEventEntity>(

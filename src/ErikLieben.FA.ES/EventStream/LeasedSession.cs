@@ -1,8 +1,8 @@
-﻿using ErikLieben.FA.ES.Actions;
+using ErikLieben.FA.ES.Actions;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.Notifications;
-using System.Diagnostics;
+using ErikLieben.FA.ES.Observability;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
@@ -19,7 +19,6 @@ public class LeasedSession : ILeasedSession
     private readonly IEventStream eventStream;
     private readonly List<IStreamDocumentChunkClosedNotification> docClosedNotificationActions = [];
     private readonly List<IAsyncPostCommitAction> postCommitActions = [];
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
 
     /// <summary>
     /// Gets the buffer of events pending commit in this session.
@@ -88,7 +87,15 @@ public class LeasedSession : ILeasedSession
         string? externalSequencer = null,
         Dictionary<string, string>? metadata = null) where TPayloadType : class
     {
-        using var activity = ActivitySource.StartActivity($"Session.{nameof(Append)}");
+        using var activity = FaesInstrumentation.Core.StartActivity("Session.Append");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.EventType, typeof(TPayloadType).Name);
+        }
+
         ArgumentNullException.ThrowIfNull(payload);
 
         int version = document.Active.CurrentStreamVersion += 1;
@@ -136,6 +143,7 @@ public class LeasedSession : ILeasedSession
     /// Commits all buffered events to the event stream.
     /// Handles stream chunking if enabled and executes post-commit actions.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous commit operation.</returns>
     /// <exception cref="CommitFailedException">
     /// Thrown when the commit operation fails. The exception contains information
@@ -155,12 +163,21 @@ public class LeasedSession : ILeasedSession
     /// should reload the document to determine the actual state before retrying.
     /// </para>
     /// </remarks>
-    public async Task CommitAsync()
+    public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity($"Session.{nameof(CommitAsync)}");
+        using var activity = FaesInstrumentation.Core.StartActivity("Session.Commit");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
         var allEvents = Buffer.ToList();
         var originalVersion = document.Active.CurrentStreamVersion - Buffer.Count;
-        activity?.SetTag("EventCount", Buffer.Count);
+
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.EventCount, Buffer.Count);
+            activity.SetTag(FaesSemanticConventions.ChunkingEnabled, document.Active.ChunkingEnabled());
+        }
 
         // Track commit state for exception context
         var commitState = new CommitState();
@@ -178,6 +195,10 @@ public class LeasedSession : ILeasedSession
         }
         catch (Exception ex)
         {
+            FaesInstrumentation.RecordException(activity, ex);
+            activity?.SetTag(FaesSemanticConventions.Success, false);
+            FaesMetrics.RecordCommit(document.ObjectName, FaesSemanticConventions.StorageProviderBlob, success: false);
+
             // Restore the version so the caller can retry with the same buffer.
             document.Active.CurrentStreamVersion = originalVersion;
 
@@ -257,6 +278,18 @@ public class LeasedSession : ILeasedSession
         }
 
         await ExecutePostCommitActionsAsync(allEvents);
+
+        // Record success metrics
+        if (timer != null)
+        {
+            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+            FaesMetrics.RecordCommitDuration(durationMs, document.ObjectName, FaesSemanticConventions.StorageProviderBlob);
+        }
+        FaesMetrics.RecordEventsAppended(allEvents.Count, document.ObjectName, FaesSemanticConventions.StorageProviderBlob);
+        FaesMetrics.RecordEventsPerCommit(allEvents.Count, document.ObjectName);
+        FaesMetrics.RecordCommit(document.ObjectName, FaesSemanticConventions.StorageProviderBlob, success: true);
+        activity?.SetTag(FaesSemanticConventions.Success, true);
+
         Buffer.Clear();
     }
 
@@ -288,7 +321,7 @@ public class LeasedSession : ILeasedSession
         // This flag is used for exception context if AppendAsync fails
         state.EventsAppendStarted = true;
 
-        await datastore.AppendAsync(document, [.. Buffer]);
+        await datastore.AppendAsync(document, default, [.. Buffer]);
     }
 
     /// <summary>
@@ -357,7 +390,7 @@ public class LeasedSession : ILeasedSession
         // Document update succeeded - mark that events will be appended
         state.EventsAppendStarted = true;
 
-        await datastore.AppendAsync(document, [.. eventsToAdd]);
+        await datastore.AppendAsync(document, default, [.. eventsToAdd]);
     }
 
     private async Task CreateChunkIfNeededAsync(
@@ -383,10 +416,13 @@ public class LeasedSession : ILeasedSession
     {
         if (postCommitActions.Count > 0)
         {
-            using var postCommitActivity = ActivitySource.StartActivity("Session.PostCommitActions");
+            using var postCommitActivity = FaesInstrumentation.Core.StartActivity("Session.PostCommitActions");
+            postCommitActivity?.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
+            postCommitActivity?.SetTag(FaesSemanticConventions.EventCount, allEvents.Count);
+
             foreach (var action in postCommitActions)
             {
-                postCommitActivity?.SetTag("Action", action.GetType().FullName);
+                postCommitActivity?.SetTag(FaesSemanticConventions.ActionType, action.GetType().FullName);
                 await action.PostCommitAsync(allEvents, document);
             }
         }
@@ -444,8 +480,9 @@ public class LeasedSession : ILeasedSession
     /// Checks if a stream is terminated (has reached a terminal state).
     /// </summary>
     /// <param name="streamIdentifier">The identifier of the stream to check.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>True if the stream is terminated, otherwise false.</returns>
-    public Task<bool> IsTerminatedASync(string streamIdentifier)
+    public Task<bool> IsTerminatedAsync(string streamIdentifier, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(document.TerminatedStreams
             .Find(ts => ts.StreamIdentifier == streamIdentifier) != null);
@@ -456,10 +493,23 @@ public class LeasedSession : ILeasedSession
     /// </summary>
     /// <param name="startVersion">The starting version (inclusive). Defaults to 0.</param>
     /// <param name="untilVersion">The ending version (inclusive). If null, reads to the latest version.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The collection of events, or null if none found.</returns>
-    public Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(int startVersion = 0, int? untilVersion = null, CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("Session.ReadAsync");
-        return datastore.ReadAsync(document, startVersion, untilVersion);
+        using var activity = FaesInstrumentation.Core.StartActivity("Session.Read");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.StartVersion, startVersion);
+            if (untilVersion.HasValue)
+            {
+                activity.SetTag(FaesSemanticConventions.TargetVersion, untilVersion.Value);
+            }
+        }
+
+        return datastore.ReadAsync(document, startVersion, untilVersion, cancellationToken: cancellationToken);
     }
 }
