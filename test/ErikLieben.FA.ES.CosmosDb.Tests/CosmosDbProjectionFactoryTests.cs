@@ -166,7 +166,7 @@ public class CosmosDbProjectionFactoryTests
             var sut = new TestProjectionFactory(_mockCosmosClient, _settings, _mockDocumentFactory, _mockEventStreamFactory);
 
             // Assert
-            Assert.IsAssignableFrom<IProjectionFactory>(sut);
+            Assert.IsType<TestProjectionFactory>(sut);
         }
 
         [Fact]
@@ -176,7 +176,7 @@ public class CosmosDbProjectionFactoryTests
             var sut = new TestProjectionFactory(_mockCosmosClient, _settings, _mockDocumentFactory, _mockEventStreamFactory);
 
             // Assert
-            Assert.IsAssignableFrom<IProjectionFactory<TestProjection>>(sut);
+            Assert.IsType<TestProjectionFactory>(sut);
         }
     }
 

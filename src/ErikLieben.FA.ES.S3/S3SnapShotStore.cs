@@ -34,13 +34,15 @@ public partial class S3SnapShotStore(
     /// <returns>A task that represents the asynchronous save operation.</returns>
     public async Task SetAsync(IBase @object, JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.Set");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -65,13 +67,15 @@ public partial class S3SnapShotStore(
     /// <returns>The deserialized snapshot instance when found; otherwise null.</returns>
     public async Task<T?> GetAsync<T>(JsonTypeInfo<T> jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default) where T : class, IBase
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -93,13 +97,15 @@ public partial class S3SnapShotStore(
     /// <returns>The deserialized snapshot instance when found; otherwise null.</returns>
     public async Task<object?> GetAsync(JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -114,17 +120,17 @@ public partial class S3SnapShotStore(
         IObjectDocument document,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.ObjectName);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.List");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationQuery);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
-
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(document.ObjectName);
 
         var (s3Client, bucketName) = await GetClientAndBucket(document);
         var prefix = $"snapshot/{document.Active.StreamIdentifier}-";
@@ -165,13 +171,15 @@ public partial class S3SnapShotStore(
         string? name = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.Delete");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -199,13 +207,15 @@ public partial class S3SnapShotStore(
         IEnumerable<int> versions,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("S3SnapShotStore.DeleteMany");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, "s3");
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         var deleted = 0;

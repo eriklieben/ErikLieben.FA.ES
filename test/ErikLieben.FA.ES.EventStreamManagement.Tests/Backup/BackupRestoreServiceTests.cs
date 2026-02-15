@@ -582,7 +582,7 @@ public class BackupRestoreServiceTests
             await sut.RestoreToNewStreamAsync(handle, "new-id", options);
 
             // Assert
-            await documentStore.Received(1).CreateAsync("TestObject", "new-id", null);
+            await documentStore.Received(1).CreateAsync("TestObject", "new-id", null)!;
         }
 
         [Fact]

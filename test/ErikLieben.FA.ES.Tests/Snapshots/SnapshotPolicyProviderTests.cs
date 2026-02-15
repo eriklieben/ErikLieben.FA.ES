@@ -55,7 +55,7 @@ public class SnapshotPolicyProviderTests
         var provider = new SnapshotPolicyProvider(Options.Create(options));
 
         // Note: Short name matching in PolicyOverrides
-        var policy = provider.GetPolicy(typeof(AggregateWithPolicy));
+        var policy = provider.GetPolicy<AggregateWithPolicy>();
 
         Assert.NotNull(policy);
         Assert.Equal(200, policy.Every);

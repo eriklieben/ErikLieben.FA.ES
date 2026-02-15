@@ -26,18 +26,20 @@ namespace ErikLieben.FA.ES.Observability;
 /// </remarks>
 public static class FaesMetrics
 {
+    private const string UnitEvents = "events";
+
     #region Counters
 
     private static readonly Counter<long> EventsAppendedCounter =
         FaesInstrumentation.CoreMeter.CreateCounter<long>(
             name: "faes.events.appended",
-            unit: "events",
+            unit: UnitEvents,
             description: "Total number of events appended to streams");
 
     private static readonly Counter<long> EventsReadCounter =
         FaesInstrumentation.CoreMeter.CreateCounter<long>(
             name: "faes.events.read",
-            unit: "events",
+            unit: UnitEvents,
             description: "Total number of events read from streams");
 
     private static readonly Counter<long> CommitsTotalCounter =
@@ -101,13 +103,13 @@ public static class FaesMetrics
     private static readonly Histogram<long> EventsPerCommitHistogram =
         FaesInstrumentation.CoreMeter.CreateHistogram<long>(
             name: "faes.events_per_commit",
-            unit: "events",
+            unit: UnitEvents,
             description: "Number of events per commit operation");
 
     private static readonly Histogram<long> ProjectionEventsFoldedHistogram =
         FaesInstrumentation.ProjectionsMeter.CreateHistogram<long>(
             name: "faes.projection.events_folded",
-            unit: "events",
+            unit: UnitEvents,
             description: "Number of events folded per projection update");
 
     #endregion

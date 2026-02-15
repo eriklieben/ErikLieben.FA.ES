@@ -23,6 +23,9 @@ public class TableSnapShotStore(
     EventStreamTableSettings settings)
     : ISnapShotStore
 {
+    private const string TagSnapshotVersion = "faes.snapshot.version";
+    private const string TagSnapshotName = "faes.snapshot.name";
+    private const string TagSnapshotFound = "faes.snapshot.found";
     /// <summary>
     /// Persists a snapshot of the aggregate to Table Storage using the supplied JSON type info.
     /// </summary>
@@ -42,8 +45,8 @@ public class TableSnapShotStore(
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationUpsert);
             activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
             activity.SetTag(FaesSemanticConventions.ObjectId, document.Active.StreamIdentifier);
-            activity.SetTag("faes.snapshot.version", version);
-            activity.SetTag("faes.snapshot.name", name);
+            activity.SetTag(TagSnapshotVersion, version);
+            activity.SetTag(TagSnapshotName, name);
         }
 
         var tableClient = await GetTableClientAsync(document);
@@ -98,8 +101,8 @@ public class TableSnapShotStore(
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
             activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
             activity.SetTag(FaesSemanticConventions.ObjectId, document.Active.StreamIdentifier);
-            activity.SetTag("faes.snapshot.version", version);
-            activity.SetTag("faes.snapshot.name", name);
+            activity.SetTag(TagSnapshotVersion, version);
+            activity.SetTag(TagSnapshotName, name);
         }
 
         var tableClient = await GetTableClientAsync(document);
@@ -114,16 +117,16 @@ public class TableSnapShotStore(
             var response = await tableClient.GetEntityIfExistsAsync<TableSnapshotEntity>(partitionKey, rowKey, cancellationToken: cancellationToken);
             if (!response.HasValue || response.Value == null)
             {
-                activity?.SetTag("faes.snapshot.found", false);
+                activity?.SetTag(TagSnapshotFound, false);
                 return null;
             }
 
-            activity?.SetTag("faes.snapshot.found", true);
+            activity?.SetTag(TagSnapshotFound, true);
             return JsonSerializer.Deserialize(response.Value.Data, jsonTypeInfo);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
-            activity?.SetTag("faes.snapshot.found", false);
+            activity?.SetTag(TagSnapshotFound, false);
             return null;
         }
     }
@@ -146,8 +149,8 @@ public class TableSnapShotStore(
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
             activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
             activity.SetTag(FaesSemanticConventions.ObjectId, document.Active.StreamIdentifier);
-            activity.SetTag("faes.snapshot.version", version);
-            activity.SetTag("faes.snapshot.name", name);
+            activity.SetTag(TagSnapshotVersion, version);
+            activity.SetTag(TagSnapshotName, name);
         }
 
         var tableClient = await GetTableClientAsync(document);
@@ -162,16 +165,16 @@ public class TableSnapShotStore(
             var response = await tableClient.GetEntityIfExistsAsync<TableSnapshotEntity>(partitionKey, rowKey, cancellationToken: cancellationToken);
             if (!response.HasValue || response.Value == null)
             {
-                activity?.SetTag("faes.snapshot.found", false);
+                activity?.SetTag(TagSnapshotFound, false);
                 return null;
             }
 
-            activity?.SetTag("faes.snapshot.found", true);
+            activity?.SetTag(TagSnapshotFound, true);
             return JsonSerializer.Deserialize(response.Value.Data, jsonTypeInfo);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
-            activity?.SetTag("faes.snapshot.found", false);
+            activity?.SetTag(TagSnapshotFound, false);
             return null;
         }
     }
@@ -225,8 +228,8 @@ public class TableSnapShotStore(
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
             activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
             activity.SetTag(FaesSemanticConventions.ObjectId, document.Active.StreamIdentifier);
-            activity.SetTag("faes.snapshot.version", version);
-            activity.SetTag("faes.snapshot.name", name);
+            activity.SetTag(TagSnapshotVersion, version);
+            activity.SetTag(TagSnapshotName, name);
         }
 
         var tableClient = await GetTableClientAsync(document);

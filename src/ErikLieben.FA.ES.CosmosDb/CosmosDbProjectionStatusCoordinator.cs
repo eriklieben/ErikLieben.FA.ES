@@ -340,6 +340,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
                 {
                     // Document was modified concurrently, skip it
                     _logger?.LogDebug(
+                        ex,
                         "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrent modification",
                         document.ProjectionName, document.ObjectId);
                 }

@@ -134,15 +134,25 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
     /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
     /// <returns>An async enumerable of events ordered by version.</returns>
-    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
         int? chunk = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        return ReadAsStreamAsyncCore(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<IEvent> ReadAsStreamAsyncCore(
+        IObjectDocument document,
+        int startVersion,
+        int? untilVersion,
+        int? chunk,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.ReadAsStream");
-        ArgumentNullException.ThrowIfNull(document);
 
         if (activity?.IsAllDataRequested == true)
         {

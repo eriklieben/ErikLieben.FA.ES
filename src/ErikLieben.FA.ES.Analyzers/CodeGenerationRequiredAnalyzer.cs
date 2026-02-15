@@ -220,7 +220,7 @@ public class CodeGenerationRequiredAnalyzer : DiagnosticAnalyzer
                        a.Name.ToString().StartsWith("WhenAttribute<"))
             .Select(a => (Attribute: a, Symbol: semanticModel.GetSymbolInfo(a).Symbol))
             .Where(x => x.Symbol?.ContainingType is INamedTypeSymbol { TypeArguments.Length: 1 })
-            .Select(x => (x.Attribute, EventType: ((INamedTypeSymbol)x.Symbol!.ContainingType!).TypeArguments[0]));
+            .Select(x => (x.Attribute, EventType: x.Symbol!.ContainingType!.TypeArguments[0]));
 
         result.AddRange(whenAttributes.Select(x =>
             (x.EventType.Name, x.Attribute.GetLocation())));

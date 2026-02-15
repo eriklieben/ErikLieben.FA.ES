@@ -76,9 +76,11 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
     /// <inheritdoc />
     public async Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Append");
-        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         await pipeline.ExecuteAsync(
             async ct => await inner.AppendAsync(document, ct, events),
             cancellationToken);
@@ -87,9 +89,11 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
     /// <inheritdoc />
     public async Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Append");
-        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         await pipeline.ExecuteAsync(
             async ct => await inner.AppendAsync(document, preserveTimestamp, ct, events),
             cancellationToken);
@@ -103,9 +107,11 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
         int? chunk = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.Read");
-        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         return await pipeline.ExecuteAsync(
             async ct => await inner.ReadAsync(document, startVersion, untilVersion, chunk, ct),
             cancellationToken);
@@ -143,9 +149,11 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
         int fromVersion,
         int toVersion)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("ResilientDataStore.RemoveEventsForFailedCommit");
-        activity?.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-        activity?.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+        activity?.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+        activity?.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         return await pipeline.ExecuteAsync(
             async ct => await ((IDataStoreRecovery)inner).RemoveEventsForFailedCommitAsync(document, fromVersion, toVersion),
             CancellationToken.None);

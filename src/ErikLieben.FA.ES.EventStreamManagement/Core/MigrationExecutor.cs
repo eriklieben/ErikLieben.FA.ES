@@ -98,7 +98,8 @@ public class MigrationExecutor
             context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
 
         var eventList = sourceEvents?.ToList() ?? [];
         var eventCount = eventList.Count;
@@ -354,7 +355,8 @@ public class MigrationExecutor
                     context.SourceDocument,
                     startVersion: 0,
                     untilVersion: null,
-                    chunk: null);
+                    chunk: null,
+                    cancellationToken: cancellationToken);
 
                 var backupContext = new BackupContext
                 {
@@ -443,7 +445,8 @@ public class MigrationExecutor
             context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
 
         var count = events?.Count() ?? 0;
 
@@ -459,7 +462,8 @@ public class MigrationExecutor
             context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
 
         if (sourceEvents == null || !sourceEvents.Any())
         {
@@ -591,14 +595,16 @@ public class MigrationExecutor
             context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
         var sourceList = sourceEvents?.ToList() ?? [];
 
         var targetEvents = await context.DataStore.ReadAsync(
             targetDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
         var targetList = targetEvents?.ToList() ?? [];
 
         // 1. Compare event counts
@@ -769,7 +775,6 @@ public class MigrationExecutor
 
     private static string ComputeStreamChecksum(List<IEvent> events)
     {
-        using var sha256 = SHA256.Create();
         var builder = new StringBuilder();
 
         foreach (var evt in events)
@@ -779,7 +784,7 @@ public class MigrationExecutor
             builder.Append(evt.Payload ?? string.Empty);
         }
 
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(builder.ToString()));
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString()));
         return Convert.ToHexString(hash);
     }
 

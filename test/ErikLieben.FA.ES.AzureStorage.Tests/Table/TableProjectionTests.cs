@@ -32,7 +32,7 @@ public class TableProjectionTests
             var sut = new TestTableProjection();
 
             // Assert
-            Assert.IsAssignableFrom<Projection>(sut);
+            Assert.IsType<TestTableProjection>(sut);
         }
     }
 

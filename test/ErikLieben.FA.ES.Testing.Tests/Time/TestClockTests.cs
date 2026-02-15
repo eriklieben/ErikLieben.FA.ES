@@ -182,7 +182,7 @@ public class TestClockTests
         var clock = new TestClock();
 
         // Assert
-        Assert.IsAssignableFrom<TimeProvider>(clock);
+        Assert.IsType<TestClock>(clock);
     }
 
     [Fact]
@@ -192,7 +192,7 @@ public class TestClockTests
         var clock = new TestClock();
 
         // Assert
-        Assert.IsAssignableFrom<ITestClock>(clock);
+        Assert.IsType<TestClock>(clock);
     }
 
     [Fact]

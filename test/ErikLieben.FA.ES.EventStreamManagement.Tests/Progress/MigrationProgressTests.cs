@@ -194,7 +194,7 @@ public class MigrationProgressTests
             var sut = new MigrationProgress();
 
             // Assert
-            Assert.IsAssignableFrom<IMigrationProgress>(sut);
+            Assert.IsType<MigrationProgress>(sut);
         }
     }
 

@@ -133,24 +133,33 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// <param name="chunk">The chunk identifier to read from when chunking is enabled; null when not chunked.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
     /// <returns>An async enumerable of events ordered by version.</returns>
-    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
         int? chunk = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+        return ReadAsStreamAsyncCore(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<IEvent> ReadAsStreamAsyncCore(
+        IObjectDocument document,
+        int startVersion,
+        int? untilVersion,
+        int? chunk,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("TableDataStore.ReadAsStream");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureTable);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
-
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
         TableClient tableClient;
         try
@@ -599,7 +608,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// <summary>
     /// Reassembles a chunked payload from the main entity and additional chunk rows.
     /// </summary>
-    private async Task<string> ReassembleChunkedPayloadAsync(
+    private static async Task<string> ReassembleChunkedPayloadAsync(
         TableClient tableClient,
         TableEventEntity mainEntity,
         CancellationToken cancellationToken = default)
@@ -655,16 +664,14 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         }
 
         // Concatenate all chunks
-        var totalLength = chunks.Sum(c => c?.Length ?? 0);
+        var nonNullChunks = chunks.Where(chunk => chunk != null).ToList();
+        var totalLength = nonNullChunks.Sum(c => c!.Length);
         var combinedData = new byte[totalLength];
         var offset = 0;
-        foreach (var chunk in chunks)
+        foreach (var chunk in nonNullChunks)
         {
-            if (chunk != null)
-            {
-                Array.Copy(chunk, 0, combinedData, offset, chunk.Length);
-                offset += chunk.Length;
-            }
+            Array.Copy(chunk!, 0, combinedData, offset, chunk!.Length);
+            offset += chunk.Length;
         }
 
         // Decompress if needed

@@ -15,6 +15,8 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// <typeparam name="T">The projection type that inherits from <see cref="Projection"/>.</typeparam>
 public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProjectionFactory where T : Projection
 {
+    private const string StatusPropertyName = "$status";
+
     private readonly IAzureClientFactory<BlobServiceClient> _blobServiceClientFactory;
     private readonly string _connectionName;
     private readonly string _containerOrPath;
@@ -380,9 +382,9 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
             writer.WriteStartObject();
             foreach (var property in root.EnumerateObject())
             {
-                if (property.Name == "$status")
+                if (property.Name == StatusPropertyName)
                 {
-                    writer.WriteNumber("$status", (int)status);
+                    writer.WriteNumber(StatusPropertyName, (int)status);
                 }
                 else
                 {
@@ -390,9 +392,9 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
                 }
             }
             // If $status wasn't in the original, add it
-            if (!root.TryGetProperty("$status", out _))
+            if (!root.TryGetProperty(StatusPropertyName, out _))
             {
-                writer.WriteNumber("$status", (int)status);
+                writer.WriteNumber(StatusPropertyName, (int)status);
             }
             writer.WriteEndObject();
         }
@@ -422,7 +424,7 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         var json = downloadResult.Value.Content.ToString();
 
         using var document = JsonDocument.Parse(json);
-        if (document.RootElement.TryGetProperty("$status", out var statusElement)
+        if (document.RootElement.TryGetProperty(StatusPropertyName, out var statusElement)
             && statusElement.TryGetInt32(out var statusValue))
         {
             return (ProjectionStatus)statusValue;

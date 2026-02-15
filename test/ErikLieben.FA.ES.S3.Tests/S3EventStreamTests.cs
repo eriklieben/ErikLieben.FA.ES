@@ -18,7 +18,7 @@ public class S3EventStreamTests
             var sut = new S3EventStream(document, dependencies);
 
             Assert.NotNull(sut);
-            Assert.IsAssignableFrom<BaseEventStream>(sut);
+            Assert.IsType<S3EventStream>(sut);
         }
     }
 }

@@ -19,6 +19,9 @@ namespace ErikLieben.FA.ES.S3;
 /// <typeparam name="T">The projection type that inherits from <see cref="Projection"/>.</typeparam>
 public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectionFactory where T : Projection
 {
+    private const string ApplicationJsonContentType = "application/json";
+    private const string StatusPropertyName = "$status";
+
     private readonly IS3ClientFactory _s3ClientFactory;
     private readonly string _clientName;
     private readonly string _bucketOrPath;
@@ -187,7 +190,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
         {
             BucketName = bucketName,
             Key = blobName,
-            ContentType = "application/json",
+            ContentType = ApplicationJsonContentType,
             InputStream = new MemoryStream(bytes),
         };
 
@@ -299,7 +302,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
             {
                 BucketName = bucketName,
                 Key = checkpointKey,
-                ContentType = "application/json",
+                ContentType = ApplicationJsonContentType,
                 InputStream = new MemoryStream(bytes),
             };
 
@@ -351,9 +354,9 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
             writer.WriteStartObject();
             foreach (var property in root.EnumerateObject())
             {
-                if (property.Name == "$status")
+                if (property.Name == StatusPropertyName)
                 {
-                    writer.WriteNumber("$status", (int)status);
+                    writer.WriteNumber(StatusPropertyName, (int)status);
                 }
                 else
                 {
@@ -361,9 +364,9 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
                 }
             }
 
-            if (!root.TryGetProperty("$status", out _))
+            if (!root.TryGetProperty(StatusPropertyName, out _))
             {
-                writer.WriteNumber("$status", (int)status);
+                writer.WriteNumber(StatusPropertyName, (int)status);
             }
 
             writer.WriteEndObject();
@@ -420,7 +423,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
             {
                 BucketName = bucketName,
                 Key = blobName,
-                ContentType = "application/json",
+                ContentType = ApplicationJsonContentType,
                 InputStream = new MemoryStream(statusBytes),
             };
 
@@ -442,7 +445,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
         {
             BucketName = bucketName,
             Key = blobName,
-            ContentType = "application/json",
+            ContentType = ApplicationJsonContentType,
             InputStream = new MemoryStream(bytes),
         };
 
@@ -466,7 +469,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
         }
 
         using var document = JsonDocument.Parse(json);
-        if (document.RootElement.TryGetProperty("$status", out var statusElement)
+        if (document.RootElement.TryGetProperty(StatusPropertyName, out var statusElement)
             && statusElement.TryGetInt32(out var statusValue))
         {
             return (ProjectionStatus)statusValue;

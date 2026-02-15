@@ -217,7 +217,7 @@ public class VerificationBuilderTests
             var sut = new VerificationBuilder();
 
             // Assert
-            Assert.IsAssignableFrom<IVerificationBuilder>(sut);
+            Assert.IsType<VerificationBuilder>(sut);
         }
     }
 }

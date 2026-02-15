@@ -97,7 +97,7 @@ public class MigrationExceptionTests
             var sut = new MigrationException("test");
 
             // Assert
-            Assert.IsAssignableFrom<Exception>(sut);
+            Assert.IsType<MigrationException>(sut);
         }
 
         [Fact]

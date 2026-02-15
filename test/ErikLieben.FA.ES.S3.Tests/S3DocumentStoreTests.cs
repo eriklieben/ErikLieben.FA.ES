@@ -135,7 +135,7 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
-            var result = await sut.CreateAsync("test", "123");
+            IObjectDocument result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);
@@ -169,7 +169,7 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
-            var result = await sut.CreateAsync("test", "123");
+            IObjectDocument result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);
@@ -195,8 +195,8 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, settings, CreateTypeSettings());
 
             // Act & Assert
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                sut.CreateAsync("test", "123"));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => sut.CreateAsync("test", "123")!);
             Assert.Contains("was not found", ex.Message);
         }
     }

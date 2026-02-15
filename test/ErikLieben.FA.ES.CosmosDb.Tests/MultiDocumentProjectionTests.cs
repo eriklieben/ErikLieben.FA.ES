@@ -23,7 +23,7 @@ public class MultiDocumentProjectionTests
             var sut = new TestMultiDocumentProjection();
 
             // Assert
-            Assert.IsAssignableFrom<Projection>(sut);
+            Assert.IsType<TestMultiDocumentProjection>(sut);
         }
     }
 

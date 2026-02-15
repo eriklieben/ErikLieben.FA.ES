@@ -88,18 +88,27 @@ public class InMemoryDataStore : IDataStore, IDataStoreRecovery
     /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
     /// <returns>An async enumerable of events ordered by version.</returns>
-#pragma warning disable CS1998 // Async method lacks 'await' operators
-    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
         int? chunk = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-#pragma warning restore CS1998
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);
+        return ReadAsStreamAsyncCore(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+    private async IAsyncEnumerable<IEvent> ReadAsStreamAsyncCore(
+        IObjectDocument document,
+        int startVersion,
+        int? untilVersion,
+        int? chunk,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+#pragma warning restore CS1998
+    {
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
 
         if (!Store.TryGetValue(identifier, out var dict))

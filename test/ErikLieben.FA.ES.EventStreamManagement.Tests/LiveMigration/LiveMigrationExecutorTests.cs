@@ -473,7 +473,7 @@ public class LiveMigrationExecutorTests
             var readCount = 0;
 
             var dataStore = Substitute.For<IDataStore>();
-            dataStore.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>())
+            dataStore.ReadAsync(Arg.Any<IObjectDocument>(), Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<int?>(), Arg.Any<CancellationToken>())
                 .Returns(callInfo =>
                 {
                     var doc = callInfo.Arg<IObjectDocument>();

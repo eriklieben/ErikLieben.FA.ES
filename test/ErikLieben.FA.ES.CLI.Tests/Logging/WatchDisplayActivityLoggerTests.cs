@@ -271,7 +271,7 @@ public class WatchDisplayActivityLoggerTests
             var result = sut.GetActivityLog();
 
             // Assert
-            Assert.IsAssignableFrom<IReadOnlyList<ActivityLogEntry>>(result);
+            Assert.IsType<System.Collections.ObjectModel.ReadOnlyCollection<ActivityLogEntry>>(result);
         }
     }
 

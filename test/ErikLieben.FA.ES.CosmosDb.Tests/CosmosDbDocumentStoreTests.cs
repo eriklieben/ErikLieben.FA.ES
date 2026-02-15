@@ -435,6 +435,9 @@ public class CosmosDbDocumentStoreTests
         }
     }
 
+    private static readonly string[] SingleTagIds = ["test-id"];
+    private static readonly string[] MultipleTagIds = ["test-id-1", "test-id-2"];
+
     public class GetFirstByDocumentByTagAsync : CosmosDbDocumentStoreTests
     {
         [Fact]
@@ -457,7 +460,7 @@ public class CosmosDbDocumentStoreTests
             var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
-            tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(new[] { "test-id" });
+            tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(SingleTagIds);
             documentTagFactory.CreateDocumentTagStore(Arg.Any<string>()).Returns(tagStore);
 
             var existingEntity = new CosmosDbDocumentEntity
@@ -510,7 +513,7 @@ public class CosmosDbDocumentStoreTests
             var sut = new CosmosDbDocumentStore(cosmosClient, documentTagFactory, settings);
 
             var tagStore = Substitute.For<IDocumentTagStore>();
-            tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(new[] { "test-id-1", "test-id-2" });
+            tagStore.GetAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(MultipleTagIds);
             documentTagFactory.CreateDocumentTagStore(Arg.Any<string>()).Returns(tagStore);
 
             var entity1 = new CosmosDbDocumentEntity

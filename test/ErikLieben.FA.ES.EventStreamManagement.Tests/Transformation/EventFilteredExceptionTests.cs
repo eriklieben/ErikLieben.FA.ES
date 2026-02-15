@@ -43,7 +43,7 @@ public class EventFilteredExceptionTests
             var sut = new EventFilteredException("test");
 
             // Assert
-            Assert.IsAssignableFrom<Exception>(sut);
+            Assert.IsType<EventFilteredException>(sut);
         }
     }
 }

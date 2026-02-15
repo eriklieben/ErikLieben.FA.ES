@@ -913,7 +913,7 @@ public class TableDataStoreTests
 
     public class PayloadChunkingAppendTests : TableDataStoreTests
     {
-        private EventStreamTableSettings CreateChunkingSettings(
+        private static EventStreamTableSettings CreateChunkingSettings(
             bool enableChunking = true,
             int thresholdBytes = 100, // Low threshold for testing
             bool compressPayloads = true)
@@ -1115,7 +1115,7 @@ public class TableDataStoreTests
 
     public class PayloadChunkingReadTests : TableDataStoreTests
     {
-        private EventStreamTableSettings CreateChunkingSettings()
+        private static EventStreamTableSettings CreateChunkingSettings()
         {
             return new EventStreamTableSettings(
                 "test-connection",

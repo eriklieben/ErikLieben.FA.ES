@@ -226,7 +226,7 @@ public class LeasedSession : ILeasedSession
                     });
 
                     // Persist rollback history (best effort)
-                    try { await documentstore.SetAsync(document); } catch { /* Log but continue */ }
+                    try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
 
                     // Cleanup succeeded - throw with EventsMayBeWritten = false so caller knows it's safe to retry
                     throw new CommitFailedException(
@@ -253,7 +253,7 @@ public class LeasedSession : ILeasedSession
                     };
 
                     // Try to persist broken state (best effort)
-                    try { await documentstore.SetAsync(document); } catch { /* Log but continue */ }
+                    try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
 
                     throw new CommitCleanupFailedException(
                         document.Active.StreamIdentifier,

@@ -152,9 +152,13 @@ public class ProjectionLoader : IProjectionLoader
                         $"code version {projection.CodeSchemaVersion}. A rebuild is required.");
 
                 case SchemaMismatchBehavior.AutoRebuild:
-                    _logger?.LogInformation(
-                        "Auto-rebuild triggered for {ProjectionType} due to schema mismatch",
-                        typeof(T).Name);
+                    if (_logger is not null)
+                    {
+                        _logger.LogInformation(
+                            "Auto-rebuild triggered for {ProjectionType} due to schema mismatch",
+                            typeof(T).Name);
+                    }
+
                     var projectionName = typeof(T).Name;
                     await _statusCoordinator.StartRebuildAsync(
                         projectionName,

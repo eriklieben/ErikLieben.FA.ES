@@ -58,7 +58,7 @@ public class S3ObjectDocumentFactoryTests
             var result = await sut.GetOrCreateAsync("Test", "123");
 
             Assert.Same(expected, result);
-            await docStore.Received(1).CreateAsync("test", "123", null);
+            await docStore.Received(1).CreateAsync("test", "123", null)!;
         }
     }
 
@@ -162,7 +162,7 @@ public class S3ObjectDocumentFactoryTests
         public async Task Should_return_empty_when_store_returns_null()
         {
             var docStore = Substitute.For<IS3DocumentStore>();
-            docStore.GetByDocumentByTagAsync("test", "tag", null, null).Returns((IEnumerable<IObjectDocument>?)null);
+            docStore.GetByDocumentByTagAsync("test", "tag", null, null)!.Returns((IEnumerable<IObjectDocument>?)null);
 
             var sut = new S3ObjectDocumentFactory(docStore);
             var result = await sut.GetByDocumentTagAsync("test", "tag");
@@ -246,7 +246,7 @@ public class S3ObjectDocumentFactoryTests
         public async Task Should_return_empty_when_store_returns_null()
         {
             var docStore = Substitute.For<IS3DocumentStore>();
-            docStore.GetByDocumentByTagAsync("test", "tag", null, null).Returns((IEnumerable<IObjectDocument>?)null);
+            docStore.GetByDocumentByTagAsync("test", "tag", null, null)!.Returns((IEnumerable<IObjectDocument>?)null);
 
             var sut = new S3ObjectDocumentFactory(docStore);
             var result = await sut.GetByObjectDocumentTag("test", "tag");
@@ -261,7 +261,7 @@ public class S3ObjectDocumentFactoryTests
         public async Task Should_throw_when_store_returns_null()
         {
             var docStore = Substitute.For<IS3DocumentStore>();
-            docStore.CreateAsync("test", "123", null).Returns((IObjectDocument?)null);
+            docStore.CreateAsync("test", "123", null)!.Returns((IObjectDocument?)null);
 
             var sut = new S3ObjectDocumentFactory(docStore);
 
@@ -276,7 +276,7 @@ public class S3ObjectDocumentFactoryTests
         public async Task Should_throw_when_store_returns_null()
         {
             var docStore = Substitute.For<IS3DocumentStore>();
-            docStore.GetAsync("test", "123", null).Returns((IObjectDocument?)null);
+            docStore.GetAsync("test", "123", null)!.Returns((IObjectDocument?)null);
 
             var sut = new S3ObjectDocumentFactory(docStore);
 

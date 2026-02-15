@@ -668,7 +668,7 @@ public class BulkMigrationBuilderTests
             var sut = new BulkMigrationBuilder(documents, dataStore, documentStore, lockProvider, loggerFactory);
 
             // Assert
-            Assert.IsAssignableFrom<IMigrationBuilder>(sut);
+            Assert.IsType<BulkMigrationBuilder>(sut);
         }
     }
 }

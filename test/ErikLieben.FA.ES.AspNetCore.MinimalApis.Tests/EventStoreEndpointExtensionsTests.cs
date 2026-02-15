@@ -1,3 +1,4 @@
+#pragma warning disable CA2263 // Prefer generic overload - mock setups must match the non-generic GetFactory(Type) called by production code
 using System.Reflection;
 using System.Text.Json;
 using ErikLieben.FA.ES.Aggregates;
@@ -66,7 +67,7 @@ public class EventStoreEndpointExtensionsTests
         return context;
     }
 
-    private ServiceProvider CreateServiceProviderWithAggregate(TestAggregate aggregate)
+    private static ServiceProvider CreateServiceProviderWithAggregate(TestAggregate aggregate)
     {
         var document = Substitute.For<IObjectDocument>();
         var eventStream = Substitute.For<IEventStream>();
@@ -92,7 +93,7 @@ public class EventStoreEndpointExtensionsTests
         return services.BuildServiceProvider();
     }
 
-    private ServiceProvider CreateServiceProviderWithProjection(TestProjection projection)
+    private static ServiceProvider CreateServiceProviderWithProjection(TestProjection projection)
     {
         var documentFactory = Substitute.For<IObjectDocumentFactory>();
         var streamFactory = Substitute.For<IEventStreamFactory>();
@@ -113,9 +114,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_bind_aggregate_using_default_id_parameter()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider, new RouteValueDictionary { { "id", "test123" } });
 
             // Act
@@ -129,9 +130,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_bind_aggregate_using_custom_route_parameter()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider, new RouteValueDictionary { { "orderId", "order456" } });
 
             // Act
@@ -146,9 +147,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_throw_ArgumentException_when_route_parameter_missing()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider, new RouteValueDictionary());
 
             // Act & Assert
@@ -162,9 +163,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_throw_ArgumentException_when_route_parameter_empty()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider, new RouteValueDictionary { { "id", "" } });
 
             // Act & Assert
@@ -177,7 +178,7 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_pass_createIfNotExists_parameter()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
 
             var document = Substitute.For<IObjectDocument>();
@@ -219,9 +220,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_bind_aggregate_by_explicit_id()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider);
 
             // Act
@@ -237,9 +238,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_throw_ArgumentException_when_objectId_is_null()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider);
 
             // Act & Assert - ArgumentNullException is thrown for null, which is a subclass of ArgumentException
@@ -250,9 +251,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_throw_ArgumentException_when_objectId_is_empty()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
-            var serviceProvider = tests.CreateServiceProviderWithAggregate(aggregate);
+            var serviceProvider = CreateServiceProviderWithAggregate(aggregate);
             var context = CreateHttpContext(serviceProvider);
 
             // Act & Assert
@@ -263,7 +264,7 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_use_custom_object_type()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
 
             var document = Substitute.For<IObjectDocument>();
@@ -303,7 +304,7 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_use_custom_store()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var aggregate = new TestAggregate();
 
             var document = Substitute.For<IObjectDocument>();
@@ -346,9 +347,9 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_bind_projection_with_default_blob_name()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var projection = new TestProjection();
-            var serviceProvider = tests.CreateServiceProviderWithProjection(projection);
+            var serviceProvider = CreateServiceProviderWithProjection(projection);
             var context = CreateHttpContext(serviceProvider);
 
             // Act
@@ -362,7 +363,7 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_bind_projection_with_blob_name_pattern()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var projection = new TestProjection();
 
             var documentFactory = Substitute.For<IObjectDocumentFactory>();
@@ -393,7 +394,7 @@ public class EventStoreEndpointExtensionsTests
         [Fact]
         public async Task Should_respect_createIfNotExists_parameter()
         {
-            var tests = new EventStoreEndpointExtensionsTests();
+
             var projection = new TestProjection();
 
             var documentFactory = Substitute.For<IObjectDocumentFactory>();

@@ -187,7 +187,7 @@ public class MigrationPlanTests
             var sut = CreatePlan();
 
             // Assert
-            Assert.IsAssignableFrom<IMigrationPlan>(sut);
+            Assert.IsType<MigrationPlan>(sut);
         }
     }
 

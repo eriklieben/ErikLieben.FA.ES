@@ -30,6 +30,11 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
     /// </summary>
     private const string CurrentPointerSuffix = "_current";
 
+    /// <summary>
+    /// Legacy partition key for projection data (backwards compatibility).
+    /// </summary>
+    private const string LegacyProjectionPartitionKey = "projection";
+
     private readonly IAzureClientFactory<TableServiceClient> _tableServiceClientFactory;
     private readonly string _connectionName;
     private readonly string _tableName;
@@ -242,7 +247,7 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
     /// <summary>
     /// Tries to load a checkpoint using the legacy single-row format (backwards compatibility).
     /// </summary>
-    private async Task<string?> TryLoadLegacyCheckpointAsync(
+    private static async Task<string?> TryLoadLegacyCheckpointAsync(
         TableClient tableClient,
         string checkpointId,
         CancellationToken cancellationToken)
@@ -251,7 +256,7 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         {
             // Try old "projection" partition key format
             var response = await tableClient.GetEntityAsync<TableEntity>(
-                "projection",
+                LegacyProjectionPartitionKey,
                 checkpointId,
                 cancellationToken: cancellationToken);
 
@@ -475,7 +480,7 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         {
             // Try legacy format
             var response = await checkpointTableClient.GetEntityAsync<TableEntity>(
-                "projection",
+                LegacyProjectionPartitionKey,
                 projectionName,
                 cancellationToken: cancellationToken);
             return response?.Value != null;
@@ -517,7 +522,7 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         {
             // Try legacy format
             var response = await checkpointTableClient.GetEntityAsync<TableEntity>(
-                "projection",
+                LegacyProjectionPartitionKey,
                 projectionName,
                 cancellationToken: cancellationToken);
 
@@ -614,7 +619,7 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         try
         {
             await checkpointTableClient.DeleteEntityAsync(
-                "projection",
+                LegacyProjectionPartitionKey,
                 projectionName,
                 Azure.ETag.All,
                 cancellationToken);

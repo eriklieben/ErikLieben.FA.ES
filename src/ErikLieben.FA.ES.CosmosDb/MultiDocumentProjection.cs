@@ -22,7 +22,6 @@ namespace ErikLieben.FA.ES.CosmosDb;
 public abstract class MultiDocumentProjection : Projection
 {
     private readonly List<object> _pendingDocuments = new();
-    private Checkpoint _checkpoint = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MultiDocumentProjection"/> class.
@@ -57,7 +56,7 @@ public abstract class MultiDocumentProjection : Projection
         string? checkpointFingerprint)
         : base(documentFactory, eventStreamFactory, checkpoint, checkpointFingerprint)
     {
-        _checkpoint = checkpoint;
+        Checkpoint = checkpoint;
     }
 
     /// <summary>
@@ -89,11 +88,7 @@ public abstract class MultiDocumentProjection : Projection
 
     /// <inheritdoc />
     [JsonPropertyName("$checkpoint")]
-    public override Checkpoint Checkpoint
-    {
-        get => _checkpoint;
-        set => _checkpoint = value;
-    }
+    public override Checkpoint Checkpoint { get; set; } = new();
 
     /// <inheritdoc />
     protected override Dictionary<string, IProjectionWhenParameterValueFactory> WhenParameterValueFactories =>
@@ -107,7 +102,7 @@ public abstract class MultiDocumentProjection : Projection
     {
         var data = new MultiDocumentProjectionCheckpointData
         {
-            Checkpoint = _checkpoint,
+            Checkpoint = Checkpoint,
             CheckpointFingerprint = CheckpointFingerprint
         };
         return JsonSerializer.Serialize(data, MultiDocumentProjectionJsonContext.Default.MultiDocumentProjectionCheckpointData);

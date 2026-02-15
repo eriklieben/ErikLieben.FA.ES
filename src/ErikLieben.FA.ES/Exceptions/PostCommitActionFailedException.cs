@@ -95,7 +95,7 @@ public class PostCommitActionFailedException : EsException
     /// <summary>
     /// Gets the first failure's exception for convenience.
     /// </summary>
-    public Exception? FirstError => FailedActions.FirstOrDefault()?.Error;
+    public Exception? FirstError => FailedActions.Count > 0 ? FailedActions[0].Error : null;
 
     private static string BuildMessage(
         string streamId,

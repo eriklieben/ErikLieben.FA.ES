@@ -206,7 +206,7 @@ public class CatchUpDiscoveryService : ICatchUpDiscoveryService
         return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
     }
 
-    private record ContinuationState(int ObjectIndex, string? ProviderToken);
+    private sealed record ContinuationState(int ObjectIndex, string? ProviderToken);
 }
 
 /// <summary>

@@ -544,12 +544,10 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
                 "/opt/homebrew/bin/dotnet",
             };
 
-        foreach (var path in knownPaths)
+        var found = knownPaths.FirstOrDefault(File.Exists);
+        if (found != null)
         {
-            if (File.Exists(path))
-            {
-                return path;
-            }
+            return found;
         }
 
         // Search PATH but only in secure system directories
@@ -627,12 +625,10 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
                 "/opt/homebrew/bin/git",
             };
 
-        foreach (var path in knownPaths)
+        var found = knownPaths.FirstOrDefault(File.Exists);
+        if (found != null)
         {
-            if (File.Exists(path))
-            {
-                return path;
-            }
+            return found;
         }
 
         // Search PATH but only in secure system directories

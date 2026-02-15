@@ -209,13 +209,15 @@ public partial class BlobSnapShotStore(
         IEnumerable<int> versions,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.DeleteMany");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         var deleted = 0;

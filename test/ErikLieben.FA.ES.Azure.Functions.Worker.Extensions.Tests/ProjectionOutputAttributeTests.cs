@@ -151,7 +151,7 @@ public class ProjectionOutputAttributeGenericTests
             var sut = new ProjectionOutputAttribute<TestProjection>();
 
             // Assert
-            Assert.IsAssignableFrom<ProjectionOutputAttribute>(sut);
+            Assert.IsType<ProjectionOutputAttribute<TestProjection>>(sut);
         }
 
         [Fact]

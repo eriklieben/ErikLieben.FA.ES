@@ -37,21 +37,19 @@ public static class CheckpointValidation
             var streamKey = stream.StreamIdentifier;
 
             // Find the checkpoint entry where the VersionIdentifier's StreamIdentifier matches
-            foreach (var entry in checkpoint)
+            var matchingEntry = checkpoint.FirstOrDefault(entry => entry.Value.StreamIdentifier == streamKey);
+            if (matchingEntry.Value is not null)
             {
-                if (entry.Value.StreamIdentifier == streamKey)
+                // Parse the version from the 20-digit padded string
+                var expectedVersion = int.Parse(matchingEntry.Value.VersionString);
+                if (stream.CurrentVersion != expectedVersion)
                 {
-                    // Parse the version from the 20-digit padded string
-                    var expectedVersion = int.Parse(entry.Value.VersionString);
-                    if (stream.CurrentVersion != expectedVersion)
-                    {
-                        return CheckpointValidationResult.VersionMismatch(
-                            streamKey, expectedVersion, stream.CurrentVersion);
-                    }
-
-                    // Found and validated - return success
-                    return CheckpointValidationResult.Valid();
+                    return CheckpointValidationResult.VersionMismatch(
+                        streamKey, expectedVersion, stream.CurrentVersion);
                 }
+
+                // Found and validated - return success
+                return CheckpointValidationResult.Valid();
             }
             // Stream not in checkpoint = new aggregate since projection was built
             // This is valid - proceed

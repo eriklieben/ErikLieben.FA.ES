@@ -661,7 +661,7 @@ public class BlobStreamTagStoreTests
         }
     }
 
-    private IObjectDocument CreateMockDocument(string streamIdentifier, string objectName, string connectionName)
+    private static IObjectDocument CreateMockDocument(string streamIdentifier, string objectName, string connectionName)
     {
         var mockDocument = Substitute.For<IObjectDocument>();
         var mockActive = Substitute.For<StreamInformation>();

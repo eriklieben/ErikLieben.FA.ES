@@ -27,7 +27,6 @@ public abstract class TableProjection : Projection
 {
     // Use dictionary for O(1) lookup/update by entity key
     private readonly Dictionary<(string PartitionKey, string RowKey), TableOperation> _pendingOperationsMap = new();
-    private Checkpoint _checkpoint = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TableProjection"/> class.
@@ -62,7 +61,7 @@ public abstract class TableProjection : Projection
         string? checkpointFingerprint)
         : base(documentFactory, eventStreamFactory, checkpoint, checkpointFingerprint)
     {
-        _checkpoint = checkpoint;
+        Checkpoint = checkpoint;
     }
 
     /// <summary>
@@ -112,11 +111,7 @@ public abstract class TableProjection : Projection
 
     /// <inheritdoc />
     [JsonPropertyName("$checkpoint")]
-    public override Checkpoint Checkpoint
-    {
-        get => _checkpoint;
-        set => _checkpoint = value;
-    }
+    public override Checkpoint Checkpoint { get; set; } = new();
 
     /// <inheritdoc />
     protected override Dictionary<string, IProjectionWhenParameterValueFactory> WhenParameterValueFactories =>
@@ -130,7 +125,7 @@ public abstract class TableProjection : Projection
     {
         var data = new TableProjectionCheckpointData
         {
-            Checkpoint = _checkpoint,
+            Checkpoint = Checkpoint,
             CheckpointFingerprint = CheckpointFingerprint
         };
         return JsonSerializer.Serialize(data, TableProjectionJsonContext.Default.TableProjectionCheckpointData);

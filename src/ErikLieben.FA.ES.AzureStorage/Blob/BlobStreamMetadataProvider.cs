@@ -63,6 +63,7 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
             DateTimeOffset? oldest = null;
             DateTimeOffset? newest = null;
 
+#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
             await foreach (var blobItem in containerClient.GetBlobsAsync(
                 prefix: prefix, cancellationToken: cancellationToken))
             {
@@ -82,6 +83,7 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
                     }
                 }
             }
+#pragma warning restore S3267
 
             if (eventCount == 0)
             {

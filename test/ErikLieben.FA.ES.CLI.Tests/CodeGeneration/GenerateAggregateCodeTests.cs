@@ -11,11 +11,14 @@ using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Xunit;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ErikLieben.FA.ES.CLI.Tests.CodeGeneration;
 
-public class GenerateAggregateCodeTests
+public partial class GenerateAggregateCodeTests
 {
+    [GeneratedRegex(@"\[System\.ComponentModel\.EditorBrowsable\(System\.ComponentModel\.EditorBrowsableState\.Never\)\]")]
+    private static partial Regex EditorBrowsableRegex();
     private static (SolutionDefinition solution, string outDir) BuildSolution(ProjectDefinition project)
     {
         var solution = new SolutionDefinition
@@ -1674,8 +1677,7 @@ public class GenerateAggregateCodeTests
 
         // Verify EditorBrowsable appears before repository methods
         // Count the occurrences - there should be one for each repository method (7 total)
-        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Count(code,
-            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]");
+        var editorBrowsableCount = EditorBrowsableRegex().Count(code);
         Assert.True(editorBrowsableCount >= 7, $"Should have at least 7 EditorBrowsable attributes for repository methods, found {editorBrowsableCount}");
     }
 
@@ -1928,8 +1930,7 @@ public class GenerateAggregateCodeTests
         Assert.Contains("public async Task<Product?> GetByIdAsync(", code);
 
         // EditorBrowsable should not appear at all since no partials exist
-        var editorBrowsableCount = System.Text.RegularExpressions.Regex.Count(code,
-            "\\[System\\.ComponentModel\\.EditorBrowsable\\(System\\.ComponentModel\\.EditorBrowsableState\\.Never\\)\\]");
+        var editorBrowsableCount = EditorBrowsableRegex().Count(code);
         Assert.Equal(0, editorBrowsableCount);
     }
 

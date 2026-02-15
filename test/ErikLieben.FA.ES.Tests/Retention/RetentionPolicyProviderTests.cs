@@ -55,7 +55,7 @@ public class RetentionPolicyProviderTests
         };
         var provider = new RetentionPolicyProvider(Options.Create(options));
 
-        var policy = provider.GetPolicy(typeof(AggregateWithPolicy));
+        var policy = provider.GetPolicy<AggregateWithPolicy>();
 
         Assert.NotNull(policy);
         Assert.Equal(2000, policy.MaxEvents);

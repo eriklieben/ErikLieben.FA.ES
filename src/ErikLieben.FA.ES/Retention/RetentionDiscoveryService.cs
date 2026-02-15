@@ -67,7 +67,10 @@ public class RetentionDiscoveryService : IRetentionDiscoveryService
                 continue;
             }
 
-            _logger?.LogDebug("Checking retention policy for type {TypeName}", typeName);
+            if (_logger is not null)
+            {
+                _logger.LogDebug("Checking retention policy for type {TypeName}", typeName);
+            }
 
             string? continuationToken = null;
             do
@@ -117,9 +120,12 @@ public class RetentionDiscoveryService : IRetentionDiscoveryService
             } while (!string.IsNullOrEmpty(continuationToken));
         }
 
-        _logger?.LogInformation(
-            "Retention discovery completed. Found {ViolationCount} violations",
-            yielded);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Retention discovery completed. Found {ViolationCount} violations",
+                yielded);
+        }
     }
 
     /// <inheritdoc />
@@ -136,27 +142,43 @@ public class RetentionDiscoveryService : IRetentionDiscoveryService
             switch (violation.Policy.Action)
             {
                 case RetentionAction.FlagForReview:
-                    _logger?.LogInformation(
-                        "Flagged stream {StreamId} ({ObjectName}) for review: {ViolationType}, events={EventCount}",
-                        violation.StreamId, violation.ObjectName, violation.ViolationType, violation.CurrentEventCount);
+                    if (_logger is not null)
+                    {
+                        _logger.LogInformation(
+                            "Flagged stream {StreamId} ({ObjectName}) for review: {ViolationType}, events={EventCount}",
+                            violation.StreamId, violation.ObjectName, violation.ViolationType, violation.CurrentEventCount);
+                    }
+
                     return RetentionProcessingResult.Succeeded(violation.StreamId, RetentionAction.FlagForReview);
 
                 case RetentionAction.Archive:
-                    _logger?.LogInformation(
-                        "Archive requested for stream {StreamId} ({ObjectName}): {ViolationType}",
-                        violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    if (_logger is not null)
+                    {
+                        _logger.LogInformation(
+                            "Archive requested for stream {StreamId} ({ObjectName}): {ViolationType}",
+                            violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    }
+
                     return RetentionProcessingResult.Succeeded(violation.StreamId, RetentionAction.Archive);
 
                 case RetentionAction.Delete:
-                    _logger?.LogWarning(
-                        "Delete requested for stream {StreamId} ({ObjectName}): {ViolationType}",
-                        violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    if (_logger is not null)
+                    {
+                        _logger.LogWarning(
+                            "Delete requested for stream {StreamId} ({ObjectName}): {ViolationType}",
+                            violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    }
+
                     return RetentionProcessingResult.Succeeded(violation.StreamId, RetentionAction.Delete);
 
                 case RetentionAction.Migrate:
-                    _logger?.LogInformation(
-                        "Migration requested for stream {StreamId} ({ObjectName}): {ViolationType}",
-                        violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    if (_logger is not null)
+                    {
+                        _logger.LogInformation(
+                            "Migration requested for stream {StreamId} ({ObjectName}): {ViolationType}",
+                            violation.StreamId, violation.ObjectName, violation.ViolationType);
+                    }
+
                     return RetentionProcessingResult.Succeeded(violation.StreamId, RetentionAction.Migrate);
 
                 default:
@@ -179,12 +201,18 @@ public class RetentionDiscoveryService : IRetentionDiscoveryService
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<RetentionProcessingResult> ProcessViolationsAsync(
+    public IAsyncEnumerable<RetentionProcessingResult> ProcessViolationsAsync(
         IEnumerable<RetentionViolation> violations,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(violations);
+        return ProcessViolationsAsyncCore(violations, cancellationToken);
+    }
 
+    private async IAsyncEnumerable<RetentionProcessingResult> ProcessViolationsAsyncCore(
+        IEnumerable<RetentionViolation> violations,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         foreach (var violation in violations)
         {
             cancellationToken.ThrowIfCancellationRequested();

@@ -19,6 +19,13 @@ public class S3VersionIndexDocument
     /// </summary>
     public Dictionary<ObjectIdentifier, VersionIdentifier> VersionIndex { get; set; } = [];
 
+    /// <summary>
+    /// Deserializes an <see cref="S3VersionIndexDocument"/> from its JSON representation.
+    /// </summary>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <returns>The deserialized <see cref="S3VersionIndexDocument"/>.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when deserialization fails.</exception>
     public static S3VersionIndexDocument FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -26,6 +33,12 @@ public class S3VersionIndexDocument
                ?? throw new InvalidOperationException("Could not deserialize JSON of S3 version index document.");
     }
 
+    /// <summary>
+    /// Serializes a version index dictionary to its JSON representation.
+    /// </summary>
+    /// <param name="versionIndex">The version index mapping to serialize.</param>
+    /// <returns>The JSON string representation of the version index document.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="versionIndex"/> is null.</exception>
     public static string ToJson(Dictionary<ObjectIdentifier, VersionIdentifier> versionIndex)
     {
         ArgumentNullException.ThrowIfNull(versionIndex);
@@ -37,6 +50,9 @@ public class S3VersionIndexDocument
     }
 }
 
+/// <summary>
+/// Source-generated JSON serializer context for <see cref="S3VersionIndexDocument"/>.
+/// </summary>
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]

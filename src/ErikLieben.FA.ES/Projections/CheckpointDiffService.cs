@@ -75,9 +75,13 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         if (comparison.IsSynced)
         {
-            _logger?.LogDebug(
-                "Checkpoints already synced for {ProjectionType} between v{Source} and v{Target}",
-                typeof(T).Name, sourceVersion, targetVersion);
+            if (_logger is not null)
+            {
+                _logger.LogDebug(
+                    "Checkpoints already synced for {ProjectionType} between v{Source} and v{Target}",
+                    typeof(T).Name, sourceVersion, targetVersion);
+            }
+
             return comparison;
         }
 
@@ -109,10 +113,13 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         await factory.SaveAsync(target, targetBlobName, cancellationToken);
 
-        _logger?.LogInformation(
-            "Synced {ProjectionType} from v{Source} to v{Target}, applied diffs for {StreamCount} streams",
-            typeof(T).Name, sourceVersion, targetVersion,
-            comparison.Diff.StreamDiffs.Count + comparison.Diff.MissingStreams.Count);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Synced {ProjectionType} from v{Source} to v{Target}, applied diffs for {StreamCount} streams",
+                typeof(T).Name, sourceVersion, targetVersion,
+                comparison.Diff.StreamDiffs.Count + comparison.Diff.MissingStreams.Count);
+        }
 
         // Return updated comparison
         return CompareCheckpoints(source, target);
@@ -142,9 +149,13 @@ public class CheckpointDiffService : ICheckpointDiffService
             if (comparison.IsSynced)
             {
                 sw.Stop();
-                _logger?.LogInformation(
-                    "Convergent catch-up for {ProjectionType} completed in {Iterations} iterations, {Events} events, {Duration}ms",
-                    typeof(T).Name, iteration, totalEventsApplied, sw.ElapsedMilliseconds);
+                if (_logger is not null)
+                {
+                    _logger.LogInformation(
+                        "Convergent catch-up for {ProjectionType} completed in {Iterations} iterations, {Events} events, {Duration}ms",
+                        typeof(T).Name, iteration, totalEventsApplied, sw.ElapsedMilliseconds);
+                }
+
                 return ConvergentCatchUpResult.Success(iteration, totalEventsApplied, sw.Elapsed);
             }
 

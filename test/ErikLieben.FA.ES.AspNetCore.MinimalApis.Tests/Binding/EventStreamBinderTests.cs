@@ -1,3 +1,4 @@
+#pragma warning disable CA2263 // Prefer generic overload - mock setups must match the non-generic GetFactory(Type) called by production code
 using System.Reflection;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.AspNetCore.MinimalApis.Binding;

@@ -56,9 +56,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
         _statuses.AddOrUpdate(key, statusInfo, (_, _) => statusInfo);
         _activeRebuilds[key] = token;
 
-        _logger?.LogInformation(
-            "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
-            projectionName, objectId, strategy, token.ExpiresAt);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
+                projectionName, objectId, strategy, token.ExpiresAt);
+        }
 
         return Task.FromResult(token);
     }
@@ -80,9 +83,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            _logger?.LogInformation(
-                "Started catch-up for {ProjectionName}:{ObjectId}",
-                token.ProjectionName, token.ObjectId);
+            if (_logger is not null)
+            {
+                _logger.LogInformation(
+                    "Started catch-up for {ProjectionName}:{ObjectId}",
+                    token.ProjectionName, token.ObjectId);
+            }
         }
 
         return Task.CompletedTask;
@@ -105,9 +111,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            _logger?.LogInformation(
-                "Marked {ProjectionName}:{ObjectId} as ready",
-                token.ProjectionName, token.ObjectId);
+            if (_logger is not null)
+            {
+                _logger.LogInformation(
+                    "Marked {ProjectionName}:{ObjectId} as ready",
+                    token.ProjectionName, token.ObjectId);
+            }
         }
 
         return Task.CompletedTask;
@@ -133,9 +142,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         _activeRebuilds.TryRemove(key, out _);
 
-        _logger?.LogInformation(
-            "Completed rebuild for {ProjectionName}:{ObjectId}",
-            token.ProjectionName, token.ObjectId);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Completed rebuild for {ProjectionName}:{ObjectId}",
+                token.ProjectionName, token.ObjectId);
+        }
 
         return Task.CompletedTask;
     }
@@ -167,9 +179,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         _activeRebuilds.TryRemove(key, out _);
 
-        _logger?.LogWarning(
-            "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
-            token.ProjectionName, token.ObjectId, error ?? "none");
+        if (_logger is not null)
+        {
+            _logger.LogWarning(
+                "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
+                token.ProjectionName, token.ObjectId, error ?? "none");
+        }
 
         return Task.CompletedTask;
     }
@@ -220,9 +235,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
                     _activeRebuilds.TryRemove(key, out _);
                     recovered++;
 
-                    _logger?.LogWarning(
-                        "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
-                        kvp.Value.ProjectionName, kvp.Value.ObjectId);
+                    if (_logger is not null)
+                    {
+                        _logger.LogWarning(
+                            "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
+                            kvp.Value.ProjectionName, kvp.Value.ObjectId);
+                    }
                 }
             }
         }
@@ -250,9 +268,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             StatusChangedAt = DateTimeOffset.UtcNow
         });
 
-        _logger?.LogInformation(
-            "Disabled projection {ProjectionName}:{ObjectId}",
-            projectionName, objectId);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Disabled projection {ProjectionName}:{ObjectId}",
+                projectionName, objectId);
+        }
 
         return Task.CompletedTask;
     }
@@ -273,9 +294,12 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            _logger?.LogInformation(
-                "Enabled projection {ProjectionName}:{ObjectId}",
-                projectionName, objectId);
+            if (_logger is not null)
+            {
+                _logger.LogInformation(
+                    "Enabled projection {ProjectionName}:{ObjectId}",
+                    projectionName, objectId);
+            }
         }
 
         return Task.CompletedTask;

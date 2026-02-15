@@ -82,8 +82,8 @@ public class ResilientPostCommitActionExecutor
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.ActionType, actionName);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         var actionType = action.GetType();
@@ -93,10 +93,13 @@ public class ResilientPostCommitActionExecutor
 
         activity?.SetTag(FaesSemanticConventions.EventCount, eventsList.Count);
 
-        logger?.LogDebug(
-            "Starting post-commit action {ActionType} for {EventCount} events",
-            actionName,
-            eventsList.Count);
+        if (logger is not null)
+        {
+            logger.LogDebug(
+                "Starting post-commit action {ActionType} for {EventCount} events",
+                actionName,
+                eventsList.Count);
+        }
 
         try
         {
@@ -105,10 +108,13 @@ public class ResilientPostCommitActionExecutor
                 attempts++;
                 activity?.SetTag(FaesSemanticConventions.RetryAttempt, attempts);
 
-                logger?.LogDebug(
-                    "Executing post-commit action {ActionType}, attempt {Attempt}",
-                    actionName,
-                    attempts);
+                if (logger is not null)
+                {
+                    logger.LogDebug(
+                        "Executing post-commit action {ActionType}, attempt {Attempt}",
+                        actionName,
+                        attempts);
+                }
 
                 await action.PostCommitAsync(eventsList, document);
             }, cancellationToken);
@@ -117,11 +123,14 @@ public class ResilientPostCommitActionExecutor
             activity?.SetTag(FaesSemanticConventions.Success, true);
             activity?.SetTag(FaesSemanticConventions.DurationMs, duration.TotalMilliseconds);
 
-            logger?.LogDebug(
-                "Post-commit action {ActionType} succeeded after {Attempts} attempt(s) in {Duration}ms",
-                actionName,
-                attempts,
-                duration.TotalMilliseconds);
+            if (logger is not null)
+            {
+                logger.LogDebug(
+                    "Post-commit action {ActionType} succeeded after {Attempts} attempt(s) in {Duration}ms",
+                    actionName,
+                    attempts,
+                    duration.TotalMilliseconds);
+            }
 
             return PostCommitActionResult.Succeeded(actionName, actionType, duration);
         }
@@ -132,13 +141,16 @@ public class ResilientPostCommitActionExecutor
             activity?.SetTag(FaesSemanticConventions.Success, false);
             activity?.SetTag(FaesSemanticConventions.DurationMs, duration.TotalMilliseconds);
 
-            logger?.LogWarning(
-                ex,
-                "Post-commit action {ActionType} failed after {Attempts} attempt(s) in {Duration}ms: {Error}",
-                actionName,
-                attempts,
-                duration.TotalMilliseconds,
-                ex.Message);
+            if (logger is not null)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Post-commit action {ActionType} failed after {Attempts} attempt(s) in {Duration}ms: {Error}",
+                    actionName,
+                    attempts,
+                    duration.TotalMilliseconds,
+                    ex.Message);
+            }
 
             return PostCommitActionResult.Failed(actionName, actionType, ex, attempts, duration);
         }

@@ -118,7 +118,7 @@ public class EventStreamMigrationServiceTests
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsAssignableFrom<IMigrationBuilder>(result);
+            Assert.IsType<MigrationBuilder>(result);
         }
     }
 
@@ -160,7 +160,7 @@ public class EventStreamMigrationServiceTests
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsAssignableFrom<IMigrationBuilder>(result);
+            Assert.IsType<BulkMigrationBuilder>(result);
         }
     }
 
@@ -260,7 +260,7 @@ public class EventStreamMigrationServiceTests
             var sut = new EventStreamMigrationService(dataStore, documentStore, lockProvider, loggerFactory);
 
             // Assert
-            Assert.IsAssignableFrom<IEventStreamMigrationService>(sut);
+            Assert.IsType<EventStreamMigrationService>(sut);
         }
     }
 }

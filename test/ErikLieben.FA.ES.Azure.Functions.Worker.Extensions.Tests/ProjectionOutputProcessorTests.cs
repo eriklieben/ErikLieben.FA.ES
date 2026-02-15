@@ -649,15 +649,15 @@ public class ProjectionOutputProcessorTests
     // Helper class for method resolution tests
     public class TestClassWithMethod
     {
-        public void TestMethod() { }
+        public static void TestMethod() { }
 
         public static void StaticTestMethod() { }
 
         [ProjectionOutput(typeof(TestProjection))]
-        public void MethodWithProjectionOutput() { }
+        public static void MethodWithProjectionOutput() { }
 
         [ProjectionOutput(typeof(TestProjection))]
         [ProjectionOutput(typeof(TestProjection), BlobName = "second.json")]
-        public void MethodWithMultipleProjectionOutputs() { }
+        public static void MethodWithMultipleProjectionOutputs() { }
     }
 }

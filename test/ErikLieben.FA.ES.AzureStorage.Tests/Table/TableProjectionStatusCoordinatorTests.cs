@@ -46,7 +46,7 @@ public class TableProjectionStatusCoordinatorTests
         {
             var sut = CreateSut();
             Assert.NotNull(sut);
-            Assert.IsAssignableFrom<IProjectionStatusCoordinator>(sut);
+            Assert.IsType<TableProjectionStatusCoordinator>(sut);
         }
     }
 

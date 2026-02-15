@@ -134,11 +134,14 @@ public class SnapshotCleanupService : ISnapshotCleanupService
         var versions = toDelete.Select(s => s.Version).ToList();
         var deleted = await _snapshotStore.DeleteManyAsync(document, versions, cancellationToken);
 
-        _logger?.LogInformation(
-            "Cleaned up {DeletedCount} snapshots for {StreamId}. Retained: {RetainedCount}",
-            deleted,
-            document.Active.StreamIdentifier,
-            toRetain.Count);
+        if (_logger is not null)
+        {
+            _logger.LogInformation(
+                "Cleaned up {DeletedCount} snapshots for {StreamId}. Retained: {RetainedCount}",
+                deleted,
+                document.Active.StreamIdentifier,
+                toRetain.Count);
+        }
 
         activity?.SetTag("SnapshotsDeleted", deleted);
         activity?.SetTag("SnapshotsRetained", toRetain.Count);

@@ -30,7 +30,7 @@ public class S3ClientFactory : IS3ClientFactory
         return _clients.GetOrAdd(name, _ => CreateClientInternal());
     }
 
-    private IAmazonS3 CreateClientInternal()
+    private AmazonS3Client CreateClientInternal()
     {
         var config = new AmazonS3Config
         {

@@ -378,6 +378,7 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
                 {
                     // Concurrency conflict - another process already recovered this entity
                     _logger?.LogDebug(
+                        ex,
                         "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrency conflict",
                         entity.PartitionKey, entity.RowKey);
                 }
@@ -483,7 +484,7 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
         }
     }
 
-    private void ValidateToken(RebuildToken token, ProjectionStatusEntity entity)
+    private static void ValidateToken(RebuildToken token, ProjectionStatusEntity entity)
     {
         var storedToken = DeserializeRebuildToken(entity.RebuildToken);
 

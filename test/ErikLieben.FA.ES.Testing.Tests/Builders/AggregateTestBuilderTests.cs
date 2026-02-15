@@ -71,7 +71,7 @@ public partial class AggregateTestBuilderTests
                 Fold(context.Append(new TestCompleted(outcome))));
         }
 
-        public async Task FailingCommand()
+        public static async Task FailingCommand()
         {
             await Task.CompletedTask;
             throw new InvalidOperationException("Command failed intentionally");
@@ -233,7 +233,7 @@ public partial class AggregateTestBuilderTests
 
         // Act
         var builderAfterWhen = await builder
-            .When(async agg => await agg.FailingCommand());
+            .When(async _ => await TestAggregate.FailingCommand());
         var assertion = await builderAfterWhen.Then();
 
         // Assert

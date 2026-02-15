@@ -149,24 +149,33 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// <param name="chunk">The chunk identifier (not used for CosmosDB, kept for interface compatibility).</param>
     /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
     /// <returns>An async enumerable of events ordered by version.</returns>
-    public async IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
         IObjectDocument document,
         int startVersion = 0,
         int? untilVersion = null,
         int? chunk = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
+        return ReadAsStreamAsyncCore(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<IEvent> ReadAsStreamAsyncCore(
+        IObjectDocument document,
+        int startVersion,
+        int? untilVersion,
+        int? chunk,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbDataStore.ReadAsStream");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
-
-        ArgumentNullException.ThrowIfNull(document);
-        ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
         Container container;
         try

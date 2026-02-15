@@ -1212,13 +1212,10 @@ public class GenerateProjectionCode
             var args = new List<string> { "documentFactory", "eventStreamFactory" };
 
             // Add property-matched params as deserialized locals with null-forgiving operator
-            foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint"))
-            {
-                if (ctorParams.Contains($"obj.{property.Name}"))
-                {
-                    args.Add($"{ToCamelCase(property.Name)}!");
-                }
-            }
+            args.AddRange(projection.Properties
+                .Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint")
+                .Where(property => ctorParams.Contains($"obj.{property.Name}"))
+                .Select(property => $"{ToCamelCase(property.Name)}!"));
 
             // Add extra constructor params (passed through from LoadFromJson method signature)
             args.AddRange(extraCtorParams.Select(p => p.Name));
@@ -1351,13 +1348,10 @@ public class GenerateProjectionCode
         string version)
     {
         // Add namespaces for extra constructor params
-        foreach (var param in components.ExtraCtorParams.Where(p => !string.IsNullOrWhiteSpace(p.Namespace)))
-        {
-            if (!usings.Contains(param.Namespace))
-            {
-                usings.Add(param.Namespace);
-            }
-        }
+        usings.AddRange(components.ExtraCtorParams
+            .Where(p => !string.IsNullOrWhiteSpace(p.Namespace))
+            .Select(p => p.Namespace)
+            .Where(ns => !usings.Contains(ns)));
 
         var code = new StringBuilder();
 

@@ -61,7 +61,7 @@ public class InlineSnapshotHandlerTests
         return document;
     }
 
-    private static IReadOnlyList<JsonEvent> CreateCommittedEvents(int count, string eventType = "TestEvent")
+    private static List<JsonEvent> CreateCommittedEvents(int count, string eventType = "TestEvent")
     {
         var events = new List<JsonEvent>();
         for (var i = 0; i < count; i++)
@@ -71,7 +71,7 @@ public class InlineSnapshotHandlerTests
         return events;
     }
 
-    private static JsonTypeInfo CreateJsonTypeInfo()
+    private static JsonTypeInfo<JsonEvent> CreateJsonTypeInfo()
     {
         return JsonEventSerializerContext.Default.JsonEvent;
     }

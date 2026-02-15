@@ -17,6 +17,7 @@ public static class FaesBuilderExtensions
 {
     private const string BlobServiceKey = "blob";
     private const string TableServiceKey = "table";
+    private const string DefaultClientName = "Store";
     private static bool _azureExceptionExtractorRegistered;
 
     /// <summary>
@@ -51,7 +52,7 @@ public static class FaesBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(configure);
 
-        var settings = new EventStreamBlobSettings("Store");
+        var settings = new EventStreamBlobSettings(DefaultClientName);
         configure(settings);
         return builder.UseBlobStorage(settings);
     }
@@ -88,7 +89,7 @@ public static class FaesBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(configure);
 
-        var settings = new EventStreamTableSettings("Store");
+        var settings = new EventStreamTableSettings(DefaultClientName);
         configure(settings);
         return builder.UseTableStorage(settings);
     }
@@ -99,7 +100,7 @@ public static class FaesBuilderExtensions
     /// <param name="builder">The FAES builder.</param>
     /// <param name="clientName">The named client name for Azure client factory. Defaults to "Store".</param>
     /// <returns>The builder for chaining.</returns>
-    public static IFaesBuilder WithAzureStorageHealthChecks(this IFaesBuilder builder, string clientName = "Store")
+    public static IFaesBuilder WithAzureStorageHealthChecks(this IFaesBuilder builder, string clientName = DefaultClientName)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -115,7 +116,7 @@ public static class FaesBuilderExtensions
     /// <param name="builder">The FAES builder.</param>
     /// <param name="clientName">The named client name for Azure client factory. Defaults to "Store".</param>
     /// <returns>The builder for chaining.</returns>
-    public static IFaesBuilder WithBlobStorageHealthCheck(this IFaesBuilder builder, string clientName = "Store")
+    public static IFaesBuilder WithBlobStorageHealthCheck(this IFaesBuilder builder, string clientName = DefaultClientName)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -131,7 +132,7 @@ public static class FaesBuilderExtensions
     /// <param name="builder">The FAES builder.</param>
     /// <param name="clientName">The named client name for Azure client factory. Defaults to "Store".</param>
     /// <returns>The builder for chaining.</returns>
-    public static IFaesBuilder WithTableStorageHealthCheck(this IFaesBuilder builder, string clientName = "Store")
+    public static IFaesBuilder WithTableStorageHealthCheck(this IFaesBuilder builder, string clientName = DefaultClientName)
     {
         ArgumentNullException.ThrowIfNull(builder);
 

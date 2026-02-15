@@ -19,7 +19,7 @@ using System.Diagnostics;
 /// </summary>
 public class BulkMigrationBuilder : IMigrationBuilder
 {
-    private readonly IReadOnlyList<IObjectDocument> documents;
+    private readonly List<IObjectDocument> documents;
     private readonly IDataStore dataStore;
     private readonly IDocumentStore documentStore;
     private readonly IDistributedLockProvider lockProvider;
@@ -433,7 +433,7 @@ public class BulkMigrationResult : IMigrationResult
         : null;
 
     /// <inheritdoc/>
-    public Exception? Exception => Failures.FirstOrDefault()?.Exception;
+    public Exception? Exception => Failures.Count > 0 ? Failures[0].Exception : null;
 
     /// <inheritdoc/>
     public IMigrationProgress Progress => new BulkMigrationProgressSnapshot

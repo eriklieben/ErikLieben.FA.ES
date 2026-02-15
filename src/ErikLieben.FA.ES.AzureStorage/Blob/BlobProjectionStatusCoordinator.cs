@@ -201,6 +201,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
     {
         var results = new List<ProjectionStatusInfo>();
 
+#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
         await foreach (var blobItem in _containerClient.GetBlobsAsync(cancellationToken: cancellationToken))
         {
             if (!blobItem.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
@@ -216,6 +217,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
                 results.Add(document.StatusInfo);
             }
         }
+#pragma warning restore S3267
 
         return results;
     }
@@ -226,6 +228,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
         var now = DateTimeOffset.UtcNow;
         var recovered = 0;
 
+#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
         await foreach (var blobItem in _containerClient.GetBlobsAsync(cancellationToken: cancellationToken))
         {
             if (!blobItem.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
@@ -257,6 +260,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
                     document.ActiveRebuildToken.ProjectionName, document.ActiveRebuildToken.ObjectId);
             }
         }
+#pragma warning restore S3267
 
         return recovered;
     }

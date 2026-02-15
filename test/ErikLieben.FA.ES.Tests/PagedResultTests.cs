@@ -96,7 +96,7 @@ public class PagedResultTests
             var retrievedItems = sut.Items;
 
             // Assert
-            Assert.IsAssignableFrom<IReadOnlyList<string>>(retrievedItems);
+            Assert.IsType<List<string>>(retrievedItems);
             Assert.Equal(items.Count, retrievedItems.Count);
             Assert.Equal(items[0], retrievedItems[0]);
         }

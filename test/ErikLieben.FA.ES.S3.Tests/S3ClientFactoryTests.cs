@@ -52,7 +52,7 @@ public class S3ClientFactoryTests
             var sut = new S3ClientFactory(CreateSettings());
             var client = sut.CreateClient("test");
             Assert.NotNull(client);
-            Assert.IsAssignableFrom<IAmazonS3>(client);
+            Assert.IsType<AmazonS3Client>(client);
         }
 
         [Fact]

@@ -577,7 +577,7 @@ public class BulkBackupOptionsTests
             var sut = new BulkBackupOptions();
 
             // Assert
-            Assert.IsAssignableFrom<BackupOptions>(sut);
+            Assert.IsType<BulkBackupOptions>(sut);
         }
     }
 
@@ -735,7 +735,7 @@ public class BulkRestoreOptionsTests
             var sut = new BulkRestoreOptions();
 
             // Assert
-            Assert.IsAssignableFrom<RestoreOptions>(sut);
+            Assert.IsType<BulkRestoreOptions>(sut);
         }
     }
 

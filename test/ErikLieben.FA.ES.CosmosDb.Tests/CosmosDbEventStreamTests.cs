@@ -38,7 +38,7 @@ public class CosmosDbEventStreamTests
         public void Should_inherit_from_base_event_stream()
         {
             var sut = new CosmosDbEventStream(document, streamDependencies);
-            Assert.IsAssignableFrom<BaseEventStream>(sut);
+            Assert.IsType<CosmosDbEventStream>(sut);
         }
     }
 }

@@ -29,10 +29,10 @@ public class InMemoryStreamMetadataProviderTests
             name,
             new StreamInformation
             {
-                StreamConnectionName = "inMemory",
-                SnapShotConnectionName = "inMemory",
-                DocumentTagConnectionName = "inMemory",
-                StreamTagConnectionName = "inMemory",
+                DataStore = "inMemory",
+                SnapShotStore = "inMemory",
+                DocumentTagStore = "inMemory",
+                StreamTagStore = "inMemory",
                 StreamIdentifier = $"{id.Replace("-", string.Empty)}-0000000000",
                 StreamType = "inMemory",
                 DocumentTagType = "inMemory",

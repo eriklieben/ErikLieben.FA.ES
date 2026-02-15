@@ -177,7 +177,8 @@ public class LiveMigrationExecutor
             _context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
 
         var sourceEventList = sourceEvents?.ToList() ?? [];
 
@@ -321,7 +322,8 @@ public class LiveMigrationExecutor
                 _context.TargetDocument,
                 startVersion: 0,
                 untilVersion: null,
-                chunk: null);
+                chunk: null,
+                cancellationToken: cancellationToken);
 
             if (targetEvents == null || !targetEvents.Any())
             {
@@ -359,7 +361,8 @@ public class LiveMigrationExecutor
             _context.SourceDocument,
             startVersion: 0,
             untilVersion: null,
-            chunk: null);
+            chunk: null,
+            cancellationToken: cancellationToken);
 
         var allEventsList = currentEvents?.ToList() ?? [];
 
@@ -427,7 +430,8 @@ public class LiveMigrationExecutor
                 freshDocument,
                 startVersion: 0,
                 untilVersion: null,
-                chunk: null);
+                chunk: null,
+                cancellationToken: cancellationToken);
 
             var eventsAfterReloadList = eventsAfterReload?.ToList() ?? [];
 
@@ -467,7 +471,8 @@ public class LiveMigrationExecutor
                 freshDocument,
                 startVersion: 0,
                 untilVersion: null,
-                chunk: null);
+                chunk: null,
+                cancellationToken: cancellationToken);
 
             var businessEventsAfterClose = postCloseEvents?
                 .Where(e => e.EventType != StreamClosedEvent.EventTypeName)
@@ -519,7 +524,8 @@ public class LiveMigrationExecutor
                 _context.SourceDocument,
                 startVersion: 0,
                 untilVersion: null,
-                chunk: null);
+                chunk: null,
+                cancellationToken: cancellationToken);
 
             var newVersion = newEvents?.Max(e => e.EventVersion) ?? actualVersion;
             return CloseAttemptResult.VersionConflict(newVersion);

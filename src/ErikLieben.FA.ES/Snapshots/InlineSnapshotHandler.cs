@@ -87,18 +87,21 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
         var policy = _policyProvider.GetPolicy(aggregateType);
         if (policy is null || !policy.Enabled)
         {
-            _logger?.LogDebug("No snapshot policy for {AggregateType}", aggregateType.Name);
+            if (_logger is not null)
+            {
+                _logger.LogDebug("No snapshot policy for {AggregateType}", aggregateType.Name);
+            }
+
             return SnapshotResult.Skipped("No policy configured");
         }
 
-        // Aggregate implements ISnapshotTracker
-        var tracker = (ISnapshotTracker)aggregate;
+        // Aggregate implements ISnapshotTracker - use concrete type for performance
+        Aggregate tracker = aggregate;
 
         // Determine event type of last committed event
         Type? lastEventType = null;
         if (committedEvents.Count > 0)
         {
-            var lastEvent = committedEvents[^1];
             // Try to resolve event type from registry or use the event type name
             lastEventType = ResolveEventType();
         }
@@ -115,13 +118,17 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
 
         if (!shouldSnapshot)
         {
-            _logger?.LogDebug(
-                "Snapshot not triggered for {StreamId} at version {Version}. " +
-                "Events since last: {EventsSince}, Total: {Total}",
-                document.Active.StreamIdentifier,
-                currentVersion,
-                tracker.EventsSinceLastSnapshot,
-                tracker.TotalEventsProcessed);
+            if (_logger is not null)
+            {
+                _logger.LogDebug(
+                    "Snapshot not triggered for {StreamId} at version {Version}. " +
+                    "Events since last: {EventsSince}, Total: {Total}",
+                    document.Active.StreamIdentifier,
+                    currentVersion,
+                    tracker.EventsSinceLastSnapshot,
+                    tracker.TotalEventsProcessed);
+            }
+
             return SnapshotResult.Skipped("Policy conditions not met");
         }
 
@@ -136,16 +143,20 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
                 aggregate,
                 jsonTypeInfo,
                 document,
-                currentVersion);
+                currentVersion,
+                cancellationToken: cts.Token);
             stopwatch.Stop();
 
             tracker.RecordSnapshotCreated(currentVersion);
 
-            _logger?.LogInformation(
-                "Created snapshot for {StreamId} at version {Version} in {Duration}ms",
-                document.Active.StreamIdentifier,
-                currentVersion,
-                stopwatch.ElapsedMilliseconds);
+            if (_logger is not null)
+            {
+                _logger.LogInformation(
+                    "Created snapshot for {StreamId} at version {Version} in {Duration}ms",
+                    document.Active.StreamIdentifier,
+                    currentVersion,
+                    stopwatch.ElapsedMilliseconds);
+            }
 
             activity?.SetTag("SnapshotCreated", true);
             activity?.SetTag("SnapshotVersion", currentVersion);
@@ -183,17 +194,20 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
 
     private void LogSnapshotFailure(string streamId, int version, string message, Exception? ex)
     {
-        if (_options.LogFailuresAsWarnings)
+        if (_logger is not null)
         {
-            _logger?.LogWarning(ex,
-                "{Message} for {StreamId} at version {Version}. Events are committed.",
-                message, streamId, version);
-        }
-        else
-        {
-            _logger?.LogDebug(ex,
-                "{Message} for {StreamId} at version {Version}. Events are committed.",
-                message, streamId, version);
+            if (_options.LogFailuresAsWarnings)
+            {
+                _logger.LogWarning(ex,
+                    "{Message} for {StreamId} at version {Version}. Events are committed.",
+                    message, streamId, version);
+            }
+            else
+            {
+                _logger.LogDebug(ex,
+                    "{Message} for {StreamId} at version {Version}. Events are committed.",
+                    message, streamId, version);
+            }
         }
     }
 

@@ -43,17 +43,10 @@ public class InMemorySnapShotStore : ISnapShotStore
         var prefix = $"snapshot/{document.Active.StreamIdentifier}-";
         var result = new List<SnapshotMetadata>();
 
-        foreach (var kvp in snapshots)
-        {
-            if (kvp.Key.StartsWith(prefix, StringComparison.Ordinal))
-            {
-                var metadata = ParsePath(kvp.Key, kvp.Value.CreatedAt);
-                if (metadata is not null)
-                {
-                    result.Add(metadata);
-                }
-            }
-        }
+        result.AddRange(snapshots
+            .Where(kvp => kvp.Key.StartsWith(prefix, StringComparison.Ordinal))
+            .Select(kvp => ParsePath(kvp.Key, kvp.Value.CreatedAt))
+            .Where(metadata => metadata is not null)!);
 
         return Task.FromResult<IReadOnlyList<SnapshotMetadata>>(
             result.OrderByDescending(s => s.Version).ToList());

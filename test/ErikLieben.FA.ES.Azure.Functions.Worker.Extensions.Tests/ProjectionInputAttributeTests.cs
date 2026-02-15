@@ -141,7 +141,7 @@ public class ProjectionInputAttributeTests
             var sut = new ProjectionInputAttribute();
 
             // Assert
-            Assert.IsAssignableFrom<InputBindingAttribute>(sut);
+            Assert.IsType<ProjectionInputAttribute>(sut);
         }
     }
 }

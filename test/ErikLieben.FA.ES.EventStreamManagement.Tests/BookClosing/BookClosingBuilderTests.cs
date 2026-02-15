@@ -189,7 +189,7 @@ public class BookClosingBuilderTests
             var sut = new BookClosingBuilder();
 
             // Assert
-            Assert.IsAssignableFrom<IBookClosingBuilder>(sut);
+            Assert.IsType<BookClosingBuilder>(sut);
         }
     }
 }

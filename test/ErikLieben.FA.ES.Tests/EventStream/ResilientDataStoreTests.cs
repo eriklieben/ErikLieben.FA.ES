@@ -20,6 +20,7 @@ public class ResilientDataStoreTests : IDisposable
     {
         // Clean up registered extractors after each test
         ResilientDataStore.ClearStatusCodeExtractors();
+        GC.SuppressFinalize(this);
     }
 
     #region Test Helpers

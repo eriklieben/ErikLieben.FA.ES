@@ -208,7 +208,7 @@ public class BackupBuilderTests
             var sut = new BackupBuilder();
 
             // Assert
-            Assert.IsAssignableFrom<IBackupBuilder>(sut);
+            Assert.IsType<BackupBuilder>(sut);
         }
     }
 }

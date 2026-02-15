@@ -287,7 +287,7 @@ public class MigrationResultTests
             var sut = MigrationResult.CreateSuccess(Guid.NewGuid(), progress, statistics);
 
             // Assert
-            Assert.IsAssignableFrom<IMigrationResult>(sut);
+            Assert.IsType<MigrationResult>(sut);
         }
     }
 }

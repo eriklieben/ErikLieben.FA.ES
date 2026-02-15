@@ -68,7 +68,7 @@ public partial class AggregateAssertionTests
                 Fold(context.Append(new ItemDeleted())));
         }
 
-        public async Task FailWithException()
+        public static async Task FailWithException()
         {
             await Task.CompletedTask;
             throw new InvalidOperationException("Test exception");
@@ -134,7 +134,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -172,7 +172,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -235,7 +235,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -277,7 +277,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -362,7 +362,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -400,7 +400,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -471,7 +471,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -547,7 +547,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert
@@ -567,7 +567,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert - ShouldHaveThrown should work the same as ShouldThrow
@@ -587,7 +587,7 @@ public partial class AggregateAssertionTests
                 stream => new ItemAggregate(stream));
 
             var builderAfterWhen = await builder
-                .When(async agg => await agg.FailWithException());
+                .When(async _ => await ItemAggregate.FailWithException());
             var assertion = await builderAfterWhen.Then();
 
             // Act & Assert

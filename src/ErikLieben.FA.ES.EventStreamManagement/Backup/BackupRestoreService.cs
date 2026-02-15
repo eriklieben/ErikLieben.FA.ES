@@ -75,7 +75,7 @@ public class BackupRestoreService : IBackupRestoreService
         logger.BackupDocumentStarting(document.ObjectName, document.ObjectId);
 
         // Read all events from the stream
-        var events = await dataStore.ReadAsync(document);
+        var events = await dataStore.ReadAsync(document, cancellationToken: cancellationToken);
         var eventList = events?.ToList() ?? [];
 
         // Report initial progress

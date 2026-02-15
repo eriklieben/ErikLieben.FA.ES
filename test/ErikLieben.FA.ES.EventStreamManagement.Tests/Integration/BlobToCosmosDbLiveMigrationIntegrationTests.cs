@@ -96,7 +96,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         // Configure document store mock to return source document when queried
         _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
-            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+            .Returns(Task.FromResult(sourceDocument));
 
         // Write test events to blob storage
         await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
@@ -177,7 +177,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         // Configure document store mock to return source document when queried
         _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
-            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+            .Returns(Task.FromResult(sourceDocument));
 
         // Write business events to blob storage
         await _blobDataStore!.AppendAsync(sourceDocument, default, new JsonEvent
@@ -241,7 +241,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         // Configure document store mock to return source document when queried
         _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
-            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+            .Returns(Task.FromResult(sourceDocument));
 
         // Write events in specific order
         var eventTypes = new[] { "StockReceived", "StockReserved", "StockShipped", "StockReturned", "StockAdjusted" };
@@ -300,7 +300,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         // Configure document store mock to return source document when queried
         _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
-            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+            .Returns(Task.FromResult(sourceDocument));
 
         // Don't write any events to source
 
@@ -341,7 +341,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
 
         // Configure document store mock to return source document when queried
         _documentStore!.GetAsync(sourceDocument.ObjectName, sourceDocument.ObjectId)
-            .Returns(Task.FromResult<IObjectDocument?>(sourceDocument));
+            .Returns(Task.FromResult(sourceDocument));
 
         // Write events to blob storage
         for (int i = 0; i < 5; i++)
