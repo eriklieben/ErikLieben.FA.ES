@@ -250,6 +250,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             activity.SetTag(FaesSemanticConventions.EventCount, events?.Length ?? 0);
         }
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
         if (events.Length == 0)

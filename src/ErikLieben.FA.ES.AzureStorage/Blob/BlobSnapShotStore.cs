@@ -35,13 +35,15 @@ public partial class BlobSnapShotStore(
     /// <exception cref="DocumentConfigurationException">Thrown when the snapshot blob client cannot be created.</exception>
     public async Task SetAsync(IBase @object, JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.Set");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -71,13 +73,15 @@ public partial class BlobSnapShotStore(
     /// <exception cref="DocumentConfigurationException">Thrown when the snapshot blob client cannot be created.</exception>
     public async Task<T?> GetAsync<T>(JsonTypeInfo<T> jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default) where T : class, IBase
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -104,13 +108,15 @@ public partial class BlobSnapShotStore(
     /// <exception cref="DocumentConfigurationException">Thrown when the snapshot blob client cannot be created.</exception>
     public async Task<object?> GetAsync(JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -131,12 +137,14 @@ public partial class BlobSnapShotStore(
         CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.List");
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationQuery);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         ArgumentNullException.ThrowIfNull(document.ObjectName);
@@ -169,12 +177,14 @@ public partial class BlobSnapShotStore(
         CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobSnapShotStore.Delete");
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }

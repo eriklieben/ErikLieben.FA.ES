@@ -91,15 +91,8 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
             return SnapshotResult.Skipped("No policy configured");
         }
 
-        // Get tracker interface
-        var tracker = aggregate as ISnapshotTracker;
-        if (tracker is null)
-        {
-            _logger?.LogWarning(
-                "Aggregate {AggregateType} does not implement ISnapshotTracker",
-                aggregateType.Name);
-            return SnapshotResult.Skipped("Aggregate does not implement ISnapshotTracker");
-        }
+        // Aggregate implements ISnapshotTracker
+        var tracker = (ISnapshotTracker)aggregate;
 
         // Determine event type of last committed event
         Type? lastEventType = null;

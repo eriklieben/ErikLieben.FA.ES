@@ -56,12 +56,14 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.Read");
         var timer = activity != null ? FaesMetrics.StartTimer() : null;
 
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.StartVersion, startVersion);
         }
 
@@ -140,12 +142,14 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("BlobDataStore.ReadAsStream");
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemAzureBlob);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         string? documentPath;
@@ -226,6 +230,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         }
 
         ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(document.Active.StreamIdentifier);
 
         var blobDoc = BlobEventStreamDocument.From(document);

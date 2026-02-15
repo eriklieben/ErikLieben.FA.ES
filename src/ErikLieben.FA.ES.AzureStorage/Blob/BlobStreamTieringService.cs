@@ -85,12 +85,20 @@ public class BlobStreamTieringService : IBlobStreamTieringService
         var container = await GetContainerAsync(objectName);
         var prefix = GetStreamPrefix(streamId);
 
-        await foreach (var blob in container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        var enumerator = container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken)
+            .GetAsyncEnumerator(cancellationToken);
+        try
         {
-            return blob.Properties.AccessTier;
+            if (await enumerator.MoveNextAsync())
+            {
+                return enumerator.Current.Properties.AccessTier;
+            }
+            return null;
         }
-
-        return null;
+        finally
+        {
+            await enumerator.DisposeAsync();
+        }
     }
 
     /// <inheritdoc />

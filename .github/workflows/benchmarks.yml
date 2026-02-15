@@ -122,7 +122,7 @@ jobs:
             benchmark-data-${{ runner.os }}-
 
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@4bdcce38c94cec68da58d012ac24b7b1155efe8b # v1
         if: github.ref == 'refs/heads/main'
         with:
           name: ErikLieben.FA.ES Benchmarks

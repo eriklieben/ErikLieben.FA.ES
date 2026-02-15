@@ -305,10 +305,11 @@ public static class S3Extensions
 
     /// <summary>
     /// Computes the Base64-encoded MD5 hash for Content-MD5 header used in S3 PutObject for data integrity.
+    /// MD5 is required by the S3 protocol for the Content-MD5 header and is not used for security purposes.
     /// </summary>
     /// <param name="data">The input byte array.</param>
     /// <returns>The Base64-encoded MD5 hash.</returns>
-    private static string ComputeMd5Base64(byte[] data)
+    private static string ComputeMd5Base64(byte[] data) //NOSONAR - MD5 required by S3 Content-MD5 protocol
     {
         var md5Hash = MD5.HashData(data);
         return Convert.ToBase64String(md5Hash);

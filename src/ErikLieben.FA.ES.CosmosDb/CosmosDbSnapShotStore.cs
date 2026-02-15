@@ -47,13 +47,15 @@ public class CosmosDbSnapShotStore : ISnapShotStore
     /// <returns>A task that represents the asynchronous save operation.</returns>
     public async Task SetAsync(IBase @object, JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbSnapShotStore.Set");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationWrite);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -96,13 +98,15 @@ public class CosmosDbSnapShotStore : ISnapShotStore
     /// <returns>The deserialized snapshot instance when found; otherwise null.</returns>
     public async Task<T?> GetAsync<T>(JsonTypeInfo<T> jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default) where T : class, IBase
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbSnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -137,13 +141,15 @@ public class CosmosDbSnapShotStore : ISnapShotStore
     /// <returns>The deserialized snapshot instance when found; otherwise null.</returns>
     public async Task<object?> GetAsync(JsonTypeInfo jsonTypeInfo, IObjectDocument document, int version, string? name = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbSnapShotStore.Get");
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationRead);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
@@ -172,12 +178,14 @@ public class CosmosDbSnapShotStore : ISnapShotStore
         CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbSnapShotStore.List");
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationQuery);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
         }
 
         var container = await GetSnapshotsContainerAsync();
@@ -221,12 +229,14 @@ public class CosmosDbSnapShotStore : ISnapShotStore
         CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Storage.StartActivity("CosmosDbSnapShotStore.Delete");
+        ArgumentNullException.ThrowIfNull(document);
+
         if (activity?.IsAllDataRequested == true)
         {
             activity.SetTag(FaesSemanticConventions.DbSystem, FaesSemanticConventions.DbSystemCosmosDb);
             activity.SetTag(FaesSemanticConventions.DbOperation, FaesSemanticConventions.DbOperationDelete);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document?.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
+            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
             activity.SetTag(FaesSemanticConventions.SnapshotVersion, version);
             activity.SetTag(FaesSemanticConventions.SnapshotName, name);
         }
