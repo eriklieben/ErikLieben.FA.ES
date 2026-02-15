@@ -54,7 +54,7 @@ public class ProjectionDefinitionTests
             };
 
             // Act & Assert
-            Assert.IsAssignableFrom<ProjectionDefinition>(definition);
+            Assert.IsType<ProjectionDefinition>(definition, exactMatch: false);
         }
     }
 
@@ -122,7 +122,7 @@ public class ProjectionDefinitionTests
             };
 
             // Act & Assert
-            Assert.IsAssignableFrom<ProjectionDefinition>(definition);
+            Assert.IsType<ProjectionDefinition>(definition, exactMatch: false);
         }
 
         [Fact]

@@ -53,9 +53,12 @@ public class StreamRepairService : IStreamRepairService
 
         if (!document.Active.IsBroken)
         {
-            logger.LogWarning(
-                "Attempted to repair stream {StreamId} that is not marked as broken",
-                document.Active.StreamIdentifier);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Attempted to repair stream {StreamId} that is not marked as broken",
+                    document.Active.StreamIdentifier);
+            }
 
             throw new InvalidOperationException(
                 $"Stream '{document.Active.StreamIdentifier}' is not marked as broken. " +
@@ -65,9 +68,12 @@ public class StreamRepairService : IStreamRepairService
         var brokenInfo = document.Active.BrokenInfo;
         if (brokenInfo == null)
         {
-            logger.LogWarning(
-                "Stream {StreamId} is marked as broken but has no BrokenInfo",
-                document.Active.StreamIdentifier);
+            if (logger.IsEnabled(LogLevel.Warning))
+            {
+                logger.LogWarning(
+                    "Stream {StreamId} is marked as broken but has no BrokenInfo",
+                    document.Active.StreamIdentifier);
+            }
 
             throw new InvalidOperationException(
                 $"Stream '{document.Active.StreamIdentifier}' is marked as broken but BrokenInfo is null. " +
@@ -97,11 +103,14 @@ public class StreamRepairService : IStreamRepairService
         activity?.SetTag("FromVersion", fromVersion);
         activity?.SetTag("ToVersion", toVersion);
 
-        logger.LogInformation(
-            "Attempting to repair stream {StreamId} by removing events {FromVersion}-{ToVersion}",
-            document.Active.StreamIdentifier,
-            fromVersion,
-            toVersion);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Attempting to repair stream {StreamId} by removing events {FromVersion}-{ToVersion}",
+                document.Active.StreamIdentifier,
+                fromVersion,
+                toVersion);
+        }
 
         try
         {
@@ -110,12 +119,15 @@ public class StreamRepairService : IStreamRepairService
                 fromVersion,
                 toVersion);
 
-            logger.LogInformation(
-                "Successfully removed {EventsRemoved} events from stream {StreamId} (versions {FromVersion}-{ToVersion})",
-                eventsRemoved,
-                document.Active.StreamIdentifier,
-                fromVersion,
-                toVersion);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Successfully removed {EventsRemoved} events from stream {StreamId} (versions {FromVersion}-{ToVersion})",
+                    eventsRemoved,
+                    document.Active.StreamIdentifier,
+                    fromVersion,
+                    toVersion);
+            }
 
             // Create rollback record for audit trail
             var rollbackRecord = new RollbackRecord
@@ -146,11 +158,14 @@ public class StreamRepairService : IStreamRepairService
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Failed to repair stream {StreamId}: {ErrorMessage}",
-                document.Active.StreamIdentifier,
-                ex.Message);
+            if (logger.IsEnabled(LogLevel.Error))
+            {
+                logger.LogError(
+                    ex,
+                    "Failed to repair stream {StreamId}: {ErrorMessage}",
+                    document.Active.StreamIdentifier,
+                    ex.Message);
+            }
 
             activity?.SetTag("Success", false);
             activity?.SetTag("Error", ex.Message);
@@ -174,11 +189,14 @@ public class StreamRepairService : IStreamRepairService
         activity?.SetTag("StreamId", document.Active.StreamIdentifier);
         activity?.SetTag("CorrelationId", correlationId);
 
-        logger.LogInformation(
-            "Appending rollback marker event to stream {StreamId} for versions {FromVersion}-{ToVersion}",
-            document.Active.StreamIdentifier,
-            rollbackRecord.FromVersion,
-            rollbackRecord.ToVersion);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Appending rollback marker event to stream {StreamId} for versions {FromVersion}-{ToVersion}",
+                document.Active.StreamIdentifier,
+                rollbackRecord.FromVersion,
+                rollbackRecord.ToVersion);
+        }
 
         var markerEvent = new EventsRolledBackEvent
         {
@@ -204,10 +222,13 @@ public class StreamRepairService : IStreamRepairService
         document.Active.CurrentStreamVersion++;
         await documentStore.SetAsync(document);
 
-        logger.LogInformation(
-            "Rollback marker event appended to stream {StreamId} at version {Version}",
-            document.Active.StreamIdentifier,
-            document.Active.CurrentStreamVersion);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Rollback marker event appended to stream {StreamId} at version {Version}",
+                document.Active.StreamIdentifier,
+                document.Active.CurrentStreamVersion);
+        }
     }
 
     /// <inheritdoc />
@@ -222,9 +243,12 @@ public class StreamRepairService : IStreamRepairService
         // The base IDocumentStore interface doesn't have a List/Query method.
         // Implementations should override this method or use a store-specific query.
 
-        logger.LogWarning(
-            "FindBrokenStreamsAsync is not supported with the default IDocumentStore. " +
-            "Use a document store that supports querying or implement a custom IStreamRepairService.");
+        if (logger.IsEnabled(LogLevel.Warning))
+        {
+            logger.LogWarning(
+                "FindBrokenStreamsAsync is not supported with the default IDocumentStore. " +
+                "Use a document store that supports querying or implement a custom IStreamRepairService.");
+        }
 
         throw new NotSupportedException(
             "Finding broken streams requires a document store that supports querying. " +

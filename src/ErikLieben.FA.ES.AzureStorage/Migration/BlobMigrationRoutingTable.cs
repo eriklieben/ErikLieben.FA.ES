@@ -70,7 +70,10 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
                 return StreamRouting.Normal(string.Empty);
             }
 
-            logger.RoutingRetrieved(objectId, entry.Phase.ToString(), entry.OldStream, entry.NewStream);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.RoutingRetrieved(objectId, entry.Phase.ToString(), entry.OldStream, entry.NewStream);
+            }
 
             return entry.ToStreamRouting();
         }
@@ -139,7 +142,10 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
                 overwrite: true,
                 cancellationToken: cancellationToken);
 
-            logger.RoutingSet(objectId, phase.ToString(), oldStream, newStream);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.RoutingSet(objectId, phase.ToString(), oldStream, newStream);
+            }
         }
         catch (Exception ex)
         {

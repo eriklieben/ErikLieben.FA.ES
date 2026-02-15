@@ -140,9 +140,12 @@ public class ProjectionLoader : IProjectionLoader
 
         if (projection.NeedsSchemaUpgrade)
         {
-            _logger?.LogWarning(
-                "Schema mismatch for {ProjectionType}: stored v{StoredVersion}, code v{CodeVersion}",
-                typeof(T).Name, projection.SchemaVersion, projection.CodeSchemaVersion);
+            if (_logger?.IsEnabled(LogLevel.Warning) == true)
+            {
+                _logger.LogWarning(
+                    "Schema mismatch for {ProjectionType}: stored v{StoredVersion}, code v{CodeVersion}",
+                    typeof(T).Name, projection.SchemaVersion, projection.CodeSchemaVersion);
+            }
 
             switch (_options.SchemaMismatchBehavior)
             {
@@ -152,7 +155,7 @@ public class ProjectionLoader : IProjectionLoader
                         $"code version {projection.CodeSchemaVersion}. A rebuild is required.");
 
                 case SchemaMismatchBehavior.AutoRebuild:
-                    if (_logger is not null)
+                    if (_logger?.IsEnabled(LogLevel.Information) == true)
                     {
                         _logger.LogInformation(
                             "Auto-rebuild triggered for {ProjectionType} due to schema mismatch",

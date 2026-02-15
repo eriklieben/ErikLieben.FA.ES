@@ -60,15 +60,21 @@ public class BlobStreamTieringService : IBlobStreamTieringService
                 count++;
             }
 
-            _logger?.LogInformation(
-                "Changed tier for {Count} blobs in stream {StreamId} from {PreviousTier} to {NewTier}",
-                count, streamId, previousTier, tier);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Changed tier for {Count} blobs in stream {StreamId} from {PreviousTier} to {NewTier}",
+                    count, streamId, previousTier, tier);
+            }
 
             return TieringResult.Succeeded(streamId, previousTier, tier, count);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to set tier for stream {StreamId}", streamId);
+            if (_logger?.IsEnabled(LogLevel.Error) == true)
+            {
+                _logger.LogError(ex, "Failed to set tier for stream {StreamId}", streamId);
+            }
             return TieringResult.Failed(streamId, ex.Message);
         }
     }
@@ -145,15 +151,21 @@ public class BlobStreamTieringService : IBlobStreamTieringService
                 ? TimeSpan.FromHours(1)
                 : TimeSpan.FromHours(15);
 
-            _logger?.LogInformation(
-                "Initiated rehydration for stream {StreamId} with {Priority} priority, estimated {Duration}",
-                streamId, priority, estimatedDuration);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Initiated rehydration for stream {StreamId} with {Priority} priority, estimated {Duration}",
+                    streamId, priority, estimatedDuration);
+            }
 
             return RehydrationResult.Succeeded(streamId, estimatedDuration);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Failed to rehydrate stream {StreamId}", streamId);
+            if (_logger?.IsEnabled(LogLevel.Error) == true)
+            {
+                _logger.LogError(ex, "Failed to rehydrate stream {StreamId}", streamId);
+            }
             return RehydrationResult.Failed(streamId, ex.Message);
         }
     }

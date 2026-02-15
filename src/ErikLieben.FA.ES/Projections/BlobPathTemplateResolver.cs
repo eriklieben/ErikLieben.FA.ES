@@ -6,7 +6,7 @@ namespace ErikLieben.FA.ES.Projections;
 /// Resolves blob path templates with partition keys.
 /// Supports templates like "questions/{language}.json" or "kanban/{projectId}.json".
 /// </summary>
-public static class BlobPathTemplateResolver
+public static partial class BlobPathTemplateResolver
 {
     private const string JsonExtension = ".json";
     /// <summary>
@@ -48,10 +48,12 @@ public static class BlobPathTemplateResolver
     /// Extracts placeholder names from template.
     /// Example: "questions/{entityType}/{language}.json" → ["entityType", "language"]
     /// </summary>
+    [GeneratedRegex(@"\{(\w+)\}")]
+    private static partial Regex PlaceholderRegex();
+
     public static IEnumerable<string> GetPlaceholders(string template)
     {
-        var regex = new Regex(@"\{(\w+)\}", RegexOptions.None, TimeSpan.FromSeconds(1));
-        var matches = regex.Matches(template);
+        var matches = PlaceholderRegex().Matches(template);
 
         foreach (Match match in matches)
         {
@@ -75,7 +77,7 @@ public static class BlobPathTemplateResolver
         // Build regex from template by replacing {placeholder} with named capture groups
         // Note: We don't use Regex.Escape because it would escape the braces,
         // and blob paths typically don't contain regex special characters
-        var regexPattern = Regex.Replace(templateWithoutExt, @"\{(\w+)\}", @"(?<$1>[^/]+)", RegexOptions.None, TimeSpan.FromSeconds(1));
+        var regexPattern = PlaceholderRegex().Replace(templateWithoutExt, @"(?<$1>[^/]+)");
 
         var regex = new Regex($"^{regexPattern}$", RegexOptions.None, TimeSpan.FromSeconds(1));
         var match = regex.Match(pathWithoutExt);

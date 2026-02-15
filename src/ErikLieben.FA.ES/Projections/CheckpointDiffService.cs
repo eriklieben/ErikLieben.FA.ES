@@ -75,7 +75,7 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         if (comparison.IsSynced)
         {
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Debug) == true)
             {
                 _logger.LogDebug(
                     "Checkpoints already synced for {ProjectionType} between v{Source} and v{Target}",
@@ -113,7 +113,7 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         await factory.SaveAsync(target, targetBlobName, cancellationToken);
 
-        if (_logger is not null)
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
         {
             _logger.LogInformation(
                 "Synced {ProjectionType} from v{Source} to v{Target}, applied diffs for {StreamCount} streams",
@@ -149,7 +149,7 @@ public class CheckpointDiffService : ICheckpointDiffService
             if (comparison.IsSynced)
             {
                 sw.Stop();
-                if (_logger is not null)
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
                 {
                     _logger.LogInformation(
                         "Convergent catch-up for {ProjectionType} completed in {Iterations} iterations, {Events} events, {Duration}ms",
@@ -165,9 +165,12 @@ public class CheckpointDiffService : ICheckpointDiffService
             {
                 sw.Stop();
                 var reason = $"Too many events in single iteration ({eventsInIteration} > {options.MaxEventsPerIteration}), may never converge";
-                _logger?.LogWarning(
-                    "Convergent catch-up aborted for {ProjectionType}: {Reason}",
-                    typeof(T).Name, reason);
+                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                {
+                    _logger.LogWarning(
+                        "Convergent catch-up aborted for {ProjectionType}: {Reason}",
+                        typeof(T).Name, reason);
+                }
                 return ConvergentCatchUpResult.Failed(iteration, totalEventsApplied, sw.Elapsed, reason);
             }
 
@@ -188,9 +191,12 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         sw.Stop();
         var failureReason = $"Max iterations ({options.MaxIterations}) reached without convergence";
-        _logger?.LogWarning(
-            "Convergent catch-up failed for {ProjectionType}: {Reason}",
-            typeof(T).Name, failureReason);
+        if (_logger?.IsEnabled(LogLevel.Warning) == true)
+        {
+            _logger.LogWarning(
+                "Convergent catch-up failed for {ProjectionType}: {Reason}",
+                typeof(T).Name, failureReason);
+        }
         return ConvergentCatchUpResult.Failed(options.MaxIterations, totalEventsApplied, sw.Elapsed, failureReason);
     }
 

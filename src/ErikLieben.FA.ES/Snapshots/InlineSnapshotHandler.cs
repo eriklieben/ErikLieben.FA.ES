@@ -87,7 +87,7 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
         var policy = _policyProvider.GetPolicy(aggregateType);
         if (policy is null || !policy.Enabled)
         {
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Debug) == true)
             {
                 _logger.LogDebug("No snapshot policy for {AggregateType}", aggregateType.Name);
             }
@@ -118,7 +118,7 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
 
         if (!shouldSnapshot)
         {
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Debug) == true)
             {
                 _logger.LogDebug(
                     "Snapshot not triggered for {StreamId} at version {Version}. " +
@@ -149,7 +149,7 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
 
             tracker.RecordSnapshotCreated(currentVersion);
 
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation(
                     "Created snapshot for {StreamId} at version {Version} in {Duration}ms",
@@ -194,15 +194,18 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
 
     private void LogSnapshotFailure(string streamId, int version, string message, Exception? ex)
     {
-        if (_logger is not null)
+        if (_options.LogFailuresAsWarnings)
         {
-            if (_options.LogFailuresAsWarnings)
+            if (_logger?.IsEnabled(LogLevel.Warning) == true)
             {
                 _logger.LogWarning(ex,
                     "{Message} for {StreamId} at version {Version}. Events are committed.",
                     message, streamId, version);
             }
-            else
+        }
+        else
+        {
+            if (_logger?.IsEnabled(LogLevel.Debug) == true)
             {
                 _logger.LogDebug(ex,
                     "{Message} for {StreamId} at version {Version}. Events are committed.",

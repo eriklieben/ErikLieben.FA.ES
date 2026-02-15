@@ -151,9 +151,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         await tableClient.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken);
 
-        _logger?.LogInformation(
-            "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
-            projectionName, objectId, strategy, token.ExpiresAt);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
+                projectionName, objectId, strategy, token.ExpiresAt);
+        }
 
         return token;
     }
@@ -183,9 +186,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         await UpdateEntityAsync(tableClient, entity, cancellationToken);
 
-        _logger?.LogInformation(
-            "Started catch-up for {ProjectionName}:{ObjectId}",
-            token.ProjectionName, token.ObjectId);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Started catch-up for {ProjectionName}:{ObjectId}",
+                token.ProjectionName, token.ObjectId);
+        }
     }
 
     /// <inheritdoc />
@@ -213,9 +219,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         await UpdateEntityAsync(tableClient, entity, cancellationToken);
 
-        _logger?.LogInformation(
-            "Marked {ProjectionName}:{ObjectId} as ready",
-            token.ProjectionName, token.ObjectId);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Marked {ProjectionName}:{ObjectId} as ready",
+                token.ProjectionName, token.ObjectId);
+        }
     }
 
     /// <inheritdoc />
@@ -247,9 +256,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         await UpdateEntityAsync(tableClient, entity, cancellationToken);
 
-        _logger?.LogInformation(
-            "Completed rebuild for {ProjectionName}:{ObjectId}",
-            token.ProjectionName, token.ObjectId);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Completed rebuild for {ProjectionName}:{ObjectId}",
+                token.ProjectionName, token.ObjectId);
+        }
     }
 
     /// <inheritdoc />
@@ -288,9 +300,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         await UpdateEntityAsync(tableClient, entity, cancellationToken);
 
-        _logger?.LogWarning(
-            "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
-            token.ProjectionName, token.ObjectId, error ?? "none");
+        if (_logger?.IsEnabled(LogLevel.Warning) == true)
+        {
+            _logger.LogWarning(
+                "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
+                token.ProjectionName, token.ObjectId, error ?? "none");
+        }
     }
 
     /// <inheritdoc />
@@ -370,17 +385,23 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
                     await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken);
                     recovered++;
 
-                    _logger?.LogWarning(
-                        "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
-                        entity.PartitionKey, entity.RowKey);
+                    if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                    {
+                        _logger.LogWarning(
+                            "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
+                            entity.PartitionKey, entity.RowKey);
+                    }
                 }
                 catch (RequestFailedException ex) when (ex.Status == 412)
                 {
                     // Concurrency conflict - another process already recovered this entity
-                    _logger?.LogDebug(
-                        ex,
-                        "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrency conflict",
-                        entity.PartitionKey, entity.RowKey);
+                    if (_logger?.IsEnabled(LogLevel.Debug) == true)
+                    {
+                        _logger.LogDebug(
+                            ex,
+                            "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrency conflict",
+                            entity.PartitionKey, entity.RowKey);
+                    }
                 }
             }
         }
@@ -416,9 +437,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
             await tableClient.AddEntityAsync(newEntity, cancellationToken);
         }
 
-        _logger?.LogInformation(
-            "Disabled projection {ProjectionName}:{ObjectId}",
-            projectionName, objectId);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Disabled projection {ProjectionName}:{ObjectId}",
+                projectionName, objectId);
+        }
     }
 
     /// <inheritdoc />
@@ -436,9 +460,12 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
             entity.StatusChangedAt = DateTimeOffset.UtcNow;
             await UpdateEntityAsync(tableClient, entity, cancellationToken);
 
-            _logger?.LogInformation(
-                "Enabled projection {ProjectionName}:{ObjectId}",
-                projectionName, objectId);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Enabled projection {ProjectionName}:{ObjectId}",
+                    projectionName, objectId);
+            }
         }
     }
 

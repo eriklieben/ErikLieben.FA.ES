@@ -93,7 +93,7 @@ public class ResilientPostCommitActionExecutor
 
         activity?.SetTag(FaesSemanticConventions.EventCount, eventsList.Count);
 
-        if (logger is not null)
+        if (logger?.IsEnabled(LogLevel.Debug) == true)
         {
             logger.LogDebug(
                 "Starting post-commit action {ActionType} for {EventCount} events",
@@ -108,7 +108,7 @@ public class ResilientPostCommitActionExecutor
                 attempts++;
                 activity?.SetTag(FaesSemanticConventions.RetryAttempt, attempts);
 
-                if (logger is not null)
+                if (logger?.IsEnabled(LogLevel.Debug) == true)
                 {
                     logger.LogDebug(
                         "Executing post-commit action {ActionType}, attempt {Attempt}",
@@ -123,7 +123,7 @@ public class ResilientPostCommitActionExecutor
             activity?.SetTag(FaesSemanticConventions.Success, true);
             activity?.SetTag(FaesSemanticConventions.DurationMs, duration.TotalMilliseconds);
 
-            if (logger is not null)
+            if (logger?.IsEnabled(LogLevel.Debug) == true)
             {
                 logger.LogDebug(
                     "Post-commit action {ActionType} succeeded after {Attempts} attempt(s) in {Duration}ms",
@@ -141,7 +141,7 @@ public class ResilientPostCommitActionExecutor
             activity?.SetTag(FaesSemanticConventions.Success, false);
             activity?.SetTag(FaesSemanticConventions.DurationMs, duration.TotalMilliseconds);
 
-            if (logger is not null)
+            if (logger?.IsEnabled(LogLevel.Warning) == true)
             {
                 logger.LogWarning(
                     ex,
@@ -203,12 +203,15 @@ public class ResilientPostCommitActionExecutor
                 UseJitter = options.UseJitter,
                 OnRetry = args =>
                 {
-                    logger?.LogWarning(
-                        args.Outcome.Exception,
-                        "Post-commit action retry attempt {AttemptNumber} after {Delay}ms due to: {Error}",
-                        args.AttemptNumber,
-                        args.RetryDelay.TotalMilliseconds,
-                        args.Outcome.Exception?.Message);
+                    if (logger?.IsEnabled(LogLevel.Warning) == true)
+                    {
+                        logger.LogWarning(
+                            args.Outcome.Exception,
+                            "Post-commit action retry attempt {AttemptNumber} after {Delay}ms due to: {Error}",
+                            args.AttemptNumber,
+                            args.RetryDelay.TotalMilliseconds,
+                            args.Outcome.Exception?.Message);
+                    }
                     return ValueTask.CompletedTask;
                 }
             })

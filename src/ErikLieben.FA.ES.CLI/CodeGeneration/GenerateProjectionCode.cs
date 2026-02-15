@@ -342,7 +342,7 @@ public class GenerateProjectionCode
 
             // Don't add ? if type is already nullable (e.g., System.Nullable<T>)
             var isTypeAlreadyNullable = type.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
-                                        type.EndsWith("?", StringComparison.Ordinal);
+                                        type.EndsWith('?');
             var nullableSuffix = property.IsNullable && !isTypeAlreadyNullable ? "?" : string.Empty;
 
             if (property.Name != "WhenParameterValueFactories")
@@ -1185,7 +1185,7 @@ public class GenerateProjectionCode
         {
             var fullTypeDef = BuildFullTypeDefinition(property);
             var isTypeAlreadyNullable = fullTypeDef.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
-                                        fullTypeDef.EndsWith("?", StringComparison.Ordinal);
+                                        fullTypeDef.EndsWith('?');
             var nullableSuffix = isTypeAlreadyNullable ? string.Empty : "?";
             code.AppendLine($"                                {fullTypeDef}{nullableSuffix} {ToCamelCase(property.Name)} = null;");
         }

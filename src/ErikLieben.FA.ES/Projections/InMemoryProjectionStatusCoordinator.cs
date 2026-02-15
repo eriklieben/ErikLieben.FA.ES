@@ -56,7 +56,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
         _statuses.AddOrUpdate(key, statusInfo, (_, _) => statusInfo);
         _activeRebuilds[key] = token;
 
-        if (_logger is not null)
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
         {
             _logger.LogInformation(
                 "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
@@ -83,7 +83,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation(
                     "Started catch-up for {ProjectionName}:{ObjectId}",
@@ -111,7 +111,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation(
                     "Marked {ProjectionName}:{ObjectId} as ready",
@@ -142,7 +142,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         _activeRebuilds.TryRemove(key, out _);
 
-        if (_logger is not null)
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
         {
             _logger.LogInformation(
                 "Completed rebuild for {ProjectionName}:{ObjectId}",
@@ -179,7 +179,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         _activeRebuilds.TryRemove(key, out _);
 
-        if (_logger is not null)
+        if (_logger?.IsEnabled(LogLevel.Warning) == true)
         {
             _logger.LogWarning(
                 "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
@@ -235,7 +235,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
                     _activeRebuilds.TryRemove(key, out _);
                     recovered++;
 
-                    if (_logger is not null)
+                    if (_logger?.IsEnabled(LogLevel.Warning) == true)
                     {
                         _logger.LogWarning(
                             "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
@@ -268,7 +268,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             StatusChangedAt = DateTimeOffset.UtcNow
         });
 
-        if (_logger is not null)
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
         {
             _logger.LogInformation(
                 "Disabled projection {ProjectionName}:{ObjectId}",
@@ -294,7 +294,7 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
             };
             _statuses[key] = updated;
 
-            if (_logger is not null)
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
                 _logger.LogInformation(
                     "Enabled projection {ProjectionName}:{ObjectId}",

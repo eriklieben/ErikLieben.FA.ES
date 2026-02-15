@@ -64,9 +64,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
         var document = new StatusDocument(statusInfo, token);
         await UploadDocumentAsync(projectionName, objectId, document, etag: null, cancellationToken);
 
-        _logger?.LogInformation(
-            "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
-            projectionName, objectId, strategy, token.ExpiresAt);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Started rebuild for {ProjectionName}:{ObjectId} with strategy {Strategy}, expires at {ExpiresAt}",
+                projectionName, objectId, strategy, token.ExpiresAt);
+        }
 
         return token;
     }
@@ -91,9 +94,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
             var updatedDocument = new StatusDocument(updated, document.ActiveRebuildToken);
             await UploadDocumentAsync(token.ProjectionName, token.ObjectId, updatedDocument, etag, cancellationToken);
 
-            _logger?.LogInformation(
-                "Started catch-up for {ProjectionName}:{ObjectId}",
-                token.ProjectionName, token.ObjectId);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Started catch-up for {ProjectionName}:{ObjectId}",
+                    token.ProjectionName, token.ObjectId);
+            }
         }
     }
 
@@ -117,9 +123,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
             var updatedDocument = new StatusDocument(updated, document.ActiveRebuildToken);
             await UploadDocumentAsync(token.ProjectionName, token.ObjectId, updatedDocument, etag, cancellationToken);
 
-            _logger?.LogInformation(
-                "Marked {ProjectionName}:{ObjectId} as ready",
-                token.ProjectionName, token.ObjectId);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Marked {ProjectionName}:{ObjectId} as ready",
+                    token.ProjectionName, token.ObjectId);
+            }
         }
     }
 
@@ -144,9 +153,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
             var updatedDocument = new StatusDocument(updated, null);
             await UploadDocumentAsync(token.ProjectionName, token.ObjectId, updatedDocument, etag, cancellationToken);
 
-            _logger?.LogInformation(
-                "Completed rebuild for {ProjectionName}:{ObjectId}",
-                token.ProjectionName, token.ObjectId);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Completed rebuild for {ProjectionName}:{ObjectId}",
+                    token.ProjectionName, token.ObjectId);
+            }
         }
     }
 
@@ -179,9 +191,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
             await UploadDocumentAsync(token.ProjectionName, token.ObjectId, updatedDocument, etag, cancellationToken);
         }
 
-        _logger?.LogWarning(
-            "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
-            token.ProjectionName, token.ObjectId, error ?? "none");
+        if (_logger?.IsEnabled(LogLevel.Warning) == true)
+        {
+            _logger.LogWarning(
+                "Cancelled rebuild for {ProjectionName}:{ObjectId}. Error: {Error}",
+                token.ProjectionName, token.ObjectId, error ?? "none");
+        }
     }
 
     /// <inheritdoc />
@@ -255,9 +270,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
                 await UploadDocumentToBlobAsync(blobClient, updatedDocument, etag, cancellationToken);
                 recovered++;
 
-                _logger?.LogWarning(
-                    "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
-                    document.ActiveRebuildToken.ProjectionName, document.ActiveRebuildToken.ObjectId);
+                if (_logger?.IsEnabled(LogLevel.Warning) == true)
+                {
+                    _logger.LogWarning(
+                        "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
+                        document.ActiveRebuildToken.ProjectionName, document.ActiveRebuildToken.ObjectId);
+                }
             }
         }
 #pragma warning restore S3267
@@ -295,9 +313,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
         var updatedDocument = new StatusDocument(statusInfo, document?.ActiveRebuildToken);
         await UploadDocumentAsync(projectionName, objectId, updatedDocument, etag, cancellationToken);
 
-        _logger?.LogInformation(
-            "Disabled projection {ProjectionName}:{ObjectId}",
-            projectionName, objectId);
+        if (_logger?.IsEnabled(LogLevel.Information) == true)
+        {
+            _logger.LogInformation(
+                "Disabled projection {ProjectionName}:{ObjectId}",
+                projectionName, objectId);
+        }
     }
 
     /// <inheritdoc />
@@ -319,9 +340,12 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
             var updatedDocument = new StatusDocument(updated, document.ActiveRebuildToken);
             await UploadDocumentAsync(projectionName, objectId, updatedDocument, etag, cancellationToken);
 
-            _logger?.LogInformation(
-                "Enabled projection {ProjectionName}:{ObjectId}",
-                projectionName, objectId);
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Enabled projection {ProjectionName}:{ObjectId}",
+                    projectionName, objectId);
+            }
         }
     }
 

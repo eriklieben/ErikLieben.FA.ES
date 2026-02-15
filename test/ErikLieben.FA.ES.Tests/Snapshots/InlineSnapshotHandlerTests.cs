@@ -21,6 +21,7 @@ public class InlineSnapshotHandlerTests
         _snapshotStore = Substitute.For<ISnapShotStore>();
         _policyProvider = Substitute.For<ISnapshotPolicyProvider>();
         _logger = Substitute.For<ILogger<InlineSnapshotHandler>>();
+        _logger.IsEnabled(Arg.Any<LogLevel>()).Returns(true);
         _options = new SnapshotOptions();
     }
 
