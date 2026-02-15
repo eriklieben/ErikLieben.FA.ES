@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.AzureStorage.Table;
 using ErikLieben.FA.ES.Builder;
 using ErikLieben.FA.ES.EventStream;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ErikLieben.FA.ES.AzureStorage.Builder;
 
@@ -136,6 +137,50 @@ public static class FaesBuilderExtensions
 
         builder.Services.AddHealthChecks()
             .AddTableStorageHealthCheck(clientName: clientName, tags: ["faes", "storage", "table"]);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers the Blob Storage-backed projection status coordinator.
+    /// </summary>
+    /// <param name="builder">The FAES builder.</param>
+    /// <param name="containerName">The container name for projection status documents. Default: "projection-status".</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFaesBuilder WithBlobProjectionStatusCoordinator(
+        this IFaesBuilder builder,
+        string containerName = "projection-status")
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSingleton<Projections.IProjectionStatusCoordinator>(sp =>
+        {
+            var blobServiceClient = sp.GetRequiredService<Azure.Storage.Blobs.BlobServiceClient>();
+            var logger = sp.GetService<ILogger<BlobProjectionStatusCoordinator>>();
+            return new BlobProjectionStatusCoordinator(blobServiceClient, containerName, logger);
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers the Table Storage-backed projection status coordinator.
+    /// </summary>
+    /// <param name="builder">The FAES builder.</param>
+    /// <param name="tableName">The table name for projection status entities. Default: "ProjectionStatus".</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFaesBuilder WithTableProjectionStatusCoordinator(
+        this IFaesBuilder builder,
+        string tableName = "ProjectionStatus")
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSingleton<Projections.IProjectionStatusCoordinator>(sp =>
+        {
+            var tableServiceClient = sp.GetRequiredService<Azure.Data.Tables.TableServiceClient>();
+            var logger = sp.GetService<ILogger<TableProjectionStatusCoordinator>>();
+            return new TableProjectionStatusCoordinator(tableServiceClient, tableName, logger);
+        });
 
         return builder;
     }

@@ -4,6 +4,7 @@ using ErikLieben.FA.ES.CosmosDb.HealthChecks;
 using ErikLieben.FA.ES.EventStream;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ErikLieben.FA.ES.CosmosDb.Builder;
 
@@ -63,6 +64,31 @@ public static class FaesBuilderExtensions
 
         builder.Services.AddHealthChecks()
             .AddCosmosDbHealthCheck(tags: ["faes", "storage", "cosmosdb"]);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers the CosmosDB-backed projection status coordinator.
+    /// </summary>
+    /// <param name="builder">The FAES builder.</param>
+    /// <param name="databaseName">The database name for projection status documents.</param>
+    /// <param name="containerName">The container name for projection status documents. Default: "projection-status".</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFaesBuilder WithCosmosDbProjectionStatusCoordinator(
+        this IFaesBuilder builder,
+        string databaseName,
+        string containerName = "projection-status")
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(databaseName);
+
+        builder.Services.AddSingleton<Projections.IProjectionStatusCoordinator>(sp =>
+        {
+            var cosmosClient = sp.GetRequiredService<CosmosClient>();
+            var logger = sp.GetService<ILogger<CosmosDbProjectionStatusCoordinator>>();
+            return new CosmosDbProjectionStatusCoordinator(cosmosClient, databaseName, containerName, logger);
+        });
 
         return builder;
     }
