@@ -106,15 +106,22 @@ public class CatchUpDiscoveryService : ICatchUpDiscoveryService
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<CatchUpWorkItem> StreamWorkItemsAsync(
+    public IAsyncEnumerable<CatchUpWorkItem> StreamWorkItemsAsync(
         string[] objectNames,
         int pageSize = 100,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(objectNames);
+        return StreamWorkItemsCoreAsync(objectNames, pageSize, cancellationToken);
+    }
+
+    private async IAsyncEnumerable<CatchUpWorkItem> StreamWorkItemsCoreAsync(
+        string[] objectNames,
+        int pageSize,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var activity = FaesInstrumentation.Projections.StartActivity("CatchUp.Stream");
         long itemCount = 0;
-
-        ArgumentNullException.ThrowIfNull(objectNames);
 
         foreach (var objectName in objectNames)
         {

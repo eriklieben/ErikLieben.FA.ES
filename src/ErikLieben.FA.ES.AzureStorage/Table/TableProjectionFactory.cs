@@ -308,45 +308,48 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         var tableClient = await GetTableClientAsync(cancellationToken);
         var pendingOperations = projection.GetPendingOperations();
 
-        if (pendingOperations.Count > 0)
+        if (pendingOperations.Count == 0)
         {
-            // Group operations by partition key for transactional batching
-            var groupedOperations = pendingOperations.GroupBy(op => op.PartitionKey);
+            await SaveCheckpointAsync(projection, blobName, cancellationToken);
+            return;
+        }
 
-            foreach (var group in groupedOperations)
+        // Group operations by partition key for transactional batching
+        var groupedOperations = pendingOperations.GroupBy(op => op.PartitionKey);
+
+        foreach (var group in groupedOperations)
+        {
+            var batch = new List<TableTransactionAction>();
+
+            foreach (var operation in group)
             {
-                var batch = new List<TableTransactionAction>();
-
-                foreach (var operation in group)
+                switch (operation.Type)
                 {
-                    switch (operation.Type)
-                    {
-                        case TableOperationType.Upsert:
-                            if (operation.Entity != null)
-                            {
-                                batch.Add(new TableTransactionAction(
-                                    TableTransactionActionType.UpsertReplace,
-                                    operation.Entity));
-                            }
-                            break;
-
-                        case TableOperationType.Delete:
+                    case TableOperationType.Upsert:
+                        if (operation.Entity != null)
+                        {
                             batch.Add(new TableTransactionAction(
-                                TableTransactionActionType.Delete,
-                                new TableEntity(operation.PartitionKey, operation.RowKey) { ETag = Azure.ETag.All }));
-                            break;
-                    }
-                }
+                                TableTransactionActionType.UpsertReplace,
+                                operation.Entity));
+                        }
+                        break;
 
-                // Azure Table Storage allows max 100 operations per batch
-                foreach (var chunk in batch.Chunk(100))
-                {
-                    await tableClient.SubmitTransactionAsync(chunk, cancellationToken);
+                    case TableOperationType.Delete:
+                        batch.Add(new TableTransactionAction(
+                            TableTransactionActionType.Delete,
+                            new TableEntity(operation.PartitionKey, operation.RowKey) { ETag = Azure.ETag.All }));
+                        break;
                 }
             }
 
-            projection.ClearPendingOperations();
+            // Azure Table Storage allows max 100 operations per batch
+            foreach (var chunk in batch.Chunk(100))
+            {
+                await tableClient.SubmitTransactionAsync(chunk, cancellationToken);
+            }
         }
+
+        projection.ClearPendingOperations();
 
         // Save checkpoint metadata
         await SaveCheckpointAsync(projection, blobName, cancellationToken);

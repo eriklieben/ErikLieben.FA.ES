@@ -135,7 +135,7 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
-            IObjectDocument result = await sut.CreateAsync("test", "123");
+            var result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);
@@ -169,7 +169,7 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
-            IObjectDocument result = await sut.CreateAsync("test", "123");
+            var result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);

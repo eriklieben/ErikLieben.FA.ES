@@ -374,7 +374,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         if (timer != null)
         {
             var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
-            FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, objectName);
+            FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, objectName!);
         }
     }
 
