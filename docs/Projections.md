@@ -314,6 +314,110 @@ public abstract Checkpoint Checkpoint { get; set; }
 public string? CheckpointFingerprint { get; set; }
 ```
 
+## Projection Status
+
+Projections support operational status for coordinating rebuilds with inline updates.
+
+### Status Values
+
+| Status | Value | Description |
+|--------|-------|-------------|
+| `Active` | 0 | Normal operation, inline updates processed |
+| `Rebuilding` | 1 | Being rebuilt, inline updates skipped |
+| `Disabled` | 2 | Turned off, all updates skipped |
+
+### Setting Status
+
+```csharp
+// Before starting a rebuild
+await factory.SetStatusAsync(ProjectionStatus.Rebuilding);
+
+// After rebuild completes
+await factory.SetStatusAsync(ProjectionStatus.Active);
+
+// Temporarily disable a projection
+await factory.SetStatusAsync(ProjectionStatus.Disabled);
+```
+
+### Checking Status
+
+```csharp
+var status = await factory.GetStatusAsync();
+if (status == ProjectionStatus.Rebuilding)
+{
+    // Handle rebuilding state
+}
+```
+
+### Update Results
+
+When calling `UpdateToVersion`, the result indicates if the update was processed:
+
+```csharp
+var result = await projection.UpdateToVersion(token);
+if (result.Skipped)
+{
+    // Update was skipped due to status
+    logger.LogWarning("Update skipped: {Status}, Token: {Token}",
+        result.Status, result.SkippedToken);
+
+    // Queue for retry if needed
+    await retryQueue.EnqueueAsync(result.SkippedToken);
+}
+```
+
+## Schema Versioning
+
+Track projection schema versions to detect when rebuilds are needed due to code changes.
+
+### Using ProjectionVersion Attribute
+
+```csharp
+[BlobJsonProjection("projections")]
+[ProjectionVersion(2)]  // Increment when schema changes
+public partial class OrderDashboard : Projection
+{
+    // New field added in v2
+    public decimal TotalRevenue { get; private set; }
+}
+```
+
+### Detecting Schema Upgrades
+
+```csharp
+var projection = await factory.GetOrCreateAsync(docFactory, eventFactory);
+
+if (projection.NeedsSchemaUpgrade)
+{
+    logger.LogWarning(
+        "Projection {Name} needs rebuild: stored v{Stored}, code v{Code}",
+        typeof(OrderDashboard).Name,
+        projection.SchemaVersion,
+        projection.CodeSchemaVersion);
+
+    // Trigger rebuild workflow
+    await rebuildService.QueueRebuildAsync<OrderDashboard>();
+}
+```
+
+### Properties
+
+| Property | Description |
+|----------|-------------|
+| `SchemaVersion` | Version stored in the projection |
+| `CodeSchemaVersion` | Version from `[ProjectionVersion]` attribute |
+| `NeedsSchemaUpgrade` | True if versions don't match |
+
+### When to Increment Version
+
+Increment the projection version when:
+- Adding new properties that need historical data
+- Changing how events are processed
+- Removing or renaming properties
+- Changing the structure of stored data
+
+See [Projection Status and Versioning](ProjectionStatusAndVersioning.md) for detailed rebuild patterns.
+
 ## Parameter Value Factories
 
 Inject values into When methods using factories:
@@ -546,3 +650,5 @@ See [Testing](Testing.md) for complete testing guide.
 - [Storage Providers](StorageProviders.md) - Configure storage
 - [Testing](Testing.md) - Unit testing projections
 - [Minimal APIs](MinimalApis.md) - ASP.NET Core integration
+- [Projection Status and Versioning](ProjectionStatusAndVersioning.md) - Rebuild workflows
+- [Projection Catch-Up](ProjectionCatchUp.md) - Catch-up discovery service
