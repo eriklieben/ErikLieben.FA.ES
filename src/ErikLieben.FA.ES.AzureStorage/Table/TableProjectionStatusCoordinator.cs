@@ -365,12 +365,10 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         foreach (var entity in entities)
         {
-            if (entity.RebuildExpiresAt.HasValue && entity.RebuildExpiresAt.Value <= now)
+            if (entity.RebuildExpiresAt.HasValue && entity.RebuildExpiresAt.Value <= now
+                && await TryRecoverEntityAsync(tableClient, entity, now, cancellationToken))
             {
-                if (await TryRecoverEntityAsync(tableClient, entity, now, cancellationToken))
-                {
-                    recovered++;
-                }
+                recovered++;
             }
         }
 

@@ -67,7 +67,7 @@ public class VersionTokenBenchmarks
     }
 
     [Benchmark]
-    public VersionToken CreateFromExplicitParts()
+    public static VersionToken CreateFromExplicitParts()
     {
         return new VersionToken("Order", "12345", "stream-abc", 42);
     }
@@ -85,7 +85,7 @@ public class VersionTokenBenchmarks
     }
 
     [Benchmark]
-    public string ToVersionTokenString()
+    public static string ToVersionTokenString()
     {
         return VersionToken.ToVersionTokenString(99999);
     }
@@ -109,7 +109,7 @@ public class VersionTokenBenchmarks
     }
 
     [Benchmark]
-    public int ParseManyTokens()
+    public static int ParseManyTokens()
     {
         int count = 0;
         for (int i = 0; i < 100; i++)

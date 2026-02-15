@@ -97,7 +97,7 @@ public class CommitCleanupEdgeCaseTests
         // Assert - cleanup succeeded, so EventsMayBeWritten should be false
         Assert.False(exception.EventsMayBeWritten);
         Assert.Contains("Safe to retry", exception.Message);
-        Assert.DoesNotContain("broken", exception.Message.ToLower());
+        Assert.DoesNotContain("broken", exception.Message.ToLowerInvariant());
     }
 
     [Fact]

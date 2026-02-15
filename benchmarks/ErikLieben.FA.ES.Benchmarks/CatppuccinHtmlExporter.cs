@@ -10,9 +10,12 @@ namespace ErikLieben.FA.ES.Benchmarks;
 /// Custom HTML exporter with Catppuccin Mocha theme styling, metric explanations,
 /// and grouped results with method descriptions.
 /// </summary>
-public class CatppuccinHtmlExporter : IExporter
+public partial class CatppuccinHtmlExporter : IExporter
 {
     public static readonly CatppuccinHtmlExporter Default = new();
+
+    [GeneratedRegex(@"(\B[A-Z])")]
+    private static partial Regex CamelCaseSplitRegex();
 
     public string Name => "catppuccin-html";
 
@@ -99,7 +102,7 @@ public class CatppuccinHtmlExporter : IExporter
         // Convert "ErikLieben.FA.ES.Benchmarks.Serialization.JsonEventBenchmarks" to "JSON Event Benchmarks"
         var lastPart = title.Split('.').Last();
         // Insert spaces before capitals and remove "Benchmarks" suffix
-        var formatted = Regex.Replace(lastPart, "(\\B[A-Z])", " $1");
+        var formatted = CamelCaseSplitRegex().Replace(lastPart, " $1");
         return formatted.Replace("Benchmarks", "").Trim();
     }
 
@@ -875,7 +878,7 @@ public class CatppuccinHtmlExporter : IExporter
         {
             "Serialization" => $"Converting typed event objects to JSON. Payload: {payloadDesc}",
             "Deserialization" => $"Converting JSON back to typed objects. Payload: {payloadDesc}",
-            _ => $"Testing {operation.ToLower()} with {payloadSize.ToLower()} payloads ({payloadDesc})"
+            _ => $"Testing {operation.ToLowerInvariant()} with {payloadSize.ToLowerInvariant()} payloads ({payloadDesc})"
         };
     }
 
@@ -940,7 +943,7 @@ public class CatppuccinHtmlExporter : IExporter
     private static string FormatMethodName(string methodName)
     {
         // Convert "DeserializeSmallPayload" to "Small payload (~100B)"
-        var formatted = Regex.Replace(methodName, "(\\B[A-Z])", " $1").ToLower();
+        var formatted = CamelCaseSplitRegex().Replace(methodName, " $1").ToLowerInvariant();
 
         if (methodName.Contains("Small")) return "Small payload (~100 bytes)";
         if (methodName.Contains("Medium")) return "Medium payload (~1 KB)";
@@ -971,7 +974,7 @@ public class CatppuccinHtmlExporter : IExporter
 
         // Find fastest and slowest
         var reports = summary.Reports.Where(r => r.ResultStatistics != null).ToList();
-        if (reports.Any())
+        if (reports.Count > 0)
         {
             var fastest = reports.OrderBy(r => r.ResultStatistics!.Mean).First();
             var slowest = reports.OrderByDescending(r => r.ResultStatistics!.Mean).First();
@@ -993,7 +996,7 @@ public class CatppuccinHtmlExporter : IExporter
             }
 
             // Scaling insight
-            if (summary.Title.ToLowerInvariant().Contains("json"))
+            if (summary.Title.Contains("json", StringComparison.OrdinalIgnoreCase))
             {
                 sb.AppendLine("        <li><strong>Scaling:</strong> Performance scales roughly linearly with payload size due to efficient source-generated JSON serialization</li>");
             }
@@ -1002,7 +1005,7 @@ public class CatppuccinHtmlExporter : IExporter
             var sourceGenReports = reports.Where(r => r.BenchmarkCase.Descriptor.WorkloadMethod.Name.Contains("SourceGen")).ToList();
             var reflectionReports = reports.Where(r => r.BenchmarkCase.Descriptor.WorkloadMethod.Name.Contains("Reflection")).ToList();
 
-            if (sourceGenReports.Any() && reflectionReports.Any())
+            if (sourceGenReports.Count > 0 && reflectionReports.Count > 0)
             {
                 var avgSourceGen = sourceGenReports.Average(r => r.ResultStatistics!.Mean);
                 var avgReflection = reflectionReports.Average(r => r.ResultStatistics!.Mean);
@@ -1055,7 +1058,7 @@ public class CatppuccinHtmlExporter : IExporter
 
         // Only show if we have multiple runtimes for at least one method
         var methodsWithMultipleRuntimes = runtimeGroups.Where(g => g.Value.Count > 1).ToList();
-        if (!methodsWithMultipleRuntimes.Any())
+        if (methodsWithMultipleRuntimes.Count == 0)
         {
             AppendRuntimeComparisonNote(sb, summary);
             return;
@@ -1086,7 +1089,7 @@ public class CatppuccinHtmlExporter : IExporter
             foreach (var (runtime, report) in orderedRuntimes)
             {
                 var isBaseline = report == baseline.Report;
-                var rowClass = runtime.Contains("10") ? "net10-row" : (runtime.Contains("9") ? "net9-row" : "");
+                var rowClass = runtime.Contains("10") ? "net10-row" : (runtime.Contains('9') ? "net9-row" : "");
 
                 var mean = report.ResultStatistics!.Mean;
                 var allocated = report.GcStats.GetBytesAllocatedPerOperation(report.BenchmarkCase) ?? 0;
@@ -1125,7 +1128,7 @@ public class CatppuccinHtmlExporter : IExporter
 
         foreach (var group in methodsWithMultipleRuntimes)
         {
-            var net9Report = group.Value.FirstOrDefault(r => r.Runtime.Contains("9")).Report;
+            var net9Report = group.Value.FirstOrDefault(r => r.Runtime.Contains('9')).Report;
             var net10Report = group.Value.FirstOrDefault(r => r.Runtime.Contains("10")).Report;
 
             if (net9Report?.ResultStatistics != null && net10Report?.ResultStatistics != null)

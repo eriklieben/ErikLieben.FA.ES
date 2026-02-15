@@ -11,6 +11,11 @@ public static class BenchmarkResultsCache
 {
     private const string CacheFileName = "benchmark-results-cache.json";
 
+    private static readonly JsonSerializerOptions CachedJsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
     public static string GetCachePath(string resultsDirectory)
     {
         return Path.Combine(resultsDirectory, CacheFileName);
@@ -64,7 +69,7 @@ public static class BenchmarkResultsCache
         try
         {
             var json = File.ReadAllText(cachePath);
-            return JsonSerializer.Deserialize<BenchmarkCache>(json) ?? new BenchmarkCache();
+            return JsonSerializer.Deserialize<BenchmarkCache>(json, CachedJsonOptions) ?? new BenchmarkCache();
         }
         catch
         {
@@ -74,11 +79,7 @@ public static class BenchmarkResultsCache
 
     private static void SaveCache(string cachePath, BenchmarkCache cache)
     {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
-        var json = JsonSerializer.Serialize(cache, options);
+        var json = JsonSerializer.Serialize(cache, CachedJsonOptions);
         File.WriteAllText(cachePath, json);
     }
 

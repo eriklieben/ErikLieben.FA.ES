@@ -158,6 +158,6 @@ public class StaleDecisionExceptionTests
         Assert.Contains("order-123", sut.Message);
         Assert.Contains("v5", sut.Message);
         Assert.Contains("v8", sut.Message);
-        Assert.Contains("refresh", sut.Message.ToLower());
+        Assert.Contains("refresh", sut.Message.ToLowerInvariant());
     }
 }

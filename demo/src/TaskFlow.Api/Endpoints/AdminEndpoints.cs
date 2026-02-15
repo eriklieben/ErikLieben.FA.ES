@@ -540,7 +540,7 @@ public static class AdminEndpoints
                 var lastName = stakeholderLastNames[i % stakeholderLastNames.Length];
                 // Add number suffix to ensure unique emails
                 var emailSuffix = i / (stakeholderFirstNames.Length * stakeholderLastNames.Length / 2) + 1;
-                var email = $"{firstName.ToLower()}.{lastName.ToLower()}{(emailSuffix > 1 ? emailSuffix.ToString() : "")}@stakeholders.com";
+                var email = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}{(emailSuffix > 1 ? emailSuffix.ToString() : "")}@stakeholders.com";
                 var role = stakeholderRoles[i % stakeholderRoles.Length];
                 stakeholders.Add(($"{firstName} {lastName}", email, role));
             }
@@ -1787,7 +1787,7 @@ public static class AdminEndpoints
                 var lastName = stakeholderLastNames[i % stakeholderLastNames.Length];
                 // Add number suffix to ensure unique emails
                 var emailSuffix = i / (stakeholderFirstNames.Length * stakeholderLastNames.Length / 2) + 1;
-                var email = $"{firstName.ToLower()}.{lastName.ToLower()}{(emailSuffix > 1 ? emailSuffix.ToString() : "")}@stakeholders.com";
+                var email = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}{(emailSuffix > 1 ? emailSuffix.ToString() : "")}@stakeholders.com";
                 var role = stakeholderRoles[i % stakeholderRoles.Length];
                 stakeholders.Add(($"{firstName} {lastName}", email, role));
             }

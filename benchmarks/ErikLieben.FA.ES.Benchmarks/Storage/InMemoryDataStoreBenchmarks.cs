@@ -104,7 +104,7 @@ public class InMemoryDataStoreBenchmarks
     }
 
     [Benchmark]
-    public string GetStoreKey()
+    public static string GetStoreKey()
     {
         return InMemoryDataStore.GetStoreKey("TestAggregate", "test-123");
     }
