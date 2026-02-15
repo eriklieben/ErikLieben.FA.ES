@@ -18,6 +18,7 @@ using TaskFlow.Api.Services;
 using TaskFlow.Api.Middleware;
 using Scalar.AspNetCore;
 using Microsoft.Azure.Cosmos;
+using ErikLieben.FA.ES.S3.Builder;
 using Microsoft.Extensions.Azure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -257,11 +258,39 @@ else
     Console.WriteLine("[STARTUP] CosmosDB connection string not found - Sprint features disabled");
 }
 
+// Configure S3-compatible storage (MinIO) for Release aggregates
+// This demonstrates using S3 as a storage provider for event streams
+var s3Settings = new ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings("s3")
+{
+    ServiceUrl = "http://localhost:9000",
+    AccessKey = "minioadmin",
+    SecretKey = "minioadmin",
+    BucketName = "eventstore",
+    ForcePathStyle = true,
+    AutoCreateBucket = true,
+    Region = "us-east-1"
+};
+builder.Services.ConfigureS3EventStore(s3Settings);
+
+// Override ReleaseFactory registration to use S3 keyed services
+builder.Services.AddSingleton<TaskFlow.Domain.Aggregates.IReleaseFactory>(sp =>
+{
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
+    return new TaskFlow.Domain.Aggregates.ReleaseFactory(sp, eventStreamFactory, objectDocumentFactory);
+});
+
+// Register ReleaseDashboard projection handler
+builder.Services.AddSingleton<TaskFlow.Api.Projections.IProjectionHandler, TaskFlow.Api.Projections.ReleaseDashboardProjectionHandler>();
+
+Console.WriteLine("[STARTUP] S3/MinIO configured successfully for Release aggregates");
+
 // Register storage provider status for UI feedback
 builder.Services.AddSingleton(new StorageProviderStatus(
     BlobEnabled: true,  // Always enabled - required for core functionality
     TableEnabled: true, // Always enabled - required for epics
-    CosmosDbEnabled: cosmosDbEnabled
+    CosmosDbEnabled: cosmosDbEnabled,
+    S3Enabled: true
 ));
 
 // Override EpicFactory registration to use Table Storage keyed services
@@ -491,6 +520,7 @@ app.MapBackupRestoreEndpoints();
 app.MapStreamMigrationDemoEndpoints();
 app.MapEpicEndpoints();
 app.MapSprintEndpoints();
+app.MapReleaseEndpoints();
 app.MapIdempotencyDemoEndpoints();
 
 await app.RunAsync();
@@ -596,5 +626,6 @@ file class TableServiceClientFactory : IAzureClientFactory<TableServiceClient>
 public record StorageProviderStatus(
     bool BlobEnabled,
     bool TableEnabled,
-    bool CosmosDbEnabled
+    bool CosmosDbEnabled,
+    bool S3Enabled
 );

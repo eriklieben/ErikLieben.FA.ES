@@ -44,6 +44,15 @@
           "OpenTelemetry.Extensions.Hosting": "1.9.0"
         }
       },
+      "AWSSDK.S3": {
+        "type": "Direct",
+        "requested": "[4.0.0.3, )",
+        "resolved": "4.0.0.3",
+        "contentHash": "88ynMipuY2t4vlaKX+ubHt9gkHT5zEH0sVlJ7sHh7wTmI07qUJTA2QwzcqnFTuji8xn9iRT3WYLKbTgSyv9HWA==",
+        "dependencies": {
+          "AWSSDK.Core": "[4.0.0.3, 5.0.0)"
+        }
+      },
       "ErikLieben.FA.ES.Azure.Functions.Worker.Extensions": {
         "type": "Direct",
         "requested": "[2.0.0-preview.6, )",
@@ -90,6 +99,19 @@
         "contentHash": "fORaHfhyerL+7Tu4lTyj5CBHEMPYdH0LS1bm9N2Wd/K4mgd/zzg+iXLFBYTNTbF+hLYpVNZyO2Tx/wU0/s4KqQ==",
         "dependencies": {
           "Azure.Storage.Blobs": "12.19.1"
+        }
+      },
+      "AWSSDK.Core": {
+        "type": "Transitive",
+        "resolved": "4.0.0.12",
+        "contentHash": "rY6j6zbNlfGgMswK3FQufPWkyk9GNN2c66w+mN0GizohFSCivRu6d/V+DnDR5qPXJswnOEU9Ng/lmIiLqtutrg=="
+      },
+      "AWSSDK.Extensions.NETCore.Setup": {
+        "type": "Transitive",
+        "resolved": "4.0.2",
+        "contentHash": "xn4fGntAP0Hze6xws87/Mcpr+csXaC1XeTI2AuBQgJa0AynNumQfOs6xGlsZXPS/BmnY5yoOfEdwNT48v82xqQ==",
+        "dependencies": {
+          "AWSSDK.Core": "4.0.0.12"
         }
       },
       "Azure.Core": {
@@ -574,12 +596,22 @@
           "ErikLieben.FA.ES": "[1.0.0, )"
         }
       },
+      "eriklieben.fa.es.s3": {
+        "type": "Project",
+        "dependencies": {
+          "AWSSDK.Extensions.NETCore.Setup": "[4.0.2, )",
+          "AWSSDK.S3": "[4.0.0.3, )",
+          "ErikLieben.FA.ES": "[1.0.0, )",
+          "ErikLieben.FA.ES.EventStreamManagement": "[1.0.0, )"
+        }
+      },
       "taskflow.domain": {
         "type": "Project",
         "dependencies": {
           "ErikLieben.FA.ES": "[1.0.0, )",
           "ErikLieben.FA.ES.AzureStorage": "[1.0.0, )",
           "ErikLieben.FA.ES.CosmosDb": "[1.0.0, )",
+          "ErikLieben.FA.ES.S3": "[1.0.0, )",
           "ErikLieben.FA.Results": "[1.1.0, )",
           "ErikLieben.FA.Results.Validations": "[1.1.0, )",
           "ErikLieben.FA.Specifications": "[1.0.7, )",

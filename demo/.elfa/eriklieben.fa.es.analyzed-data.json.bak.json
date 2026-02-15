@@ -12529,24 +12529,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -13953,13 +13935,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -14178,6 +14153,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -14186,8 +14168,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.cs",
-            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -14202,24 +14183,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -15025,13 +14988,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -15250,6 +15206,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -15258,8 +15221,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\EpicSummary.cs",
-            "src\\TaskFlow.Domain\\Projections\\EpicSummary.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\EpicSummary.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -15274,24 +15236,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             },
             {
               "Parameters": []
@@ -16886,13 +16830,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -17111,6 +17048,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -17119,8 +17063,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.cs",
-            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.cs"
           ],
           "SchemaVersion": 1,
           "BlobProjection": {
@@ -17148,24 +17091,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -19030,13 +18955,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -19255,6 +19173,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -19263,8 +19188,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.cs",
-            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -19279,24 +19203,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -21144,43 +21050,6 @@
               "SubTypes": []
             },
             {
-              "Name": "WhenParameterValueFactories",
-              "IsNullable": true,
-              "Namespace": "System.Collections.Generic",
-              "Type": "Dictionary",
-              "IsGeneric": true,
-              "GenericTypes": [
-                {
-                  "Name": "String",
-                  "Namespace": "System",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                },
-                {
-                  "Name": "IProjectionWhenParameterValueFactory",
-                  "Namespace": "ErikLieben.FA.ES.Projections",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                }
-              ],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "Destinations",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -22138,11 +22007,41 @@
               "SubTypes": []
             },
             {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CurrentDocument",
               "IsNullable": true,
               "Namespace": "ErikLieben.FA.ES.Documents",
               "Type": "IObjectDocument",
               "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
               "SubTypes": []
             },
             {
@@ -22364,6 +22263,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -22372,8 +22278,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.cs",
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -22388,24 +22293,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -23349,13 +23236,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -23574,6 +23454,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -23582,8 +23469,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.cs",
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.cs"
           ],
           "SchemaVersion": 1,
           "BlobProjection": {
@@ -23597,24 +23483,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -24494,13 +24362,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -24719,6 +24580,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -24727,8 +24595,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.cs",
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.cs"
           ],
           "SchemaVersion": 1,
           "BlobProjection": {
@@ -24742,24 +24609,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -25594,13 +25443,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -25819,6 +25661,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -25827,8 +25676,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.cs",
-            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -25844,24 +25692,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -26119,13 +25949,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -26344,6 +26167,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -26352,8 +26182,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\TeamMembers.cs",
-            "src\\TaskFlow.Domain\\Projections\\TeamMembers.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\TeamMembers.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -26368,24 +26197,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -26656,13 +26467,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -26881,6 +26685,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -26889,8 +26700,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.cs",
-            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.cs"
           ],
           "SchemaVersion": 1,
           "BlobProjection": {
@@ -26904,24 +26714,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -27128,43 +26920,6 @@
             },
             {
               "Name": "TotalUsers",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "WhenParameterValueFactories",
-              "IsNullable": true,
-              "Namespace": "System.Collections.Generic",
-              "Type": "Dictionary",
-              "IsGeneric": true,
-              "GenericTypes": [
-                {
-                  "Name": "String",
-                  "Namespace": "System",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                },
-                {
-                  "Name": "IProjectionWhenParameterValueFactory",
-                  "Namespace": "ErikLieben.FA.ES.Projections",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                }
-              ],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "CodeSchemaVersion",
               "Namespace": "System",
               "Type": "Int32",
               "GenericTypes": [],
@@ -28128,11 +27883,41 @@
               "SubTypes": []
             },
             {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CurrentDocument",
               "IsNullable": true,
               "Namespace": "ErikLieben.FA.ES.Documents",
               "Type": "IObjectDocument",
               "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
               "SubTypes": []
             },
             {
@@ -28354,6 +28139,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -28362,8 +28154,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\UserProfiles.cs",
-            "src\\TaskFlow.Domain\\Projections\\UserProfiles.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\UserProfiles.cs"
           ],
           "ExternalCheckpoint": true,
           "SchemaVersion": 1,
@@ -28378,24 +28169,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -29581,6 +29354,21 @@
           ],
           "Properties": [
             {
+              "Name": "PendingDocumentCount",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "WhenParameterValueFactories",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -29600,28 +29388,6 @@
                   "SubTypes": []
                 }
               ],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "PendingDocumentCount",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
               "SubTypes": []
             },
             {
@@ -29843,6 +29609,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -29851,8 +29624,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.cs",
-            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.cs"
           ],
           "SchemaVersion": 1
         },
@@ -29862,24 +29634,6 @@
           "Constructors": [
             {
               "Parameters": []
-            },
-            {
-              "Parameters": [
-                {
-                  "Name": "documentFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IObjectDocumentFactory",
-                  "GenericTypes": []
-                },
-                {
-                  "Name": "eventStreamFactory",
-                  "IsNullable": true,
-                  "Namespace": "ErikLieben.FA.ES",
-                  "Type": "IEventStreamFactory",
-                  "GenericTypes": []
-                }
-              ]
             }
           ],
           "Events": [
@@ -30889,6 +30643,21 @@
           ],
           "Properties": [
             {
+              "Name": "PendingOperationCount",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "WhenParameterValueFactories",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -30908,28 +30677,6 @@
                   "SubTypes": []
                 }
               ],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "PendingOperationCount",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
               "SubTypes": []
             },
             {
@@ -31151,6 +30898,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -31159,8 +30913,7 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.cs",
-            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.Generated.cs"
+            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.cs"
           ],
           "SchemaVersion": 1
         }

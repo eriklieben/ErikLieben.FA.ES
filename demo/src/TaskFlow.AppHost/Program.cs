@@ -116,6 +116,19 @@ if (enableCosmosDb)
     // Instead, the API creates containers lazily with AutoCreateContainers = true
 }
 
+// MinIO S3-compatible storage for demonstrating S3 storage provider
+var minio = builder.AddContainer("minio", "minio/minio")
+    .WithArgs("server", "/data", "--console-address", ":9001")
+    .WithEndpoint(port: 9000, targetPort: 9000, name: "s3", scheme: "http")
+    .WithEndpoint(port: 9001, targetPort: 9001, name: "console", scheme: "http")
+    .WithEnvironment("MINIO_ROOT_USER", "minioadmin")
+    .WithEnvironment("MINIO_ROOT_PASSWORD", "minioadmin");
+
+if (persistStorage)
+{
+    minio = minio.WithBindMount("minio-data", "/data");
+}
+
 // Use AddBlobContainer to provision specific containers
 var eventsContainer = storage.AddBlobContainer("blob-events", "events");
 var projectContainer = storage.AddBlobContainer("project");
@@ -141,6 +154,7 @@ var api = builder.AddProject<Projects.TaskFlow_Api>("api")
                  // Wait for storage resources to be ready before starting API
                  .WaitFor(storage)
                  .WaitFor(userDataStorage)
+                 .WaitFor(minio)
                  .WithExternalHttpEndpoints();
 
 // Add CosmosDB reference if enabled

@@ -119,6 +119,7 @@ public class PublishProjectionUpdateAction : IAsyncPostCommitAction
             "workitem" => ["ActiveWorkItems", "ProjectDashboard"],
             "sprint" => ["SprintDashboard"],
             "epic" => ["EpicSummary"],
+            "release" => ["ReleaseDashboard"],
             _ => null // null means all projections
         };
     }

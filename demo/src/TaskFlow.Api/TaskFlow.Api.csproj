@@ -12,6 +12,7 @@
     <PackageReference Include="Aspire.Microsoft.Azure.Cosmos" Version="13.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.11.1" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.0.3" />
     <PackageReference Include="ErikLieben.FA.ES.Azure.Functions.Worker.Extensions" Version="2.0.0-preview.6" />
     <!-- Use local project reference for testing fix -->
     <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.EventStreamManagement\ErikLieben.FA.ES.EventStreamManagement.csproj" />

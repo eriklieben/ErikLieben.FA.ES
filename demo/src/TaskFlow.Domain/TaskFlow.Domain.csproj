@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
     <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.AzureStorage\ErikLieben.FA.ES.AzureStorage.csproj" />
     <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.CosmosDb\ErikLieben.FA.ES.CosmosDb.csproj" />
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.S3\ErikLieben.FA.ES.S3.csproj" />
     <PackageReference Include="ErikLieben.FA.ES.Analyzers" Version="2.0.0-preview.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -8721,6 +8721,836 @@
           "IsPartialClass": true
         },
         {
+          "IdentifierName": "Release",
+          "ObjectName": "release",
+          "IdentifierType": "ReleaseId",
+          "IdentifierTypeNamespace": "TaskFlow.Domain.ValueObjects",
+          "Namespace": "TaskFlow.Domain.Aggregates",
+          "Constructors": [
+            {
+              "Parameters": [
+                {
+                  "Name": "stream",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStream",
+                  "GenericTypes": []
+                }
+              ]
+            }
+          ],
+          "Events": [
+            {
+              "TypeName": "ReleaseCreated",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCreated.cs",
+              "EventName": "Release.Created",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseCreated",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "Name",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Version",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ProjectId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CreatedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CreatedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "ReleaseNoteAdded",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseNoteAdded.cs",
+              "EventName": "Release.NoteAdded",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseNoteAdded",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "Note",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "AddedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "AddedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "ReleaseDeployed",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseDeployed.cs",
+              "EventName": "Release.Deployed",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseDeployed",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "DeployedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DeployedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "ReleaseCompleted",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCompleted.cs",
+              "EventName": "Release.Completed",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseCompleted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "CompletedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CompletedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "ReleaseStaged",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseStaged.cs",
+              "EventName": "Release.Staged",
+              "SchemaVersion": 1,
+              "ActivationType": "WhenReleaseStaged",
+              "Parameters": [],
+              "Properties": [
+                {
+                  "Name": "StagedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "StagedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "ReleaseRolledBack",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseRolledBack.cs",
+              "EventName": "Release.RolledBack",
+              "SchemaVersion": 1,
+              "ActivationType": "WhenReleaseRolledBack",
+              "Parameters": [],
+              "Properties": [
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RolledBackBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RolledBackAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "Commands": [
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Create",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "name",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "version",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "projectId",
+                  "Type": "ProjectId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "createdBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "createdByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseCreated",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCreated.cs",
+                  "EventName": "Release.Created",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "AddNote",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "note",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "addedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "addedByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseNoteAdded",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseNoteAdded.cs",
+                  "EventName": "Release.NoteAdded",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Stage",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "stagedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "stagedByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseStaged",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseStaged.cs",
+                  "EventName": "Release.Staged",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Deploy",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "deployedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "deployedByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseDeployed",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseDeployed.cs",
+                  "EventName": "Release.Deployed",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Complete",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "completedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "completedByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseCompleted",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCompleted.cs",
+                  "EventName": "Release.Completed",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Rollback",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "reason",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "rolledBackBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "rolledBackByUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "ReleaseRolledBack",
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseRolledBack.cs",
+                  "EventName": "Release.RolledBack",
+                  "SchemaVersion": 1
+                }
+              ]
+            }
+          ],
+          "Properties": [
+            {
+              "Name": "Name",
+              "IsNullable": true,
+              "Namespace": "System",
+              "Type": "String",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Version",
+              "IsNullable": true,
+              "Namespace": "System",
+              "Type": "String",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "ProjectId",
+              "IsNullable": true,
+              "Namespace": "TaskFlow.Domain.ValueObjects",
+              "Type": "ProjectId",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "StronglyTypedId\u003CGuid\u003E",
+                  "Namespace": "ErikLieben.FA.StronglyTypedIds",
+                  "GenericTypes": [
+                    {
+                      "Name": "Guid",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ],
+                  "SubTypes": [
+                    {
+                      "Name": "Guid",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Guid",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "Status",
+              "Namespace": "TaskFlow.Domain.ValueObjects.Release",
+              "Type": "ReleaseStatus",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "Notes",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "List",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "DeployedAt",
+              "Namespace": "System",
+              "Type": "Nullable",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "DateTime",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "CompletedAt",
+              "Namespace": "System",
+              "Type": "Nullable",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "DateTime",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "CreatedAt",
+              "Namespace": "System",
+              "Type": "DateTime",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CreatedBy",
+              "IsNullable": true,
+              "Namespace": "TaskFlow.Domain.ValueObjects",
+              "Type": "UserProfileId",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "StronglyTypedId\u003CString\u003E",
+                  "Namespace": "ErikLieben.FA.StronglyTypedIds",
+                  "GenericTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "Metadata",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "ObjectMetadata",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "ReleaseId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": [
+                {
+                  "Name": "ReleaseId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "FileLocations": [
+            "\\src\\TaskFlow.Domain\\Aggregates\\Release.cs"
+          ],
+          "PostWhen": {
+            "Parameters": [
+              {
+                "Name": "document",
+                "Type": "IObjectDocument",
+                "Namespace": "ErikLieben.FA.ES.Documents"
+              },
+              {
+                "Name": "event",
+                "Type": "IEvent",
+                "Namespace": "ErikLieben.FA.ES"
+              }
+            ]
+          },
+          "StreamActions": [],
+          "Upcasters": [],
+          "IsPartialClass": true,
+          "EventStreamTypeAttribute": {
+            "StreamType": "s3",
+            "DocumentType": "s3"
+          }
+        },
+        {
           "IdentifierName": "Sprint",
           "ObjectName": "sprint",
           "IdentifierType": "SprintId",
@@ -12517,8 +13347,7 @@
           "StreamActions": [],
           "Upcasters": [],
           "IsPartialClass": true,
-          "HasUserDefinedFactoryPartial": true,
-          "HasUserDefinedProcessSnapshot": true
+          "HasUserDefinedFactoryPartial": true
         }
       ],
       "InheritedAggregates": [],
@@ -12529,6 +13358,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -13935,6 +14782,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -14153,13 +15007,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -14168,10 +15015,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.cs"
+            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.cs",
+            "src\\TaskFlow.Domain\\Projections\\ActiveWorkItems.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections",
             "Connection": "BlobStorage"
@@ -14183,6 +15030,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -14988,6 +15853,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -15206,13 +16078,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -15221,10 +16086,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\EpicSummary.cs"
+            "src\\TaskFlow.Domain\\Projections\\EpicSummary.cs",
+            "src\\TaskFlow.Domain\\Projections\\EpicSummary.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections",
             "Connection": "BlobStorage"
@@ -15236,6 +16101,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             },
             {
               "Parameters": []
@@ -16830,6 +17713,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -17048,13 +17938,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -17063,9 +17946,9 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.cs"
+            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.cs",
+            "src\\TaskFlow.Domain\\Projections\\EventUpcastingDemonstration.Generated.cs"
           ],
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections",
             "Connection": "BlobStorage"
@@ -17091,6 +17974,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -18955,6 +19856,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -19173,13 +20081,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -19188,10 +20089,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.cs",
+            "src\\TaskFlow.Domain\\Projections\\ProjectDashboard.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections",
             "Connection": "BlobStorage"
@@ -19203,6 +20104,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -21050,6 +21969,43 @@
               "SubTypes": []
             },
             {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "Destinations",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -22007,41 +22963,11 @@
               "SubTypes": []
             },
             {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CurrentDocument",
               "IsNullable": true,
               "Namespace": "ErikLieben.FA.ES.Documents",
               "Type": "IObjectDocument",
               "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "WhenParameterValueFactories",
-              "IsNullable": true,
-              "Namespace": "System.Collections.Generic",
-              "Type": "Dictionary",
-              "IsGeneric": true,
-              "GenericTypes": [
-                {
-                  "Name": "String",
-                  "Namespace": "System",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                },
-                {
-                  "Name": "IProjectionWhenParameterValueFactory",
-                  "Namespace": "ErikLieben.FA.ES.Projections",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                }
-              ],
               "SubTypes": []
             },
             {
@@ -22263,13 +23189,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -22278,10 +23197,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.cs",
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanBoard.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections/kanban.json",
             "Connection": "BlobStorage"
@@ -22293,6 +23212,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -23236,6 +24173,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -23454,13 +24398,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -23469,9 +24406,9 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.cs"
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.cs",
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanDestination.Generated.cs"
           ],
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections/kanban/{projectId}.json",
             "Connection": "BlobStorage"
@@ -23483,6 +24420,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -24362,6 +25317,755 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CheckpointFingerprint",
+              "IsNullable": true,
+              "Namespace": "System",
+              "Type": "String",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Status",
+              "Namespace": "ErikLieben.FA.ES.Projections",
+              "Type": "ProjectionStatus",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "StatusChangedAt",
+              "Namespace": "System",
+              "Type": "Nullable",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "DateTimeOffset",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DayOfWeek",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "TimeSpan",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Double",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "RebuildInfo",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES.Projections",
+              "Type": "RebuildInfo",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "RebuildStrategy",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DateTimeOffset",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DayOfWeek",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "TimeSpan",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Double",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "DateTime",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DayOfWeek",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "TimeSpan",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Double",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Boolean",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "SchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "NeedsSchemaUpgrade",
+              "Namespace": "System",
+              "Type": "Boolean",
+              "GenericTypes": [],
+              "SubTypes": []
+            }
+          ],
+          "FileLocations": [
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.cs",
+            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.Generated.cs"
+          ],
+          "BlobProjection": {
+            "Container": "projections/kanban/{projectId}/{languageCode}.json",
+            "Connection": "BlobStorage"
+          }
+        },
+        {
+          "Name": "ReleaseDashboard",
+          "Namespace": "TaskFlow.Domain.Projections",
+          "Constructors": [
+            {
+              "Parameters": []
+            }
+          ],
+          "Events": [
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "releaseId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "ReleaseCreated",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCreated.cs",
+              "EventName": "Release.Created",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseCreated",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "releaseId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "Name",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Version",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ProjectId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CreatedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CreatedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "releaseId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "ReleaseStaged",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseStaged.cs",
+              "EventName": "Release.Staged",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseStaged",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "releaseId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "StagedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "StagedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "releaseId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "ReleaseDeployed",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseDeployed.cs",
+              "EventName": "Release.Deployed",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseDeployed",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "releaseId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "DeployedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DeployedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "releaseId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "ReleaseCompleted",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseCompleted.cs",
+              "EventName": "Release.Completed",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseCompleted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "releaseId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "CompletedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "CompletedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "releaseId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "ReleaseRolledBack",
+              "Namespace": "TaskFlow.Domain.Events.Release",
+              "File": "src\\TaskFlow.Domain\\Events\\Release\\ReleaseRolledBack.cs",
+              "EventName": "Release.RolledBack",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.Release",
+                  "Type": "ReleaseRolledBack",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "releaseId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RolledBackBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RolledBackAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "Properties": [
+            {
+              "Name": "Releases",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ReleaseSummary",
+                  "Namespace": "TaskFlow.Domain.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "ReleaseStatus",
+                      "Namespace": "TaskFlow.Domain.ValueObjects.Release",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -24595,11 +26299,11 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ProjectKanbanLanguageDestination.cs"
+            "src\\TaskFlow.Domain\\Projections\\ReleaseDashboard.cs"
           ],
-          "SchemaVersion": 1,
+          "ExternalCheckpoint": true,
           "BlobProjection": {
-            "Container": "projections/kanban/{projectId}/{languageCode}.json",
+            "Container": "projections",
             "Connection": "BlobStorage"
           }
         },
@@ -24609,6 +26313,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -25443,6 +27165,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -25661,13 +27390,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -25676,10 +27398,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.cs"
+            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.cs",
+            "src\\TaskFlow.Domain\\Projections\\SprintDashboard.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "CosmosDbProjection": {
             "Container": "projections",
             "Connection": "cosmosdb",
@@ -25692,6 +27414,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -25949,6 +27689,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -26167,13 +27914,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -26182,10 +27922,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\TeamMembers.cs"
+            "src\\TaskFlow.Domain\\Projections\\TeamMembers.cs",
+            "src\\TaskFlow.Domain\\Projections\\TeamMembers.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections/userprofiles/team-members.json",
             "Connection": "BlobStorage"
@@ -26197,6 +27937,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -26467,6 +28225,13 @@
               "SubTypes": []
             },
             {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
               "Name": "CheckpointFingerprint",
               "IsNullable": true,
               "Namespace": "System",
@@ -26685,13 +28450,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -26700,9 +28458,9 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.cs"
+            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.cs",
+            "src\\TaskFlow.Domain\\Projections\\UserProfilePage.Generated.cs"
           ],
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections/userprofiles/page-{pageNumber}.json",
             "Connection": "BlobStorage"
@@ -26714,6 +28472,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -26920,6 +28696,43 @@
             },
             {
               "Name": "TotalUsers",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CodeSchemaVersion",
               "Namespace": "System",
               "Type": "Int32",
               "GenericTypes": [],
@@ -27883,41 +29696,11 @@
               "SubTypes": []
             },
             {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "CurrentDocument",
               "IsNullable": true,
               "Namespace": "ErikLieben.FA.ES.Documents",
               "Type": "IObjectDocument",
               "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "WhenParameterValueFactories",
-              "IsNullable": true,
-              "Namespace": "System.Collections.Generic",
-              "Type": "Dictionary",
-              "IsGeneric": true,
-              "GenericTypes": [
-                {
-                  "Name": "String",
-                  "Namespace": "System",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                },
-                {
-                  "Name": "IProjectionWhenParameterValueFactory",
-                  "Namespace": "ErikLieben.FA.ES.Projections",
-                  "GenericTypes": [],
-                  "SubTypes": []
-                }
-              ],
               "SubTypes": []
             },
             {
@@ -28139,13 +29922,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -28154,10 +29930,10 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\UserProfiles.cs"
+            "src\\TaskFlow.Domain\\Projections\\UserProfiles.cs",
+            "src\\TaskFlow.Domain\\Projections\\UserProfiles.Generated.cs"
           ],
           "ExternalCheckpoint": true,
-          "SchemaVersion": 1,
           "BlobProjection": {
             "Container": "projections/userprofiles.json",
             "Connection": "BlobStorage"
@@ -28169,6 +29945,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -29354,21 +31148,6 @@
           ],
           "Properties": [
             {
-              "Name": "PendingDocumentCount",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "WhenParameterValueFactories",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -29388,6 +31167,28 @@
                   "SubTypes": []
                 }
               ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "PendingDocumentCount",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
               "SubTypes": []
             },
             {
@@ -29609,13 +31410,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -29624,9 +31418,9 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.cs"
-          ],
-          "SchemaVersion": 1
+            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.cs",
+            "src\\TaskFlow.Domain\\Projections\\WorkItemAuditLog.Generated.cs"
+          ]
         },
         {
           "Name": "WorkItemReportingIndex",
@@ -29634,6 +31428,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -30643,21 +32455,6 @@
           ],
           "Properties": [
             {
-              "Name": "PendingOperationCount",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
-              "Name": "Checkpoint",
-              "IsNullable": true,
-              "Namespace": "ErikLieben.FA.ES",
-              "Type": "Checkpoint",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "WhenParameterValueFactories",
               "IsNullable": true,
               "Namespace": "System.Collections.Generic",
@@ -30677,6 +32474,28 @@
                   "SubTypes": []
                 }
               ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "PendingOperationCount",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
               "SubTypes": []
             },
             {
@@ -30898,13 +32717,6 @@
               "SubTypes": []
             },
             {
-              "Name": "CodeSchemaVersion",
-              "Namespace": "System",
-              "Type": "Int32",
-              "GenericTypes": [],
-              "SubTypes": []
-            },
-            {
               "Name": "NeedsSchemaUpgrade",
               "Namespace": "System",
               "Type": "Boolean",
@@ -30913,9 +32725,9 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.cs"
-          ],
-          "SchemaVersion": 1
+            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.cs",
+            "src\\TaskFlow.Domain\\Projections\\WorkItemReportingIndex.Generated.cs"
+          ]
         }
       ],
       "VersionTokens": [],
