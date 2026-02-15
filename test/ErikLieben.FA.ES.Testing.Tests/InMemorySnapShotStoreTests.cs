@@ -57,13 +57,16 @@ public class InMemorySnapShotStoreTests
     }
 
     [Fact]
-    public async Task Get_should_throw_when_snapshot_missing()
+    public async Task Get_should_return_null_when_snapshot_missing()
     {
         // Arrange
         var store = new InMemorySnapShotStore();
         var doc = CreateDoc();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(async () => await store.GetAsync(TypeInfo, doc, 1));
+        // Act
+        var result = await store.GetAsync(TypeInfo, doc, 1);
+
+        // Assert
+        Assert.Null(result);
     }
 }

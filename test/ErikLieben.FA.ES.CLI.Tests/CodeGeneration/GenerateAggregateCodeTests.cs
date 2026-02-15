@@ -184,9 +184,9 @@ public class GenerateAggregateCodeTests
         Assert.Contains("return new Account(eventStream, svc!);", code);
 
         // Async factory helpers, including generic CreateAsync<T> with ActionMetadata parameter
-        Assert.Contains("public async Task<Account> CreateAsync(Guid id)", code);
+        Assert.Contains("public async Task<Account> CreateAsync(Guid id, CancellationToken cancellationToken = default)", code);
         Assert.Contains("protected async Task<Account> CreateAsync<T>(Guid id, T firstEvent, ActionMetadata? metadata = null) where T : class", code);
-        Assert.Contains("public async Task<(Account, IObjectDocument)> GetWithDocumentAsync(Guid id)", code);
+        Assert.Contains("public async Task<(Account, IObjectDocument)> GetWithDocumentAsync(Guid id, CancellationToken cancellationToken = default)", code);
     }
 
     [Fact]
@@ -986,7 +986,7 @@ public class GenerateAggregateCodeTests
         var code = await File.ReadAllTextAsync(generatedPath);
 
         // Factory GetAsync should have upToVersion parameter
-        Assert.Contains("public async Task<BlogPost> GetAsync(Guid id, int? upToVersion = null)", code);
+        Assert.Contains("public async Task<BlogPost> GetAsync(Guid id, int? upToVersion = null, CancellationToken cancellationToken = default)", code);
     }
 
     [Fact]
@@ -1544,11 +1544,11 @@ public class GenerateAggregateCodeTests
 
         // Should contain EditorBrowsable attribute before CreateAsync method
         Assert.Contains("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
-        Assert.Contains("public async Task<WorkItem> CreateAsync(WorkItemId id)", code);
+        Assert.Contains("public async Task<WorkItem> CreateAsync(WorkItemId id, CancellationToken cancellationToken = default)", code);
 
         // Verify the attribute appears right before the CreateAsync method
         var editorBrowsableIndex = code.IndexOf("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", StringComparison.Ordinal);
-        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id)", StringComparison.Ordinal);
+        var createAsyncIndex = code.IndexOf("public async Task<WorkItem> CreateAsync(WorkItemId id, CancellationToken cancellationToken = default)", StringComparison.Ordinal);
         Assert.True(editorBrowsableIndex < createAsyncIndex, "EditorBrowsable attribute should appear before CreateAsync method");
     }
 
@@ -1609,7 +1609,7 @@ public class GenerateAggregateCodeTests
         Assert.DoesNotContain("[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]", code);
 
         // But should still have the public CreateAsync method
-        Assert.Contains("public async Task<Project> CreateAsync(ProjectId id)", code);
+        Assert.Contains("public async Task<Project> CreateAsync(ProjectId id, CancellationToken cancellationToken = default)", code);
     }
 
     [Fact]

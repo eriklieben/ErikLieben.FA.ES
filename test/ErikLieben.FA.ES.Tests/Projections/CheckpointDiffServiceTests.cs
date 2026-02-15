@@ -184,6 +184,19 @@ public class CheckpointDiffServiceTests
         public async Task Should_fail_when_max_iterations_reached()
         {
             // Arrange — checkpoints that never converge
+            // Target projection needs factories because SyncAsync calls UpdateToVersion
+            var mockDoc = Substitute.For<IObjectDocument>();
+            var mockStream = Substitute.For<IEventStream>();
+            mockStream.ReadAsync(Arg.Any<int>()).Returns(Array.Empty<IEvent>());
+            mockStream.ReadAsync(Arg.Any<int>(), Arg.Any<int?>()).Returns(Array.Empty<IEvent>());
+
+            var targetDocFactory = Substitute.For<IObjectDocumentFactory>();
+            targetDocFactory.GetAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string?>())
+                .Returns(mockDoc);
+
+            var targetStreamFactory = Substitute.For<IEventStreamFactory>();
+            targetStreamFactory.Create(Arg.Any<IObjectDocument>()).Returns(mockStream);
+
             var source = CreateProjectionWithCheckpoint("abc", new()
             {
                 [new ObjectIdentifier("order", "1")] = new VersionIdentifier("stream1", 100)
@@ -191,7 +204,7 @@ public class CheckpointDiffServiceTests
             var target = CreateProjectionWithCheckpoint("def", new()
             {
                 [new ObjectIdentifier("order", "1")] = new VersionIdentifier("stream1", 50)
-            });
+            }, targetDocFactory, targetStreamFactory);
 
             SetupFactory(source, target, 1, 2);
             var sut = new CheckpointDiffService(_serviceProvider);
@@ -269,9 +282,12 @@ public class CheckpointDiffServiceTests
         return projection;
     }
 
-    private static TestProjection CreateProjectionWithCheckpoint(string? fingerprint, Checkpoint checkpoint)
+    private static TestProjection CreateProjectionWithCheckpoint(string? fingerprint, Checkpoint checkpoint,
+        IObjectDocumentFactory? documentFactory = null, IEventStreamFactory? eventStreamFactory = null)
     {
-        var projection = new TestProjection();
+        var projection = documentFactory != null && eventStreamFactory != null
+            ? new TestProjection(documentFactory, eventStreamFactory)
+            : new TestProjection();
         projection.CheckpointFingerprint = fingerprint;
         projection.Checkpoint = checkpoint;
         return projection;
@@ -304,6 +320,11 @@ public class CheckpointDiffServiceTests
 public class TestProjection : Projection
 {
     private Checkpoint _checkpoint = new();
+
+    public TestProjection() { }
+
+    public TestProjection(IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+        : base(documentFactory, eventStreamFactory) { }
 
     public override Checkpoint Checkpoint
     {
