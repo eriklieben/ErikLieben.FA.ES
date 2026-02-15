@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 // Allow internal types to be visible to implementation assemblies
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.AzureStorage")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.CosmosDb")]
+[assembly: InternalsVisibleTo("ErikLieben.FA.ES.S3")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.EventStreamManagement")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Testing")]
 
