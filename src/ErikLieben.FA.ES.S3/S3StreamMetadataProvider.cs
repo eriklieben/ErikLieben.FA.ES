@@ -95,6 +95,7 @@ public class S3StreamMetadataProvider : IStreamMetadataProvider
         }
         catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
+            _logger?.LogDebug(ex, "Bucket or prefix not found for {ObjectName}/{ObjectId}", objectName, objectId);
             return null;
         }
     }

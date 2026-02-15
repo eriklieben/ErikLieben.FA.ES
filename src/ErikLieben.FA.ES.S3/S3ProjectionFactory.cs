@@ -337,6 +337,41 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
         }
     }
 
+    /// <summary>
+    /// Replaces or adds the <c>$status</c> property in a projection JSON string.
+    /// </summary>
+    private static string UpdateStatusInJson(string json, ProjectionStatus status)
+    {
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Name == "$status")
+                {
+                    writer.WriteNumber("$status", (int)status);
+                }
+                else
+                {
+                    property.WriteTo(writer);
+                }
+            }
+
+            if (!root.TryGetProperty("$status", out _))
+            {
+                writer.WriteNumber("$status", (int)status);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
     /// <inheritdoc />
     public Type ProjectionType => typeof(T);
 
@@ -400,35 +435,7 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
             return;
         }
 
-        // Parse and update status using JsonDocument
-        using var document = JsonDocument.Parse(json);
-        var root = document.RootElement;
-
-        // Build a new JSON object with the updated status
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream))
-        {
-            writer.WriteStartObject();
-            foreach (var property in root.EnumerateObject())
-            {
-                if (property.Name == "$status")
-                {
-                    writer.WriteNumber("$status", (int)status);
-                }
-                else
-                {
-                    property.WriteTo(writer);
-                }
-            }
-            // If $status wasn't in the original, add it
-            if (!root.TryGetProperty("$status", out _))
-            {
-                writer.WriteNumber("$status", (int)status);
-            }
-            writer.WriteEndObject();
-        }
-
-        var updatedJson = Encoding.UTF8.GetString(stream.ToArray());
+        var updatedJson = UpdateStatusInJson(json, status);
         var bytes = Encoding.UTF8.GetBytes(updatedJson);
 
         var updateRequest = new PutObjectRequest

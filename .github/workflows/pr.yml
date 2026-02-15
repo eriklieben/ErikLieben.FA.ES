@@ -148,7 +148,8 @@ jobs:
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
             /d:sonar.pullrequest.key="$PR_NUMBER" \
             /d:sonar.pullrequest.branch="$HEAD_REF" \
-            /d:sonar.pullrequest.base="$BASE_REF"
+            /d:sonar.pullrequest.base="$BASE_REF" \
+            /d:sonar.exclusions="demo/**,benchmarks/**"
 
       - name: Build
         run: dotnet build --configuration Release --no-restore

@@ -123,6 +123,7 @@ public partial class S3SnapShotStore(
             activity.SetTag(FaesSemanticConventions.ObjectId, document?.ObjectId);
         }
 
+        ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(document.ObjectName);
 
         var (s3Client, bucketName) = await GetClientAndBucket(document);
