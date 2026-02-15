@@ -771,7 +771,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     /// <summary>
     /// Converts an entity to a TableJsonEvent, handling payload reassembly if needed.
     /// </summary>
-    private async Task<TableJsonEvent> ConvertEntityToEventAsync(
+    private static async Task<TableJsonEvent> ConvertEntityToEventAsync(
         TableClient tableClient,
         TableEventEntity entity,
         CancellationToken cancellationToken = default)

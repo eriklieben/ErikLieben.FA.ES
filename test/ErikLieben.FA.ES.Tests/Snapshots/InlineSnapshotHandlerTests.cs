@@ -565,12 +565,14 @@ public class InlineSnapshotHandlerTests
 
             Assert.False(result.Success);
             // Verify the logger was invoked (at Debug level)
+#pragma warning disable CA1873 // These are NSubstitute test assertions, not production logging calls
             _logger.Received().Log(
                 LogLevel.Debug,
                 Arg.Any<EventId>(),
                 Arg.Any<object>(),
                 Arg.Any<Exception>(),
                 Arg.Any<Func<object, Exception?, string>>());
+#pragma warning restore CA1873
         }
 
         [Fact]
@@ -717,12 +719,14 @@ public class InlineSnapshotHandlerTests
             var result = await handler.HandlePostCommitAsync(aggregate, document, events, jsonTypeInfo);
 
             Assert.False(result.Success);
+#pragma warning disable CA1873 // These are NSubstitute test assertions, not production logging calls
             _logger.Received().Log(
                 LogLevel.Debug,
                 Arg.Any<EventId>(),
                 Arg.Any<object>(),
                 Arg.Any<Exception?>(),
                 Arg.Any<Func<object, Exception?, string>>());
+#pragma warning restore CA1873
         }
     }
 

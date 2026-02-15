@@ -51,6 +51,11 @@ public static partial class BlobPathTemplateResolver
     [GeneratedRegex(@"\{(\w+)\}")]
     private static partial Regex PlaceholderRegex();
 
+    /// <summary>
+    /// Extracts placeholder names from a blob path template string.
+    /// </summary>
+    /// <param name="template">The template string containing placeholders in {name} format.</param>
+    /// <returns>An enumerable of placeholder names found in the template.</returns>
     public static IEnumerable<string> GetPlaceholders(string template)
     {
         var matches = PlaceholderRegex().Matches(template);

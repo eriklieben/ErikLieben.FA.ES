@@ -57,40 +57,7 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
                 return null;
             }
 
-            var objectNameLower = objectName.ToLowerInvariant();
-            var prefix = $"{objectNameLower}/{objectId}";
-            var eventCount = 0;
-            DateTimeOffset? oldest = null;
-            DateTimeOffset? newest = null;
-
-#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
-            await foreach (var blobItem in containerClient.GetBlobsAsync(
-                prefix: prefix, cancellationToken: cancellationToken))
-            {
-                eventCount++;
-
-                if (blobItem.Properties?.CreatedOn != null)
-                {
-                    var created = blobItem.Properties.CreatedOn.Value;
-                    if (oldest == null || created < oldest)
-                    {
-                        oldest = created;
-                    }
-
-                    if (newest == null || created > newest)
-                    {
-                        newest = created;
-                    }
-                }
-            }
-#pragma warning restore S3267
-
-            if (eventCount == 0)
-            {
-                return null;
-            }
-
-            return new StreamMetadata(objectName, objectId, eventCount, oldest, newest);
+            return await CollectBlobMetadataAsync(containerClient, objectName, objectId, cancellationToken);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
@@ -99,6 +66,54 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
                 _logger.LogDebug(ex, "Container or blob not found for {ObjectName}/{ObjectId}", objectName, objectId);
             }
             return null;
+        }
+    }
+
+    private static async Task<StreamMetadata?> CollectBlobMetadataAsync(
+        BlobContainerClient containerClient,
+        string objectName,
+        string objectId,
+        CancellationToken cancellationToken)
+    {
+        var objectNameLower = objectName.ToLowerInvariant();
+        var prefix = $"{objectNameLower}/{objectId}";
+        var eventCount = 0;
+        DateTimeOffset? oldest = null;
+        DateTimeOffset? newest = null;
+
+#pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
+        await foreach (var blobItem in containerClient.GetBlobsAsync(
+            prefix: prefix, cancellationToken: cancellationToken))
+        {
+            eventCount++;
+            UpdateDateRange(blobItem, ref oldest, ref newest);
+        }
+#pragma warning restore S3267
+
+        if (eventCount == 0)
+        {
+            return null;
+        }
+
+        return new StreamMetadata(objectName, objectId, eventCount, oldest, newest);
+    }
+
+    private static void UpdateDateRange(BlobItem blobItem, ref DateTimeOffset? oldest, ref DateTimeOffset? newest)
+    {
+        if (blobItem.Properties?.CreatedOn == null)
+        {
+            return;
+        }
+
+        var created = blobItem.Properties.CreatedOn.Value;
+        if (oldest == null || created < oldest)
+        {
+            oldest = created;
+        }
+
+        if (newest == null || created > newest)
+        {
+            newest = created;
         }
     }
 }

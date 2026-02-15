@@ -144,44 +144,15 @@ public class CheckpointDiffService : ICheckpointDiffService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var comparison = await CompareAsync<T>(objectId, sourceVersion, targetVersion, cancellationToken);
+            var iterationResult = await RunCatchUpIterationAsync<T>(
+                objectId, sourceVersion, targetVersion, iteration, options, sw, totalEventsApplied, cancellationToken);
 
-            if (comparison.IsSynced)
+            if (iterationResult.IsTerminal)
             {
-                sw.Stop();
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation(
-                        "Convergent catch-up for {ProjectionType} completed in {Iterations} iterations, {Events} events, {Duration}ms",
-                        typeof(T).Name, iteration, totalEventsApplied, sw.ElapsedMilliseconds);
-                }
-
-                return ConvergentCatchUpResult.Success(iteration, totalEventsApplied, sw.Elapsed);
+                return iterationResult.Result!;
             }
 
-            var eventsInIteration = comparison.Diff?.TotalMissingEvents ?? 0;
-
-            if (eventsInIteration > options.MaxEventsPerIteration)
-            {
-                sw.Stop();
-                var reason = $"Too many events in single iteration ({eventsInIteration} > {options.MaxEventsPerIteration}), may never converge";
-                if (_logger?.IsEnabled(LogLevel.Warning) == true)
-                {
-                    _logger.LogWarning(
-                        "Convergent catch-up aborted for {ProjectionType}: {Reason}",
-                        typeof(T).Name, reason);
-                }
-                return ConvergentCatchUpResult.Failed(iteration, totalEventsApplied, sw.Elapsed, reason);
-            }
-
-            var syncResult = await SyncAsync<T>(objectId, sourceVersion, targetVersion, cancellationToken);
-            totalEventsApplied += eventsInIteration;
-
-            if (syncResult.IsSynced)
-            {
-                sw.Stop();
-                return ConvergentCatchUpResult.Success(iteration, totalEventsApplied, sw.Elapsed);
-            }
+            totalEventsApplied = iterationResult.TotalEventsApplied;
 
             if (iteration < options.MaxIterations)
             {
@@ -191,13 +162,75 @@ public class CheckpointDiffService : ICheckpointDiffService
 
         sw.Stop();
         var failureReason = $"Max iterations ({options.MaxIterations}) reached without convergence";
+        LogCatchUpWarning<T>(failureReason);
+        return ConvergentCatchUpResult.Failed(options.MaxIterations, totalEventsApplied, sw.Elapsed, failureReason);
+    }
+
+    private async Task<CatchUpIterationOutcome> RunCatchUpIterationAsync<T>(
+        string objectId,
+        int sourceVersion,
+        int targetVersion,
+        int iteration,
+        ConvergentCatchUpOptions options,
+        Stopwatch sw,
+        int totalEventsApplied,
+        CancellationToken cancellationToken)
+        where T : Projection
+    {
+        var comparison = await CompareAsync<T>(objectId, sourceVersion, targetVersion, cancellationToken);
+
+        if (comparison.IsSynced)
+        {
+            sw.Stop();
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
+            {
+                _logger.LogInformation(
+                    "Convergent catch-up for {ProjectionType} completed in {Iterations} iterations, {Events} events, {Duration}ms",
+                    typeof(T).Name, iteration, totalEventsApplied, sw.ElapsedMilliseconds);
+            }
+
+            return CatchUpIterationOutcome.Terminal(
+                ConvergentCatchUpResult.Success(iteration, totalEventsApplied, sw.Elapsed));
+        }
+
+        var eventsInIteration = comparison.Diff?.TotalMissingEvents ?? 0;
+
+        if (eventsInIteration > options.MaxEventsPerIteration)
+        {
+            sw.Stop();
+            var reason = $"Too many events in single iteration ({eventsInIteration} > {options.MaxEventsPerIteration}), may never converge";
+            LogCatchUpWarning<T>(reason);
+            return CatchUpIterationOutcome.Terminal(
+                ConvergentCatchUpResult.Failed(iteration, totalEventsApplied, sw.Elapsed, reason));
+        }
+
+        var syncResult = await SyncAsync<T>(objectId, sourceVersion, targetVersion, cancellationToken);
+        totalEventsApplied += eventsInIteration;
+
+        if (syncResult.IsSynced)
+        {
+            sw.Stop();
+            return CatchUpIterationOutcome.Terminal(
+                ConvergentCatchUpResult.Success(iteration, totalEventsApplied, sw.Elapsed));
+        }
+
+        return CatchUpIterationOutcome.Continue(totalEventsApplied);
+    }
+
+    private void LogCatchUpWarning<T>(string reason) where T : Projection
+    {
         if (_logger?.IsEnabled(LogLevel.Warning) == true)
         {
             _logger.LogWarning(
                 "Convergent catch-up failed for {ProjectionType}: {Reason}",
-                typeof(T).Name, failureReason);
+                typeof(T).Name, reason);
         }
-        return ConvergentCatchUpResult.Failed(options.MaxIterations, totalEventsApplied, sw.Elapsed, failureReason);
+    }
+
+    private readonly record struct CatchUpIterationOutcome(bool IsTerminal, ConvergentCatchUpResult? Result, int TotalEventsApplied)
+    {
+        public static CatchUpIterationOutcome Terminal(ConvergentCatchUpResult result) => new(true, result, 0);
+        public static CatchUpIterationOutcome Continue(int totalEventsApplied) => new(false, null, totalEventsApplied);
     }
 
     private static CheckpointComparisonResult CompareCheckpoints(Projection source, Projection target)

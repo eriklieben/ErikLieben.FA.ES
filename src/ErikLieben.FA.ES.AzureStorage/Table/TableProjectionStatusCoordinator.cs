@@ -367,46 +367,61 @@ public class TableProjectionStatusCoordinator : IProjectionStatusCoordinator
         {
             if (entity.RebuildExpiresAt.HasValue && entity.RebuildExpiresAt.Value <= now)
             {
-                var rebuildInfo = DeserializeRebuildInfo(entity.RebuildInfoJson);
-
-                entity.Status = (int)ProjectionStatus.Failed;
-                entity.StatusChangedAt = now;
-                entity.Error = "Rebuild timed out";
-                entity.RebuildToken = null;
-                entity.RebuildStrategy = null;
-                entity.RebuildStartedAt = null;
-                entity.RebuildExpiresAt = null;
-                entity.RebuildInfoJson = rebuildInfo is not null
-                    ? JsonSerializer.Serialize(rebuildInfo.WithError("Rebuild timed out"), ProjectionStatusJsonContext.Default.RebuildInfo)
-                    : null;
-
-                try
+                if (await TryRecoverEntityAsync(tableClient, entity, now, cancellationToken))
                 {
-                    await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken);
                     recovered++;
-
-                    if (_logger?.IsEnabled(LogLevel.Warning) == true)
-                    {
-                        _logger.LogWarning(
-                            "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
-                            entity.PartitionKey, entity.RowKey);
-                    }
-                }
-                catch (RequestFailedException ex) when (ex.Status == 412)
-                {
-                    // Concurrency conflict - another process already recovered this entity
-                    if (_logger?.IsEnabled(LogLevel.Debug) == true)
-                    {
-                        _logger.LogDebug(
-                            ex,
-                            "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrency conflict",
-                            entity.PartitionKey, entity.RowKey);
-                    }
                 }
             }
         }
 
         return recovered;
+    }
+
+    private async Task<bool> TryRecoverEntityAsync(
+        TableClient tableClient,
+        ProjectionStatusEntity entity,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var rebuildInfo = DeserializeRebuildInfo(entity.RebuildInfoJson);
+
+        entity.Status = (int)ProjectionStatus.Failed;
+        entity.StatusChangedAt = now;
+        entity.Error = "Rebuild timed out";
+        entity.RebuildToken = null;
+        entity.RebuildStrategy = null;
+        entity.RebuildStartedAt = null;
+        entity.RebuildExpiresAt = null;
+        entity.RebuildInfoJson = rebuildInfo is not null
+            ? JsonSerializer.Serialize(rebuildInfo.WithError("Rebuild timed out"), ProjectionStatusJsonContext.Default.RebuildInfo)
+            : null;
+
+        try
+        {
+            await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken);
+
+            if (_logger?.IsEnabled(LogLevel.Warning) == true)
+            {
+                _logger.LogWarning(
+                    "Recovered stuck rebuild for {ProjectionName}:{ObjectId}",
+                    entity.PartitionKey, entity.RowKey);
+            }
+
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 412)
+        {
+            // Concurrency conflict - another process already recovered this entity
+            if (_logger?.IsEnabled(LogLevel.Debug) == true)
+            {
+                _logger.LogDebug(
+                    ex,
+                    "Skipped recovery for {ProjectionName}:{ObjectId} due to concurrency conflict",
+                    entity.PartitionKey, entity.RowKey);
+            }
+
+            return false;
+        }
     }
 
     /// <inheritdoc />

@@ -353,12 +353,14 @@ public class MigrationProgressTrackerExtendedTests
             sut.Report();
 
             // Assert - logger should have been called
+#pragma warning disable CA1873 // These are NSubstitute test assertions, not production logging calls
             logger.ReceivedWithAnyArgs().Log(
                 LogLevel.Information,
                 Arg.Any<EventId>(),
                 Arg.Any<object>(),
                 Arg.Any<Exception?>(),
                 Arg.Any<Func<object, Exception?, string>>());
+#pragma warning restore CA1873
         }
     }
 
@@ -410,12 +412,14 @@ public class MigrationProgressTrackerExtendedTests
             sut.ReportCompleted();
 
             // Assert
+#pragma warning disable CA1873 // These are NSubstitute test assertions, not production logging calls
             logger.ReceivedWithAnyArgs().Log(
                 LogLevel.Information,
                 Arg.Any<EventId>(),
                 Arg.Any<object>(),
                 Arg.Any<Exception?>(),
                 Arg.Any<Func<object, Exception?, string>>());
+#pragma warning restore CA1873
         }
     }
 

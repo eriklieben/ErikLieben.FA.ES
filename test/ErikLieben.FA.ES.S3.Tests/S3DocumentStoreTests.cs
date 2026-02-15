@@ -135,12 +135,14 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
+#pragma warning disable CS8602 // CreateAsync is marked [MaybeNull] but returns non-null in these test scenarios
             var result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal("123", result.ObjectId);
             Assert.Equal("test", result.ObjectName);
+#pragma warning restore CS8602
             await s3Client.Received(1).PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>());
         }
 
@@ -169,12 +171,14 @@ public class S3DocumentStoreTests
             var sut = new S3DocumentStore(clientFactory, tagFactory, CreateSettings(), CreateTypeSettings());
 
             // Act
+#pragma warning disable CS8602 // CreateAsync is marked [MaybeNull] but returns non-null in these test scenarios
             var result = await sut.CreateAsync("test", "123");
 
             // Assert
             Assert.NotNull(result);
             Assert.Equal("123", result.ObjectId);
             Assert.Equal("test", result.ObjectName);
+#pragma warning restore CS8602
             // Should NOT have called PutObjectAsync because document already exists
             await s3Client.DidNotReceive().PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>());
         }

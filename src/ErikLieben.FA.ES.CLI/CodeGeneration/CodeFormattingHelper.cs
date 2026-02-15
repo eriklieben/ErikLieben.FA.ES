@@ -187,25 +187,17 @@ public static class CodeFormattingHelper
     }
 
     /// <summary>
-    /// Extracts DLL paths from compile/runtime entries in the assets file lines.
+    /// Processes compile/runtime entries in the assets file lines to warm regex matching.
     /// </summary>
-    private static HashSet<string> ExtractDllPathsFromAssets(string[] lines)
+    private static void ExtractDllPathsFromAssets(string[] lines)
     {
-        var packagePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
         foreach (var line in lines)
         {
             if (!line.Contains("\"compile\"") && !line.Contains("\"runtime\""))
                 continue;
 
-            var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
-            if (match.Success)
-            {
-                packagePaths.Add(match.Groups[1].Value);
-            }
+            _ = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
         }
-
-        return packagePaths;
     }
 
     /// <summary>
