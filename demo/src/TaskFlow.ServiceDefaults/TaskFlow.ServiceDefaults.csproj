@@ -20,4 +20,8 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+  </ItemGroup>
+
 </Project>

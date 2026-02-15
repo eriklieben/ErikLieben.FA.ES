@@ -340,14 +340,19 @@ public class GenerateProjectionCode
         {
             var type = BuildPropertyTypeString(property);
 
+            // Don't add ? if type is already nullable (e.g., System.Nullable<T>)
+            var isTypeAlreadyNullable = type.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
+                                        type.EndsWith("?", StringComparison.Ordinal);
+            var nullableSuffix = property.IsNullable && !isTypeAlreadyNullable ? "?" : string.Empty;
+
             if (property.Name != "WhenParameterValueFactories")
             {
-                propertySnapshotCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
+                propertySnapshotCode.AppendLine($"public {type}{nullableSuffix} {property.Name} {{get; init; }}");
             }
 
             if (property.Name != "Checkpoint" && projection.Name != "CheckpointFingerprint" && property.Name != "WhenParameterValueFactories" && property.Name != "CurrentContext")
             {
-                propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
+                propertyCode.AppendLine($"public {type}{nullableSuffix} {property.Name} {{get;}}");
             }
         }
 
@@ -1141,7 +1146,11 @@ public class GenerateProjectionCode
         foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
         {
             var fullTypeDef = BuildFullTypeDefinition(property);
-            code.AppendLine($"                                {fullTypeDef}? {ToCamelCase(property.Name)} = null;");
+            // Don't add ? if type is already nullable (e.g., System.Nullable<T>)
+            var isTypeAlreadyNullable = fullTypeDef.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
+                                        fullTypeDef.EndsWith("?", StringComparison.Ordinal);
+            var nullableSuffix = isTypeAlreadyNullable ? string.Empty : "?";
+            code.AppendLine($"                                {fullTypeDef}{nullableSuffix} {ToCamelCase(property.Name)} = null;");
         }
 
         code.AppendLine("                                Checkpoint checkpoint = [];");
@@ -1409,6 +1418,12 @@ public class GenerateProjectionCode
                               /// </summary>
                               {{components.CheckpointJsonAnnotation}}
                               public override Checkpoint Checkpoint { get; set; } = [];
+
+                              /// <summary>
+                              /// Gets the schema version defined in code via [ProjectionVersion] attribute.
+                              /// </summary>
+                              [JsonIgnore]
+                              public override int CodeSchemaVersion => {{projection.SchemaVersion}};
                               {{components.CreateDestinationInstanceCode}}
                               {{components.RoutedProjectionSerializationCode}}
                           }

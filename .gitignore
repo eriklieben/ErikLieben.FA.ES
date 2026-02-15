@@ -102,3 +102,6 @@ BenchmarkDotNet.Artifacts/
 # SonarCloud local scripts
 sonarcloud-pr-report.md
 sonarcloud-pr.ps1
+
+# Private documentation
+future_features/

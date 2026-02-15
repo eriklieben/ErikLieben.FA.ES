@@ -264,8 +264,9 @@ public partial class EpicFactory : IEpicFactory
     /// Creates a new Epic aggregate with the specified identifier.
     /// </summary>
     /// <param name="id">The identifier for the new aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A new Epic instance.</returns>
-    public async Task<Epic> CreateAsync(EpicId id)
+    public async Task<Epic> CreateAsync(EpicId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), null, "table");
 
@@ -312,9 +313,10 @@ public partial class EpicFactory : IEpicFactory
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
     /// <param name="upToVersion">Optional maximum event version to fold. If null, loads to current state.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded Epic instance.</returns>
     [Obsolete("Use IEpicRepository.GetByIdAsync instead. This method will be removed in a future version.")]
-    public async Task<Epic> GetAsync(EpicId id, int? upToVersion = null)
+    public async Task<Epic> GetAsync(EpicId id, int? upToVersion = null, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), null, "table");
 
@@ -340,9 +342,10 @@ public partial class EpicFactory : IEpicFactory
     /// Gets an existing Epic aggregate by identifier along with its document.
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A tuple containing the loaded Epic instance and its document.</returns>
     [Obsolete("Use IEpicRepository.GetByIdWithDocumentAsync instead. This method will be removed in a future version.")]
-    public async Task<(Epic, IObjectDocument)> GetWithDocumentAsync(EpicId id)
+    public async Task<(Epic, IObjectDocument)> GetWithDocumentAsync(EpicId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), null, "table");
         var obj = Create(document);
@@ -354,9 +357,10 @@ public partial class EpicFactory : IEpicFactory
     /// Gets the first Epic aggregate with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching Epic instance, or null if not found.</returns>
     [Obsolete("Use IEpicRepository.GetFirstByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<Epic?> GetFirstByDocumentTag(string tag)
+    public async Task<Epic?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
         if (document == null)
@@ -372,9 +376,10 @@ public partial class EpicFactory : IEpicFactory
     /// Gets all Epic aggregates with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of all matching Epic instances.</returns>
     [Obsolete("Use IEpicRepository.GetAllByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<IEnumerable<Epic>> GetAllByDocumentTag(string tag)
+    public async Task<IEnumerable<Epic>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag));
         var items = new List<Epic>();

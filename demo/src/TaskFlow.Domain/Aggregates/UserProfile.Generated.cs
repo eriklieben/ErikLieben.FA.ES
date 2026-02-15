@@ -214,8 +214,9 @@ public partial class UserProfileFactory : IUserProfileFactory
     /// Creates a new UserProfile aggregate with the specified identifier.
     /// </summary>
     /// <param name="id">The identifier for the new aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A new UserProfile instance.</returns>
-    public async Task<UserProfile> CreateAsync(UserProfileId id)
+    public async Task<UserProfile> CreateAsync(UserProfileId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), "UserDataStore", null);
 
@@ -278,9 +279,10 @@ public partial class UserProfileFactory : IUserProfileFactory
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
     /// <param name="upToVersion">Optional maximum event version to fold. If null, loads to current state.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded UserProfile instance.</returns>
     [Obsolete("Use IUserProfileRepository.GetByIdAsync instead. This method will be removed in a future version.")]
-    public async Task<UserProfile> GetAsync(UserProfileId id, int? upToVersion = null)
+    public async Task<UserProfile> GetAsync(UserProfileId id, int? upToVersion = null, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), "UserDataStore", null);
 
@@ -306,9 +308,10 @@ public partial class UserProfileFactory : IUserProfileFactory
     /// Gets an existing UserProfile aggregate by identifier along with its document.
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A tuple containing the loaded UserProfile instance and its document.</returns>
     [Obsolete("Use IUserProfileRepository.GetByIdWithDocumentAsync instead. This method will be removed in a future version.")]
-    public async Task<(UserProfile, IObjectDocument)> GetWithDocumentAsync(UserProfileId id)
+    public async Task<(UserProfile, IObjectDocument)> GetWithDocumentAsync(UserProfileId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), "UserDataStore", null);
         var obj = Create(document);
@@ -320,9 +323,10 @@ public partial class UserProfileFactory : IUserProfileFactory
     /// Gets the first UserProfile aggregate with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching UserProfile instance, or null if not found.</returns>
     [Obsolete("Use IUserProfileRepository.GetFirstByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<UserProfile?> GetFirstByDocumentTag(string tag)
+    public async Task<UserProfile?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag, "UserDataStore", "UserDataStore");
         if (document == null)
@@ -338,9 +342,10 @@ public partial class UserProfileFactory : IUserProfileFactory
     /// Gets all UserProfile aggregates with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of all matching UserProfile instances.</returns>
     [Obsolete("Use IUserProfileRepository.GetAllByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<IEnumerable<UserProfile>> GetAllByDocumentTag(string tag)
+    public async Task<IEnumerable<UserProfile>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag, "UserDataStore", "UserDataStore"));
         var items = new List<UserProfile>();

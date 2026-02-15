@@ -18,6 +18,7 @@ namespace TaskFlow.Domain.Aggregates;
 
 [Aggregate]
 [UseUpcaster<ProjectCompletedUpcast>]
+[RetentionPolicy(MaxAge = "2y", MaxEvents = 5000, Action = RetentionAction.Migrate, KeepRecentEvents = 100)]
 public partial class Project : Aggregate
 {
     public Project(IEventStream stream) : base(stream)

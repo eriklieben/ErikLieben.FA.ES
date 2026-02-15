@@ -119,6 +119,7 @@ public class AnalyzeProjections
                     .Select(r => Path.GetRelativePath(solutionRootPath, r.SyntaxTree.FilePath))
                     .ToList(),
                 ExternalCheckpoint = HasExternalCheckpoint(classSymbol),
+                SchemaVersion = AttributeExtractor.ExtractProjectionVersionAttribute(classSymbol),
                 IsRoutedProjection = true,
                 DestinationType = destinationTypeSymbols.Keys.FirstOrDefault(),
                 DestinationPathTemplates = destinationPathTemplates,
@@ -134,7 +135,8 @@ public class AnalyzeProjections
                 FileLocations = classSymbol!.DeclaringSyntaxReferences
                     .Select(r => Path.GetRelativePath(solutionRootPath, r.SyntaxTree.FilePath))
                     .ToList(),
-                ExternalCheckpoint = HasExternalCheckpoint(classSymbol)
+                ExternalCheckpoint = HasExternalCheckpoint(classSymbol),
+                SchemaVersion = AttributeExtractor.ExtractProjectionVersionAttribute(classSymbol)
             };
         }
 

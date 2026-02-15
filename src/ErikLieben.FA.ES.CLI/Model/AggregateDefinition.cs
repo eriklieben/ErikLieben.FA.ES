@@ -51,6 +51,12 @@ public record AggregateDefinition
     public bool HasUserDefinedRepositoryPartial { get; set; }
 
     /// <summary>
+    /// Indicates whether the user has defined their own ProcessSnapshot method override.
+    /// When true, the code generator will not emit a default ProcessSnapshot implementation.
+    /// </summary>
+    public bool HasUserDefinedProcessSnapshot { get; set; }
+
+    /// <summary>
     /// Settings extracted from [EventStreamType] attribute if present.
     /// </summary>
     public EventStreamTypeAttributeData? EventStreamTypeAttribute { get; set; }

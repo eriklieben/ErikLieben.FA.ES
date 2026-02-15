@@ -17,6 +17,7 @@ namespace TaskFlow.Domain.Projections;
 /// Demonstrates aggregating statistics from multiple event streams
 /// </summary>
 [ProjectionWithExternalCheckpoint]
+[ProjectionVersion(1)]
 [BlobJsonProjection("projections", Connection = "BlobStorage")]
 public partial class ProjectDashboard : Projection
 {

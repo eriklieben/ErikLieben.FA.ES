@@ -92,12 +92,42 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="projectionStatus">
+          <th mat-header-cell *matHeaderCellDef>Projection Status</th>
+          <td mat-cell *matCellDef="let projection">
+            <mat-chip [class]="'projection-status-' + projection.projectionStatus.toLowerCase()"
+                      [matTooltip]="getProjectionStatusTooltip(projection.projectionStatus)">
+              <mat-icon class="status-icon">
+                @switch (projection.projectionStatus.toLowerCase()) {
+                  @case ('active') { check_circle }
+                  @case ('rebuilding') { sync }
+                  @case ('disabled') { block }
+                  @default { help }
+                }
+              </mat-icon>
+              {{ projection.projectionStatus }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <th mat-header-cell *matHeaderCellDef>Persistence</th>
           <td mat-cell *matCellDef="let projection">
             <mat-chip [class]="'status-' + projection.status">
               {{ projection.status }}
             </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="schemaVersion">
+          <th mat-header-cell *matHeaderCellDef>Schema Version</th>
+          <td mat-cell *matCellDef="let projection">
+            <span class="schema-version" [class.needs-upgrade]="projection.needsSchemaUpgrade">
+              v{{ projection.schemaVersion }}
+              @if (projection.needsSchemaUpgrade) {
+                <mat-icon class="warning-icon" matTooltip="Schema upgrade needed! Code version: v{{ projection.codeSchemaVersion }}">warning</mat-icon>
+              }
+            </span>
           </td>
         </ng-container>
 

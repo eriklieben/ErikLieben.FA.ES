@@ -17,6 +17,12 @@ public record ProjectionDefinition
 
     public bool ExternalCheckpoint { get; set; }
 
+    /// <summary>
+    /// Gets or sets the schema version for the projection (from [ProjectionVersion] attribute).
+    /// Defaults to 1 if not specified.
+    /// </summary>
+    public int SchemaVersion { get; set; } = 1;
+
     public BlobProjectionDefinition? BlobProjection { get; set; }
 
     public CosmosDbProjectionDefinition? CosmosDbProjection { get; set; }

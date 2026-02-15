@@ -382,8 +382,9 @@ public partial class ProjectFactory : IProjectFactory
     /// Creates a new Project aggregate with the specified identifier.
     /// </summary>
     /// <param name="id">The identifier for the new aggregate.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A new Project instance.</returns>
-    public async Task<Project> CreateAsync(ProjectId id)
+    public async Task<Project> CreateAsync(ProjectId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), null, null);
 
@@ -416,9 +417,10 @@ public partial class ProjectFactory : IProjectFactory
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
     /// <param name="upToVersion">Optional maximum event version to fold. If null, loads to current state.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The loaded Project instance.</returns>
     [Obsolete("Use IProjectRepository.GetByIdAsync instead. This method will be removed in a future version.")]
-    public async Task<Project> GetAsync(ProjectId id, int? upToVersion = null)
+    public async Task<Project> GetAsync(ProjectId id, int? upToVersion = null, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), null, null);
 
@@ -444,9 +446,10 @@ public partial class ProjectFactory : IProjectFactory
     /// Gets an existing Project aggregate by identifier along with its document.
     /// </summary>
     /// <param name="id">The identifier of the aggregate to retrieve.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A tuple containing the loaded Project instance and its document.</returns>
     [Obsolete("Use IProjectRepository.GetByIdWithDocumentAsync instead. This method will be removed in a future version.")]
-    public async Task<(Project, IObjectDocument)> GetWithDocumentAsync(ProjectId id)
+    public async Task<(Project, IObjectDocument)> GetWithDocumentAsync(ProjectId id, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), null, null);
         var obj = Create(document);
@@ -458,9 +461,10 @@ public partial class ProjectFactory : IProjectFactory
     /// Gets the first Project aggregate with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The first matching Project instance, or null if not found.</returns>
     [Obsolete("Use IProjectRepository.GetFirstByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<Project?> GetFirstByDocumentTag(string tag)
+    public async Task<Project?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag);
         if (document == null)
@@ -476,9 +480,10 @@ public partial class ProjectFactory : IProjectFactory
     /// Gets all Project aggregates with the specified document tag.
     /// </summary>
     /// <param name="tag">The document tag to search for.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A collection of all matching Project instances.</returns>
     [Obsolete("Use IProjectRepository.GetAllByDocumentTagAsync instead. This method will be removed in a future version.")]
-    public async Task<IEnumerable<Project>> GetAllByDocumentTag(string tag)
+    public async Task<IEnumerable<Project>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default)
     {
         var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag));
         var items = new List<Project>();

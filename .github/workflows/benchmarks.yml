@@ -1,0 +1,155 @@
+name: Benchmarks
+
+on:
+  # Manual trigger only - benchmarks are expensive, run on-demand
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: 'Benchmark filter pattern (e.g., "*Json*", "*Session*")'
+        required: false
+        default: '*'
+      category:
+        description: 'Benchmark category to run'
+        required: false
+        type: choice
+        options:
+          - All
+          - Core
+          - Serialization
+          - Folding
+          - Registry
+          - Upcasting
+          - Parsing
+          - Storage
+        default: 'All'
+      config:
+        description: 'Benchmark configuration'
+        required: false
+        type: choice
+        options:
+          - quick
+          - ci
+          - default
+        default: 'quick'
+
+  # Optional: Run on schedule (monthly on 1st at midnight UTC)
+  # Uncomment if you want periodic benchmark tracking
+  # schedule:
+  #   - cron: '0 0 1 * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore benchmarks/ErikLieben.FA.ES.Benchmarks/ErikLieben.FA.ES.Benchmarks.csproj
+
+      - name: Build
+        run: dotnet build benchmarks/ErikLieben.FA.ES.Benchmarks/ErikLieben.FA.ES.Benchmarks.csproj -c Release --no-restore
+
+      - name: Determine filter
+        id: filter
+        run: |
+          FILTER="${{ github.event.inputs.filter || '*' }}"
+          CATEGORY="${{ github.event.inputs.category || 'All' }}"
+
+          if [ "$CATEGORY" != "All" ]; then
+            case $CATEGORY in
+              Core)          FILTER="*EventStream*" ;;
+              Serialization) FILTER="*Json*" ;;
+              Folding)       FILTER="*Fold*" ;;
+              Registry)      FILTER="*Registry*" ;;
+              Upcasting)     FILTER="*Upcaster*" ;;
+              Parsing)       FILTER="*Token*" ;;
+              Storage)       FILTER="*DataStore*" ;;
+            esac
+          fi
+
+          echo "filter=$FILTER" >> $GITHUB_OUTPUT
+
+      - name: Run Benchmarks
+        run: |
+          cd benchmarks/ErikLieben.FA.ES.Benchmarks
+          CONFIG="${{ github.event.inputs.config || 'quick' }}"
+          dotnet run -c Release -- --filter "${{ steps.filter.outputs.filter }}" --config "$CONFIG"
+        timeout-minutes: 60
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_number }}
+          path: |
+            benchmarks/ErikLieben.FA.ES.Benchmarks/BenchmarkDotNet.Artifacts/results/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        id: benchmark-cache
+        with:
+          path: ./benchmark-data
+          key: benchmark-data-${{ runner.os }}-${{ github.ref_name }}
+          restore-keys: |
+            benchmark-data-${{ runner.os }}-
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: ErikLieben.FA.ES Benchmarks
+          tool: 'benchmarkdotnet'
+          output-file-path: benchmarks/ErikLieben.FA.ES.Benchmarks/BenchmarkDotNet.Artifacts/results/*.md
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+          alert-comment-cc-users: '@eriklieben'
+
+      - name: Create benchmark summary
+        if: always()
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Filter:** ${{ steps.filter.outputs.filter }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Include markdown results if available
+          if ls benchmarks/ErikLieben.FA.ES.Benchmarks/BenchmarkDotNet.Artifacts/results/*-github.md 1> /dev/null 2>&1; then
+            echo "### Results" >> $GITHUB_STEP_SUMMARY
+            for file in benchmarks/ErikLieben.FA.ES.Benchmarks/BenchmarkDotNet.Artifacts/results/*-github.md; do
+              cat "$file" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            done
+          fi

@@ -13,6 +13,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SignalRService } from '../../core/services/signalr.service';
 import { AdminApiService } from '../../core/services/admin-api.service';
 import { ProjectionViewerDialogComponent } from './projection-viewer-dialog.component';
+import { ProjectionStatus } from '../../core/contracts/admin.contracts';
 
 @Component({
   selector: 'app-projections',
@@ -41,10 +42,10 @@ export class ProjectionsComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(true);
   readonly loadError = signal<string | null>(null);
 
-  readonly projectionColumns = ['name', 'storageType', 'status', 'lastUpdate', 'lastGenerationDuration', 'checkpoint', 'actions'];
+  readonly projectionColumns = ['name', 'storageType', 'projectionStatus', 'status', 'schemaVersion', 'lastUpdate', 'checkpoint', 'actions'];
 
   // Store raw projection data with timestamps
-  private rawProjections: Array<{name: string, storageType: string, status: string, lastUpdate: string | null, checkpoint: number, checkpointFingerprint: string, lastGenerationDurationMs: number | null}> = [];
+  private rawProjections: ProjectionStatus[] = [];
   private updateTimerSubscription?: Subscription;
 
   ngOnInit() {
@@ -70,8 +71,12 @@ export class ProjectionsComponent implements OnInit, OnDestroy {
         name: p.name,
         storageType: p.storageType || 'Blob',
         status: p.status,
+        projectionStatus: p.projectionStatus || 'Active',
+        schemaVersion: p.schemaVersion ?? 1,
+        codeSchemaVersion: p.codeSchemaVersion ?? 1,
+        needsSchemaUpgrade: p.needsSchemaUpgrade ?? false,
         lastUpdate: p.lastUpdate ? this.formatLastUpdate(p.lastUpdate) : 'Never persisted',
-        lastGenerationDuration: this.formatDuration(p.lastGenerationDurationMs),
+        lastGenerationDuration: this.formatDuration(p.lastGenerationDurationMs ?? null),
         checkpoint: p.checkpointFingerprint ? p.checkpointFingerprint.substring(0, 12) + '...' : p.checkpoint.toString(),
         isPersisted: !!p.lastUpdate
       }));
@@ -94,15 +99,7 @@ export class ProjectionsComponent implements OnInit, OnDestroy {
         console.log('Projection statuses:', event.projections.map(p => `${p.name}: ${p.status}`));
 
         // Update projection data from SignalR event
-        this.rawProjections = event.projections.map(p => ({
-          name: p.name,
-          storageType: p.storageType || 'Blob',
-          status: p.status,
-          lastUpdate: p.lastUpdate,
-          checkpoint: p.checkpoint,
-          checkpointFingerprint: p.checkpointFingerprint,
-          lastGenerationDurationMs: p.lastGenerationDurationMs
-        }));
+        this.rawProjections = event.projections as ProjectionStatus[];
 
         console.log('Updated rawProjections:', this.rawProjections);
 
@@ -123,24 +120,11 @@ export class ProjectionsComponent implements OnInit, OnDestroy {
       next: (projections) => {
         console.log('Loaded projections from API:', projections);
 
-        // Store raw data (add default for lastGenerationDurationMs if not present)
-        this.rawProjections = projections.map(p => ({
-          ...p,
-          storageType: p.storageType || 'Blob',
-          lastGenerationDurationMs: p.lastGenerationDurationMs ?? null
-        }));
+        // Store raw data
+        this.rawProjections = projections;
 
-        // Transform to match the component's expected format
-        const formatted = projections.map(p => ({
-          name: p.name,
-          storageType: p.storageType || 'Blob',
-          status: p.status,
-          lastUpdate: p.lastUpdate ? this.formatLastUpdate(p.lastUpdate) : 'Never persisted',
-          lastGenerationDuration: this.formatDuration(p.lastGenerationDurationMs ?? null),
-          checkpoint: p.checkpointFingerprint ? p.checkpointFingerprint.substring(0, 12) + '...' : p.checkpoint.toString(),
-          isPersisted: !!p.lastUpdate
-        }));
-        this.projections.set(formatted);
+        // Update the displayed projections
+        this.updateProjectionTimes();
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -175,6 +159,19 @@ export class ProjectionsComponent implements OnInit, OnDestroy {
         projectionName: name
       }
     });
+  }
+
+  getProjectionStatusTooltip(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'Projection is active and processing events normally';
+      case 'rebuilding':
+        return 'Projection is being rebuilt - inline updates are skipped';
+      case 'disabled':
+        return 'Projection is disabled - all updates are skipped';
+      default:
+        return 'Unknown status';
+    }
   }
 
   rebuildProjection(name: string) {

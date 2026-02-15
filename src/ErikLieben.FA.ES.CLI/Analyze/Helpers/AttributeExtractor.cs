@@ -138,6 +138,28 @@ public static class AttributeExtractor
     }
 
     /// <summary>
+    /// Extracts the schema version from [ProjectionVersion] attribute on a projection type.
+    /// Returns 1 (default) if the attribute is not present.
+    /// </summary>
+    public static int ExtractProjectionVersionAttribute(INamedTypeSymbol projectionSymbol)
+    {
+        var attribute = projectionSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == "ProjectionVersionAttribute");
+
+        if (attribute == null)
+            return 1; // Default schema version
+
+        // [ProjectionVersion(2)] - single int constructor argument
+        if (attribute.ConstructorArguments.Length == 1 &&
+            attribute.ConstructorArguments[0].Value is int version)
+        {
+            return version;
+        }
+
+        return 1; // Default if parsing fails
+    }
+
+    /// <summary>
     /// Extracts [UseUpcaster&lt;T&gt;] attributes from an aggregate class.
     /// Returns a list of upcaster definitions to register.
     /// </summary>

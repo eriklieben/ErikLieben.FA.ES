@@ -536,6 +536,145 @@ namespace App {
         }
     }
 
+    public class ExtractProjectionVersionAttribute
+    {
+        [Fact]
+        public void Should_return_1_when_attribute_not_present()
+        {
+            // Arrange
+            var code = @"
+namespace App { public class TestProjection { } }
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_extract_version_from_constructor_argument()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class ProjectionVersionAttribute : System.Attribute {
+        public ProjectionVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.ProjectionVersion(2)]
+    public class TestProjection { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(2, result);
+        }
+
+        [Fact]
+        public void Should_extract_version_3()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class ProjectionVersionAttribute : System.Attribute {
+        public ProjectionVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.ProjectionVersion(3)]
+    public class TestProjection { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(3, result);
+        }
+
+        [Fact]
+        public void Should_return_1_when_attribute_has_no_constructor_arguments()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class ProjectionVersionAttribute : System.Attribute {
+        public ProjectionVersionAttribute() { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.ProjectionVersion]
+    public class TestProjection { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_return_1_when_constructor_argument_is_not_int()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class ProjectionVersionAttribute : System.Attribute {
+        public ProjectionVersionAttribute(string version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.ProjectionVersion(""v2"")]
+    public class TestProjection { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public void Should_work_with_partial_projection_class()
+        {
+            // Arrange
+            var code = @"
+namespace ErikLieben.FA.ES.Attributes {
+    public class ProjectionVersionAttribute : System.Attribute {
+        public ProjectionVersionAttribute(int version) { }
+    }
+}
+namespace App {
+    [ErikLieben.FA.ES.Attributes.ProjectionVersion(5)]
+    public partial class TestProjection { }
+}
+";
+            var symbol = GetTypeSymbol(code);
+
+            // Act
+            var result = AttributeExtractor.ExtractProjectionVersionAttribute(symbol);
+
+            // Assert
+            Assert.Equal(5, result);
+        }
+    }
+
     private static INamedTypeSymbol GetTypeSymbol(string code)
     {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);

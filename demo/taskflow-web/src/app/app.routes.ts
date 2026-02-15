@@ -55,6 +55,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/stream-migration/stream-migration.component').then(m => m.StreamMigrationComponent)
   },
   {
+    path: 'benchmarks',
+    loadComponent: () => import('./features/benchmarks/benchmarks.component').then(m => m.BenchmarksComponent)
+  },
+  {
     path: 'event-versioning',
     loadComponent: () => import('./features/event-versioning/event-versioning.component').then(m => m.EventVersioningComponent)
   },

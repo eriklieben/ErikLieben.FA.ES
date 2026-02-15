@@ -117,6 +117,9 @@ public class AnalyzeAggregates
 
         // Detect if user has defined their own partial repository
         declaration.HasUserDefinedRepositoryPartial = DetectUserDefinedRepositoryPartial(declaration);
+
+        // Detect if user has defined their own ProcessSnapshot override
+        declaration.HasUserDefinedProcessSnapshot = DetectUserDefinedProcessSnapshot(typeSymbol);
     }
 
 
@@ -264,6 +267,33 @@ public class AnalyzeAggregates
             if (hasUserDefinedPartial)
             {
                 AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial repository for {aggregate.IdentifierName}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool DetectUserDefinedProcessSnapshot(INamedTypeSymbol typeSymbol)
+    {
+        // Look for ProcessSnapshot method in the aggregate class
+        var processSnapshotMethods = typeSymbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => m.Name == "ProcessSnapshot" && m.IsOverride);
+
+        foreach (var method in processSnapshotMethods)
+        {
+            // Check if it's defined in a non-generated file
+            var hasUserDefinedMethod = method.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedMethod)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined ProcessSnapshot for {typeSymbol.Name}");
                 return true;
             }
         }

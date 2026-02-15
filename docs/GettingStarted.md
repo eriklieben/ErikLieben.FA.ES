@@ -162,6 +162,7 @@ This generates:
 // Program.cs
 using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.AzureStorage;
+using ErikLieben.FA.ES.Builder;
 using MyApp;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -169,18 +170,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Azure Storage
 builder.Services.AddAzureClients(clients =>
 {
-    clients.AddBlobServiceClient(builder.Configuration.GetConnectionString("Storage")!);
+    clients.AddBlobServiceClient(builder.Configuration.GetConnectionString("Storage")!)
+        .WithName("Store");
 });
 
-// Configure Event Store
-builder.Services.ConfigureBlobEventStore(new EventStreamBlobSettings("Default", autoCreateContainer: true));
-builder.Services.ConfigureEventStore(new EventStreamDefaultTypeSettings("blob"));
+// Configure Event Store using fluent builder (recommended)
+builder.Services.AddFaes(faes => faes
+    .UseDefaultStorage("blob")
+    .UseBlobStorage(new EventStreamBlobSettings("Store", autoCreateContainer: true))
+);
 
 // Register your domain (generated extension method)
 builder.Services.ConfigureMyAppFactory();
 
 var app = builder.Build();
 ```
+
+> **Note**: The classic configuration approach using `ConfigureBlobEventStore()` and `ConfigureEventStore()` is still supported. See [Configuration](Configuration.md) for details.
 
 ### Step 5: Use the Aggregate
 

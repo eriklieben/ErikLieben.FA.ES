@@ -20,6 +20,12 @@ import {
   StorageConnectionSchema,
   EventUpcastingDemonstration,
   EventUpcastingDemonstrationSchema,
+  AuditLogResponse,
+  AuditLogResponseSchema,
+  ReportingIndexResponse,
+  ReportingIndexResponseSchema,
+  ProjectionStatus,
+  ProjectionStatusSchema,
 } from '../contracts/admin.contracts';
 
 @Injectable({
@@ -103,8 +109,10 @@ export class AdminApiService {
   }
 
   // Projection management
-  getProjectionStatus(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/projections`);
+  getProjectionStatus(): Observable<ProjectionStatus[]> {
+    return this.http.get<ProjectionStatus[]>(`${this.baseUrl}/projections`).pipe(
+      map(response => response.map(p => ProjectionStatusSchema.parse(p)))
+    );
   }
 
   getProjectionJson(name: string): Observable<string> {
@@ -133,6 +141,20 @@ export class AdminApiService {
   // Storage Provider Status
   getStorageProviderStatus(): Observable<StorageProviderStatus> {
     return this.http.get<StorageProviderStatus>(`${this.baseUrl}/storage/providers`);
+  }
+
+  // Audit Log
+  getWorkItemAuditLog(workItemId: string): Observable<AuditLogResponse> {
+    return this.http.get(`${this.baseUrl}/audit-log/workitem/${workItemId}`).pipe(
+      map(response => AuditLogResponseSchema.parse(response))
+    );
+  }
+
+  // Reporting Index
+  getWorkItemReportingIndex(): Observable<ReportingIndexResponse> {
+    return this.http.get(`${this.baseUrl}/reporting-index`).pipe(
+      map(response => ReportingIndexResponseSchema.parse(response))
+    );
   }
 }
 

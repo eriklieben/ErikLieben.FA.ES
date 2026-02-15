@@ -15,6 +15,12 @@ using LocalizedTitle = TaskFlow.Domain.ValueObjects.WorkItem.LocalizedTitle;
 namespace TaskFlow.Domain.Aggregates;
 
 [Aggregate]
+[SnapshotPolicy(
+    Every = 50,
+    OnEvents = [typeof(WorkCompleted)],
+    KeepSnapshots = 3,
+    MaxAge = "30d",
+    MinEventsBeforeSnapshot = 10)]
 public partial class WorkItem : Aggregate
 {
     public WorkItem(IEventStream stream) : base(stream)
@@ -570,11 +576,10 @@ public partial class WorkItem : Aggregate
 
     /// <summary>
     /// Restores the aggregate state from a snapshot.
-    /// This partial method is called by the generated ProcessSnapshot method
-    /// when loading an aggregate that has a snapshot.
+    /// This override is called by the base Aggregate class when loading an aggregate that has a snapshot.
     /// </summary>
     /// <param name="snapshot">The snapshot object containing the saved state.</param>
-    partial void ProcessSnapshotImpl(object snapshot)
+    public override void ProcessSnapshot(object snapshot)
     {
         if (snapshot is not WorkItemSnapshot workItemSnapshot)
         {

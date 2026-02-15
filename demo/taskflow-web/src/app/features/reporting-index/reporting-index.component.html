@@ -1,0 +1,214 @@
+<div class="reporting-index-container">
+  <mat-card class="reporting-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>table_chart</mat-icon>
+        Work Item Reporting Index
+      </mat-card-title>
+      <mat-card-subtitle>
+        Multi-row Azure Table Storage projection for efficient reporting queries
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Storage Info Banner -->
+      <div class="storage-info">
+        <mat-icon>table_rows</mat-icon>
+        <span>Data stored in Azure Table Storage. Table: <code>{{ tableName() || 'workitemindex' }}</code></span>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>filter_list</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Efficient Filtering</span>
+            <span class="feature-desc">Filter by project, status, priority using PartitionKey/RowKey</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>sort</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Server-side Sorting</span>
+            <span class="feature-desc">Sort by any column without loading all data</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>update</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Individual Updates</span>
+            <span class="feature-desc">Update single rows without affecting others</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>attach_money</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Cost Effective</span>
+            <span class="feature-desc">Azure Table Storage is very cost-effective for large datasets</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="storage-chips">
+        <mat-chip-set>
+          <mat-chip>
+            <mat-icon>storage</mat-icon>
+            Storage: {{ storageType() || 'Table' }}
+          </mat-chip>
+          <mat-chip>
+            <mat-icon>table_rows</mat-icon>
+            Table: {{ tableName() || 'workitemindex' }}
+          </mat-chip>
+          <mat-chip>
+            <mat-icon>numbers</mat-icon>
+            Total Rows: {{ items().length }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="reporting-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list_alt</mat-icon>
+        Work Items
+      </mat-card-title>
+      <mat-card-subtitle>Real-time data from the workitemindex table</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span>Loading table data...</span>
+        </div>
+      } @else if (error()) {
+        <div class="error-container">
+          <mat-icon>error</mat-icon>
+          <span>{{ error() }}</span>
+          <span class="hint">Make sure you have seeded demo data first.</span>
+          <a mat-raised-button color="primary" routerLink="/demo-data">
+            <mat-icon>data_object</mat-icon>
+            Go to Demo Data
+          </a>
+        </div>
+      } @else if (items().length === 0) {
+        <div class="empty-container">
+          <mat-icon>inbox</mat-icon>
+          <h3>No Work Items</h3>
+          <p>No work items found in the reporting index.</p>
+          <p class="hint">Generate demo data to populate the Table Storage projection.</p>
+          <a mat-raised-button color="primary" routerLink="/demo-data">
+            <mat-icon>data_object</mat-icon>
+            Generate Demo Data
+          </a>
+        </div>
+      } @else {
+        <div class="filter-section">
+          <mat-form-field appearance="outline">
+            <mat-label>Filter by Project</mat-label>
+            <mat-select [value]="selectedProject()" (selectionChange)="filterByProject($event.value)">
+              <mat-option [value]="null">All Projects</mat-option>
+              @for (project of projects(); track project) {
+                <mat-option [value]="project">{{ project }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="status-summary">
+            <mat-chip class="status-planned">
+              <mat-icon>schedule</mat-icon>
+              Planned: {{ statusCounts().planned }}
+            </mat-chip>
+            <mat-chip class="status-inprogress">
+              <mat-icon>play_circle</mat-icon>
+              In Progress: {{ statusCounts().inProgress }}
+            </mat-chip>
+            <mat-chip class="status-completed">
+              <mat-icon>check_circle</mat-icon>
+              Completed: {{ statusCounts().completed }}
+            </mat-chip>
+          </div>
+
+          <button mat-stroked-button (click)="loadData()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <table mat-table [dataSource]="filteredItems()" class="data-table">
+          <ng-container matColumnDef="projectId">
+            <th mat-header-cell *matHeaderCellDef>Project (PartitionKey)</th>
+            <td mat-cell *matCellDef="let item">
+              <code class="partition-key">{{ truncate(item.partitionKey, 12) }}</code>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="workItemId">
+            <th mat-header-cell *matHeaderCellDef>Work Item (RowKey)</th>
+            <td mat-cell *matCellDef="let item">
+              <a [routerLink]="['/workitems', item.rowKey]" class="id-link">
+                {{ truncate(item.rowKey, 12) }}
+              </a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Title</th>
+            <td mat-cell *matCellDef="let item" [matTooltip]="item.title">
+              {{ truncate(item.title, 30) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let item">
+              <mat-chip [class]="getStatusClass(item.status)">
+                {{ item.status || '-' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="priority-badge" [class]="getPriorityClass(item.priority)">
+                {{ item.priority || '-' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="assignedTo">
+            <th mat-header-cell *matHeaderCellDef>Assigned To</th>
+            <td mat-cell *matCellDef="let item">
+              {{ item.assignedTo || 'Unassigned' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="lastUpdatedAt">
+            <th mat-header-cell *matHeaderCellDef>Last Updated</th>
+            <td mat-cell *matCellDef="let item">
+              {{ formatDate(item.lastUpdatedAt) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let item">
+              <button mat-icon-button matTooltip="View Audit Log" [routerLink]="['/audit-log']" [queryParams]="{workItemId: item.rowKey}">
+                <mat-icon>history</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="table-footer">
+          <span class="count">Showing {{ filteredItems().length }} of {{ items().length }} work items</span>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,3 +1,4 @@
+using ErikLieben.FA.ES.Observability;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +55,11 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    // ErikLieben.FA.ES event sourcing metrics
+                    .AddMeter(FaesInstrumentation.Meters.Core)
+                    .AddMeter(FaesInstrumentation.Meters.Storage)
+                    .AddMeter(FaesInstrumentation.Meters.Projections);
             })
             .WithTracing(tracing =>
             {
@@ -62,7 +67,11 @@ public static class Extensions
                     .AddAspNetCoreInstrumentation()
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    // ErikLieben.FA.ES event sourcing tracing
+                    .AddSource(FaesInstrumentation.ActivitySources.Core)
+                    .AddSource(FaesInstrumentation.ActivitySources.Storage)
+                    .AddSource(FaesInstrumentation.ActivitySources.Projections);
             });
 
         builder.AddOpenTelemetryExporters();

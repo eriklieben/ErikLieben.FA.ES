@@ -14,6 +14,7 @@ using TaskFlow.Domain.ValueObjects.WorkItem;
 using TaskFlow.Domain.ValueObjects.Sprint;
 using TaskFlow.Domain.Projections;
 using TaskFlow.Api.Helpers;
+using ErikLieben.FA.ES.Projections;
 
 namespace TaskFlow.Api.Endpoints;
 
@@ -105,6 +106,10 @@ public static class AdminEndpoints
             .WithName("RebuildProjection")
             .WithSummary("Rebuild a projection by updating it to the latest version");
 
+        group.MapPost("/projections/{name}/status", SetProjectionStatusEndpoint)
+            .WithName("SetProjectionStatus")
+            .WithSummary("Set projection status (Active, Rebuilding, or Disabled)");
+
         group.MapPost("/projections/{name}/reset", ResetProjection)
             .WithName("ResetProjection")
             .WithSummary("Clear projection checkpoint and rebuild from scratch");
@@ -120,6 +125,15 @@ public static class AdminEndpoints
         group.MapGet("/storage/providers", GetStorageProviderStatus)
             .WithName("GetStorageProviderStatus")
             .WithSummary("Get which storage providers are configured and available");
+
+        // Benchmark results
+        group.MapGet("/benchmarks", ListBenchmarkFiles)
+            .WithName("ListBenchmarkFiles")
+            .WithSummary("List available benchmark result files");
+
+        group.MapGet("/benchmarks/{filename}", GetBenchmarkFile)
+            .WithName("GetBenchmarkFile")
+            .WithSummary("Get a specific benchmark result file by name");
 
         return group;
     }
@@ -2091,7 +2105,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = activeWorkItems.CheckpointFingerprint,
                 eventCount = activeWorkItems.WorkItems.Count,
                 pageCount = (int?)null,
-                isPersisted = activeWorkItemsLastModified.HasValue
+                isPersisted = activeWorkItemsLastModified.HasValue,
+                projectionStatus = activeWorkItems.Status.ToString(),
+                schemaVersion = activeWorkItems.SchemaVersion,
+                codeSchemaVersion = activeWorkItems.CodeSchemaVersion,
+                needsSchemaUpgrade = activeWorkItems.NeedsSchemaUpgrade
             },
             new
             {
@@ -2103,7 +2121,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = projectDashboard.CheckpointFingerprint,
                 eventCount = projectDashboard.Projects.Count,
                 pageCount = (int?)null,
-                isPersisted = projectDashboardLastModified.HasValue
+                isPersisted = projectDashboardLastModified.HasValue,
+                projectionStatus = projectDashboard.Status.ToString(),
+                schemaVersion = projectDashboard.SchemaVersion,
+                codeSchemaVersion = projectDashboard.CodeSchemaVersion,
+                needsSchemaUpgrade = projectDashboard.NeedsSchemaUpgrade
             },
             new
             {
@@ -2115,7 +2137,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = userProfiles.CheckpointFingerprint,
                 eventCount = userProfiles.TotalUsers,
                 pageCount = (int?)userProfiles.TotalPages,
-                isPersisted = userProfilesLastModified.HasValue
+                isPersisted = userProfilesLastModified.HasValue,
+                projectionStatus = userProfiles.Status.ToString(),
+                schemaVersion = userProfiles.SchemaVersion,
+                codeSchemaVersion = userProfiles.CodeSchemaVersion,
+                needsSchemaUpgrade = userProfiles.NeedsSchemaUpgrade
             },
             new
             {
@@ -2127,7 +2153,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = projectKanbanBoard.CheckpointFingerprint,
                 eventCount = projectKanbanBoard.Projects.Count,
                 pageCount = (int?)projectKanbanBoard.Registry.Destinations.Count,
-                isPersisted = projectKanbanBoardLastModified.HasValue
+                isPersisted = projectKanbanBoardLastModified.HasValue,
+                projectionStatus = projectKanbanBoard.Status.ToString(),
+                schemaVersion = projectKanbanBoard.SchemaVersion,
+                codeSchemaVersion = projectKanbanBoard.CodeSchemaVersion,
+                needsSchemaUpgrade = projectKanbanBoard.NeedsSchemaUpgrade
             },
             new
             {
@@ -2139,7 +2169,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = eventUpcastingDemonstration.CheckpointFingerprint,
                 eventCount = eventUpcastingDemonstration.DemoProjects.Count,
                 pageCount = (int?)null,
-                isPersisted = eventUpcastingDemonstrationLastModified.HasValue
+                isPersisted = eventUpcastingDemonstrationLastModified.HasValue,
+                projectionStatus = eventUpcastingDemonstration.Status.ToString(),
+                schemaVersion = eventUpcastingDemonstration.SchemaVersion,
+                codeSchemaVersion = eventUpcastingDemonstration.CodeSchemaVersion,
+                needsSchemaUpgrade = eventUpcastingDemonstration.NeedsSchemaUpgrade
             },
             new
             {
@@ -2151,7 +2185,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = epicSummary?.CheckpointFingerprint ?? "",
                 eventCount = epicSummary?.Epics.Count ?? 0,
                 pageCount = (int?)null,
-                isPersisted = epicSummaryLastModified.HasValue
+                isPersisted = epicSummaryLastModified.HasValue,
+                projectionStatus = epicSummary?.Status.ToString() ?? "Unknown",
+                schemaVersion = epicSummary?.SchemaVersion ?? 0,
+                codeSchemaVersion = epicSummary?.CodeSchemaVersion ?? 0,
+                needsSchemaUpgrade = epicSummary?.NeedsSchemaUpgrade ?? false
             },
             new
             {
@@ -2163,7 +2201,11 @@ public static class AdminEndpoints
                 checkpointFingerprint = sprintDashboard?.CheckpointFingerprint ?? "",
                 eventCount = sprintDashboard?.Sprints.Count ?? 0,
                 pageCount = (int?)null,
-                isPersisted = sprintDashboardExists
+                isPersisted = sprintDashboardExists,
+                projectionStatus = sprintDashboard?.Status.ToString() ?? "Unknown",
+                schemaVersion = sprintDashboard?.SchemaVersion ?? 0,
+                codeSchemaVersion = sprintDashboard?.CodeSchemaVersion ?? 0,
+                needsSchemaUpgrade = sprintDashboard?.NeedsSchemaUpgrade ?? false
             }
         };
 
@@ -2296,6 +2338,63 @@ public static class AdminEndpoints
 
                 default:
                     return Results.NotFound(new { message = $"Projection '{name}' not found" });
+        }
+    }
+
+    /// <summary>
+    /// Request body for setting projection status.
+    /// </summary>
+    public record SetProjectionStatusRequest(string Status);
+
+    private static async Task<IResult> SetProjectionStatusEndpoint(
+        string name,
+        [FromBody] SetProjectionStatusRequest request,
+        [FromServices] IServiceProvider serviceProvider)
+    {
+        if (!Enum.TryParse<ProjectionStatus>(request.Status, ignoreCase: true, out var status))
+        {
+            return Results.BadRequest(new { message = $"Invalid status '{request.Status}'. Valid values are: Active, Rebuilding, Disabled" });
+        }
+
+        try
+        {
+            switch (name.ToLowerInvariant())
+            {
+                case "activeworkitems":
+                    var activeWorkItemsFactory = serviceProvider.GetRequiredService<TaskFlow.Domain.Projections.ActiveWorkItemsFactory>();
+                    await activeWorkItemsFactory.SetStatusAsync(status);
+                    return Results.Ok(new { success = true, message = $"Projection '{name}' status set to {status}", status = status.ToString() });
+
+                case "projectdashboard":
+                    var projectDashboardFactory = serviceProvider.GetRequiredService<TaskFlow.Domain.Projections.ProjectDashboardFactory>();
+                    await projectDashboardFactory.SetStatusAsync(status);
+                    return Results.Ok(new { success = true, message = $"Projection '{name}' status set to {status}", status = status.ToString() });
+
+                case "userprofiles":
+                    var userProfilesFactory = serviceProvider.GetRequiredService<TaskFlow.Domain.Projections.UserProfilesFactory>();
+                    await userProfilesFactory.SetStatusAsync(status);
+                    return Results.Ok(new { success = true, message = $"Projection '{name}' status set to {status}", status = status.ToString() });
+
+                case "eventupcastingdemonstration":
+                    var eventUpcastingFactory = serviceProvider.GetRequiredService<TaskFlow.Domain.Projections.EventUpcastingDemonstrationFactory>();
+                    await eventUpcastingFactory.SetStatusAsync(status);
+                    return Results.Ok(new { success = true, message = $"Projection '{name}' status set to {status}", status = status.ToString() });
+
+                case "projectkanbanboard":
+                    var kanbanFactory = serviceProvider.GetRequiredService<TaskFlow.Domain.Projections.ProjectKanbanBoardFactory>();
+                    await kanbanFactory.SetStatusAsync(status);
+                    return Results.Ok(new { success = true, message = $"Projection '{name}' status set to {status}", status = status.ToString() });
+
+                default:
+                    return Results.NotFound(new { message = $"Projection '{name}' not found or status cannot be set for this projection type" });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Failed to set projection status",
+                detail: ex.Message,
+                statusCode: 500);
         }
     }
 
@@ -3463,6 +3562,101 @@ public static class AdminEndpoints
             return Results.Problem(
                 title: "Failed to get epic events",
                 detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                statusCode: 500
+            );
+        }
+    }
+
+    /// <summary>
+    /// Lists available benchmark result files from the benchmarks artifacts directory
+    /// </summary>
+    private static IResult ListBenchmarkFiles(IWebHostEnvironment env)
+    {
+        // Navigate from demo/src/TaskFlow.Api to benchmarks/ErikLieben.FA.ES.Benchmarks/BenchmarkDotNet.Artifacts/results
+        var contentRoot = env.ContentRootPath;
+        var benchmarkResultsPath = Path.GetFullPath(Path.Combine(contentRoot, "..", "..", "..", "benchmarks", "ErikLieben.FA.ES.Benchmarks", "BenchmarkDotNet.Artifacts", "results"));
+
+        if (!Directory.Exists(benchmarkResultsPath))
+        {
+            return Results.Ok(Array.Empty<object>());
+        }
+
+        var jsonFiles = Directory.GetFiles(benchmarkResultsPath, "*-report-full.json")
+            .Select(f =>
+            {
+                var fileName = Path.GetFileName(f);
+                var fileInfo = new FileInfo(f);
+
+                // Extract framework from filename (e.g., "...-net10-report-full.json")
+                var framework = "unknown";
+                if (fileName.Contains("-net10-")) framework = "net10.0";
+                else if (fileName.Contains("-net9-")) framework = "net9.0";
+                else if (fileName.Contains("-net8-")) framework = "net8.0";
+
+                // Try to parse JSON to get benchmark count
+                var benchmarkCount = 0;
+                try
+                {
+                    var json = System.IO.File.ReadAllText(f);
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("Benchmarks", out var benchmarks) && benchmarks.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        benchmarkCount = benchmarks.GetArrayLength();
+                    }
+                }
+                catch { /* Ignore parse errors */ }
+
+                return new
+                {
+                    name = fileName,
+                    path = f,
+                    date = fileInfo.LastWriteTimeUtc.ToString("o"),
+                    framework,
+                    benchmarkCount
+                };
+            })
+            .OrderByDescending(f => f.date)
+            .ToList();
+
+        return Results.Ok(jsonFiles);
+    }
+
+    /// <summary>
+    /// Returns the contents of a specific benchmark result file
+    /// </summary>
+    private static IResult GetBenchmarkFile(string filename, IWebHostEnvironment env)
+    {
+        // Validate filename to prevent path traversal
+        if (filename.Contains("..") || filename.Contains('/') || filename.Contains('\\'))
+        {
+            return Results.BadRequest("Invalid filename");
+        }
+
+        var contentRoot = env.ContentRootPath;
+        var benchmarkResultsPath = Path.GetFullPath(Path.Combine(contentRoot, "..", "..", "..", "benchmarks", "ErikLieben.FA.ES.Benchmarks", "BenchmarkDotNet.Artifacts", "results"));
+        var filePath = Path.Combine(benchmarkResultsPath, filename);
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            return Results.NotFound($"Benchmark file '{filename}' not found");
+        }
+
+        // Ensure the resolved path is still within the expected directory
+        if (!Path.GetFullPath(filePath).StartsWith(benchmarkResultsPath))
+        {
+            return Results.BadRequest("Invalid filename");
+        }
+
+        try
+        {
+            var json = System.IO.File.ReadAllText(filePath);
+            return Results.Content(json, "application/json");
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Failed to read benchmark file",
+                detail: ex.Message,
                 statusCode: 500
             );
         }

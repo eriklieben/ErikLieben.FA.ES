@@ -265,6 +265,99 @@ mat-card {
     }
   }
 
+  /* Projection Status badges (Active/Rebuilding/Disabled) */
+  .projection-status-active {
+    background-color: var(--ctp-green) !important;
+    color: var(--ctp-crust) !important;
+    font-weight: 600;
+    font-size: 0.7rem !important;
+    height: 28px !important;
+    --mat-chip-label-text-color: var(--ctp-crust);
+
+    .mdc-evolution-chip__text-label {
+      color: var(--ctp-crust) !important;
+    }
+
+    .status-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+
+  .projection-status-rebuilding {
+    background-color: var(--ctp-yellow) !important;
+    color: var(--ctp-crust) !important;
+    font-weight: 600;
+    font-size: 0.7rem !important;
+    height: 28px !important;
+    --mat-chip-label-text-color: var(--ctp-crust);
+    animation: pulse 1.5s ease-in-out infinite;
+
+    .mdc-evolution-chip__text-label {
+      color: var(--ctp-crust) !important;
+    }
+
+    .status-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .projection-status-disabled {
+    background-color: var(--ctp-overlay0) !important;
+    color: var(--ctp-text) !important;
+    font-weight: 600;
+    font-size: 0.7rem !important;
+    height: 28px !important;
+    --mat-chip-label-text-color: var(--ctp-text);
+
+    .mdc-evolution-chip__text-label {
+      color: var(--ctp-text) !important;
+    }
+
+    .status-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+
+  /* Schema version display */
+  .schema-version {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.875rem;
+    color: var(--ctp-text);
+
+    &.needs-upgrade {
+      color: var(--ctp-peach);
+    }
+
+    .warning-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--ctp-peach);
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   @keyframes pulse {
     0%, 100% {
       opacity: 1;

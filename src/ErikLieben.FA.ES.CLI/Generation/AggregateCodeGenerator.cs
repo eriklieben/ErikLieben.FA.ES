@@ -88,9 +88,10 @@ public class AggregateCodeGenerator : CodeGeneratorBase
         var (get, ctorInput) = GenerateAggregateCode.GenerateConstructorParameters(aggregate);
         var setupCode = GenerateAggregateCode.GenerateSetupCode(aggregate);
         var version = "1.0.0";
+        var processSnapshotCode = GenerateAggregateCode.GenerateProcessSnapshotCode(aggregate, version);
         var code = GenerateAggregateCode.AssembleAggregateCode(
             aggregate, usings, postWhenCode, foldCode, serializableCode,
-            propertyCode, propertySnapshotCode, get, ctorInput, setupCode, version);
+            propertyCode, propertySnapshotCode, get, ctorInput, setupCode, processSnapshotCode, version);
 
         await WriteCodeAsync(path, code.ToString(), projectDir, cancellationToken);
     }

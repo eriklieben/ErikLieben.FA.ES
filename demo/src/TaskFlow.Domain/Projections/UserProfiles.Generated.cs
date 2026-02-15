@@ -85,6 +85,12 @@ public partial class UserProfiles : IUserProfiles
         System.Object? metadata = null;
         ErikLieben.FA.ES.Documents.IObjectDocument? currentDocument = null;
         System.String? checkpointFingerprint = null;
+        ErikLieben.FA.ES.Projections.ProjectionStatus? status = null;
+        System.Nullable<System.DateTimeOffset> statusChangedAt = null;
+        ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
+        System.Int32? schemaVersion = null;
+        System.Int32? codeSchemaVersion = null;
+        System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
         var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json));
@@ -111,9 +117,6 @@ public partial class UserProfiles : IUserProfiles
                 case "TotalUsers":
                     totalUsers = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
-                case "$checkpoint":
-                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, UserProfilesJsonSerializerContext.Default.Options) ?? [];
-                    break;
                 case "Destinations":
                     destinations = JsonSerializer.Deserialize<System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
@@ -129,17 +132,38 @@ public partial class UserProfiles : IUserProfiles
                 case "Metadata":
                     metadata = JsonSerializer.Deserialize<System.Object>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
+                case "$checkpoint":
+                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, UserProfilesJsonSerializerContext.Default.Options) ?? [];
+                    break;
                 case "CurrentDocument":
                     currentDocument = JsonSerializer.Deserialize<ErikLieben.FA.ES.Documents.IObjectDocument>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
                 case "$checkpointFingerprint":
                     checkpointFingerprint = JsonSerializer.Deserialize<System.String>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
+                case "Status":
+                    status = JsonSerializer.Deserialize<ErikLieben.FA.ES.Projections.ProjectionStatus>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
+                case "StatusChangedAt":
+                    statusChangedAt = JsonSerializer.Deserialize<System.Nullable<System.DateTimeOffset>>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
+                case "RebuildInfo":
+                    rebuildInfo = JsonSerializer.Deserialize<ErikLieben.FA.ES.Projections.RebuildInfo>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
+                case "SchemaVersion":
+                    schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
+                case "NeedsSchemaUpgrade":
+                    needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
             }
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new UserProfiles(documentFactory, eventStreamFactory);
+        var instance = new UserProfiles();
 
         instance.Checkpoint = checkpoint;
         instance.CheckpointFingerprint = checkpointFingerprint;
@@ -159,6 +183,12 @@ public partial class UserProfiles : IUserProfiles
     /// </summary>
     [JsonIgnore]
     public override Checkpoint Checkpoint { get; set; } = [];
+
+    /// <summary>
+    /// Gets the schema version defined in code via [ProjectionVersion] attribute.
+    /// </summary>
+    [JsonIgnore]
+    public override int CodeSchemaVersion => 1;
 
     /// <summary>
     /// Creates a destination instance with proper initialization.
@@ -362,27 +392,38 @@ public interface IUserProfiles
     public Object? Metadata { get; }
     public IObjectDocument? CurrentDocument { get; }
     public String? CheckpointFingerprint { get; }
+    public ProjectionStatus Status { get; }
+    public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
+    public RebuildInfo? RebuildInfo { get; }
+    public Int32 SchemaVersion { get; }
+    public Int32 CodeSchemaVersion { get; }
+    public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore
 
 [JsonSerializable(typeof(UserProfileCreated))]
 [JsonSerializable(typeof(UserProfileUpdated))]
 [JsonSerializable(typeof(System.Int32))]
-[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.Projection))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.ProjectionStatus))]
+[JsonSerializable(typeof(System.Enum))]
+[JsonSerializable(typeof(System.DateTimeOffset))]
+[JsonSerializable(typeof(System.DayOfWeek))]
+[JsonSerializable(typeof(System.TimeSpan))]
+[JsonSerializable(typeof(System.Double))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.RebuildInfo))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.RebuildStrategy))]
+[JsonSerializable(typeof(System.Boolean))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.RoutedProjectionMetadata))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.DestinationRegistry))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.DestinationMetadata))]
-[JsonSerializable(typeof(System.DateTimeOffset))]
-[JsonSerializable(typeof(System.DayOfWeek))]
-[JsonSerializable(typeof(System.Enum))]
-[JsonSerializable(typeof(System.TimeSpan))]
-[JsonSerializable(typeof(System.Double))]
 [JsonSerializable(typeof(System.Object))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Documents.IObjectDocument))]
+[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
+[JsonSerializable(typeof(System.Nullable<System.DateTimeOffset>))]
 [JsonSerializable(typeof(UserProfiles))]
 // <auto-generated />
 /// <summary>

@@ -14,6 +14,7 @@ namespace TaskFlow.Domain.Projections;
 /// This demonstrates a simple filtered view of work items
 /// </summary>
 [ProjectionWithExternalCheckpoint]
+[ProjectionVersion(1)]
 [BlobJsonProjection("projections", Connection = "BlobStorage")]
 public partial class ActiveWorkItems : Projection
 {

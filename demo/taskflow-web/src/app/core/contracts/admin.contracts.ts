@@ -267,3 +267,65 @@ export const MigrationStatusResponseSchema = z.object({
   targetEvents: z.array(StreamEventSchema),
 });
 export type MigrationStatusResponse = z.infer<typeof MigrationStatusResponseSchema>;
+
+// Audit Log types
+export const AuditLogEntrySchema = z.object({
+  id: z.string(),
+  workItemId: z.string(),
+  eventType: z.string().nullable(),
+  eventData: z.any().nullable(),
+  occurredAt: z.coerce.date().nullable(),
+  userId: z.string().nullable(),
+  userName: z.string().nullable(),
+  schemaVersion: z.number().optional(),
+  description: z.string().nullable().optional(),
+  details: z.any().nullable().optional(),
+});
+export type AuditLogEntry = z.infer<typeof AuditLogEntrySchema>;
+
+export const AuditLogResponseSchema = z.object({
+  workItemId: z.string(),
+  entries: z.array(AuditLogEntrySchema),
+  storageType: z.string(),
+  containerName: z.string(),
+  message: z.string().nullable().optional(),
+});
+export type AuditLogResponse = z.infer<typeof AuditLogResponseSchema>;
+
+// Reporting Index types
+export const ReportingIndexItemSchema = z.object({
+  partitionKey: z.string(),
+  rowKey: z.string(),
+  workItemId: z.string(),
+  projectId: z.string(),
+  title: z.string().nullable(),
+  status: z.string().nullable(),
+  priority: z.string().nullable(),
+  assignedTo: z.string().nullable(),
+  lastUpdatedAt: z.coerce.date().nullable(),
+});
+export type ReportingIndexItem = z.infer<typeof ReportingIndexItemSchema>;
+
+export const ReportingIndexResponseSchema = z.object({
+  items: z.array(ReportingIndexItemSchema),
+  storageType: z.string(),
+  tableName: z.string(),
+});
+export type ReportingIndexResponse = z.infer<typeof ReportingIndexResponseSchema>;
+
+// Projection status types
+export const ProjectionStatusSchema = z.object({
+  name: z.string(),
+  storageType: z.string().optional(),
+  status: z.string(),
+  projectionStatus: z.string().optional(),
+  schemaVersion: z.number().optional(),
+  codeSchemaVersion: z.number().optional(),
+  needsSchemaUpgrade: z.boolean().optional(),
+  lastUpdate: z.string().nullable(),
+  checkpoint: z.number(),
+  checkpointFingerprint: z.string(),
+  isPersisted: z.boolean().optional(),
+  lastGenerationDurationMs: z.number().nullable().optional(),
+});
+export type ProjectionStatus = z.infer<typeof ProjectionStatusSchema>;

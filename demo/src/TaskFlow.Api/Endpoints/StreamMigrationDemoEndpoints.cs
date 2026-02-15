@@ -647,7 +647,7 @@ public static class StreamMigrationDemoEndpoints
                                 targetStreamInfo);
 
                             // Write all events to the target stream (preserve original timestamps)
-                            await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, sourceEvents.ToArray());
+                            await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, CancellationToken.None, sourceEvents.ToArray());
 
                             state.LastSourceVersion = sourceEvents.Count;
                         }
@@ -733,7 +733,7 @@ public static class StreamMigrationDemoEndpoints
                                 EventOccuredAt = DateTimeOffset.UtcNow
                             }
                         };
-                        await dataStore.AppendAsync(state.SourceDocument, [closedEvent]);
+                        await dataStore.AppendAsync(state.SourceDocument, CancellationToken.None, closedEvent);
 
                         // Create terminated stream entry for source
                         var terminatedStream = new TerminatedStream
@@ -966,7 +966,7 @@ public static class StreamMigrationDemoEndpoints
                         var newEvents = allSourceEvents.Skip(state.LastSourceVersion).ToList();
                         if (newEvents.Count > 0)
                         {
-                            await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, newEvents.ToArray());
+                            await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, CancellationToken.None, newEvents.ToArray());
                             state.LastSourceVersion = currentSourceCount;
                         }
                     }
@@ -1327,7 +1327,7 @@ public static class StreamMigrationDemoEndpoints
             if (newEvents.Count > 0)
             {
                 // Append new events to target stream (preserve original timestamps)
-                await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, newEvents.ToArray());
+                await dataStore.AppendAsync(state.TargetDocument, preserveTimestamp: true, CancellationToken.None, newEvents.ToArray());
 
                 // Update in-memory state for UI with actual event data
                 foreach (var evt in newEvents)
