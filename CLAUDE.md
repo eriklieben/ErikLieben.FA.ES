@@ -6,7 +6,7 @@ This file provides patterns and guidance for AI assistants working with the Erik
 
 ErikLieben.FA.ES is an event sourcing framework for .NET featuring:
 - **Code generation** via `dotnet faes` CLI
-- **Multiple storage providers** (Azure Blob, Table, CosmosDB)
+- **Multiple storage providers** (Azure Blob, Table, CosmosDB, S3-compatible)
 - **AOT-compatible** (Native AOT, no reflection)
 - **Roslyn analyzers** for compile-time validation
 
@@ -201,6 +201,11 @@ builder.Services.AddFaes(faes => faes
     .UseBlobStorage(new EventStreamBlobSettings("Store", autoCreateContainer: true))
     .UseTableStorage(new EventStreamTableSettings("Tables"))
     .UseCosmosDb(new EventStreamCosmosDbSettings { DatabaseName = "eventstore" })
+    .UseS3Storage(new EventStreamS3Settings("s3",
+        serviceUrl: "http://localhost:9000",
+        accessKey: "minioadmin",
+        secretKey: "minioadmin",
+        autoCreateBucket: true))
 );
 ```
 
@@ -234,6 +239,21 @@ public partial class MyAggregate : Aggregate { }
 
 // In Program.cs
 builder.Services.ConfigureCosmosDbEventStore(new EventStreamCosmosDbSettings("CosmosConnection"));
+```
+
+#### S3-Compatible Storage (AWS S3, MinIO, Scaleway, etc.)
+
+```csharp
+// On the aggregate class
+[EventStreamType("s3", "s3")]
+public partial class MyAggregate : Aggregate { }
+
+// In Program.cs
+builder.Services.ConfigureS3EventStore(new EventStreamS3Settings("s3",
+    serviceUrl: "http://localhost:9000",
+    accessKey: "minioadmin",
+    secretKey: "minioadmin",
+    autoCreateBucket: true));
 ```
 
 ## ASP.NET Core Minimal APIs
