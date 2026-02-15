@@ -31,12 +31,7 @@ public class CatchUpDiscoveryService : ICatchUpDiscoveryService
         CancellationToken cancellationToken = default)
     {
         using var activity = FaesInstrumentation.Projections.StartActivity("CatchUp.Discover");
-
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.PageSize, pageSize);
-            activity.SetTag(FaesSemanticConventions.HasContinuation, continuationToken != null);
-        }
+        SetDiscoverActivityTags(activity, pageSize, continuationToken);
 
         ArgumentNullException.ThrowIfNull(objectNames);
 
@@ -53,18 +48,14 @@ public class CatchUpDiscoveryService : ICatchUpDiscoveryService
         // Continue from current object type index
         for (var i = state.ObjectIndex; i < objectNames.Length && remainingPageSize > 0; i++)
         {
-            var objectName = objectNames[i];
             var providerToken = i == state.ObjectIndex ? state.ProviderToken : null;
 
             var result = await _objectIdProvider.GetObjectIdsAsync(
-                objectName,
-                providerToken,
-                remainingPageSize,
-                cancellationToken);
+                objectNames[i], providerToken, remainingPageSize, cancellationToken);
 
             foreach (var objectId in result.Items)
             {
-                workItems.Add(new CatchUpWorkItem(objectName, objectId));
+                workItems.Add(new CatchUpWorkItem(objectNames[i], objectId));
             }
 
             remainingPageSize -= result.Items.Count;
@@ -72,34 +63,46 @@ public class CatchUpDiscoveryService : ICatchUpDiscoveryService
             // If there are more items in this object type, return with continuation token
             if (result.HasNextPage)
             {
-                var nextToken = CreateContinuationToken(i, result.ContinuationToken);
-
-                if (activity?.IsAllDataRequested == true)
-                {
-                    activity.SetTag(FaesSemanticConventions.EventCount, workItems.Count);
-                }
-
-                return new CatchUpDiscoveryResult(workItems, nextToken, null);
+                SetEventCountActivityTag(activity, workItems.Count);
+                return new CatchUpDiscoveryResult(workItems, CreateContinuationToken(i, result.ContinuationToken), null);
             }
         }
 
-        // Check if there are more object types to process
-        var processedAllObjectTypes = state.ObjectIndex >= objectNames.Length - 1 ||
-                                       workItems.Count < pageSize;
-
-        string? finalToken = null;
-        if (!processedAllObjectTypes && state.ObjectIndex < objectNames.Length - 1)
-        {
-            // Move to next object type
-            finalToken = CreateContinuationToken(state.ObjectIndex + 1, null);
-        }
-
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.EventCount, workItems.Count);
-        }
+        var finalToken = DetermineNextObjectTypeToken(state, objectNames, workItems.Count, pageSize);
+        SetEventCountActivityTag(activity, workItems.Count);
 
         return new CatchUpDiscoveryResult(workItems, finalToken, null);
+    }
+
+    private static void SetDiscoverActivityTags(System.Diagnostics.Activity? activity, int pageSize, string? continuationToken)
+    {
+        if (activity?.IsAllDataRequested != true)
+        {
+            return;
+        }
+
+        activity.SetTag(FaesSemanticConventions.PageSize, pageSize);
+        activity.SetTag(FaesSemanticConventions.HasContinuation, continuationToken != null);
+    }
+
+    private static void SetEventCountActivityTag(System.Diagnostics.Activity? activity, int count)
+    {
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.EventCount, count);
+        }
+    }
+
+    private static string? DetermineNextObjectTypeToken(ContinuationState state, string[] objectNames, int workItemCount, int pageSize)
+    {
+        var processedAllObjectTypes = state.ObjectIndex >= objectNames.Length - 1 || workItemCount < pageSize;
+
+        if (!processedAllObjectTypes && state.ObjectIndex < objectNames.Length - 1)
+        {
+            return CreateContinuationToken(state.ObjectIndex + 1, null);
+        }
+
+        return null;
     }
 
     /// <inheritdoc />

@@ -251,56 +251,78 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             throw new ArgumentException("No events provided to store.");
         }
 
-        string? documentPath = null;
-        if (document.Active.ChunkingEnabled())
-        {
-            var chunks = document.Active.StreamChunks;
-            var lastChunk = chunks[chunks.Count - 1];
-            documentPath = $"{document.Active.StreamIdentifier}-{lastChunk.ChunkIdentifier:d10}.json";
-        }
-        else
-        {
-            documentPath = $"{document.Active.StreamIdentifier}.json";
-        }
-
+        var documentPath = GetDocumentPathForAppend(document);
         var blob = CreateBlobClient(document, documentPath);
 
         if (!await blob.ExistsAsync(cancellationToken))
         {
-            var newDoc = new BlobDataStoreDocument {
-                ObjectId = document.ObjectId,
-                ObjectName = document.ObjectName,
-                LastObjectDocumentHash = blobDoc.Hash ?? "*"
-            };
-            newDoc.Events.AddRange(events.Select(e => BlobJsonEvent.From(e, preserveTimestamp))!);
-            newDoc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
-
-            try
-            {
-                await blob.SaveEntityAsync(
-                    newDoc,
-                    BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
-                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
-            }
-            catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
-            {
-                FaesInstrumentation.RecordException(activity, ex);
-                var containerName = blob.BlobContainerName;
-                throw new BlobDocumentStoreContainerNotFoundException(
-                    $"The container by the name '{containerName}' is not found. " +
-                    $"Please create it or adjust the config setting: 'EventStream:Blob:DefaultDocumentContainerName'",
-                ex);
-            }
-
-            // Record metrics for new blob
-            if (timer != null)
-            {
-                var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
-                FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, document.ObjectName);
-            }
+            await CreateNewBlobAsync(blob, document, blobDoc, preserveTimestamp, activity, timer, cancellationToken, events);
             return;
         }
 
+        await AppendToExistingBlobAsync(blob, document, blobDoc, documentPath, preserveTimestamp, timer, cancellationToken, events);
+    }
+
+    private static string GetDocumentPathForAppend(IObjectDocument document)
+    {
+        if (document.Active.ChunkingEnabled())
+        {
+            var chunks = document.Active.StreamChunks;
+            var lastChunk = chunks[chunks.Count - 1];
+            return $"{document.Active.StreamIdentifier}-{lastChunk.ChunkIdentifier:d10}.json";
+        }
+
+        return $"{document.Active.StreamIdentifier}.json";
+    }
+
+    private static async Task CreateNewBlobAsync(
+        BlobClient blob,
+        IObjectDocument document,
+        BlobEventStreamDocument blobDoc,
+        bool preserveTimestamp,
+        System.Diagnostics.Activity? activity,
+        System.Diagnostics.Stopwatch? timer,
+        CancellationToken cancellationToken,
+        IEvent[] events)
+    {
+        var newDoc = new BlobDataStoreDocument {
+            ObjectId = document.ObjectId,
+            ObjectName = document.ObjectName,
+            LastObjectDocumentHash = blobDoc.Hash ?? "*"
+        };
+        newDoc.Events.AddRange(events.Select(e => BlobJsonEvent.From(e, preserveTimestamp))!);
+        newDoc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
+
+        try
+        {
+            await blob.SaveEntityAsync(
+                newDoc,
+                BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
+        {
+            FaesInstrumentation.RecordException(activity, ex);
+            var containerName = blob.BlobContainerName;
+            throw new BlobDocumentStoreContainerNotFoundException(
+                $"The container by the name '{containerName}' is not found. " +
+                $"Please create it or adjust the config setting: 'EventStream:Blob:DefaultDocumentContainerName'",
+            ex);
+        }
+
+        RecordWriteMetrics(timer, document.ObjectName);
+    }
+
+    private static async Task AppendToExistingBlobAsync(
+        BlobClient blob,
+        IObjectDocument document,
+        BlobEventStreamDocument blobDoc,
+        string documentPath,
+        bool preserveTimestamp,
+        System.Diagnostics.Stopwatch? timer,
+        CancellationToken cancellationToken,
+        IEvent[] events)
+    {
         var properties = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
         var etag = properties.Value.ETag;
 
@@ -310,35 +332,49 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             new BlobRequestConditions { IfMatch = etag })).Item1
             ?? throw new BlobDataStoreProcessingException($"Unable to find document '{document.ObjectName.ToLowerInvariant()}/{documentPath}' while processing save.");
 
-        // Check if the stream is closed - if the last event is EventStream.Closed, reject new events
-        if (doc.Events.Count > 0)
-        {
-            var lastEvent = doc.Events[^1];
-            if (lastEvent.EventType == "EventStream.Closed")
-            {
-                throw new EventStreamClosedException(
-                    document.Active.StreamIdentifier,
-                    $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
-                    $"The stream was closed and may have a continuation stream. Please retry on the active stream.");
-            }
-        }
+        ThrowIfStreamClosed(doc, document.Active.StreamIdentifier);
+        ValidateDocumentHash(doc, blobDoc, document.ObjectName, documentPath);
 
-        if (doc.LastObjectDocumentHash != "*" && doc.LastObjectDocumentHash != blobDoc.PrevHash)
-        {
-            throw new BlobDataStoreProcessingException($"Optimistic concurrency check failed: document hash mismatch for '{document.ObjectName.ToLowerInvariant()}/{documentPath}'.");
-        }
         doc.LastObjectDocumentHash = blobDoc.Hash ?? "*";
-
         doc.Events.AddRange(events.Select(e => BlobJsonEvent.From(e, preserveTimestamp))!);
         await blob.SaveEntityAsync(doc,
             BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
             new BlobRequestConditions { IfMatch = etag });
 
-        // Record metrics for existing blob update
+        RecordWriteMetrics(timer, document.ObjectName);
+    }
+
+    private static void ThrowIfStreamClosed(BlobDataStoreDocument doc, string streamIdentifier)
+    {
+        if (doc.Events.Count == 0)
+        {
+            return;
+        }
+
+        var lastEvent = doc.Events[^1];
+        if (lastEvent.EventType == "EventStream.Closed")
+        {
+            throw new EventStreamClosedException(
+                streamIdentifier,
+                $"Cannot append events to closed stream '{streamIdentifier}'. " +
+                $"The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+    }
+
+    private static void ValidateDocumentHash(BlobDataStoreDocument doc, BlobEventStreamDocument blobDoc, string? objectName, string documentPath)
+    {
+        if (doc.LastObjectDocumentHash != "*" && doc.LastObjectDocumentHash != blobDoc.PrevHash)
+        {
+            throw new BlobDataStoreProcessingException($"Optimistic concurrency check failed: document hash mismatch for '{objectName?.ToLowerInvariant()}/{documentPath}'.");
+        }
+    }
+
+    private static void RecordWriteMetrics(System.Diagnostics.Stopwatch? timer, string? objectName)
+    {
         if (timer != null)
         {
             var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
-            FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, document.ObjectName);
+            FaesMetrics.RecordStorageWriteDuration(durationMs, FaesSemanticConventions.StorageProviderBlob, objectName);
         }
     }
 

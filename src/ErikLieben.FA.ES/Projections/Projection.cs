@@ -272,82 +272,38 @@ public abstract class Projection : IProjectionBase
         using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
         var timer = activity != null ? FaesMetrics.StartTimer() : null;
 
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
-            activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
-            activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
-            activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
-        }
+        SetUpdateToVersionActivityTags(activity, token);
 
-        // Check if projection should process updates based on status
         if (!ShouldProcessUpdates())
         {
             return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
         }
 
-        if (DocumentFactory == null)
-        {
-            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
-        }
-        if (EventStreamFactory == null)
-        {
-            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
-        }
+        EnsureFactoriesInitialized();
 
-        // Guard clause to reduce nesting and cognitive complexity
         if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
             return ProjectionUpdateResult.Success;
         }
 
-        var startIdx = -1;
-        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
-        {
-            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
-        }
+        var startIdx = GetStartIndex(token);
+        SetActivityTag(activity, FaesSemanticConventions.StartVersion, startIdx);
 
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.StartVersion, startIdx);
-        }
-
-        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-        var eventStream = EventStreamFactory.Create(document);
-        var events = token.TryUpdateToLatestVersion ?
-            await eventStream.ReadAsync(startIdx) :
-            await eventStream.ReadAsync(startIdx, token.Version);
+        var (document, events) = await ReadEventsForUpdate(token, startIdx);
 
         foreach (var @event in events)
         {
-            // Create version token directly from event and document info
             var eventVersionToken = new VersionToken(@event, document);
             await Fold(@event, eventVersionToken, context);
             UpdateCheckpointEntry(eventVersionToken);
         }
 
-        // Generate fingerprint once after all events are processed
         if (events.Count > 0)
         {
             CheckpointFingerprint = GenerateCheckpointFingerprint();
         }
 
-        // Record metrics
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
-        }
-
-        if (timer != null)
-        {
-            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
-            FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
-            if (events.Count > 0)
-            {
-                FaesMetrics.RecordProjectionEventsFolded(events.Count, GetType().Name);
-            }
-        }
+        RecordUpdateMetrics(activity, timer, events.Count);
 
         await PostWhenAll(document);
         return ProjectionUpdateResult.Success;
@@ -368,60 +324,29 @@ public abstract class Projection : IProjectionBase
         using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
         var timer = activity != null ? FaesMetrics.StartTimer() : null;
 
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
-            activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
-            activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
-            activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
-        }
+        SetUpdateToVersionActivityTags(activity, token);
 
-        // Check if projection should process updates based on status
         if (!ShouldProcessUpdates())
         {
             return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
         }
 
-        if (DocumentFactory == null)
-        {
-            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
-        }
-        if (EventStreamFactory == null)
-        {
-            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
-        }
+        EnsureFactoriesInitialized();
 
         if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
             return ProjectionUpdateResult.Success;
         }
 
-        var startIdx = -1;
-        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
-        {
-            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
-        }
+        var startIdx = GetStartIndex(token);
+        SetActivityTag(activity, FaesSemanticConventions.StartVersion, startIdx);
 
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.StartVersion, startIdx);
-        }
-
-        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-        var eventStream = EventStreamFactory.Create(document);
-        var events = token.TryUpdateToLatestVersion ?
-            await eventStream.ReadAsync(startIdx) :
-            await eventStream.ReadAsync(startIdx, token.Version);
+        var (document, events) = await ReadEventsForUpdate(token, startIdx);
 
         foreach (var @event in events)
         {
-            if (context != null && @event == context.Event)
-            {
-                throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
-            }
+            ValidateNoProcessingLoop(@event, context);
 
-            // Create version token directly from event and document info
             var eventVersionToken = new VersionToken(@event, document);
             await Fold(@event, eventVersionToken, data, context);
             UpdateCheckpointEntry(eventVersionToken);
@@ -429,26 +354,11 @@ public abstract class Projection : IProjectionBase
 
         if (events.Count > 0)
         {
-            // Generate fingerprint once after all events are processed
             CheckpointFingerprint = GenerateCheckpointFingerprint();
             await PostWhenAll(document);
         }
 
-        // Record metrics
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
-        }
-
-        if (timer != null)
-        {
-            var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
-            FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
-            if (events.Count > 0)
-            {
-                FaesMetrics.RecordProjectionEventsFolded(events.Count, GetType().Name);
-            }
-        }
+        RecordUpdateMetrics(activity, timer, events.Count);
 
         return ProjectionUpdateResult.Success;
     }
@@ -463,6 +373,86 @@ public abstract class Projection : IProjectionBase
         foreach (var versionToken in Checkpoint)
         {
             await UpdateToVersion(new VersionToken(versionToken.Key, versionToken.Value).ToLatestVersion(), context);
+        }
+    }
+
+    private void SetUpdateToVersionActivityTags(Activity? activity, VersionToken token)
+    {
+        if (activity?.IsAllDataRequested != true)
+        {
+            return;
+        }
+
+        activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
+        activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
+        activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
+        activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
+        activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
+    }
+
+    private static void SetActivityTag(Activity? activity, string key, object value)
+    {
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(key, value);
+        }
+    }
+
+    private void EnsureFactoriesInitialized()
+    {
+        if (DocumentFactory == null)
+        {
+            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
+        }
+        if (EventStreamFactory == null)
+        {
+            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
+        }
+    }
+
+    private int GetStartIndex(VersionToken token)
+    {
+        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
+        {
+            return new VersionToken(token.ObjectIdentifier, value).Version + 1;
+        }
+
+        return -1;
+    }
+
+    private async Task<(IObjectDocument document, IReadOnlyCollection<IEvent> events)> ReadEventsForUpdate(VersionToken token, int startIdx)
+    {
+        var document = await DocumentFactory!.GetAsync(token.ObjectName, token.ObjectId);
+        var eventStream = EventStreamFactory!.Create(document);
+        var events = token.TryUpdateToLatestVersion ?
+            await eventStream.ReadAsync(startIdx) :
+            await eventStream.ReadAsync(startIdx, token.Version);
+
+        return (document, events);
+    }
+
+    private static void ValidateNoProcessingLoop<T>(IEvent @event, IExecutionContextWithData<T>? context) where T : class
+    {
+        if (context != null && @event == context.Event)
+        {
+            throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
+        }
+    }
+
+    private void RecordUpdateMetrics(Activity? activity, Stopwatch? timer, int eventCount)
+    {
+        SetActivityTag(activity, FaesSemanticConventions.EventsFolded, eventCount);
+
+        if (timer == null)
+        {
+            return;
+        }
+
+        var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+        FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
+        if (eventCount > 0)
+        {
+            FaesMetrics.RecordProjectionEventsFolded(eventCount, GetType().Name);
         }
     }
 

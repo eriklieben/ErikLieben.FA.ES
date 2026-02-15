@@ -58,18 +58,10 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         AnsiConsole.WriteLine();
 
         // Step 2: Check git status
-        if (!settings.SkipGitCheck)
+        var gitCheckFailed = await CheckGitPrerequisiteAsync(settings, folderPath, cancellationToken);
+        if (gitCheckFailed)
         {
-            var gitCheckResult = await CheckGitStatusAsync(folderPath, cancellationToken);
-            if (!gitCheckResult.Success)
-            {
-                return 1;
-            }
-        }
-        else
-        {
-            AnsiConsole.MarkupLine("[yellow]⚠ Git check skipped - manual recovery may be needed on failure[/]");
-            AnsiConsole.WriteLine();
+            return 1;
         }
 
         // Step 3: Detect current version
@@ -94,9 +86,7 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         AnsiConsole.WriteLine();
 
         // Check if update is needed
-        if (Version.TryParse(currentVersion.TrimStart('v'), out var current) &&
-            Version.TryParse(targetVersion.TrimStart('v'), out var target) &&
-            current >= target)
+        if (IsAlreadyAtTargetVersion(currentVersion, targetVersion))
         {
             AnsiConsole.MarkupLine("[green]✓ Already at latest version[/]");
             return 0;
@@ -109,37 +99,88 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         }
 
         // Step 5: Update NuGet packages
-        AnsiConsole.Write(new Rule("[blue]Updating Packages[/]").RuleStyle("dim"));
-        AnsiConsole.WriteLine();
-
-        if (!settings.DryRun)
+        var packageUpdateFailed = await UpdatePackageStepAsync(settings, folderPath, targetVersion, cancellationToken);
+        if (packageUpdateFailed)
         {
-            var updateResult = await UpdatePackagesAsync(folderPath, targetVersion, cancellationToken);
-            if (!updateResult)
-            {
-                AnsiConsole.MarkupLine("[red]✗ Package update failed[/]");
-                AnsiConsole.MarkupLine("[yellow]You can restore the previous state with: git checkout .[/]");
-                return 1;
-            }
-        }
-        else
-        {
-            AnsiConsole.MarkupLine("[gray]Would update ErikLieben.FA.ES.* packages to {0}[/]", targetVersion);
+            return 1;
         }
 
         // Step 6: Run code migrations
+        var migrationFailed = await RunMigrationStepAsync(folderPath, currentVersion, targetVersion, settings.DryRun, cancellationToken);
+        if (migrationFailed)
+        {
+            return 1;
+        }
+
+        // Step 7: Run generate
+        var generateFailed = await RunGenerateStepAsync(settings, solutionPath, cancellationToken);
+        if (generateFailed)
+        {
+            return 1;
+        }
+
+        // Summary
+        PrintUpdateSummary(settings.DryRun, currentVersion, targetVersion);
+
+        return 0;
+    }
+
+    private static async Task<bool> CheckGitPrerequisiteAsync(Settings settings, string folderPath, CancellationToken cancellationToken)
+    {
+        if (settings.SkipGitCheck)
+        {
+            AnsiConsole.MarkupLine("[yellow]⚠ Git check skipped - manual recovery may be needed on failure[/]");
+            AnsiConsole.WriteLine();
+            return false;
+        }
+
+        var gitCheckResult = await CheckGitStatusAsync(folderPath, cancellationToken);
+        return !gitCheckResult.Success;
+    }
+
+    private static bool IsAlreadyAtTargetVersion(string currentVersion, string targetVersion)
+    {
+        return Version.TryParse(currentVersion.TrimStart('v'), out var current) &&
+               Version.TryParse(targetVersion.TrimStart('v'), out var target) &&
+               current >= target;
+    }
+
+    private static async Task<bool> UpdatePackageStepAsync(Settings settings, string folderPath, string targetVersion, CancellationToken cancellationToken)
+    {
+        AnsiConsole.Write(new Rule("[blue]Updating Packages[/]").RuleStyle("dim"));
+        AnsiConsole.WriteLine();
+
+        if (settings.DryRun)
+        {
+            AnsiConsole.MarkupLine("[gray]Would update ErikLieben.FA.ES.* packages to {0}[/]", targetVersion);
+            return false;
+        }
+
+        var updateResult = await UpdatePackagesAsync(folderPath, targetVersion, cancellationToken);
+        if (!updateResult)
+        {
+            AnsiConsole.MarkupLine("[red]✗ Package update failed[/]");
+            AnsiConsole.MarkupLine("[yellow]You can restore the previous state with: git checkout .[/]");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<bool> RunMigrationStepAsync(string folderPath, string currentVersion, string targetVersion, bool dryRun, CancellationToken cancellationToken)
+    {
         AnsiConsole.WriteLine();
         AnsiConsole.Write(new Rule("[blue]Running Code Migrations[/]").RuleStyle("dim"));
         AnsiConsole.WriteLine();
 
-        var migrator = new CodeMigrator(folderPath, currentVersion, targetVersion, settings.DryRun);
+        var migrator = new CodeMigrator(folderPath, currentVersion, targetVersion, dryRun);
         var migrationResult = await migrator.MigrateAsync(cancellationToken);
 
         if (!migrationResult.Success)
         {
             AnsiConsole.MarkupLine("[red]✗ Code migration failed[/]");
             AnsiConsole.MarkupLine("[yellow]You can restore the previous state with: git checkout .[/]");
-            return 1;
+            return true;
         }
 
         if (migrationResult.FilesModified > 0)
@@ -151,28 +192,38 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
             AnsiConsole.MarkupLine("[gray]No code migrations needed[/]");
         }
 
-        // Step 7: Run generate
-        if (!settings.SkipGenerate && !settings.DryRun)
-        {
-            AnsiConsole.WriteLine();
-            AnsiConsole.Write(new Rule("[blue]Regenerating Code[/]").RuleStyle("dim"));
-            AnsiConsole.WriteLine();
+        return false;
+    }
 
-            var generateResult = await RunGenerateAsync(solutionPath, cancellationToken);
-            if (!generateResult)
-            {
-                AnsiConsole.MarkupLine("[red]✗ Code generation failed[/]");
-                AnsiConsole.MarkupLine("[yellow]You can restore the previous state with: git checkout .[/]");
-                return 1;
-            }
+    private static async Task<bool> RunGenerateStepAsync(Settings settings, string solutionPath, CancellationToken cancellationToken)
+    {
+        if (settings.SkipGenerate || settings.DryRun)
+        {
+            return false;
         }
 
-        // Summary
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Rule("[blue]Regenerating Code[/]").RuleStyle("dim"));
+        AnsiConsole.WriteLine();
+
+        var generateResult = await RunGenerateAsync(solutionPath, cancellationToken);
+        if (!generateResult)
+        {
+            AnsiConsole.MarkupLine("[red]✗ Code generation failed[/]");
+            AnsiConsole.MarkupLine("[yellow]You can restore the previous state with: git checkout .[/]");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void PrintUpdateSummary(bool dryRun, string currentVersion, string targetVersion)
+    {
         AnsiConsole.WriteLine();
         AnsiConsole.Write(new Rule("[green]Update Complete[/]").RuleStyle("green dim"));
         AnsiConsole.WriteLine();
 
-        if (settings.DryRun)
+        if (dryRun)
         {
             AnsiConsole.MarkupLine("[yellow]This was a dry run. Run without --dry-run to apply changes.[/]");
         }
@@ -186,8 +237,6 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         }
 
         AnsiConsole.WriteLine();
-
-        return 0;
     }
 
     private static async Task<(bool Success, bool IsGitRepo, bool IsClean)> CheckGitStatusAsync(string folderPath, CancellationToken cancellationToken)
@@ -529,7 +578,6 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
     /// <returns>The full path to dotnet executable, or null if not found in secure locations.</returns>
     private static string? ResolveDotnetPath()
     {
-        // Check known secure installation directories first
         var knownPaths = OperatingSystem.IsWindows()
             ? new[]
             {
@@ -544,62 +592,8 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
                 "/opt/homebrew/bin/dotnet",
             };
 
-        var found = knownPaths.FirstOrDefault(File.Exists);
-        if (found != null)
-        {
-            return found;
-        }
-
-        // Search PATH but only in secure system directories
-        var pathEnv = Environment.GetEnvironmentVariable("PATH");
-        if (string.IsNullOrEmpty(pathEnv))
-        {
-            return null;
-        }
-
-        var separator = OperatingSystem.IsWindows() ? ';' : ':';
-        var secureDirectories = OperatingSystem.IsWindows()
-            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                Environment.GetFolderPath(Environment.SpecialFolder.System),
-                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                @"C:\Program Files",
-                @"C:\Program Files (x86)",
-                @"C:\Windows",
-                @"C:\Windows\System32",
-            }
-            : new HashSet<string>(StringComparer.Ordinal)
-            {
-                "/usr/bin",
-                "/usr/local/bin",
-                "/usr/share/dotnet",
-                "/bin",
-                "/opt/homebrew/bin",
-            };
-
-        var dotnetExecutable = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
-
-        foreach (var dir in pathEnv.Split(separator, StringSplitOptions.RemoveEmptyEntries))
-        {
-            // Only check directories that are under secure system paths
-            var isSecure = secureDirectories.Any(secure =>
-                dir.StartsWith(secure, OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal));
-
-            if (isSecure)
-            {
-                var dotnetPath = Path.Combine(dir, dotnetExecutable);
-                if (File.Exists(dotnetPath))
-                {
-                    return dotnetPath;
-                }
-            }
-        }
-
-        return null;
+        var secureDirectories = GetSecureDirectories(includeShareDotnet: true);
+        return ResolveExecutableFromSecurePaths(knownPaths, secureDirectories, "dotnet");
     }
 
     /// <summary>
@@ -609,7 +603,6 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
     /// <returns>The full path to git executable, or null if not found in secure locations.</returns>
     private static string? ResolveGitPath()
     {
-        // Check known secure installation directories first
         var knownPaths = OperatingSystem.IsWindows()
             ? new[]
             {
@@ -625,22 +618,15 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
                 "/opt/homebrew/bin/git",
             };
 
-        var found = knownPaths.FirstOrDefault(File.Exists);
-        if (found != null)
-        {
-            return found;
-        }
+        var secureDirectories = GetSecureDirectories(includeShareDotnet: false);
+        return ResolveExecutableFromSecurePaths(knownPaths, secureDirectories, "git");
+    }
 
-        // Search PATH but only in secure system directories
-        var pathEnv = Environment.GetEnvironmentVariable("PATH");
-        if (string.IsNullOrEmpty(pathEnv))
+    private static HashSet<string> GetSecureDirectories(bool includeShareDotnet)
+    {
+        if (OperatingSystem.IsWindows())
         {
-            return null;
-        }
-
-        var separator = OperatingSystem.IsWindows() ? ';' : ':';
-        var secureDirectories = OperatingSystem.IsWindows()
-            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
@@ -650,32 +636,60 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
                 @"C:\Program Files (x86)",
                 @"C:\Windows",
                 @"C:\Windows\System32",
-            }
-            : new HashSet<string>(StringComparer.Ordinal)
-            {
-                "/usr/bin",
-                "/usr/local/bin",
-                "/bin",
-                "/opt/homebrew/bin",
             };
+        }
 
-        var gitExecutable = OperatingSystem.IsWindows() ? "git.exe" : "git";
+        var dirs = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "/usr/bin",
+            "/usr/local/bin",
+            "/bin",
+            "/opt/homebrew/bin",
+        };
+
+        if (includeShareDotnet)
+        {
+            dirs.Add("/usr/share/dotnet");
+        }
+
+        return dirs;
+    }
+
+    private static string? ResolveExecutableFromSecurePaths(string[] knownPaths, HashSet<string> secureDirectories, string executableName)
+    {
+        var found = knownPaths.FirstOrDefault(File.Exists);
+        if (found != null)
+        {
+            return found;
+        }
+
+        return SearchPathForExecutable(secureDirectories, executableName);
+    }
+
+    private static string? SearchPathForExecutable(HashSet<string> secureDirectories, string executableName)
+    {
+        var pathEnv = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(pathEnv))
+        {
+            return null;
+        }
+
+        var separator = OperatingSystem.IsWindows() ? ';' : ':';
+        var executable = OperatingSystem.IsWindows() ? $"{executableName}.exe" : executableName;
+        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         foreach (var dir in pathEnv.Split(separator, StringSplitOptions.RemoveEmptyEntries))
         {
-            // Only check directories that are under secure system paths
-            var isSecure = secureDirectories.Any(secure =>
-                dir.StartsWith(secure, OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal));
-
-            if (isSecure)
+            var isSecure = secureDirectories.Any(secure => dir.StartsWith(secure, comparison));
+            if (!isSecure)
             {
-                var gitPath = Path.Combine(dir, gitExecutable);
-                if (File.Exists(gitPath))
-                {
-                    return gitPath;
-                }
+                continue;
+            }
+
+            var executablePath = Path.Combine(dir, executable);
+            if (File.Exists(executablePath))
+            {
+                return executablePath;
             }
         }
 

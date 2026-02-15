@@ -961,84 +961,13 @@ public class GenerateProjectionCode
 
         foreach (var @event in projection.Events)
         {
-            // Note: ActivationType is the method name (e.g., "When" or "MarkAsDeleted")
-            // We process all methods that were detected as When handlers
-
             if (!usings.Contains(@event.Namespace))
             {
                 usings.Add(@event.Namespace);
             }
 
-            var firstParameter = @event.Parameters.FirstOrDefault();
-
-            // Generate case statement
-            string awaitCode = @event.ActivationAwaitRequired ? "await " : string.Empty;
-            foldCode.Append($$"""
-                              case "{{@event.EventName}}":
-                                {{awaitCode}} {{@event.ActivationType}}(
-                              """);
-
-            // If there's a first parameter, generate the event argument
-            if (firstParameter != null)
-            {
-                if (firstParameter.Type == @event.TypeName && firstParameter.Type != "IEvent")
-                {
-                    foldCode.Append(
-                        $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
-                }
-                else if (firstParameter.Type == "IEvent")
-                {
-                    foldCode.Append(
-                        $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
-                }
-
-                if (@event.Parameters.Count > 1)
-                {
-                    foldCode.Append(", ");
-                }
-
-                // Generate parameter arguments using versionToken instead of document
-                // Use WhenParameterDeclarations which has correct parameters (already skipped event param if present)
-                var parametersToGenerate = @event.WhenParameterDeclarations;
-                for (int i = 0; i < parametersToGenerate.Count; i++)
-                {
-                    var paramDecl = parametersToGenerate[i];
-
-                    // For custom parameters that use WhenParameterValueFactory, use version token variant
-                    if (paramDecl.Type != "IEvent" && paramDecl.Type != "IObjectDocument" && !paramDecl.IsExecutionContext)
-                    {
-                        foldCode.Append($"GetWhenParameterValue<{paramDecl.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{paramDecl.Type}\",{Environment.NewLine}\t\t\tversionToken, @event)!");
-                    }
-                    else if (paramDecl.Type == "IObjectDocument")
-                    {
-                        // If they really need the document, we don't have it in this context - this shouldn't happen
-                        // but we'll add a comment
-                        foldCode.Append($"null! /* Document not available in version token fold */");
-                    }
-                    else if (paramDecl.Type == "IEvent")
-                    {
-                        foldCode.Append($"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
-                    }
-                    else if (paramDecl.IsExecutionContext)
-                    {
-                        // Pass parentContext, cast to the specific type if not IExecutionContext
-                        if (paramDecl.Type == "IExecutionContext" || paramDecl.Type.StartsWith("IExecutionContext"))
-                        {
-                            foldCode.Append($"parentContext");
-                        }
-                        else
-                        {
-                            // Cast to the specific implementation type (e.g., LanguageContext)
-                            foldCode.Append($"parentContext as {paramDecl.Type}");
-                        }
-                    }
-
-                    if (i < parametersToGenerate.Count - 1)
-                    {
-                        foldCode.Append(", ");
-                    }
-                }
-            }
+            AppendVersionTokenCaseStatement(foldCode, @event);
+            AppendVersionTokenFirstParameter(foldCode, @event);
 
             foldCode.Append("""
                             );
@@ -1047,6 +976,100 @@ public class GenerateProjectionCode
         }
 
         return foldCode.ToString();
+    }
+
+    private static void AppendVersionTokenCaseStatement(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        string awaitCode = @event.ActivationAwaitRequired ? "await " : string.Empty;
+        foldCode.Append($$"""
+                          case "{{@event.EventName}}":
+                            {{awaitCode}} {{@event.ActivationType}}(
+                          """);
+    }
+
+    private static void AppendVersionTokenFirstParameter(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        var firstParameter = @event.Parameters.FirstOrDefault();
+        if (firstParameter == null)
+        {
+            return;
+        }
+
+        AppendEventArgument(foldCode, firstParameter, @event);
+
+        if (@event.Parameters.Count > 1)
+        {
+            foldCode.Append(", ");
+        }
+
+        AppendVersionTokenParameterDeclarations(foldCode, @event);
+    }
+
+    private static void AppendEventArgument(StringBuilder foldCode, ParameterDefinition firstParameter, EventDefinition @event)
+    {
+        if (firstParameter.Type == @event.TypeName && firstParameter.Type != "IEvent")
+        {
+            foldCode.Append(
+                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
+        }
+        else if (firstParameter.Type == "IEvent")
+        {
+            foldCode.Append(
+                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
+        }
+    }
+
+    private static void AppendVersionTokenParameterDeclarations(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        var parametersToGenerate = @event.WhenParameterDeclarations;
+        for (int i = 0; i < parametersToGenerate.Count; i++)
+        {
+            var paramDecl = parametersToGenerate[i];
+            AppendVersionTokenParameterValue(foldCode, paramDecl, @event);
+
+            if (i < parametersToGenerate.Count - 1)
+            {
+                foldCode.Append(", ");
+            }
+        }
+    }
+
+    private static void AppendVersionTokenParameterValue(StringBuilder foldCode, WhenParameterDeclaration paramDecl, ProjectionEventDefinition @event)
+    {
+        if (paramDecl.Type != "IEvent" && paramDecl.Type != "IObjectDocument" && !paramDecl.IsExecutionContext)
+        {
+            foldCode.Append($"GetWhenParameterValue<{paramDecl.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{paramDecl.Type}\",{Environment.NewLine}\t\t\tversionToken, @event)!");
+            return;
+        }
+
+        if (paramDecl.Type == "IObjectDocument")
+        {
+            foldCode.Append($"null! /* Document not available in version token fold */");
+            return;
+        }
+
+        if (paramDecl.Type == "IEvent")
+        {
+            foldCode.Append($"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
+            return;
+        }
+
+        if (paramDecl.IsExecutionContext)
+        {
+            AppendExecutionContextParameter(foldCode, paramDecl);
+        }
+    }
+
+    private static void AppendExecutionContextParameter(StringBuilder foldCode, WhenParameterDeclaration paramDecl)
+    {
+        if (paramDecl.Type == "IExecutionContext" || paramDecl.Type.StartsWith("IExecutionContext"))
+        {
+            foldCode.Append($"parentContext");
+        }
+        else
+        {
+            foldCode.Append($"parentContext as {paramDecl.Type}");
+        }
     }
 
     private static (StringBuilder CtorCode, List<ConstructorParameter> ExtraParams) SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
@@ -1140,13 +1163,27 @@ public class GenerateProjectionCode
     {
         var code = new StringBuilder();
 
-        // Generate variable declarations for each property
+        AppendVariableDeclarations(code, projection);
+        AppendJsonReaderBoilerplate(code);
+        AppendPropertySwitchCases(code, projection);
+        AppendInstanceConstruction(code, projection, ctorParams, extraCtorParams);
+        AppendPropertyPopulation(code, projection, ctorParams);
+
+        code.AppendLine("                                instance.Checkpoint = checkpoint;");
+        code.AppendLine("                                instance.CheckpointFingerprint = checkpointFingerprint;");
+        code.AppendLine();
+        code.AppendLine("                                return instance;");
+
+        return code.ToString();
+    }
+
+    private static void AppendVariableDeclarations(StringBuilder code, ProjectionDefinition projection)
+    {
         code.AppendLine("// Deserialize each property manually to preserve data");
 
         foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
         {
             var fullTypeDef = BuildFullTypeDefinition(property);
-            // Don't add ? if type is already nullable (e.g., System.Nullable<T>)
             var isTypeAlreadyNullable = fullTypeDef.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
                                         fullTypeDef.EndsWith("?", StringComparison.Ordinal);
             var nullableSuffix = isTypeAlreadyNullable ? string.Empty : "?";
@@ -1154,6 +1191,10 @@ public class GenerateProjectionCode
         }
 
         code.AppendLine("                                Checkpoint checkpoint = [];");
+    }
+
+    private static void AppendJsonReaderBoilerplate(StringBuilder code)
+    {
         code.AppendLine();
         code.AppendLine("                                var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json));");
         code.AppendLine("                                ");
@@ -1173,8 +1214,10 @@ public class GenerateProjectionCode
         code.AppendLine();
         code.AppendLine("                                    switch (propertyName)");
         code.AppendLine("                                    {");
+    }
 
-        // Generate case for each property
+    private static void AppendPropertySwitchCases(StringBuilder code, ProjectionDefinition projection)
+    {
         foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories"))
         {
             var jsonPropertyName = property.Name switch
@@ -1185,53 +1228,53 @@ public class GenerateProjectionCode
             };
             var varName = property.Name == "Checkpoint" ? "checkpoint" : ToCamelCase(property.Name);
             var fullTypeDef = BuildFullTypeDefinition(property);
+            var nullCoalesce = property.Name == "Checkpoint" ? " ?? []" : string.Empty;
 
             code.AppendLine($"                                        case \"{jsonPropertyName}\":");
-
-            if (property.Name == "Checkpoint")
-            {
-                code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options) ?? [];");
-            }
-            else
-            {
-                code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options);");
-            }
-
+            code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options){nullCoalesce};");
             code.AppendLine("                                            break;");
         }
 
         code.AppendLine("                                    }");
         code.AppendLine("                                }");
         code.AppendLine();
+    }
+
+    private static void AppendInstanceConstruction(StringBuilder code, ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
+    {
         code.AppendLine($"                                // Create instance with factories and deserialized properties");
 
-        // Build constructor call with parameters
-        var ctorParamsWithValues = ctorParams;
-        if (ctorParams.Contains("documentFactory, eventStreamFactory"))
-        {
-            var args = new List<string> { "documentFactory", "eventStreamFactory" };
-
-            // Add property-matched params as deserialized locals with null-forgiving operator
-            args.AddRange(projection.Properties
-                .Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint")
-                .Where(property => ctorParams.Contains($"obj.{property.Name}"))
-                .Select(property => $"{ToCamelCase(property.Name)}!"));
-
-            // Add extra constructor params (passed through from LoadFromJson method signature)
-            args.AddRange(extraCtorParams.Select(p => p.Name));
-
-            ctorParamsWithValues = string.Join(", ", args);
-        }
+        var ctorParamsWithValues = BuildConstructorParamsWithValues(projection, ctorParams, extraCtorParams);
 
         code.AppendLine($"                                var instance = new {projection.Name}({ctorParamsWithValues});");
         code.AppendLine();
+    }
 
-        // Generate code to populate each property (skip those that were constructor parameters)
+    private static string BuildConstructorParamsWithValues(ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
+    {
+        if (!ctorParams.Contains("documentFactory, eventStreamFactory"))
+        {
+            return ctorParams;
+        }
+
+        var args = new List<string> { "documentFactory", "eventStreamFactory" };
+
+        args.AddRange(projection.Properties
+            .Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint")
+            .Where(property => ctorParams.Contains($"obj.{property.Name}"))
+            .Select(property => $"{ToCamelCase(property.Name)}!"));
+
+        args.AddRange(extraCtorParams.Select(p => p.Name));
+
+        return string.Join(", ", args);
+    }
+
+    private static void AppendPropertyPopulation(StringBuilder code, ProjectionDefinition projection, string ctorParams)
+    {
         foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
         {
             var varName = ToCamelCase(property.Name);
 
-            // Skip if this property was passed to constructor
             if (ctorParams.Contains($", {varName}"))
                 continue;
 
@@ -1254,13 +1297,6 @@ public class GenerateProjectionCode
                 code.AppendLine("                                }");
             }
         }
-
-        code.AppendLine("                                instance.Checkpoint = checkpoint;");
-        code.AppendLine("                                instance.CheckpointFingerprint = checkpointFingerprint;");
-        code.AppendLine();
-        code.AppendLine("                                return instance;");
-
-        return code.ToString();
     }
 
     private static string ToCamelCase(string name)

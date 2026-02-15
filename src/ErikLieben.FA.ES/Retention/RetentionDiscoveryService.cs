@@ -67,65 +67,82 @@ public class RetentionDiscoveryService : IRetentionDiscoveryService
                 continue;
             }
 
-            if (_logger is not null)
-            {
-                _logger.LogDebug("Checking retention policy for type {TypeName}", typeName);
-            }
+            _logger?.LogDebug("Checking retention policy for type {TypeName}", typeName);
 
-            string? continuationToken = null;
-            do
+            await foreach (var violation in DiscoverViolationsForTypeAsync(typeName, policy, cancellationToken))
+            {
+                if (yielded >= options.MaxResults)
+                {
+                    yield break;
+                }
+
+                yielded++;
+                yield return violation;
+            }
+        }
+
+        _logger?.LogInformation(
+            "Retention discovery completed. Found {ViolationCount} violations",
+            yielded);
+    }
+
+    private async IAsyncEnumerable<RetentionViolation> DiscoverViolationsForTypeAsync(
+        string typeName,
+        RetentionPolicy policy,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        string? continuationToken = null;
+        do
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var page = await _objectIdProvider.GetObjectIdsAsync(
+                typeName, continuationToken, 100, cancellationToken);
+
+            foreach (var objectId in page.Items)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var page = await _objectIdProvider.GetObjectIdsAsync(
-                    typeName,
-                    continuationToken,
-                    100,
-                    cancellationToken);
-
-                foreach (var objectId in page.Items)
+                var violation = await CheckObjectForViolationAsync(typeName, objectId, policy, cancellationToken);
+                if (violation != null)
                 {
-                    if (yielded >= options.MaxResults)
-                    {
-                        yield break;
-                    }
-
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    var metadata = await _metadataProvider.GetStreamMetadataAsync(
-                        typeName, objectId, cancellationToken);
-
-                    if (metadata == null)
-                    {
-                        continue;
-                    }
-
-                    var oldestEventDate = metadata.OldestEventDate ?? DateTimeOffset.UtcNow;
-                    var violationType = policy.CheckViolation(metadata.EventCount, oldestEventDate);
-
-                    if (violationType.HasValue)
-                    {
-                        yielded++;
-                        yield return new RetentionViolation(
-                            objectId,
-                            typeName,
-                            policy,
-                            metadata.EventCount,
-                            oldestEventDate,
-                            violationType.Value);
-                    }
+                    yield return violation;
                 }
+            }
 
-                continuationToken = page.ContinuationToken;
-            } while (!string.IsNullOrEmpty(continuationToken));
-        }
+            continuationToken = page.ContinuationToken;
+        } while (!string.IsNullOrEmpty(continuationToken));
+    }
 
-        if (_logger is not null)
+    private async Task<RetentionViolation?> CheckObjectForViolationAsync(
+        string typeName,
+        string objectId,
+        RetentionPolicy policy,
+        CancellationToken cancellationToken)
+    {
+        var metadata = await _metadataProvider.GetStreamMetadataAsync(
+            typeName, objectId, cancellationToken);
+
+        if (metadata == null)
         {
-            _logger.LogInformation(
-                "Retention discovery completed. Found {ViolationCount} violations",
-                yielded);
+            return null;
         }
+
+        var oldestEventDate = metadata.OldestEventDate ?? DateTimeOffset.UtcNow;
+        var violationType = policy.CheckViolation(metadata.EventCount, oldestEventDate);
+
+        if (!violationType.HasValue)
+        {
+            return null;
+        }
+
+        return new RetentionViolation(
+            objectId,
+            typeName,
+            policy,
+            metadata.EventCount,
+            oldestEventDate,
+            violationType.Value);
     }
 
     /// <inheritdoc />

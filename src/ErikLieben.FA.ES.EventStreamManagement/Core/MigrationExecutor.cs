@@ -94,6 +94,56 @@ public class MigrationExecutor
         logger.ExecutingDryRun(context.MigrationId);
 
         // Step 1: Analyze source stream
+        var eventList = await ReadSourceEventsForDryRunAsync(cancellationToken);
+        var eventCount = eventList.Count;
+        var estimatedSizeBytes = eventCount * 1024L; // Assume ~1KB per event average
+
+        var sourceAnalysis = AnalyzeSourceStream(eventList, eventCount, estimatedSizeBytes,
+            context.SourceDocument.Active.CurrentStreamVersion);
+
+        // Step 2: Simulate transformations if configured
+        var transformationSimulation = await SimulateTransformationsAsync(eventList, cancellationToken);
+
+        // Step 3: Estimate resources
+        var resourceEstimate = EstimateResources(eventCount, estimatedSizeBytes);
+
+        // Step 4: Check prerequisites
+        var prerequisites = CheckPrerequisites();
+
+        // Step 5: Identify risks
+        var risks = IdentifyRisks(eventCount, transformationSimulation);
+
+        // Step 6: Determine feasibility
+        var allPrerequisitesMet = prerequisites.All(p => p.IsMet);
+        var noHighRisks = !risks.Any(r => r.Severity == "High");
+        var isFeasible = allPrerequisitesMet && (noHighRisks || context.BackupConfig != null);
+
+        // Step 7: Recommend phases
+        var recommendedPhases = BuildRecommendedPhases(eventCount);
+
+        var plan = new Verification.MigrationPlan
+        {
+            PlanId = Guid.NewGuid(),
+            SourceAnalysis = sourceAnalysis,
+            TransformationSimulation = transformationSimulation,
+            ResourceEstimate = resourceEstimate,
+            Prerequisites = prerequisites.ToArray(),
+            Risks = risks.ToArray(),
+            RecommendedPhases = recommendedPhases.ToArray(),
+            IsFeasible = isFeasible
+        };
+
+        progressTracker.SetStatus(MigrationStatus.Completed);
+        progressTracker.ReportCompleted();
+
+        return MigrationResult.CreateDryRun(
+            context.MigrationId,
+            progressTracker.GetProgress(),
+            plan);
+    }
+
+    private async Task<List<IEvent>> ReadSourceEventsForDryRunAsync(CancellationToken cancellationToken)
+    {
         var sourceEvents = await context.DataStore!.ReadAsync(
             context.SourceDocument,
             startVersion: 0,
@@ -101,27 +151,33 @@ public class MigrationExecutor
             chunk: null,
             cancellationToken: cancellationToken);
 
-        var eventList = sourceEvents?.ToList() ?? [];
-        var eventCount = eventList.Count;
+        return sourceEvents?.ToList() ?? [];
+    }
 
-        // Calculate event type distribution
+    private static Verification.StreamAnalysis AnalyzeSourceStream(
+        List<IEvent> eventList,
+        int eventCount,
+        long estimatedSizeBytes,
+        int currentVersion)
+    {
         var eventTypeDistribution = eventList
             .GroupBy(e => e.EventType)
             .ToDictionary(g => g.Key, g => (long)g.Count());
 
-        // Estimate size (rough estimate based on event count)
-        var estimatedSizeBytes = eventCount * 1024L; // Assume ~1KB per event average
-
-        var sourceAnalysis = new Verification.StreamAnalysis
+        return new Verification.StreamAnalysis
         {
             EventCount = eventCount,
             SizeBytes = estimatedSizeBytes,
             EventTypeDistribution = eventTypeDistribution,
-            CurrentVersion = context.SourceDocument.Active.CurrentStreamVersion
+            CurrentVersion = currentVersion
         };
+    }
 
-        // Step 2: Simulate transformations if configured
-        var transformationSimulation = new Verification.TransformationSimulation
+    private async Task<Verification.TransformationSimulation> SimulateTransformationsAsync(
+        List<IEvent> eventList,
+        CancellationToken cancellationToken)
+    {
+        var simulation = new Verification.TransformationSimulation
         {
             SampleSize = 0,
             SuccessfulTransformations = 0,
@@ -129,90 +185,81 @@ public class MigrationExecutor
             Failures = []
         };
 
-        if (context.Transformer != null && eventList.Count > 0)
+        if (context.Transformer == null || eventList.Count == 0)
         {
-            var sampleSize = Math.Min(
-                context.VerificationConfig?.TransformationSampleSize ?? 100,
-                eventList.Count);
+            return simulation;
+        }
 
-            transformationSimulation.SampleSize = sampleSize;
+        var sampleSize = Math.Min(
+            context.VerificationConfig?.TransformationSampleSize ?? 100,
+            eventList.Count);
 
-            // Sample events for transformation testing
-            var sampleEvents = eventList.Take(sampleSize).ToList();
+        simulation.SampleSize = sampleSize;
 
-            foreach (var evt in sampleEvents)
+        var sampleEvents = eventList.Take(sampleSize).ToList();
+
+        foreach (var evt in sampleEvents)
+        {
+            try
             {
-                try
+                await context.Transformer.TransformAsync(evt, cancellationToken);
+                simulation.SuccessfulTransformations++;
+            }
+            catch (Exception ex)
+            {
+                simulation.FailedTransformations++;
+                simulation.Failures.Add(new Verification.TransformationFailure
                 {
-                    await context.Transformer.TransformAsync(evt, cancellationToken);
-                    transformationSimulation.SuccessfulTransformations++;
-                }
-                catch (Exception ex)
-                {
-                    transformationSimulation.FailedTransformations++;
-                    transformationSimulation.Failures.Add(new Verification.TransformationFailure
-                    {
-                        EventVersion = evt.EventVersion,
-                        EventName = evt.EventType,
-                        Error = ex.Message
-                    });
-                }
+                    EventVersion = evt.EventVersion,
+                    EventName = evt.EventType,
+                    Error = ex.Message
+                });
             }
         }
 
-        // Step 3: Estimate resources
+        return simulation;
+    }
+
+    private static Verification.ResourceEstimate EstimateResources(int eventCount, long estimatedSizeBytes)
+    {
         var eventsPerSecond = 1000.0; // Conservative estimate
         var estimatedDuration = TimeSpan.FromSeconds(eventCount / eventsPerSecond);
 
-        var resourceEstimate = new Verification.ResourceEstimate
+        return new Verification.ResourceEstimate
         {
             EstimatedDuration = estimatedDuration,
             EstimatedStorageBytes = estimatedSizeBytes,
             EstimatedBandwidthBytes = estimatedSizeBytes * 2 // Read + Write
         };
+    }
 
-        // Step 4: Check prerequisites
-        var prerequisites = new List<Verification.Prerequisite>();
-
-        if (context.DataStore == null)
-        {
-            prerequisites.Add(new Verification.Prerequisite
+    private List<Verification.Prerequisite> CheckPrerequisites()
+    {
+        return
+        [
+            new Verification.Prerequisite
             {
                 Name = "DataStore",
-                IsMet = false,
-                Description = "A data store must be configured for migration"
-            });
-        }
-        else
-        {
-            prerequisites.Add(new Verification.Prerequisite
-            {
-                Name = "DataStore",
-                IsMet = true,
-                Description = "Data store is configured"
-            });
-        }
-
-        if (context.DocumentStore == null)
-        {
-            prerequisites.Add(new Verification.Prerequisite
+                IsMet = context.DataStore != null,
+                Description = context.DataStore != null
+                    ? "Data store is configured"
+                    : "A data store must be configured for migration"
+            },
+            new Verification.Prerequisite
             {
                 Name = "DocumentStore",
-                IsMet = false,
-                Description = "A document store must be configured for cutover"
-            });
-        }
-        else
-        {
-            prerequisites.Add(new Verification.Prerequisite
-            {
-                Name = "DocumentStore",
-                IsMet = true,
-                Description = "Document store is configured"
-            });
-        }
+                IsMet = context.DocumentStore != null,
+                Description = context.DocumentStore != null
+                    ? "Document store is configured"
+                    : "A document store must be configured for cutover"
+            }
+        ];
+    }
 
-        // Step 5: Identify risks
+    private List<Verification.MigrationRisk> IdentifyRisks(
+        int eventCount,
+        Verification.TransformationSimulation transformationSimulation)
+    {
         var risks = new List<Verification.MigrationRisk>();
 
         if (eventCount > 10000)
@@ -249,47 +296,29 @@ public class MigrationExecutor
             });
         }
 
-        // Step 6: Determine feasibility
-        var allPrerequisitesMet = prerequisites.All(p => p.IsMet);
-        var noHighRisks = !risks.Any(r => r.Severity == "High");
-        var isFeasible = allPrerequisitesMet && (noHighRisks || context.BackupConfig != null);
+        return risks;
+    }
 
-        // Step 7: Recommend phases
-        var recommendedPhases = new List<string>();
+    private List<string> BuildRecommendedPhases(int eventCount)
+    {
+        var phases = new List<string>();
+
         if (context.BackupConfig != null)
         {
-            recommendedPhases.Add("1. Create backup of source stream");
+            phases.Add("1. Create backup of source stream");
         }
-        recommendedPhases.Add($"{(context.BackupConfig != null ? "2" : "1")}. Copy and transform {eventCount} events");
+        phases.Add($"{(context.BackupConfig != null ? "2" : "1")}. Copy and transform {eventCount} events");
         if (context.VerificationConfig != null)
         {
-            recommendedPhases.Add($"{recommendedPhases.Count + 1}. Verify migration integrity");
+            phases.Add($"{phases.Count + 1}. Verify migration integrity");
         }
-        recommendedPhases.Add($"{recommendedPhases.Count + 1}. Perform cutover to target stream");
+        phases.Add($"{phases.Count + 1}. Perform cutover to target stream");
         if (context.BookClosingConfig != null)
         {
-            recommendedPhases.Add($"{recommendedPhases.Count + 1}. Archive source stream");
+            phases.Add($"{phases.Count + 1}. Archive source stream");
         }
 
-        var plan = new Verification.MigrationPlan
-        {
-            PlanId = Guid.NewGuid(),
-            SourceAnalysis = sourceAnalysis,
-            TransformationSimulation = transformationSimulation,
-            ResourceEstimate = resourceEstimate,
-            Prerequisites = prerequisites.ToArray(),
-            Risks = risks.ToArray(),
-            RecommendedPhases = recommendedPhases.ToArray(),
-            IsFeasible = isFeasible
-        };
-
-        progressTracker.SetStatus(MigrationStatus.Completed);
-        progressTracker.ReportCompleted();
-
-        return MigrationResult.CreateDryRun(
-            context.MigrationId,
-            progressTracker.GetProgress(),
-            plan);
+        return phases;
     }
 
     private async Task<IMigrationResult> ExecuteMigrationWithLockAsync(CancellationToken cancellationToken)
@@ -560,7 +589,24 @@ public class MigrationExecutor
         var result = new MigrationVerificationResult();
         var config = context.VerificationConfig!;
 
-        // Create target document for reading
+        var targetDocument = CreateTargetDocumentForVerification();
+
+        // Read source and target events
+        var sourceList = await ReadEventsAsync(context.SourceDocument, cancellationToken);
+        var targetList = await ReadEventsAsync(targetDocument, cancellationToken);
+
+        // Run each verification step
+        VerifyEventCounts(config, result, sourceList, targetList);
+        VerifyChecksums(config, result, sourceList, targetList);
+        await VerifyTransformationsAsync(config, result, sourceList, targetList, cancellationToken);
+        VerifyStreamIntegrity(config, result, targetList);
+        await RunCustomValidationsAsync(config, result, cancellationToken);
+
+        return result;
+    }
+
+    private MigrationTargetDocument CreateTargetDocumentForVerification()
+    {
         var targetStreamInfo = new StreamInformation
         {
             StreamIdentifier = context.TargetStreamIdentifier,
@@ -585,192 +631,242 @@ public class MigrationExecutor
             SnapShotStore = context.SourceDocument.Active.SnapShotStore
         };
 
-        var targetDocument = new MigrationTargetDocument(
+        return new MigrationTargetDocument(
             context.SourceDocument.ObjectId,
             context.SourceDocument.ObjectName,
             targetStreamInfo);
+    }
 
-        // Read source and target events
-        var sourceEvents = await context.DataStore!.ReadAsync(
-            context.SourceDocument,
+    private async Task<List<IEvent>> ReadEventsAsync(IObjectDocument document, CancellationToken cancellationToken)
+    {
+        var events = await context.DataStore!.ReadAsync(
+            document,
             startVersion: 0,
             untilVersion: null,
             chunk: null,
             cancellationToken: cancellationToken);
-        var sourceList = sourceEvents?.ToList() ?? [];
+        return events?.ToList() ?? [];
+    }
 
-        var targetEvents = await context.DataStore.ReadAsync(
-            targetDocument,
-            startVersion: 0,
-            untilVersion: null,
-            chunk: null,
-            cancellationToken: cancellationToken);
-        var targetList = targetEvents?.ToList() ?? [];
-
-        // 1. Compare event counts
-        if (config.CompareEventCounts)
+    private static void VerifyEventCounts(
+        VerificationConfiguration config,
+        MigrationVerificationResult result,
+        List<IEvent> sourceList,
+        List<IEvent> targetList)
+    {
+        if (!config.CompareEventCounts)
         {
-            var sourceCount = sourceList.Count;
-            var targetCount = targetList.Count;
-            var countsMatch = sourceCount == targetCount;
-
-            result.AddResult(new ValidationResult(
-                "EventCountComparison",
-                countsMatch,
-                countsMatch
-                    ? $"Event counts match: {sourceCount} events"
-                    : $"Event count mismatch: source={sourceCount}, target={targetCount}")
-            {
-                Details = new Dictionary<string, object>
-                {
-                    ["sourceCount"] = sourceCount,
-                    ["targetCount"] = targetCount
-                }
-            });
+            return;
         }
 
-        // 2. Compare checksums
-        if (config.CompareChecksums)
-        {
-            var sourceChecksum = ComputeStreamChecksum(sourceList);
-            var targetChecksum = ComputeStreamChecksum(targetList);
+        var sourceCount = sourceList.Count;
+        var targetCount = targetList.Count;
+        var countsMatch = sourceCount == targetCount;
 
-            // If transformation was used, checksums won't match directly
-            var checksumValid = context.Transformer == null && sourceChecksum == targetChecksum;
-            if (context.Transformer != null)
+        result.AddResult(new ValidationResult(
+            "EventCountComparison",
+            countsMatch,
+            countsMatch
+                ? $"Event counts match: {sourceCount} events"
+                : $"Event count mismatch: source={sourceCount}, target={targetCount}")
+        {
+            Details = new Dictionary<string, object>
             {
-                // With transformations, we can only verify target stream integrity
-                checksumValid = !string.IsNullOrEmpty(targetChecksum);
-                result.AddResult(new ValidationResult(
-                    "ChecksumVerification",
-                    checksumValid,
-                    checksumValid
-                        ? "Target stream checksum computed successfully (transformation applied)"
-                        : "Failed to compute target stream checksum")
-                {
-                    Details = new Dictionary<string, object>
-                    {
-                        ["targetChecksum"] = targetChecksum
-                    }
-                });
+                ["sourceCount"] = sourceCount,
+                ["targetCount"] = targetCount
+            }
+        });
+    }
+
+    private void VerifyChecksums(
+        VerificationConfiguration config,
+        MigrationVerificationResult result,
+        List<IEvent> sourceList,
+        List<IEvent> targetList)
+    {
+        if (!config.CompareChecksums)
+        {
+            return;
+        }
+
+        var sourceChecksum = ComputeStreamChecksum(sourceList);
+        var targetChecksum = ComputeStreamChecksum(targetList);
+
+        if (context.Transformer != null)
+        {
+            VerifyChecksumWithTransformation(result, targetChecksum);
+        }
+        else
+        {
+            VerifyChecksumDirect(result, sourceChecksum, targetChecksum);
+        }
+    }
+
+    private static void VerifyChecksumWithTransformation(
+        MigrationVerificationResult result,
+        string targetChecksum)
+    {
+        var checksumValid = !string.IsNullOrEmpty(targetChecksum);
+        result.AddResult(new ValidationResult(
+            "ChecksumVerification",
+            checksumValid,
+            checksumValid
+                ? "Target stream checksum computed successfully (transformation applied)"
+                : "Failed to compute target stream checksum")
+        {
+            Details = new Dictionary<string, object>
+            {
+                ["targetChecksum"] = targetChecksum
+            }
+        });
+    }
+
+    private static void VerifyChecksumDirect(
+        MigrationVerificationResult result,
+        string sourceChecksum,
+        string targetChecksum)
+    {
+        var checksumValid = sourceChecksum == targetChecksum;
+        result.AddResult(new ValidationResult(
+            "ChecksumComparison",
+            checksumValid,
+            checksumValid
+                ? $"Checksums match: {sourceChecksum[..16]}..."
+                : $"Checksum mismatch: source={sourceChecksum[..16]}..., target={targetChecksum[..16]}...")
+        {
+            Details = new Dictionary<string, object>
+            {
+                ["sourceChecksum"] = sourceChecksum,
+                ["targetChecksum"] = targetChecksum
+            }
+        });
+    }
+
+    private async Task VerifyTransformationsAsync(
+        VerificationConfiguration config,
+        MigrationVerificationResult result,
+        List<IEvent> sourceList,
+        List<IEvent> targetList,
+        CancellationToken cancellationToken)
+    {
+        if (!config.ValidateTransformations || context.Transformer == null)
+        {
+            return;
+        }
+
+        var sampleSize = Math.Min(config.TransformationSampleSize, sourceList.Count);
+        var successes = 0;
+        var failures = 0;
+
+        for (var i = 0; i < sampleSize; i++)
+        {
+            if (await ValidateSingleTransformationAsync(sourceList[i], i, targetList, cancellationToken))
+            {
+                successes++;
             }
             else
             {
-                result.AddResult(new ValidationResult(
-                    "ChecksumComparison",
-                    checksumValid,
-                    checksumValid
-                        ? $"Checksums match: {sourceChecksum[..16]}..."
-                        : $"Checksum mismatch: source={sourceChecksum[..16]}..., target={targetChecksum[..16]}...")
-                {
-                    Details = new Dictionary<string, object>
-                    {
-                        ["sourceChecksum"] = sourceChecksum,
-                        ["targetChecksum"] = targetChecksum
-                    }
-                });
+                failures++;
             }
         }
 
-        // 3. Validate transformations (sample-based)
-        if (config.ValidateTransformations && context.Transformer != null)
+        var transformationValid = failures == 0;
+        result.AddResult(new ValidationResult(
+            "TransformationValidation",
+            transformationValid,
+            transformationValid
+                ? $"All {sampleSize} sampled transformations validated successfully"
+                : $"Transformation validation: {successes} passed, {failures} failed out of {sampleSize} samples")
         {
-            var sampleSize = Math.Min(config.TransformationSampleSize, sourceList.Count);
-            var successes = 0;
-            var failures = 0;
-
-            for (var i = 0; i < sampleSize; i++)
+            Details = new Dictionary<string, object>
             {
-                try
-                {
-                    var sourceEvent = sourceList[i];
-                    var transformedEvent = await context.Transformer.TransformAsync(sourceEvent, cancellationToken);
-
-                    // Verify the transformed event matches what's in target
-                    if (i < targetList.Count)
-                    {
-                        var targetEvent = targetList[i];
-                        if (transformedEvent.EventType == targetEvent.EventType)
-                        {
-                            successes++;
-                        }
-                        else
-                        {
-                            failures++;
-                        }
-                    }
-                    else
-                    {
-                        failures++;
-                    }
-                }
-                catch
-                {
-                    failures++;
-                }
+                ["sampleSize"] = sampleSize,
+                ["successes"] = successes,
+                ["failures"] = failures
             }
+        });
+    }
 
-            var transformationValid = failures == 0;
-            result.AddResult(new ValidationResult(
-                "TransformationValidation",
-                transformationValid,
-                transformationValid
-                    ? $"All {sampleSize} sampled transformations validated successfully"
-                    : $"Transformation validation: {successes} passed, {failures} failed out of {sampleSize} samples")
-            {
-                Details = new Dictionary<string, object>
-                {
-                    ["sampleSize"] = sampleSize,
-                    ["successes"] = successes,
-                    ["failures"] = failures
-                }
-            });
-        }
-
-        // 4. Verify stream integrity
-        if (config.VerifyStreamIntegrity)
+    private async Task<bool> ValidateSingleTransformationAsync(
+        IEvent sourceEvent,
+        int index,
+        List<IEvent> targetList,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            var integrityValid = VerifyEventSequencing(targetList);
-            result.AddResult(new ValidationResult(
-                "StreamIntegrity",
-                integrityValid,
-                integrityValid
-                    ? "Target stream integrity verified: proper event sequencing"
-                    : "Stream integrity check failed: event sequencing issues detected")
-            {
-                Details = new Dictionary<string, object>
-                {
-                    ["eventCount"] = targetList.Count
-                }
-            });
+            var transformedEvent = await context.Transformer!.TransformAsync(sourceEvent, cancellationToken);
+
+            return index < targetList.Count &&
+                   transformedEvent.EventType == targetList[index].EventType;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void VerifyStreamIntegrity(
+        VerificationConfiguration config,
+        MigrationVerificationResult result,
+        List<IEvent> targetList)
+    {
+        if (!config.VerifyStreamIntegrity)
+        {
+            return;
         }
 
-        // 5. Run custom validations
+        var integrityValid = VerifyEventSequencing(targetList);
+        result.AddResult(new ValidationResult(
+            "StreamIntegrity",
+            integrityValid,
+            integrityValid
+                ? "Target stream integrity verified: proper event sequencing"
+                : "Stream integrity check failed: event sequencing issues detected")
+        {
+            Details = new Dictionary<string, object>
+            {
+                ["eventCount"] = targetList.Count
+            }
+        });
+    }
+
+    private async Task RunCustomValidationsAsync(
+        VerificationConfiguration config,
+        MigrationVerificationResult result,
+        CancellationToken cancellationToken)
+    {
         foreach (var (name, validator) in config.CustomValidations)
         {
-            try
-            {
-                var verificationContext = new VerificationContext
-                {
-                    SourceStreamIdentifier = context.SourceStreamIdentifier,
-                    TargetStreamIdentifier = context.TargetStreamIdentifier,
-                    Transformer = context.Transformer,
-                    Statistics = statistics
-                };
-
-                var validationResult = await validator(verificationContext);
-                result.AddResult(validationResult);
-            }
-            catch (Exception ex)
-            {
-                result.AddResult(new ValidationResult(
-                    name,
-                    false,
-                    $"Custom validation '{name}' threw an exception: {ex.Message}"));
-            }
+            var validationResult = await ExecuteCustomValidationAsync(name, validator, cancellationToken);
+            result.AddResult(validationResult);
         }
+    }
 
-        return result;
+    private async Task<ValidationResult> ExecuteCustomValidationAsync(
+        string name,
+        Func<VerificationContext, Task<ValidationResult>> validator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var verificationContext = new VerificationContext
+            {
+                SourceStreamIdentifier = context.SourceStreamIdentifier,
+                TargetStreamIdentifier = context.TargetStreamIdentifier,
+                Transformer = context.Transformer,
+                Statistics = statistics
+            };
+
+            return await validator(verificationContext);
+        }
+        catch (Exception ex)
+        {
+            return new ValidationResult(
+                name,
+                false,
+                $"Custom validation '{name}' threw an exception: {ex.Message}");
+        }
     }
 
     private static string ComputeStreamChecksum(List<IEvent> events)

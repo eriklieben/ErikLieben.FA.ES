@@ -93,47 +93,73 @@ public class AzureBlobBackupRegistry : IBackupRegistry
 
         if (query != null)
         {
-            if (!string.IsNullOrEmpty(query.ObjectName))
-            {
-                results = results.Where(e => e.ObjectName == query.ObjectName);
-            }
-
-            if (!string.IsNullOrEmpty(query.ObjectId))
-            {
-                results = results.Where(e => e.ObjectId == query.ObjectId);
-            }
-
-            if (query.CreatedAfter.HasValue)
-            {
-                results = results.Where(e => e.CreatedAt >= query.CreatedAfter.Value);
-            }
-
-            if (query.CreatedBefore.HasValue)
-            {
-                results = results.Where(e => e.CreatedAt <= query.CreatedBefore.Value);
-            }
-
-            if (query.Tags != null && query.Tags.Count > 0)
-            {
-                results = results.Where(e =>
-                    e.Tags != null &&
-                    query.Tags.All(qt => e.Tags.TryGetValue(qt.Key, out var value) && value == qt.Value));
-            }
-
-            if (!query.IncludeExpired)
-            {
-                var now = DateTimeOffset.UtcNow;
-                results = results.Where(e =>
-                    !e.Retention.HasValue || e.CreatedAt.Add(e.Retention.Value) > now);
-            }
-
-            if (query.MaxResults.HasValue)
-            {
-                results = results.Take(query.MaxResults.Value);
-            }
+            results = ApplyQueryFilters(results, query);
         }
 
         return results.Select(e => e.ToBackupHandle()).ToList();
+    }
+
+    private static IEnumerable<BackupRegistryEntry> ApplyQueryFilters(
+        IEnumerable<BackupRegistryEntry> results,
+        BackupQuery query)
+    {
+        if (!string.IsNullOrEmpty(query.ObjectName))
+        {
+            results = results.Where(e => e.ObjectName == query.ObjectName);
+        }
+
+        if (!string.IsNullOrEmpty(query.ObjectId))
+        {
+            results = results.Where(e => e.ObjectId == query.ObjectId);
+        }
+
+        if (query.CreatedAfter.HasValue)
+        {
+            results = results.Where(e => e.CreatedAt >= query.CreatedAfter.Value);
+        }
+
+        if (query.CreatedBefore.HasValue)
+        {
+            results = results.Where(e => e.CreatedAt <= query.CreatedBefore.Value);
+        }
+
+        results = ApplyTagFilter(results, query);
+        results = ApplyExpirationFilter(results, query);
+
+        if (query.MaxResults.HasValue)
+        {
+            results = results.Take(query.MaxResults.Value);
+        }
+
+        return results;
+    }
+
+    private static IEnumerable<BackupRegistryEntry> ApplyTagFilter(
+        IEnumerable<BackupRegistryEntry> results,
+        BackupQuery query)
+    {
+        if (query.Tags == null || query.Tags.Count == 0)
+        {
+            return results;
+        }
+
+        return results.Where(e =>
+            e.Tags != null &&
+            query.Tags.All(qt => e.Tags.TryGetValue(qt.Key, out var value) && value == qt.Value));
+    }
+
+    private static IEnumerable<BackupRegistryEntry> ApplyExpirationFilter(
+        IEnumerable<BackupRegistryEntry> results,
+        BackupQuery query)
+    {
+        if (query.IncludeExpired)
+        {
+            return results;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        return results.Where(e =>
+            !e.Retention.HasValue || e.CreatedAt.Add(e.Retention.Value) > now);
     }
 
     /// <inheritdoc/>

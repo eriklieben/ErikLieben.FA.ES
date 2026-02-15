@@ -737,25 +737,35 @@ public sealed class WatchDisplay : IWatchDisplay
     {
         if (changes.Count == 0) return;
 
-        // For initial analysis, just show a summary
         if (isInitial)
         {
-            var aggregates = changes.Count(c => c.Category == Abstractions.ChangeCategory.Aggregate);
-            var projections = changes.Count(c => c.Category == Abstractions.ChangeCategory.Projection);
-            var inherited = changes.Count(c => c.Category == Abstractions.ChangeCategory.InheritedAggregate);
-
-            if (aggregates > 0 || projections > 0 || inherited > 0)
-            {
-                var parts = new List<string>();
-                if (aggregates > 0) parts.Add($"{aggregates} aggregates");
-                if (projections > 0) parts.Add($"{projections} projections");
-                if (inherited > 0) parts.Add($"{inherited} inherited");
-                LogActivity(ActivityType.Info, $"Found {string.Join(", ", parts)}");
-            }
+            LogInitialChangeSummary(changes);
             return;
         }
 
-        // For incremental updates, show detailed changes (limit to most recent)
+        LogIncrementalChanges(changes);
+    }
+
+    private void LogInitialChangeSummary(IReadOnlyList<Abstractions.DetectedChange> changes)
+    {
+        var aggregates = changes.Count(c => c.Category == Abstractions.ChangeCategory.Aggregate);
+        var projections = changes.Count(c => c.Category == Abstractions.ChangeCategory.Projection);
+        var inherited = changes.Count(c => c.Category == Abstractions.ChangeCategory.InheritedAggregate);
+
+        if (aggregates == 0 && projections == 0 && inherited == 0)
+        {
+            return;
+        }
+
+        var parts = new List<string>();
+        if (aggregates > 0) parts.Add($"{aggregates} aggregates");
+        if (projections > 0) parts.Add($"{projections} projections");
+        if (inherited > 0) parts.Add($"{inherited} inherited");
+        LogActivity(ActivityType.Info, $"Found {string.Join(", ", parts)}");
+    }
+
+    private void LogIncrementalChanges(IReadOnlyList<Abstractions.DetectedChange> changes)
+    {
         var changesToShow = changes.Take(10).ToList();
         foreach (var change in changesToShow)
         {

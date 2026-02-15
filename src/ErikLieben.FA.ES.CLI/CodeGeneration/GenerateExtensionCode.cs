@@ -86,68 +86,9 @@ public async Task Generate()
         // Collect all aggregate-related namespaces
         var aggregateNamespaces = new HashSet<string>();
 
-        foreach (var declaration in project.Aggregates)
-        {
-            if (!declaration.IsPartialClass)
-            {
-                continue;
-            }
-
-            // Collect aggregate namespace
-            if (!string.IsNullOrWhiteSpace(declaration.Namespace))
-            {
-                aggregateNamespaces.Add(declaration.Namespace);
-            }
-
-            // Collect identifier namespace
-            if (!string.IsNullOrWhiteSpace(declaration.IdentifierTypeNamespace))
-            {
-                aggregateNamespaces.Add(declaration.IdentifierTypeNamespace);
-            }
-
-            registerCode.AppendLine(
-                $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
-            registerCode.AppendLine(
-                $"serviceCollection.AddSingleton<I{declaration.IdentifierName}Factory, {declaration.IdentifierName}Factory>();");
-            registerCode.AppendLine(
-                $"serviceCollection.AddScoped<I{declaration.IdentifierName}Repository, {declaration.IdentifierName}Repository>();");
-            mappingCode.AppendLine(
-                $"Type agg when agg == typeof({declaration.IdentifierName}) => typeof(IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>),");
-        }
-
-
-        foreach (var declaration in project.InheritedAggregates)
-        {
-            // Collect aggregate namespace
-            if (!string.IsNullOrWhiteSpace(declaration.Namespace))
-            {
-                aggregateNamespaces.Add(declaration.Namespace);
-            }
-
-            // Collect identifier namespace
-            if (!string.IsNullOrWhiteSpace(declaration.IdentifierTypeNamespace))
-            {
-                aggregateNamespaces.Add(declaration.IdentifierTypeNamespace);
-            }
-
-            registerCode.AppendLine(
-                $"serviceCollection.AddSingleton<IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>, {declaration.IdentifierName}Factory>();");
-            registerCode.AppendLine(
-                $"serviceCollection.AddSingleton<I{declaration.IdentifierName}Factory, {declaration.IdentifierName}Factory>();");
-            registerCode.AppendLine(
-                $"serviceCollection.AddScoped<I{declaration.IdentifierName}Repository, {declaration.IdentifierName}Repository>();");
-            mappingCode.AppendLine(
-                $"Type agg when agg == typeof({declaration.IdentifierName}) => typeof(IAggregateFactory<{declaration.IdentifierName}, {declaration.IdentifierType}>),");
-        }
-
-        // Collect projection namespaces
-        foreach (var projection in project.Projections.Where(p => p.BlobProjection != null))
-        {
-            if (!string.IsNullOrWhiteSpace(projection.Namespace))
-            {
-                aggregateNamespaces.Add(projection.Namespace);
-            }
-        }
+        CollectAggregateRegistrations(project, aggregateNamespaces, registerCode, mappingCode);
+        CollectInheritedAggregateRegistrations(project, aggregateNamespaces, registerCode, mappingCode);
+        CollectProjectionNamespaces(project, aggregateNamespaces);
 
         // Merge aggregate namespaces with JSON serializer namespaces
         var allNamespaces = jsonNamespaces.Union(aggregateNamespaces).Distinct().Order();
@@ -264,6 +205,61 @@ public async Task Generate()
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
         var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
         await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
+    }
+
+    private static void CollectAggregateRegistrations(ProjectDefinition project, HashSet<string> namespaces, StringBuilder registerCode, StringBuilder mappingCode)
+    {
+        foreach (var declaration in project.Aggregates)
+        {
+            if (!declaration.IsPartialClass)
+            {
+                continue;
+            }
+
+            CollectNamespace(namespaces, declaration.Namespace);
+            CollectNamespace(namespaces, declaration.IdentifierTypeNamespace);
+
+            AppendAggregateRegistration(registerCode, mappingCode, declaration.IdentifierName, declaration.IdentifierType);
+        }
+    }
+
+    private static void CollectInheritedAggregateRegistrations(ProjectDefinition project, HashSet<string> namespaces, StringBuilder registerCode, StringBuilder mappingCode)
+    {
+        foreach (var declaration in project.InheritedAggregates)
+        {
+            CollectNamespace(namespaces, declaration.Namespace);
+            CollectNamespace(namespaces, declaration.IdentifierTypeNamespace);
+
+            AppendAggregateRegistration(registerCode, mappingCode, declaration.IdentifierName, declaration.IdentifierType);
+        }
+    }
+
+    private static void CollectProjectionNamespaces(ProjectDefinition project, HashSet<string> namespaces)
+    {
+        foreach (var projection in project.Projections.Where(p => p.BlobProjection != null))
+        {
+            CollectNamespace(namespaces, projection.Namespace);
+        }
+    }
+
+    private static void CollectNamespace(HashSet<string> namespaces, string? ns)
+    {
+        if (!string.IsNullOrWhiteSpace(ns))
+        {
+            namespaces.Add(ns);
+        }
+    }
+
+    private static void AppendAggregateRegistration(StringBuilder registerCode, StringBuilder mappingCode, string identifierName, string identifierType)
+    {
+        registerCode.AppendLine(
+            $"serviceCollection.AddSingleton<IAggregateFactory<{identifierName}, {identifierType}>, {identifierName}Factory>();");
+        registerCode.AppendLine(
+            $"serviceCollection.AddSingleton<I{identifierName}Factory, {identifierName}Factory>();");
+        registerCode.AppendLine(
+            $"serviceCollection.AddScoped<I{identifierName}Repository, {identifierName}Repository>();");
+        mappingCode.AppendLine(
+            $"Type agg when agg == typeof({identifierName}) => typeof(IAggregateFactory<{identifierName}, {identifierType}>),");
     }
 
     private static (StringBuilder, List<string>) GenerateJsonSerializers(ProjectDefinition project, string version)

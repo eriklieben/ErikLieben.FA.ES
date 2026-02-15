@@ -85,63 +85,67 @@ public class SnapshotCleanupService : ISnapshotCleanupService
             return SnapshotCleanupResult.NoCleanupNeeded(0);
         }
 
-        // Determine which snapshots to delete
-        var toDelete = new List<SnapshotMetadata>();
-        var toRetain = new List<SnapshotMetadata>();
+        var (toDelete, toRetain) = ClassifySnapshots(snapshots, policy);
 
-        // Snapshots are ordered by version descending (most recent first)
-        for (var i = 0; i < snapshots.Count; i++)
-        {
-            var snapshot = snapshots[i];
-            var shouldDelete = false;
-
-            // Always keep at least one snapshot (the most recent)
-            if (i == 0)
-            {
-                toRetain.Add(snapshot);
-                continue;
-            }
-
-            // Check count limit
-            if (policy.KeepSnapshots > 0 && i >= policy.KeepSnapshots)
-            {
-                shouldDelete = true;
-            }
-
-            // Check age limit
-            if (policy.MaxAge is not null && snapshot.IsOlderThan(policy.MaxAge.Value))
-            {
-                shouldDelete = true;
-            }
-
-            if (shouldDelete)
-            {
-                toDelete.Add(snapshot);
-            }
-            else
-            {
-                toRetain.Add(snapshot);
-            }
-        }
-
-        // Nothing to delete
         if (toDelete.Count == 0)
         {
             return SnapshotCleanupResult.NoCleanupNeeded(toRetain.Count);
         }
 
-        // Delete the snapshots
+        return await DeleteSnapshotsAsync(document, toDelete, toRetain, policy, activity, cancellationToken);
+    }
+
+    private static (List<SnapshotMetadata> toDelete, List<SnapshotMetadata> toRetain) ClassifySnapshots(
+        IReadOnlyList<SnapshotMetadata> snapshots, SnapshotPolicy policy)
+    {
+        var toDelete = new List<SnapshotMetadata>();
+        var toRetain = new List<SnapshotMetadata>();
+
+        // Always keep the most recent snapshot (index 0)
+        toRetain.Add(snapshots[0]);
+
+        // Snapshots are ordered by version descending (most recent first)
+        for (var i = 1; i < snapshots.Count; i++)
+        {
+            if (ShouldDeleteSnapshot(snapshots[i], i, policy))
+            {
+                toDelete.Add(snapshots[i]);
+            }
+            else
+            {
+                toRetain.Add(snapshots[i]);
+            }
+        }
+
+        return (toDelete, toRetain);
+    }
+
+    private static bool ShouldDeleteSnapshot(SnapshotMetadata snapshot, int index, SnapshotPolicy policy)
+    {
+        if (policy.KeepSnapshots > 0 && index >= policy.KeepSnapshots)
+        {
+            return true;
+        }
+
+        return policy.MaxAge is not null && snapshot.IsOlderThan(policy.MaxAge.Value);
+    }
+
+    private async Task<SnapshotCleanupResult> DeleteSnapshotsAsync(
+        IObjectDocument document,
+        List<SnapshotMetadata> toDelete,
+        List<SnapshotMetadata> toRetain,
+        SnapshotPolicy policy,
+        Activity? activity,
+        CancellationToken cancellationToken)
+    {
         var versions = toDelete.Select(s => s.Version).ToList();
         var deleted = await _snapshotStore.DeleteManyAsync(document, versions, cancellationToken);
 
-        if (_logger is not null)
-        {
-            _logger.LogInformation(
-                "Cleaned up {DeletedCount} snapshots for {StreamId}. Retained: {RetainedCount}",
-                deleted,
-                document.Active.StreamIdentifier,
-                toRetain.Count);
-        }
+        _logger?.LogInformation(
+            "Cleaned up {DeletedCount} snapshots for {StreamId}. Retained: {RetainedCount}",
+            deleted,
+            document.Active.StreamIdentifier,
+            toRetain.Count);
 
         activity?.SetTag("SnapshotsDeleted", deleted);
         activity?.SetTag("SnapshotsRetained", toRetain.Count);

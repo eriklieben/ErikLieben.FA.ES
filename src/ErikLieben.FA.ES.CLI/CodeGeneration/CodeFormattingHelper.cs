@@ -162,7 +162,6 @@ public static class CodeFormattingHelper
         if (string.IsNullOrEmpty(projectDirectory) || !Directory.Exists(projectDirectory))
             return;
 
-        // Read project.assets.json from obj folder
         var assetsFile = Path.Combine(projectDirectory, "obj", "project.assets.json");
         if (!File.Exists(assetsFile))
             return;
@@ -177,44 +176,57 @@ public static class CodeFormattingHelper
             if (!Directory.Exists(nugetCache))
                 return;
 
-            // Parse packages from assets file (simple text search approach)
-            // Looking for patterns like "Azure.Storage.Blobs/12.19.1"
             var lines = assetsJson.Split('\n');
-            var packagePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var line in lines)
-            {
-                if (line.Contains("\"compile\"") || line.Contains("\"runtime\""))
-                {
-                    // Extract package path from entries like "lib/net6.0/Azure.Storage.Blobs.dll"
-                    var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
-                    if (match.Success)
-                    {
-                        packagePaths.Add(match.Groups[1].Value);
-                    }
-                }
-            }
-
-            // Also look for target section which has package names and versions
-            foreach (var line in lines)
-            {
-                var packageMatch = System.Text.RegularExpressions.Regex.Match(line, @"""([a-zA-Z0-9\.]+)/([0-9\.]+)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
-                if (packageMatch.Success)
-                {
-                    var packageName = packageMatch.Groups[1].Value.ToLowerInvariant();
-                    var version = packageMatch.Groups[2].Value;
-
-                    var packageDir = Path.Combine(nugetCache, packageName, version);
-                    if (Directory.Exists(packageDir))
-                    {
-                        LoadPackageAssemblies(packageDir, references, addedLocations);
-                    }
-                }
-            }
+            ExtractDllPathsFromAssets(lines);
+            LoadPackagesFromAssets(lines, nugetCache, references, addedLocations);
         }
         catch
         {
             // If we can't read assets file, silently continue
+        }
+    }
+
+    /// <summary>
+    /// Extracts DLL paths from compile/runtime entries in the assets file lines.
+    /// </summary>
+    private static HashSet<string> ExtractDllPathsFromAssets(string[] lines)
+    {
+        var packagePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var line in lines)
+        {
+            if (!line.Contains("\"compile\"") && !line.Contains("\"runtime\""))
+                continue;
+
+            var match = System.Text.RegularExpressions.Regex.Match(line, @"""([^""]+\.dll)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
+            if (match.Success)
+            {
+                packagePaths.Add(match.Groups[1].Value);
+            }
+        }
+
+        return packagePaths;
+    }
+
+    /// <summary>
+    /// Loads NuGet package assemblies by matching package name/version patterns in the assets file.
+    /// </summary>
+    private static void LoadPackagesFromAssets(string[] lines, string nugetCache, List<MetadataReference> references, HashSet<string> addedLocations)
+    {
+        foreach (var line in lines)
+        {
+            var packageMatch = System.Text.RegularExpressions.Regex.Match(line, @"""([a-zA-Z0-9\.]+)/([0-9\.]+)""", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
+            if (!packageMatch.Success)
+                continue;
+
+            var packageName = packageMatch.Groups[1].Value.ToLowerInvariant();
+            var version = packageMatch.Groups[2].Value;
+
+            var packageDir = Path.Combine(nugetCache, packageName, version);
+            if (Directory.Exists(packageDir))
+            {
+                LoadPackageAssemblies(packageDir, references, addedLocations);
+            }
         }
     }
 
@@ -299,57 +311,37 @@ public static class CodeFormattingHelper
 
         // First check if there are ANY unresolved symbols - if so, keep all usings
         if (HasUnresolvedSymbols(semanticModel, root, cancelToken))
-        {
-            return true; // Keep all usings when there are unresolved types
-        }
+            return true;
 
         // All symbols can be resolved - check if this specific using is needed
-        // Check all identifiers
-        var allIdentifiers = root.DescendantNodes()
-            .OfType<IdentifierNameSyntax>()
-            .Where(id => id.Span.Start > usingDirective.Span.End);
+        return AnyNodeReferencesNamespace<IdentifierNameSyntax>(semanticModel, root, usingDirective, namespaceName, cancelToken)
+            || AnyNodeReferencesNamespace<AttributeSyntax>(semanticModel, root, usingDirective, namespaceName, cancelToken)
+            || AnyNodeReferencesNamespace<GenericNameSyntax>(semanticModel, root, usingDirective, namespaceName, cancelToken);
+    }
 
-        foreach (var identifier in allIdentifiers)
+    /// <summary>
+    /// Checks if any syntax node of the specified type references a symbol from the given namespace.
+    /// </summary>
+    private static bool AnyNodeReferencesNamespace<T>(
+        SemanticModel semanticModel,
+        SyntaxNode root,
+        UsingDirectiveSyntax usingDirective,
+        string namespaceName,
+        CancellationToken cancelToken) where T : SyntaxNode
+    {
+        var nodes = root.DescendantNodes()
+            .OfType<T>()
+            .Where(node => node.Span.Start > usingDirective.Span.End);
+
+        foreach (var node in nodes)
         {
-            var symbolInfo = semanticModel.GetSymbolInfo(identifier, cancelToken);
-            if (symbolInfo.Symbol != null)
-            {
-                var containingNamespace = symbolInfo.Symbol.ContainingNamespace?.ToDisplayString();
-                if (containingNamespace != null && containingNamespace.StartsWith(namespaceName))
-                    return true;
-            }
-        }
+            var symbolInfo = semanticModel.GetSymbolInfo(node, cancelToken);
+            if (symbolInfo.Symbol == null)
+                continue;
 
-        // Check attributes
-        var allAttributes = root.DescendantNodes()
-            .OfType<AttributeSyntax>()
-            .Where(attr => attr.Span.Start > usingDirective.Span.End);
-
-        foreach (var attribute in allAttributes)
-        {
-            var symbolInfo = semanticModel.GetSymbolInfo(attribute, cancelToken);
-            if (symbolInfo.Symbol != null)
-            {
-                var containingNamespace = symbolInfo.Symbol.ContainingNamespace?.ToDisplayString();
-                if (containingNamespace != null && containingNamespace.StartsWith(namespaceName))
-                    return true;
-            }
-        }
-
-        // Check generic names (like ConcurrentDictionary in ConcurrentDictionary<K,V>)
-        var allGenericNames = root.DescendantNodes()
-            .OfType<GenericNameSyntax>()
-            .Where(gn => gn.Span.Start > usingDirective.Span.End);
-
-        foreach (var genericName in allGenericNames)
-        {
-            var symbolInfo = semanticModel.GetSymbolInfo(genericName, cancelToken);
-            if (symbolInfo.Symbol != null)
-            {
-                var containingNamespace = symbolInfo.Symbol.ContainingNamespace?.ToDisplayString();
-                if (containingNamespace != null && containingNamespace.StartsWith(namespaceName))
-                    return true;
-            }
+            var containingNamespace = symbolInfo.Symbol.ContainingNamespace?.ToDisplayString();
+            if (containingNamespace != null && containingNamespace.StartsWith(namespaceName))
+                return true;
         }
 
         return false;

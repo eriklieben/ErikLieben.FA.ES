@@ -170,14 +170,7 @@ public class LeasedSession : ILeasedSession
         var allEvents = Buffer.ToList();
         var originalVersion = document.Active.CurrentStreamVersion - Buffer.Count;
 
-        if (activity?.IsAllDataRequested == true)
-        {
-            activity.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
-            activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
-            activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
-            activity.SetTag(FaesSemanticConventions.EventCount, Buffer.Count);
-            activity.SetTag(FaesSemanticConventions.ChunkingEnabled, document.Active.ChunkingEnabled());
-        }
+        SetCommitActivityTags(activity);
 
         // Track commit state for exception context
         var commitState = new CommitState();
@@ -202,69 +195,7 @@ public class LeasedSession : ILeasedSession
             // Restore the version so the caller can retry with the same buffer.
             document.Active.CurrentStreamVersion = originalVersion;
 
-            // Try automatic cleanup if events may have been written
-            if (commitState.EventsAppendStarted)
-            {
-                var cleanupFromVersion = originalVersion + 1;
-                var cleanupToVersion = originalVersion + allEvents.Count;
-
-                try
-                {
-                    var removed = await ((IDataStoreRecovery)datastore).RemoveEventsForFailedCommitAsync(
-                        document, cleanupFromVersion, cleanupToVersion);
-
-                    // Record rollback in metadata
-                    document.Active.RollbackHistory ??= [];
-                    document.Active.RollbackHistory.Add(new RollbackRecord
-                    {
-                        RolledBackAt = DateTimeOffset.UtcNow,
-                        FromVersion = cleanupFromVersion,
-                        ToVersion = cleanupToVersion,
-                        EventsRemoved = removed,
-                        OriginalError = ex.Message,
-                        OriginalExceptionType = ex.GetType().FullName
-                    });
-
-                    // Persist rollback history (best effort)
-                    try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
-
-                    // Cleanup succeeded - throw with EventsMayBeWritten = false so caller knows it's safe to retry
-                    throw new CommitFailedException(
-                        document.Active.StreamIdentifier,
-                        originalVersion,
-                        cleanupToVersion,
-                        eventsMayBeWritten: false,
-                        $"Commit failed for stream '{document.Active.StreamIdentifier}'. " +
-                        $"Automatic cleanup removed {removed} partial events. Safe to retry.",
-                        ex);
-                }
-                catch (Exception cleanupEx) when (cleanupEx is not CommitFailedException)
-                {
-                    // Cleanup failed - mark stream as broken
-                    document.Active.IsBroken = true;
-                    document.Active.BrokenInfo = new BrokenStreamInfo
-                    {
-                        BrokenAt = DateTimeOffset.UtcNow,
-                        OrphanedFromVersion = cleanupFromVersion,
-                        OrphanedToVersion = cleanupToVersion,
-                        ErrorMessage = cleanupEx.Message,
-                        OriginalExceptionType = ex.GetType().FullName,
-                        CleanupExceptionType = cleanupEx.GetType().FullName
-                    };
-
-                    // Try to persist broken state (best effort)
-                    try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
-
-                    throw new CommitCleanupFailedException(
-                        document.Active.StreamIdentifier,
-                        originalVersion,
-                        cleanupToVersion,
-                        cleanupFromVersion,
-                        cleanupToVersion,
-                        cleanupEx,
-                        ex);
-                }
-            }
+            await HandleCommitFailureAsync(ex, commitState, originalVersion, allEvents.Count, cancellationToken);
 
             // Document update failed before events were written - safe to retry
             throw new CommitFailedException(
@@ -278,19 +209,114 @@ public class LeasedSession : ILeasedSession
         }
 
         await ExecutePostCommitActionsAsync(allEvents);
+        RecordSuccessMetrics(activity, timer, allEvents.Count);
 
-        // Record success metrics
+        Buffer.Clear();
+    }
+
+    private void SetCommitActivityTags(System.Diagnostics.Activity? activity)
+    {
+        if (activity?.IsAllDataRequested != true)
+        {
+            return;
+        }
+
+        activity.SetTag(FaesSemanticConventions.StreamId, document.Active.StreamIdentifier);
+        activity.SetTag(FaesSemanticConventions.ObjectName, document.ObjectName);
+        activity.SetTag(FaesSemanticConventions.ObjectId, document.ObjectId);
+        activity.SetTag(FaesSemanticConventions.EventCount, Buffer.Count);
+        activity.SetTag(FaesSemanticConventions.ChunkingEnabled, document.Active.ChunkingEnabled());
+    }
+
+    private async Task HandleCommitFailureAsync(Exception ex, CommitState commitState, int originalVersion, int eventCount, CancellationToken cancellationToken)
+    {
+        if (!commitState.EventsAppendStarted)
+        {
+            return;
+        }
+
+        var cleanupFromVersion = originalVersion + 1;
+        var cleanupToVersion = originalVersion + eventCount;
+
+        try
+        {
+            await AttemptCleanupAfterFailedCommitAsync(ex, cleanupFromVersion, cleanupToVersion, originalVersion, cancellationToken);
+        }
+        catch (Exception cleanupEx) when (cleanupEx is not CommitFailedException)
+        {
+            await MarkStreamAsBrokenAsync(ex, cleanupEx, cleanupFromVersion, cleanupToVersion, cancellationToken);
+
+            throw new CommitCleanupFailedException(
+                document.Active.StreamIdentifier,
+                originalVersion,
+                cleanupToVersion,
+                cleanupFromVersion,
+                cleanupToVersion,
+                cleanupEx,
+                ex);
+        }
+    }
+
+    private async Task AttemptCleanupAfterFailedCommitAsync(
+        Exception originalEx, int cleanupFromVersion, int cleanupToVersion, int originalVersion, CancellationToken cancellationToken)
+    {
+        var removed = await ((IDataStoreRecovery)datastore).RemoveEventsForFailedCommitAsync(
+            document, cleanupFromVersion, cleanupToVersion);
+
+        // Record rollback in metadata
+        document.Active.RollbackHistory ??= [];
+        document.Active.RollbackHistory.Add(new RollbackRecord
+        {
+            RolledBackAt = DateTimeOffset.UtcNow,
+            FromVersion = cleanupFromVersion,
+            ToVersion = cleanupToVersion,
+            EventsRemoved = removed,
+            OriginalError = originalEx.Message,
+            OriginalExceptionType = originalEx.GetType().FullName
+        });
+
+        // Persist rollback history (best effort)
+        try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
+
+        throw new CommitFailedException(
+            document.Active.StreamIdentifier,
+            originalVersion,
+            cleanupToVersion,
+            eventsMayBeWritten: false,
+            $"Commit failed for stream '{document.Active.StreamIdentifier}'. " +
+            $"Automatic cleanup removed {removed} partial events. Safe to retry.",
+            originalEx);
+    }
+
+    private async Task MarkStreamAsBrokenAsync(
+        Exception originalEx, Exception cleanupEx, int cleanupFromVersion, int cleanupToVersion, CancellationToken cancellationToken)
+    {
+        document.Active.IsBroken = true;
+        document.Active.BrokenInfo = new BrokenStreamInfo
+        {
+            BrokenAt = DateTimeOffset.UtcNow,
+            OrphanedFromVersion = cleanupFromVersion,
+            OrphanedToVersion = cleanupToVersion,
+            ErrorMessage = cleanupEx.Message,
+            OriginalExceptionType = originalEx.GetType().FullName,
+            CleanupExceptionType = cleanupEx.GetType().FullName
+        };
+
+        // Try to persist broken state (best effort)
+        try { await documentstore.SetAsync(document, cancellationToken: cancellationToken); } catch { /* Log but continue */ }
+    }
+
+    private void RecordSuccessMetrics(System.Diagnostics.Activity? activity, System.Diagnostics.Stopwatch? timer, int eventCount)
+    {
         if (timer != null)
         {
             var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
             FaesMetrics.RecordCommitDuration(durationMs, document.ObjectName, FaesSemanticConventions.StorageProviderBlob);
         }
-        FaesMetrics.RecordEventsAppended(allEvents.Count, document.ObjectName, FaesSemanticConventions.StorageProviderBlob);
-        FaesMetrics.RecordEventsPerCommit(allEvents.Count, document.ObjectName);
+        FaesMetrics.RecordEventsAppended(eventCount, document.ObjectName, FaesSemanticConventions.StorageProviderBlob);
+        FaesMetrics.RecordEventsPerCommit(eventCount, document.ObjectName);
         FaesMetrics.RecordCommit(document.ObjectName, FaesSemanticConventions.StorageProviderBlob, success: true);
         activity?.SetTag(FaesSemanticConventions.Success, true);
-
-        Buffer.Clear();
     }
 
     /// <summary>

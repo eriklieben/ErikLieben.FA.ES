@@ -20,39 +20,54 @@ public static class AttributeExtractor
         if (attribute == null)
             return null;
 
-        // Handle constructor with single "all" parameter
-        // Example: [EventStreamType("blob")]
-        if (attribute.ConstructorArguments.Length == 1 &&
-            attribute.ConstructorArguments[0].Value is string allValue)
-        {
-            return new EventStreamTypeAttributeData
-            {
-                StreamType = allValue,
-                DocumentType = allValue,
-                DocumentTagType = allValue,
-                EventStreamTagType = allValue,
-                DocumentRefType = allValue
-            };
-        }
+        if (attribute.ConstructorArguments.Length == 1)
+            return ExtractSingleArgEventStreamType(attribute);
 
-        // Handle positional arguments constructor
-        // Example: [EventStreamType("table", "table")] or [EventStreamType("blob", "cosmos", "table")]
-        // Order: streamType, documentType, documentTagType, eventStreamTagType, documentRefType
         if (attribute.ConstructorArguments.Length > 1)
-        {
-            var args = attribute.ConstructorArguments;
-            return new EventStreamTypeAttributeData
-            {
-                StreamType = args.Length > 0 ? args[0].Value as string : null,
-                DocumentType = args.Length > 1 ? args[1].Value as string : null,
-                DocumentTagType = args.Length > 2 ? args[2].Value as string : null,
-                EventStreamTagType = args.Length > 3 ? args[3].Value as string : null,
-                DocumentRefType = args.Length > 4 ? args[4].Value as string : null
-            };
-        }
+            return ExtractPositionalEventStreamType(attribute);
 
-        // Handle named arguments constructor using Aggregate
-        // Example: [EventStreamType(streamType: "blob", documentType: "cosmos")]
+        return ExtractNamedEventStreamType(attribute);
+    }
+
+    /// <summary>
+    /// Handles constructor with single "all" parameter: [EventStreamType("blob")].
+    /// </summary>
+    private static EventStreamTypeAttributeData? ExtractSingleArgEventStreamType(AttributeData attribute)
+    {
+        if (attribute.ConstructorArguments[0].Value is not string allValue)
+            return ExtractNamedEventStreamType(attribute);
+
+        return new EventStreamTypeAttributeData
+        {
+            StreamType = allValue,
+            DocumentType = allValue,
+            DocumentTagType = allValue,
+            EventStreamTagType = allValue,
+            DocumentRefType = allValue
+        };
+    }
+
+    /// <summary>
+    /// Handles positional arguments: [EventStreamType("table", "table")].
+    /// </summary>
+    private static EventStreamTypeAttributeData ExtractPositionalEventStreamType(AttributeData attribute)
+    {
+        var args = attribute.ConstructorArguments;
+        return new EventStreamTypeAttributeData
+        {
+            StreamType = args.Length > 0 ? args[0].Value as string : null,
+            DocumentType = args.Length > 1 ? args[1].Value as string : null,
+            DocumentTagType = args.Length > 2 ? args[2].Value as string : null,
+            EventStreamTagType = args.Length > 3 ? args[3].Value as string : null,
+            DocumentRefType = args.Length > 4 ? args[4].Value as string : null
+        };
+    }
+
+    /// <summary>
+    /// Handles named arguments: [EventStreamType(streamType: "blob", documentType: "cosmos")].
+    /// </summary>
+    private static EventStreamTypeAttributeData ExtractNamedEventStreamType(AttributeData attribute)
+    {
         return attribute.NamedArguments
             .Where(namedArg => namedArg.Value.Value is string)
             .Aggregate(new EventStreamTypeAttributeData(), (data, namedArg) =>

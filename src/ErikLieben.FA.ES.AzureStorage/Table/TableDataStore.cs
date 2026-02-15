@@ -272,14 +272,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         // Check if stream is closed by looking for the last event
         await CheckStreamNotClosedAsync(tableClient, document, cancellationToken);
 
-        int? chunkIdentifier = null;
-        if (document.Active.ChunkingEnabled())
-        {
-            var chunks = document.Active.StreamChunks;
-            var lastChunk = chunks[chunks.Count - 1];
-            chunkIdentifier = lastChunk.ChunkIdentifier;
-        }
-
+        var chunkIdentifier = GetLastChunkIdentifier(document);
         var documentHash = document.Hash ?? "*";
 
         // Convert events and add to table
@@ -294,7 +287,28 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             throw new ArgumentException("No valid events could be converted for storage.");
         }
 
-        // Use batch transaction for atomicity
+        var batch = BuildAppendBatch(tableEvents, document, documentHash, chunkIdentifier);
+        await SubmitBatchesAsync(tableClient, batch, document.Active.StreamIdentifier, cancellationToken);
+    }
+
+    private static int? GetLastChunkIdentifier(IObjectDocument document)
+    {
+        if (!document.Active.ChunkingEnabled())
+        {
+            return null;
+        }
+
+        var chunks = document.Active.StreamChunks;
+        var lastChunk = chunks[chunks.Count - 1];
+        return lastChunk.ChunkIdentifier;
+    }
+
+    private List<TableTransactionAction> BuildAppendBatch(
+        List<TableJsonEvent> tableEvents,
+        IObjectDocument document,
+        string documentHash,
+        int? chunkIdentifier)
+    {
         var batch = new List<TableTransactionAction>();
         foreach (var tableEvent in tableEvents)
         {
@@ -304,67 +318,100 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
                 documentHash,
                 chunkIdentifier);
 
-            // Check if payload chunking is needed
-            if (settings.EnableLargePayloadChunking)
+            if (TryAddLargePayloadActions(entity, batch))
             {
-                var payloadBytes = Encoding.UTF8.GetBytes(entity.Payload);
-                if (payloadBytes.Length > settings.PayloadChunkThresholdBytes)
-                {
-                    // Payload exceeds threshold, apply compression and potentially chunk
-                    byte[] dataToStore;
-                    bool isCompressed = false;
-
-                    if (settings.CompressLargePayloads)
-                    {
-                        dataToStore = CompressPayload(entity.Payload);
-                        isCompressed = true;
-                    }
-                    else
-                    {
-                        dataToStore = payloadBytes;
-                    }
-
-                    if (dataToStore.Length > MaxPayloadChunkSizeBytes)
-                    {
-                        // Still too large after compression, need to chunk
-                        var chunks = ChunkPayloadData(dataToStore);
-                        var totalChunks = chunks.Count;
-
-                        // Main entity stores first chunk
-                        entity.Payload = "{}"; // Clear payload, data is in PayloadData
-                        entity.PayloadData = chunks[0];
-                        entity.PayloadChunked = true;
-                        entity.PayloadTotalChunks = totalChunks;
-                        entity.PayloadCompressed = isCompressed;
-
-                        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
-
-                        // Add additional chunk entities
-                        for (int i = 1; i < chunks.Count; i++)
-                        {
-                            var chunkEntity = CreatePayloadChunkEntity(entity, chunks[i], i, totalChunks);
-                            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, chunkEntity));
-                        }
-                    }
-                    else
-                    {
-                        // Compressed data fits in one row
-                        entity.Payload = "{}"; // Clear payload, data is in PayloadData
-                        entity.PayloadData = dataToStore;
-                        entity.PayloadChunked = false;
-                        entity.PayloadTotalChunks = 1;
-                        entity.PayloadCompressed = isCompressed;
-
-                        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
-                    }
-
-                    continue;
-                }
+                continue;
             }
 
             batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
         }
 
+        return batch;
+    }
+
+    private bool TryAddLargePayloadActions(TableEventEntity entity, List<TableTransactionAction> batch)
+    {
+        if (!settings.EnableLargePayloadChunking)
+        {
+            return false;
+        }
+
+        var payloadBytes = Encoding.UTF8.GetBytes(entity.Payload);
+        if (payloadBytes.Length <= settings.PayloadChunkThresholdBytes)
+        {
+            return false;
+        }
+
+        var (dataToStore, isCompressed) = PreparePayloadData(entity.Payload, payloadBytes);
+
+        if (dataToStore.Length > MaxPayloadChunkSizeBytes)
+        {
+            AddChunkedPayloadActions(entity, dataToStore, isCompressed, batch);
+        }
+        else
+        {
+            AddSinglePayloadAction(entity, dataToStore, isCompressed, batch);
+        }
+
+        return true;
+    }
+
+    private (byte[] Data, bool IsCompressed) PreparePayloadData(string payload, byte[] payloadBytes)
+    {
+        if (settings.CompressLargePayloads)
+        {
+            return (CompressPayload(payload), true);
+        }
+
+        return (payloadBytes, false);
+    }
+
+    private static void AddChunkedPayloadActions(
+        TableEventEntity entity,
+        byte[] dataToStore,
+        bool isCompressed,
+        List<TableTransactionAction> batch)
+    {
+        var chunks = ChunkPayloadData(dataToStore);
+        var totalChunks = chunks.Count;
+
+        // Main entity stores first chunk
+        entity.Payload = "{}";
+        entity.PayloadData = chunks[0];
+        entity.PayloadChunked = true;
+        entity.PayloadTotalChunks = totalChunks;
+        entity.PayloadCompressed = isCompressed;
+
+        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
+
+        for (int i = 1; i < chunks.Count; i++)
+        {
+            var chunkEntity = CreatePayloadChunkEntity(entity, chunks[i], i, totalChunks);
+            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, chunkEntity));
+        }
+    }
+
+    private static void AddSinglePayloadAction(
+        TableEventEntity entity,
+        byte[] dataToStore,
+        bool isCompressed,
+        List<TableTransactionAction> batch)
+    {
+        entity.Payload = "{}";
+        entity.PayloadData = dataToStore;
+        entity.PayloadChunked = false;
+        entity.PayloadTotalChunks = 1;
+        entity.PayloadCompressed = isCompressed;
+
+        batch.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
+    }
+
+    private async Task SubmitBatchesAsync(
+        TableClient tableClient,
+        List<TableTransactionAction> batch,
+        string streamIdentifier,
+        CancellationToken cancellationToken)
+    {
         try
         {
             // Azure Table Storage batch operations are limited to 100 entities
@@ -379,7 +426,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         catch (RequestFailedException ex) when (ex.Status == 409)
         {
             throw new TableDataStoreProcessingException(
-                $"Conflict detected when appending events to stream '{document.Active.StreamIdentifier}'. " +
+                $"Conflict detected when appending events to stream '{streamIdentifier}'. " +
                 "An event with the same version already exists.", ex);
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
@@ -471,65 +518,79 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
 
         var tableClient = await GetTableClientAsync(document);
 
-        // Determine chunk if chunking is enabled
-        int? chunkIdentifier = null;
-        if (document.Active.ChunkingEnabled() && document.Active.StreamChunks.Count > 0)
-        {
-            var chunks = document.Active.StreamChunks;
-            var lastChunk = chunks[chunks.Count - 1];
-            chunkIdentifier = lastChunk.ChunkIdentifier;
-        }
-
+        var chunkIdentifier = GetLastChunkIdentifierIfAvailable(document);
         var partitionKey = GetPartitionKey(document, chunkIdentifier);
         var removed = 0;
 
-        // Delete each event row individually (including any payload chunk rows)
         for (var version = fromVersion; version <= toVersion; version++)
         {
             var rowKey = $"{version:d20}";
-            try
+            if (await TryDeleteEventRowAsync(tableClient, partitionKey, rowKey))
             {
-                // First try to get the entity to check if it has payload chunks
-                TableEventEntity? mainEntity = null;
-                try
-                {
-                    var response = await tableClient.GetEntityAsync<TableEventEntity>(partitionKey, rowKey);
-                    mainEntity = response.Value;
-                }
-                catch (RequestFailedException ex) when (ex.Status == 404)
-                {
-                    // Event doesn't exist, continue to next version
-                    continue;
-                }
-
-                // Delete any payload chunk rows first
-                if (mainEntity.PayloadChunked == true && mainEntity.PayloadTotalChunks.HasValue)
-                {
-                    for (int i = 1; i < mainEntity.PayloadTotalChunks.Value; i++)
-                    {
-                        try
-                        {
-                            await tableClient.DeleteEntityAsync(partitionKey, $"{rowKey}_p{i}");
-                        }
-                        catch (RequestFailedException ex) when (ex.Status == 404)
-                        {
-                            // Chunk doesn't exist, continue
-                        }
-                    }
-                }
-
-                // Delete the main event row
-                await tableClient.DeleteEntityAsync(partitionKey, rowKey);
                 removed++;
-            }
-            catch (RequestFailedException ex) when (ex.Status == 404)
-            {
-                // Event doesn't exist (wasn't written) - that's fine, continue
             }
         }
 
         activity?.SetTag(FaesSemanticConventions.EventCount, removed);
         return removed;
+    }
+
+    private static int? GetLastChunkIdentifierIfAvailable(IObjectDocument document)
+    {
+        if (!document.Active.ChunkingEnabled() || document.Active.StreamChunks.Count == 0)
+        {
+            return null;
+        }
+
+        var chunks = document.Active.StreamChunks;
+        var lastChunk = chunks[chunks.Count - 1];
+        return lastChunk.ChunkIdentifier;
+    }
+
+    private static async Task<bool> TryDeleteEventRowAsync(TableClient tableClient, string partitionKey, string rowKey)
+    {
+        TableEventEntity? mainEntity;
+        try
+        {
+            var response = await tableClient.GetEntityAsync<TableEventEntity>(partitionKey, rowKey);
+            mainEntity = response.Value;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return false;
+        }
+
+        await DeletePayloadChunksAsync(tableClient, partitionKey, rowKey, mainEntity);
+
+        try
+        {
+            await tableClient.DeleteEntityAsync(partitionKey, rowKey);
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return false;
+        }
+    }
+
+    private static async Task DeletePayloadChunksAsync(TableClient tableClient, string partitionKey, string rowKey, TableEventEntity mainEntity)
+    {
+        if (mainEntity.PayloadChunked != true || !mainEntity.PayloadTotalChunks.HasValue)
+        {
+            return;
+        }
+
+        for (int i = 1; i < mainEntity.PayloadTotalChunks.Value; i++)
+        {
+            try
+            {
+                await tableClient.DeleteEntityAsync(partitionKey, $"{rowKey}_p{i}");
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                // Chunk doesn't exist, continue
+            }
+        }
     }
 
     /// <summary>
@@ -615,55 +676,85 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
     {
         if (mainEntity.PayloadChunked != true || mainEntity.PayloadTotalChunks == null)
         {
-            // Not chunked or has compressed data in single row
-            if (mainEntity.PayloadData != null && mainEntity.PayloadData.Length > 0)
-            {
-                return mainEntity.PayloadCompressed == true
-                    ? DecompressPayload(mainEntity.PayloadData)
-                    : Encoding.UTF8.GetString(mainEntity.PayloadData);
-            }
-
-            return mainEntity.Payload;
+            return GetNonChunkedPayload(mainEntity);
         }
 
-        var totalChunks = mainEntity.PayloadTotalChunks.Value;
+        var chunks = await FetchAllChunksAsync(tableClient, mainEntity, cancellationToken);
+        var combinedData = ConcatenateChunks(chunks);
+
+        return DecodePayloadData(combinedData, mainEntity.PayloadCompressed == true);
+    }
+
+    private static string GetNonChunkedPayload(TableEventEntity mainEntity)
+    {
+        if (mainEntity.PayloadData != null && mainEntity.PayloadData.Length > 0)
+        {
+            return DecodePayloadData(mainEntity.PayloadData, mainEntity.PayloadCompressed == true);
+        }
+
+        return mainEntity.Payload;
+    }
+
+    private static string DecodePayloadData(byte[] data, bool isCompressed)
+    {
+        return isCompressed
+            ? DecompressPayload(data)
+            : Encoding.UTF8.GetString(data);
+    }
+
+    private static async Task<byte[][]> FetchAllChunksAsync(
+        TableClient tableClient,
+        TableEventEntity mainEntity,
+        CancellationToken cancellationToken)
+    {
+        var totalChunks = mainEntity.PayloadTotalChunks!.Value;
         var chunks = new byte[totalChunks][];
 
-        // First chunk is in the main entity
         if (mainEntity.PayloadData != null)
         {
             chunks[0] = mainEntity.PayloadData;
         }
 
-        // Fetch additional chunks
-        if (totalChunks > 1)
+        for (int i = 1; i < totalChunks; i++)
         {
-            var baseRowKey = mainEntity.RowKey;
-            for (int i = 1; i < totalChunks; i++)
-            {
-                var chunkRowKey = $"{baseRowKey}_p{i}";
-                try
-                {
-                    var chunkResponse = await tableClient.GetEntityAsync<TableEventEntity>(
-                        mainEntity.PartitionKey,
-                        chunkRowKey,
-                        cancellationToken: cancellationToken);
-
-                    if (chunkResponse?.Value?.PayloadData != null)
-                    {
-                        chunks[i] = chunkResponse.Value.PayloadData;
-                    }
-                }
-                catch (RequestFailedException ex) when (ex.Status == 404)
-                {
-                    throw new InvalidOperationException(
-                        $"Missing payload chunk {i} for event version {mainEntity.EventVersion} " +
-                        $"in stream '{mainEntity.StreamIdentifier}'. Expected {totalChunks} chunks.");
-                }
-            }
+            chunks[i] = await FetchSingleChunkAsync(tableClient, mainEntity, i, totalChunks, cancellationToken);
         }
 
-        // Concatenate all chunks
+        return chunks;
+    }
+
+    private static async Task<byte[]> FetchSingleChunkAsync(
+        TableClient tableClient,
+        TableEventEntity mainEntity,
+        int chunkIndex,
+        int totalChunks,
+        CancellationToken cancellationToken)
+    {
+        var chunkRowKey = $"{mainEntity.RowKey}_p{chunkIndex}";
+        try
+        {
+            var chunkResponse = await tableClient.GetEntityAsync<TableEventEntity>(
+                mainEntity.PartitionKey,
+                chunkRowKey,
+                cancellationToken: cancellationToken);
+
+            if (chunkResponse?.Value?.PayloadData != null)
+            {
+                return chunkResponse.Value.PayloadData;
+            }
+
+            return [];
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            throw new InvalidOperationException(
+                $"Missing payload chunk {chunkIndex} for event version {mainEntity.EventVersion} " +
+                $"in stream '{mainEntity.StreamIdentifier}'. Expected {totalChunks} chunks.");
+        }
+    }
+
+    private static byte[] ConcatenateChunks(byte[][] chunks)
+    {
         var nonNullChunks = chunks.Where(chunk => chunk != null).ToList();
         var totalLength = nonNullChunks.Sum(c => c!.Length);
         var combinedData = new byte[totalLength];
@@ -674,10 +765,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             offset += chunk.Length;
         }
 
-        // Decompress if needed
-        return mainEntity.PayloadCompressed == true
-            ? DecompressPayload(combinedData)
-            : Encoding.UTF8.GetString(combinedData);
+        return combinedData;
     }
 
     /// <summary>

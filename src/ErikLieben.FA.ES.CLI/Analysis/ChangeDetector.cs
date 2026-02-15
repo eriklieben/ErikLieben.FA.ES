@@ -20,56 +20,7 @@ public class ChangeDetector : IChangeDetector
 
         if (previous == null)
         {
-            // Initial analysis - report summary of what was found
-            foreach (var project in current.Projects)
-            {
-                foreach (var aggregate in project.Aggregates)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Added,
-                        ChangeCategory.Aggregate,
-                        "Aggregate",
-                        aggregate.IdentifierName,
-                        $"Found aggregate {aggregate.IdentifierName}",
-                        $"{aggregate.Events.Count} events, {aggregate.Properties.Count} properties"));
-                }
-
-                foreach (var projection in project.Projections)
-                {
-                    var projType = projection is RoutedProjectionDefinition rp && rp.IsRoutedProjection
-                        ? "routed projection"
-                        : "projection";
-                    changes.Add(new DetectedChange(
-                        ChangeType.Added,
-                        ChangeCategory.Projection,
-                        "Projection",
-                        projection.Name,
-                        $"Found {projType} {projection.Name}",
-                        $"{projection.Events.Count} events"));
-                }
-
-                foreach (var inherited in project.InheritedAggregates)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Added,
-                        ChangeCategory.InheritedAggregate,
-                        "InheritedAggregate",
-                        inherited.IdentifierName,
-                        $"Found inherited aggregate {inherited.IdentifierName}"));
-                }
-
-                foreach (var versionToken in project.VersionTokens)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Added,
-                        ChangeCategory.VersionToken,
-                        "VersionToken",
-                        versionToken.Name,
-                        $"Found version token {versionToken.Name}",
-                        $"for type {versionToken.GenericType}"));
-                }
-            }
-
+            ReportInitialAnalysis(current, changes);
             return changes;
         }
 
@@ -114,6 +65,75 @@ public class ChangeDetector : IChangeDetector
         DetectVersionTokenChanges(prevVersionTokens, currVersionTokens, changes);
 
         return changes;
+    }
+
+    private static void ReportInitialAnalysis(SolutionDefinition current, List<DetectedChange> changes)
+    {
+        foreach (var project in current.Projects)
+        {
+            ReportInitialAggregates(project, changes);
+            ReportInitialProjections(project, changes);
+            ReportInitialInheritedAggregates(project, changes);
+            ReportInitialVersionTokens(project, changes);
+        }
+    }
+
+    private static void ReportInitialAggregates(ProjectDefinition project, List<DetectedChange> changes)
+    {
+        foreach (var aggregate in project.Aggregates)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Added,
+                ChangeCategory.Aggregate,
+                "Aggregate",
+                aggregate.IdentifierName,
+                $"Found aggregate {aggregate.IdentifierName}",
+                $"{aggregate.Events.Count} events, {aggregate.Properties.Count} properties"));
+        }
+    }
+
+    private static void ReportInitialProjections(ProjectDefinition project, List<DetectedChange> changes)
+    {
+        foreach (var projection in project.Projections)
+        {
+            var projType = projection is RoutedProjectionDefinition rp && rp.IsRoutedProjection
+                ? "routed projection"
+                : "projection";
+            changes.Add(new DetectedChange(
+                ChangeType.Added,
+                ChangeCategory.Projection,
+                "Projection",
+                projection.Name,
+                $"Found {projType} {projection.Name}",
+                $"{projection.Events.Count} events"));
+        }
+    }
+
+    private static void ReportInitialInheritedAggregates(ProjectDefinition project, List<DetectedChange> changes)
+    {
+        foreach (var inherited in project.InheritedAggregates)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Added,
+                ChangeCategory.InheritedAggregate,
+                "InheritedAggregate",
+                inherited.IdentifierName,
+                $"Found inherited aggregate {inherited.IdentifierName}"));
+        }
+    }
+
+    private static void ReportInitialVersionTokens(ProjectDefinition project, List<DetectedChange> changes)
+    {
+        foreach (var versionToken in project.VersionTokens)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Added,
+                ChangeCategory.VersionToken,
+                "VersionToken",
+                versionToken.Name,
+                $"Found version token {versionToken.Name}",
+                $"for type {versionToken.GenericType}"));
+        }
     }
 
     private static void DetectAggregateChanges(
@@ -328,31 +348,11 @@ public class ChangeDetector : IChangeDetector
                     entityType,
                     entityName,
                     $"Added property {propName} to {entityName}",
-                    $"type: {propDef.Type}{(propDef.IsNullable ? "?" : "")}"));
+                    $"type: {FormatPropertyType(propDef)}"));
             }
             else if (prevProps.TryGetValue(propName, out var prevProp))
             {
-                if (prevProp.Type != propDef.Type || prevProp.IsNullable != propDef.IsNullable)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.Property,
-                        entityType,
-                        entityName,
-                        $"Modified property {propName} in {entityName}",
-                        $"{prevProp.Type}{(prevProp.IsNullable ? "?" : "")} → {propDef.Type}{(propDef.IsNullable ? "?" : "")}"));
-                }
-
-                if (prevProp.IsGeneric != propDef.IsGeneric ||
-                    !prevProp.GenericTypes.Select(g => g.Name).SequenceEqual(propDef.GenericTypes.Select(g => g.Name)))
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.Property,
-                        entityType,
-                        entityName,
-                        $"Changed generic types for {propName} in {entityName}"));
-                }
+                DetectPropertyModifications(prevProp, propDef, propName, entityType, entityName, changes);
             }
         }
 
@@ -367,6 +367,47 @@ public class ChangeDetector : IChangeDetector
                     entityName,
                     $"Removed property {propName} from {entityName}"));
             }
+        }
+    }
+
+    private static string FormatPropertyType(PropertyDefinition prop)
+    {
+        return $"{prop.Type}{(prop.IsNullable ? "?" : "")}";
+    }
+
+    private static void DetectPropertyModifications(
+        PropertyDefinition prevProp,
+        PropertyDefinition currProp,
+        string propName,
+        string entityType,
+        string entityName,
+        List<DetectedChange> changes)
+    {
+        var typeChanged = prevProp.Type != currProp.Type;
+        var nullabilityChanged = prevProp.IsNullable != currProp.IsNullable;
+
+        if (typeChanged || nullabilityChanged)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Property,
+                entityType,
+                entityName,
+                $"Modified property {propName} in {entityName}",
+                $"{FormatPropertyType(prevProp)} → {FormatPropertyType(currProp)}"));
+        }
+
+        var genericityChanged = prevProp.IsGeneric != currProp.IsGeneric;
+        var genericTypesChanged = !prevProp.GenericTypes.Select(g => g.Name).SequenceEqual(currProp.GenericTypes.Select(g => g.Name));
+
+        if (genericityChanged || genericTypesChanged)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Property,
+                entityType,
+                entityName,
+                $"Changed generic types for {propName} in {entityName}"));
         }
     }
 
@@ -396,71 +437,7 @@ public class ChangeDetector : IChangeDetector
             }
             else if (prevCommands.TryGetValue(cmdName, out var prevCmd))
             {
-                // Check parameter changes
-                if (prevCmd.Parameters.Count != cmdDef.Parameters.Count)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.Command,
-                        "Aggregate",
-                        aggregateName,
-                        $"Changed parameters for command {cmdName}",
-                        $"{prevCmd.Parameters.Count} → {cmdDef.Parameters.Count} parameters"));
-                }
-
-                // Check return type changes
-                if (prevCmd.ReturnType.Type != cmdDef.ReturnType.Type)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.Command,
-                        "Aggregate",
-                        aggregateName,
-                        $"Changed return type for command {cmdName}",
-                        $"{prevCmd.ReturnType.Type} → {cmdDef.ReturnType.Type}"));
-                }
-
-                // Check async changes
-                if (prevCmd.RequiresAwait != cmdDef.RequiresAwait)
-                {
-                    changes.Add(new DetectedChange(
-                        ChangeType.Modified,
-                        ChangeCategory.Command,
-                        "Aggregate",
-                        aggregateName,
-                        cmdDef.RequiresAwait
-                            ? $"Command {cmdName} is now async"
-                            : $"Command {cmdName} is no longer async"));
-                }
-
-                // Check produced events changes
-                var prevEventNames = prevCmd.ProducesEvents.Select(e => e.TypeName).OrderBy(x => x).ToList();
-                var currEventNames = cmdDef.ProducesEvents.Select(e => e.TypeName).OrderBy(x => x).ToList();
-                if (!prevEventNames.SequenceEqual(currEventNames))
-                {
-                    var added = currEventNames.Except(prevEventNames).ToList();
-                    var removed = prevEventNames.Except(currEventNames).ToList();
-
-                    foreach (var evt in added)
-                    {
-                        changes.Add(new DetectedChange(
-                            ChangeType.Added,
-                            ChangeCategory.Command,
-                            "Aggregate",
-                            aggregateName,
-                            $"Command {cmdName} now produces {evt}"));
-                    }
-
-                    foreach (var evt in removed)
-                    {
-                        changes.Add(new DetectedChange(
-                            ChangeType.Removed,
-                            ChangeCategory.Command,
-                            "Aggregate",
-                            aggregateName,
-                            $"Command {cmdName} no longer produces {evt}"));
-                    }
-                }
+                DetectCommandModifications(prevCmd, cmdDef, cmdName, aggregateName, changes);
             }
         }
 
@@ -475,6 +452,84 @@ public class ChangeDetector : IChangeDetector
                     aggregateName,
                     $"Removed command {cmdName} from {aggregateName}"));
             }
+        }
+    }
+
+    private static void DetectCommandModifications(
+        CommandDefinition prevCmd,
+        CommandDefinition currCmd,
+        string cmdName,
+        string aggregateName,
+        List<DetectedChange> changes)
+    {
+        if (prevCmd.Parameters.Count != currCmd.Parameters.Count)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Command,
+                "Aggregate",
+                aggregateName,
+                $"Changed parameters for command {cmdName}",
+                $"{prevCmd.Parameters.Count} → {currCmd.Parameters.Count} parameters"));
+        }
+
+        if (prevCmd.ReturnType.Type != currCmd.ReturnType.Type)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Command,
+                "Aggregate",
+                aggregateName,
+                $"Changed return type for command {cmdName}",
+                $"{prevCmd.ReturnType.Type} → {currCmd.ReturnType.Type}"));
+        }
+
+        if (prevCmd.RequiresAwait != currCmd.RequiresAwait)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Command,
+                "Aggregate",
+                aggregateName,
+                currCmd.RequiresAwait
+                    ? $"Command {cmdName} is now async"
+                    : $"Command {cmdName} is no longer async"));
+        }
+
+        DetectProducedEventsChanges(prevCmd, currCmd, cmdName, aggregateName, changes);
+    }
+
+    private static void DetectProducedEventsChanges(
+        CommandDefinition prevCmd,
+        CommandDefinition currCmd,
+        string cmdName,
+        string aggregateName,
+        List<DetectedChange> changes)
+    {
+        var prevEventNames = prevCmd.ProducesEvents.Select(e => e.TypeName).OrderBy(x => x).ToList();
+        var currEventNames = currCmd.ProducesEvents.Select(e => e.TypeName).OrderBy(x => x).ToList();
+
+        if (prevEventNames.SequenceEqual(currEventNames))
+            return;
+
+        foreach (var evt in currEventNames.Except(prevEventNames))
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Added,
+                ChangeCategory.Command,
+                "Aggregate",
+                aggregateName,
+                $"Command {cmdName} now produces {evt}"));
+        }
+
+        foreach (var evt in prevEventNames.Except(currEventNames))
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Removed,
+                ChangeCategory.Command,
+                "Aggregate",
+                aggregateName,
+                $"Command {cmdName} no longer produces {evt}"));
         }
     }
 
@@ -679,20 +734,11 @@ public class ChangeDetector : IChangeDetector
     {
         if (previous == null && current != null)
         {
-            var settings = new List<string>();
-            if (current.DataStore != null) settings.Add($"DataStore={current.DataStore}");
-            if (current.DocumentStore != null) settings.Add($"DocumentStore={current.DocumentStore}");
-            if (current.SnapShotStore != null) settings.Add($"SnapShotStore={current.SnapShotStore}");
-
-            changes.Add(new DetectedChange(
-                ChangeType.Added,
-                ChangeCategory.BlobSettings,
-                "Aggregate",
-                aggregateName,
-                $"Added [EventStreamBlobSettings] to {aggregateName}",
-                settings.Count > 0 ? string.Join(", ", settings) : null));
+            ReportAddedBlobSettings(current, aggregateName, changes);
+            return;
         }
-        else if (previous != null && current == null)
+
+        if (previous != null && current == null)
         {
             changes.Add(new DetectedChange(
                 ChangeType.Removed,
@@ -700,40 +746,62 @@ public class ChangeDetector : IChangeDetector
                 "Aggregate",
                 aggregateName,
                 $"Removed [EventStreamBlobSettings] from {aggregateName}"));
+            return;
         }
-        else if (previous != null && current != null)
+
+        if (previous != null && current != null)
         {
-            if (previous.DataStore != current.DataStore)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.BlobSettings,
-                    "Aggregate",
-                    aggregateName,
-                    $"Changed DataStore for {aggregateName}",
-                    $"{previous.DataStore ?? "default"} → {current.DataStore ?? "default"}"));
-            }
-            if (previous.DocumentStore != current.DocumentStore)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.BlobSettings,
-                    "Aggregate",
-                    aggregateName,
-                    $"Changed DocumentStore for {aggregateName}",
-                    $"{previous.DocumentStore ?? "default"} → {current.DocumentStore ?? "default"}"));
-            }
-            if (previous.SnapShotStore != current.SnapShotStore)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.BlobSettings,
-                    "Aggregate",
-                    aggregateName,
-                    $"Changed SnapShotStore for {aggregateName}",
-                    $"{previous.SnapShotStore ?? "default"} → {current.SnapShotStore ?? "default"}"));
-            }
+            DetectBlobSettingsPropertyChanges(previous, current, aggregateName, changes);
         }
+    }
+
+    private static void ReportAddedBlobSettings(
+        EventStreamBlobSettingsAttributeData current,
+        string aggregateName,
+        List<DetectedChange> changes)
+    {
+        var settings = new List<string>();
+        if (current.DataStore != null) settings.Add($"DataStore={current.DataStore}");
+        if (current.DocumentStore != null) settings.Add($"DocumentStore={current.DocumentStore}");
+        if (current.SnapShotStore != null) settings.Add($"SnapShotStore={current.SnapShotStore}");
+
+        changes.Add(new DetectedChange(
+            ChangeType.Added,
+            ChangeCategory.BlobSettings,
+            "Aggregate",
+            aggregateName,
+            $"Added [EventStreamBlobSettings] to {aggregateName}",
+            settings.Count > 0 ? string.Join(", ", settings) : null));
+    }
+
+    private static void DetectBlobSettingsPropertyChanges(
+        EventStreamBlobSettingsAttributeData previous,
+        EventStreamBlobSettingsAttributeData current,
+        string aggregateName,
+        List<DetectedChange> changes)
+    {
+        ReportBlobSettingChange(previous.DataStore, current.DataStore, "DataStore", aggregateName, changes);
+        ReportBlobSettingChange(previous.DocumentStore, current.DocumentStore, "DocumentStore", aggregateName, changes);
+        ReportBlobSettingChange(previous.SnapShotStore, current.SnapShotStore, "SnapShotStore", aggregateName, changes);
+    }
+
+    private static void ReportBlobSettingChange(
+        string? previousValue,
+        string? currentValue,
+        string settingName,
+        string aggregateName,
+        List<DetectedChange> changes)
+    {
+        if (previousValue == currentValue)
+            return;
+
+        changes.Add(new DetectedChange(
+            ChangeType.Modified,
+            ChangeCategory.BlobSettings,
+            "Aggregate",
+            aggregateName,
+            $"Changed {settingName} for {aggregateName}",
+            $"{previousValue ?? "default"} → {currentValue ?? "default"}"));
     }
 
     private static void DetectProjectionChanges(
@@ -787,7 +855,28 @@ public class ChangeDetector : IChangeDetector
     {
         var projectionName = current.Name;
 
-        // Detect event changes (projection events are different type)
+        DetectProjectionEventChanges(previous, current, projectionName, changes);
+
+        // Detect property changes
+        DetectPropertyChanges(previous.Properties, current.Properties, "Projection", projectionName, changes);
+
+        // Detect constructor changes
+        DetectConstructorChanges(previous.Constructors, current.Constructors, "Projection", projectionName, changes);
+
+        // Detect PostWhen changes
+        DetectPostWhenChanges(previous.PostWhen, current.PostWhen, "Projection", projectionName, changes);
+
+        DetectProjectionFlagChanges(previous, current, projectionName, changes);
+        DetectBlobProjectionChanges(previous, current, projectionName, changes);
+        DetectRoutedProjectionChanges(previous, current, projectionName, changes);
+    }
+
+    private static void DetectProjectionEventChanges(
+        ProjectionDefinition previous,
+        ProjectionDefinition current,
+        string projectionName,
+        List<DetectedChange> changes)
+    {
         var prevEvents = previous.Events.ToDictionary(e => e.EventName);
         var currEvents = current.Events.ToDictionary(e => e.EventName);
 
@@ -816,17 +905,14 @@ public class ChangeDetector : IChangeDetector
                     $"Removed {eventDef.TypeName} handler from {projectionName}"));
             }
         }
+    }
 
-        // Detect property changes
-        DetectPropertyChanges(previous.Properties, current.Properties, "Projection", projectionName, changes);
-
-        // Detect constructor changes
-        DetectConstructorChanges(previous.Constructors, current.Constructors, "Projection", projectionName, changes);
-
-        // Detect PostWhen changes
-        DetectPostWhenChanges(previous.PostWhen, current.PostWhen, "Projection", projectionName, changes);
-
-        // Detect ExternalCheckpoint changes
+    private static void DetectProjectionFlagChanges(
+        ProjectionDefinition previous,
+        ProjectionDefinition current,
+        string projectionName,
+        List<DetectedChange> changes)
+    {
         if (previous.ExternalCheckpoint != current.ExternalCheckpoint)
         {
             changes.Add(new DetectedChange(
@@ -839,7 +925,6 @@ public class ChangeDetector : IChangeDetector
                     : $"Disabled external checkpoint for {projectionName}"));
         }
 
-        // Detect HasPostWhenAllMethod changes
         if (previous.HasPostWhenAllMethod != current.HasPostWhenAllMethod)
         {
             changes.Add(new DetectedChange(
@@ -851,8 +936,14 @@ public class ChangeDetector : IChangeDetector
                     ? $"Added PostWhenAll handler to {projectionName}"
                     : $"Removed PostWhenAll handler from {projectionName}"));
         }
+    }
 
-        // Detect BlobProjection changes
+    private static void DetectBlobProjectionChanges(
+        ProjectionDefinition previous,
+        ProjectionDefinition current,
+        string projectionName,
+        List<DetectedChange> changes)
+    {
         if (previous.BlobProjection == null && current.BlobProjection != null)
         {
             changes.Add(new DetectedChange(
@@ -862,8 +953,10 @@ public class ChangeDetector : IChangeDetector
                 projectionName,
                 $"Added blob projection to {projectionName}",
                 $"container: {current.BlobProjection.Container}"));
+            return;
         }
-        else if (previous.BlobProjection != null && current.BlobProjection == null)
+
+        if (previous.BlobProjection != null && current.BlobProjection == null)
         {
             changes.Add(new DetectedChange(
                 ChangeType.Removed,
@@ -871,55 +964,64 @@ public class ChangeDetector : IChangeDetector
                 "Projection",
                 projectionName,
                 $"Removed blob projection from {projectionName}"));
-        }
-        else if (previous.BlobProjection != null && current.BlobProjection != null)
-        {
-            if (previous.BlobProjection.Container != current.BlobProjection.Container)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.Projection,
-                    "Projection",
-                    projectionName,
-                    $"Changed blob container for {projectionName}",
-                    $"{previous.BlobProjection.Container} → {current.BlobProjection.Container}"));
-            }
-            if (previous.BlobProjection.Connection != current.BlobProjection.Connection)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.Projection,
-                    "Projection",
-                    projectionName,
-                    $"Changed blob connection for {projectionName}",
-                    $"{previous.BlobProjection.Connection} → {current.BlobProjection.Connection}"));
-            }
+            return;
         }
 
-        // Detect routed projection specific changes
-        if (current is RoutedProjectionDefinition currRouted && previous is RoutedProjectionDefinition prevRouted)
-        {
-            if (prevRouted.RouterType != currRouted.RouterType)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.RoutedProjection,
-                    "Projection",
-                    projectionName,
-                    $"Changed router type for {projectionName}",
-                    $"{prevRouted.RouterType ?? "none"} → {currRouted.RouterType ?? "none"}"));
-            }
+        if (previous.BlobProjection == null || current.BlobProjection == null)
+            return;
 
-            if (prevRouted.DestinationType != currRouted.DestinationType)
-            {
-                changes.Add(new DetectedChange(
-                    ChangeType.Modified,
-                    ChangeCategory.RoutedProjection,
-                    "Projection",
-                    projectionName,
-                    $"Changed destination type for {projectionName}",
-                    $"{prevRouted.DestinationType ?? "none"} → {currRouted.DestinationType ?? "none"}"));
-            }
+        if (previous.BlobProjection.Container != current.BlobProjection.Container)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Projection,
+                "Projection",
+                projectionName,
+                $"Changed blob container for {projectionName}",
+                $"{previous.BlobProjection.Container} → {current.BlobProjection.Container}"));
+        }
+
+        if (previous.BlobProjection.Connection != current.BlobProjection.Connection)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.Projection,
+                "Projection",
+                projectionName,
+                $"Changed blob connection for {projectionName}",
+                $"{previous.BlobProjection.Connection} → {current.BlobProjection.Connection}"));
+        }
+    }
+
+    private static void DetectRoutedProjectionChanges(
+        ProjectionDefinition previous,
+        ProjectionDefinition current,
+        string projectionName,
+        List<DetectedChange> changes)
+    {
+        if (current is not RoutedProjectionDefinition currRouted || previous is not RoutedProjectionDefinition prevRouted)
+            return;
+
+        if (prevRouted.RouterType != currRouted.RouterType)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.RoutedProjection,
+                "Projection",
+                projectionName,
+                $"Changed router type for {projectionName}",
+                $"{prevRouted.RouterType ?? "none"} → {currRouted.RouterType ?? "none"}"));
+        }
+
+        if (prevRouted.DestinationType != currRouted.DestinationType)
+        {
+            changes.Add(new DetectedChange(
+                ChangeType.Modified,
+                ChangeCategory.RoutedProjection,
+                "Projection",
+                projectionName,
+                $"Changed destination type for {projectionName}",
+                $"{prevRouted.DestinationType ?? "none"} → {currRouted.DestinationType ?? "none"}"));
         }
     }
 

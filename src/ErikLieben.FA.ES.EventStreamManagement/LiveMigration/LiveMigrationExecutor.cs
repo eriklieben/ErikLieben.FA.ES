@@ -214,103 +214,148 @@ public class LiveMigrationExecutor
 
         foreach (var evt in eventsToCopy)
         {
-            IEvent transformedEvent = evt;
-            var wasTransformed = false;
-            string? originalEventType = null;
-            int? originalSchemaVersion = null;
-
-            if (_context.Transformer != null)
+            var transformResult = await TransformEventAsync(evt, cancellationToken);
+            if (transformResult == null)
             {
-                try
-                {
-                    originalEventType = evt.EventType;
-                    originalSchemaVersion = evt.SchemaVersion;
-                    transformedEvent = await _context.Transformer.TransformAsync(evt, cancellationToken);
-                    wasTransformed = transformedEvent.EventType != evt.EventType ||
-                                     transformedEvent.SchemaVersion != evt.SchemaVersion;
-                }
-                catch (Exception ex)
-                {
-                    _logger.TransformEventSkipped(evt.EventType, evt.EventVersion, ex);
-                    continue;
-                }
+                continue; // Transformation failed, event was skipped
             }
 
-            // Create progress info for callbacks
-            var progress = new LiveMigrationEventProgress
-            {
-                Iteration = _iteration,
-                EventVersion = evt.EventVersion,
-                EventType = transformedEvent.EventType,
-                WasTransformed = wasTransformed,
-                OriginalEventType = wasTransformed ? originalEventType : null,
-                OriginalSchemaVersion = wasTransformed ? originalSchemaVersion : null,
-                NewSchemaVersion = wasTransformed ? transformedEvent.SchemaVersion : null,
-                TotalEventsCopied = _totalEventsCopied + eventsAppendedCount + 1,
-                SourceVersion = sourceVersion,
-                ElapsedTime = _stopwatch.Elapsed
-            };
+            var progress = CreateEventProgress(evt, transformResult, sourceVersion, eventsAppendedCount);
 
             if (usePerEventAppend)
             {
-                // Per-event append mode: call before-append callback, then append immediately
-                if (_context.Options.BeforeAppendCallback != null)
-                {
-                    await _context.Options.BeforeAppendCallback(progress);
-                }
-
-                await _context.DataStore.AppendAsync(
-                    _context.TargetDocument,
-                    preserveTimestamp: true,
-                    cancellationToken: default,
-                    transformedEvent);
-
-                eventsAppendedCount++;
-                _totalEventsCopied++;
-
-                // Invoke per-event copied callback after append
-                if (_context.Options.EventCopiedCallback != null)
-                {
-                    await _context.Options.EventCopiedCallback(progress);
-                }
-
-                _logger.EventsCopiedToTarget(1, evt.EventVersion, evt.EventVersion);
+                eventsAppendedCount = await AppendEventImmediatelyAsync(evt, transformResult.TransformedEvent, progress, eventsAppendedCount);
             }
             else
             {
-                // Batch mode: collect events, invoke callback, append all at end
-                if (_context.Options.EventCopiedCallback != null)
-                {
-                    await _context.Options.EventCopiedCallback(progress);
-                }
-
-                transformedEvents.Add(transformedEvent);
+                await InvokeEventCopiedCallbackAsync(progress);
+                transformedEvents.Add(transformResult.TransformedEvent);
             }
         }
 
         // Write batched events to target stream (only in batch mode)
-        if (!usePerEventAppend && transformedEvents.Count > 0)
-        {
-            await _context.DataStore.AppendAsync(
-                _context.TargetDocument,
-                preserveTimestamp: true,
-                cancellationToken: default,
-                transformedEvents.ToArray());
-
-            _totalEventsCopied += transformedEvents.Count;
-            eventsAppendedCount = transformedEvents.Count;
-
-            _logger.EventsCopiedToTarget(
-                transformedEvents.Count,
-                transformedEvents[0].EventVersion,
-                transformedEvents[^1].EventVersion);
-        }
+        eventsAppendedCount = await FlushBatchedEventsAsync(usePerEventAppend, transformedEvents, eventsAppendedCount);
 
         var newTargetVersion = targetVersion + eventsAppendedCount;
         ReportProgress(eventsAppendedCount, sourceVersion, newTargetVersion);
 
         return sourceVersion;
     }
+
+    private async Task<TransformResult?> TransformEventAsync(IEvent evt, CancellationToken cancellationToken)
+    {
+        IEvent transformedEvent = evt;
+        var wasTransformed = false;
+        string? originalEventType = null;
+        int? originalSchemaVersion = null;
+
+        if (_context.Transformer != null)
+        {
+            try
+            {
+                originalEventType = evt.EventType;
+                originalSchemaVersion = evt.SchemaVersion;
+                transformedEvent = await _context.Transformer.TransformAsync(evt, cancellationToken);
+                wasTransformed = transformedEvent.EventType != evt.EventType ||
+                                 transformedEvent.SchemaVersion != evt.SchemaVersion;
+            }
+            catch (Exception ex)
+            {
+                _logger.TransformEventSkipped(evt.EventType, evt.EventVersion, ex);
+                return null;
+            }
+        }
+
+        return new TransformResult(transformedEvent, wasTransformed, originalEventType, originalSchemaVersion);
+    }
+
+    private LiveMigrationEventProgress CreateEventProgress(
+        IEvent originalEvent,
+        TransformResult transformResult,
+        int sourceVersion,
+        int eventsAppendedCount)
+    {
+        return new LiveMigrationEventProgress
+        {
+            Iteration = _iteration,
+            EventVersion = originalEvent.EventVersion,
+            EventType = transformResult.TransformedEvent.EventType,
+            WasTransformed = transformResult.WasTransformed,
+            OriginalEventType = transformResult.WasTransformed ? transformResult.OriginalEventType : null,
+            OriginalSchemaVersion = transformResult.WasTransformed ? transformResult.OriginalSchemaVersion : null,
+            NewSchemaVersion = transformResult.WasTransformed ? transformResult.TransformedEvent.SchemaVersion : null,
+            TotalEventsCopied = _totalEventsCopied + eventsAppendedCount + 1,
+            SourceVersion = sourceVersion,
+            ElapsedTime = _stopwatch.Elapsed
+        };
+    }
+
+    private async Task<int> AppendEventImmediatelyAsync(
+        IEvent originalEvent,
+        IEvent transformedEvent,
+        LiveMigrationEventProgress progress,
+        int eventsAppendedCount)
+    {
+        if (_context.Options.BeforeAppendCallback != null)
+        {
+            await _context.Options.BeforeAppendCallback(progress);
+        }
+
+        await _context.DataStore.AppendAsync(
+            _context.TargetDocument,
+            preserveTimestamp: true,
+            cancellationToken: default,
+            transformedEvent);
+
+        eventsAppendedCount++;
+        _totalEventsCopied++;
+
+        await InvokeEventCopiedCallbackAsync(progress);
+
+        _logger.EventsCopiedToTarget(1, originalEvent.EventVersion, originalEvent.EventVersion);
+
+        return eventsAppendedCount;
+    }
+
+    private async Task InvokeEventCopiedCallbackAsync(LiveMigrationEventProgress progress)
+    {
+        if (_context.Options.EventCopiedCallback != null)
+        {
+            await _context.Options.EventCopiedCallback(progress);
+        }
+    }
+
+    private async Task<int> FlushBatchedEventsAsync(bool usePerEventAppend, List<IEvent> transformedEvents, int eventsAppendedCount)
+    {
+        if (usePerEventAppend || transformedEvents.Count == 0)
+        {
+            return eventsAppendedCount;
+        }
+
+        await _context.DataStore.AppendAsync(
+            _context.TargetDocument,
+            preserveTimestamp: true,
+            cancellationToken: default,
+            transformedEvents.ToArray());
+
+        _totalEventsCopied += transformedEvents.Count;
+
+        _logger.EventsCopiedToTarget(
+            transformedEvents.Count,
+            transformedEvents[0].EventVersion,
+            transformedEvents[^1].EventVersion);
+
+        return transformedEvents.Count;
+    }
+
+    /// <summary>
+    /// Holds the result of transforming a single event.
+    /// </summary>
+    private sealed record TransformResult(
+        IEvent TransformedEvent,
+        bool WasTransformed,
+        string? OriginalEventType,
+        int? OriginalSchemaVersion);
 
     private async Task<int> GetTargetVersionAsync(CancellationToken cancellationToken)
     {

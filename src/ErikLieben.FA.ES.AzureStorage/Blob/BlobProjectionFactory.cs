@@ -116,34 +116,17 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
             activity.SetTag(FaesSemanticConventions.DbName, _containerOrPath);
         }
 
-        var containerClient = await GetContainerClientAsync();
-        var blobClient = containerClient.GetBlobClient(blobName);
-
-        if (await blobClient.ExistsAsync(cancellationToken))
+        var projection = await TryLoadExistingProjectionAsync(documentFactory, eventStreamFactory, blobName, cancellationToken);
+        if (projection != null)
         {
-            var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
-            var json = downloadResult.Value.Content.ToString();
+            await TryLoadExternalCheckpointAsync(projection, cancellationToken);
 
-            var projection = LoadFromJson(json, documentFactory, eventStreamFactory);
-            if (projection != null)
+            if (activity?.IsAllDataRequested == true)
             {
-                // If external checkpoint is enabled, load it separately using the CheckpointFingerprint
-                if (HasExternalCheckpoint && !string.IsNullOrEmpty(projection.CheckpointFingerprint))
-                {
-                    var checkpoint = await LoadCheckpointAsync(projection.CheckpointFingerprint, cancellationToken);
-                    if (checkpoint != null)
-                    {
-                        projection.Checkpoint = checkpoint;
-                    }
-                }
-
-                if (activity?.IsAllDataRequested == true)
-                {
-                    activity.SetTag(FaesSemanticConventions.LoadedFromCache, true);
-                }
-
-                return projection;
+                activity.SetTag(FaesSemanticConventions.LoadedFromCache, true);
             }
+
+            return projection;
         }
 
         if (activity?.IsAllDataRequested == true)
@@ -152,6 +135,40 @@ public abstract class BlobProjectionFactory<T> : IProjectionFactory<T>, IProject
         }
 
         return New();
+    }
+
+    private async Task<T?> TryLoadExistingProjectionAsync(
+        IObjectDocumentFactory documentFactory,
+        IEventStreamFactory eventStreamFactory,
+        string blobName,
+        CancellationToken cancellationToken)
+    {
+        var containerClient = await GetContainerClientAsync();
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        if (!await blobClient.ExistsAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        var downloadResult = await blobClient.DownloadContentAsync(cancellationToken);
+        var json = downloadResult.Value.Content.ToString();
+
+        return LoadFromJson(json, documentFactory, eventStreamFactory);
+    }
+
+    private async Task TryLoadExternalCheckpointAsync(T projection, CancellationToken cancellationToken)
+    {
+        if (!HasExternalCheckpoint || string.IsNullOrEmpty(projection.CheckpointFingerprint))
+        {
+            return;
+        }
+
+        var checkpoint = await LoadCheckpointAsync(projection.CheckpointFingerprint, cancellationToken);
+        if (checkpoint != null)
+        {
+            projection.Checkpoint = checkpoint;
+        }
     }
 
     /// <summary>

@@ -39,130 +39,159 @@ public class AnalyzeManualStreamActions(
 
     private void AnalyzeMethodForRegisterActionCalls(MethodDeclarationSyntax method, List<AggregateDefinition> aggregates)
     {
-        // Find all invocation expressions in the method
         var invocations = method.DescendantNodes()
             .OfType<InvocationExpressionSyntax>();
 
         foreach (var invocation in invocations)
         {
-            // Check if this is a RegisterAction call
             if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
                 continue;
 
-            var methodName = memberAccess.Name.Identifier.Text;
-            if (methodName != "RegisterAction")
+            if (memberAccess.Name.Identifier.Text != "RegisterAction")
                 continue;
 
-            // Get the generic type argument
             if (memberAccess.Name is not GenericNameSyntax { TypeArgumentList.Arguments.Count: > 0 } genericName)
                 continue;
 
-            var typeArg = genericName.TypeArgumentList.Arguments[0];
-            var typeInfo = semanticModel.GetTypeInfo(typeArg);
-
-            if (typeInfo.Type is not INamedTypeSymbol actionType)
+            var actionType = ResolveActionType(genericName);
+            if (actionType == null)
                 continue;
 
-            // Try to determine which aggregate this RegisterAction belongs to
-            // by looking at the stream variable's type or the method context
-            var aggregateName = DetermineAggregateFromContext(memberAccess, method);
-
-            if (string.IsNullOrEmpty(aggregateName))
-                continue;
-
-            // Find the aggregate and add the stream action
-            var aggregate = aggregates.FirstOrDefault(a =>
-                a.IdentifierName == aggregateName ||
-                a.ObjectName == aggregateName);
-
+            var aggregate = FindTargetAggregate(memberAccess, method, aggregates);
             if (aggregate == null)
                 continue;
 
-            // Check if this action already exists (might be registered via attribute)
-            var actionTypeName = RoslynHelper.GetFullTypeName(actionType);
-            var actionNamespace = RoslynHelper.GetFullNamespace(actionType);
-
-            var existingAction = aggregate.StreamActions.FirstOrDefault(sa =>
-                sa.Type == actionTypeName && sa.Namespace == actionNamespace);
-
-            if (existingAction != null)
-            {
-                // Already registered (probably via attribute), skip
-                continue;
-            }
-
-            // Get interfaces implemented by the action type
-            var interfaces = actionType.AllInterfaces
-                .Where(i => StreamInterfaces.Contains(i.Name))
-                .Select(i => i.Name)
-                .ToList();
-
-            var streamAction = new StreamActionDefinition
-            {
-                Namespace = actionNamespace,
-                Type = actionTypeName,
-                StreamActionInterfaces = interfaces,
-                RegistrationType = "Manual"
-            };
-
-            aggregate.StreamActions.Add(streamAction);
+            TryAddStreamAction(actionType, aggregate);
         }
+    }
+
+    private INamedTypeSymbol? ResolveActionType(GenericNameSyntax genericName)
+    {
+        var typeArg = genericName.TypeArgumentList.Arguments[0];
+        var typeInfo = semanticModel.GetTypeInfo(typeArg);
+        return typeInfo.Type as INamedTypeSymbol;
+    }
+
+    private AggregateDefinition? FindTargetAggregate(
+        MemberAccessExpressionSyntax memberAccess,
+        MethodDeclarationSyntax method,
+        List<AggregateDefinition> aggregates)
+    {
+        var aggregateName = DetermineAggregateFromContext(memberAccess, method);
+        if (string.IsNullOrEmpty(aggregateName))
+            return null;
+
+        return aggregates.FirstOrDefault(a =>
+            a.IdentifierName == aggregateName ||
+            a.ObjectName == aggregateName);
+    }
+
+    private static void TryAddStreamAction(INamedTypeSymbol actionType, AggregateDefinition aggregate)
+    {
+        var actionTypeName = RoslynHelper.GetFullTypeName(actionType);
+        var actionNamespace = RoslynHelper.GetFullNamespace(actionType);
+
+        var existingAction = aggregate.StreamActions.FirstOrDefault(sa =>
+            sa.Type == actionTypeName && sa.Namespace == actionNamespace);
+
+        if (existingAction != null)
+            return;
+
+        var interfaces = actionType.AllInterfaces
+            .Where(i => StreamInterfaces.Contains(i.Name))
+            .Select(i => i.Name)
+            .ToList();
+
+        aggregate.StreamActions.Add(new StreamActionDefinition
+        {
+            Namespace = actionNamespace,
+            Type = actionTypeName,
+            StreamActionInterfaces = interfaces,
+            RegistrationType = "Manual"
+        });
     }
 
     private string? DetermineAggregateFromContext(
         MemberAccessExpressionSyntax memberAccess,
         MethodDeclarationSyntax method)
     {
-        // Strategy 1: Look at the variable being called (e.g., stream.RegisterAction)
-        // and trace back to find the aggregate type from the stream's generic parameter
-        if (memberAccess.Expression is IdentifierNameSyntax identifier)
-        {
-            var symbolInfo = semanticModel.GetSymbolInfo(identifier);
-            if (symbolInfo.Symbol is ILocalSymbol localSymbol)
-            {
-                // Check if it's an IEventStream<TAggregate>
-                if (localSymbol.Type is INamedTypeSymbol { IsGenericType: true } namedType &&
-                    namedType.Name.Contains("EventStream") &&
-                    namedType.TypeArguments.FirstOrDefault() is { } typeArg)
-                {
-                    return typeArg.Name;
-                }
-            }
-            else if (symbolInfo.Symbol is IParameterSymbol paramSymbol &&
-                     paramSymbol.Type is INamedTypeSymbol paramType &&
-                     paramType.IsGenericType &&
-                     paramType.Name.Contains("EventStream") &&
-                     paramType.TypeArguments.FirstOrDefault() is { } typeArg)
-            {
-                // Check if the parameter type is IEventStream<TAggregate>
-                return typeArg.Name;
-            }
-        }
+        return DetermineAggregateFromStreamVariable(memberAccess)
+            ?? DetermineAggregateFromMethodName(method)
+            ?? DetermineAggregateFromMethodParameters(method);
+    }
 
-        // Strategy 2: Look at the method name for hints (e.g., AddOrderAggregateActions)
+    /// <summary>
+    /// Strategy 1: Look at the variable being called (e.g., stream.RegisterAction)
+    /// and trace back to find the aggregate type from the stream's generic parameter.
+    /// </summary>
+    private string? DetermineAggregateFromStreamVariable(MemberAccessExpressionSyntax memberAccess)
+    {
+        if (memberAccess.Expression is not IdentifierNameSyntax identifier)
+            return null;
+
+        var symbolInfo = semanticModel.GetSymbolInfo(identifier);
+        var symbolType = GetSymbolType(symbolInfo.Symbol);
+
+        return ExtractAggregateNameFromEventStreamType(symbolType);
+    }
+
+    private static ITypeSymbol? GetSymbolType(ISymbol? symbol)
+    {
+        return symbol switch
+        {
+            ILocalSymbol localSymbol => localSymbol.Type,
+            IParameterSymbol paramSymbol => paramSymbol.Type,
+            _ => null
+        };
+    }
+
+    private static string? ExtractAggregateNameFromEventStreamType(ITypeSymbol? type)
+    {
+        if (type is not INamedTypeSymbol { IsGenericType: true } namedType)
+            return null;
+
+        if (!namedType.Name.Contains("EventStream"))
+            return null;
+
+        return namedType.TypeArguments.FirstOrDefault()?.Name;
+    }
+
+    /// <summary>
+    /// Strategy 2: Look at the method name for hints (e.g., AddOrderAggregateActions).
+    /// </summary>
+    private static string? DetermineAggregateFromMethodName(MethodDeclarationSyntax method)
+    {
         var methodName = method.Identifier.Text;
-        if (methodName.StartsWith("Add") && methodName.EndsWith("Actions"))
-        {
-            var aggregateName = methodName.Substring(3, methodName.Length - 10); // Remove "Add" and "Actions"
-            return aggregateName;
-        }
+        if (!methodName.StartsWith("Add") || !methodName.EndsWith("Actions"))
+            return null;
 
-        // Strategy 3: Look for the aggregate type in the method's generic constraints or parameters
+        return methodName.Substring(3, methodName.Length - 10);
+    }
+
+    /// <summary>
+    /// Strategy 3: Look for the aggregate type in the method's generic constraints or parameters.
+    /// </summary>
+    private string? DetermineAggregateFromMethodParameters(MethodDeclarationSyntax method)
+    {
         foreach (var param in method.ParameterList.Parameters)
         {
             var paramType = semanticModel.GetTypeInfo(param.Type!).Type;
-            if (paramType is INamedTypeSymbol namedParam &&
-                namedParam.IsGenericType &&
-                (namedParam.Name.Contains("EventStream") || namedParam.Name.Contains("IEventStreamBuilder")))
-            {
-                var typeArg = namedParam.TypeArguments.FirstOrDefault();
-                if (typeArg != null)
-                {
-                    return typeArg.Name;
-                }
-            }
+            var aggregateName = ExtractAggregateNameFromStreamBuilderType(paramType);
+            if (aggregateName != null)
+                return aggregateName;
         }
 
         return null;
+    }
+
+    private static string? ExtractAggregateNameFromStreamBuilderType(ITypeSymbol? type)
+    {
+        if (type is not INamedTypeSymbol { IsGenericType: true } namedParam)
+            return null;
+
+        if (!namedParam.Name.Contains("EventStream") && !namedParam.Name.Contains("IEventStreamBuilder"))
+            return null;
+
+        return namedParam.TypeArguments.FirstOrDefault()?.Name;
     }
 }

@@ -269,42 +269,56 @@ public class DeprecatedFoldOverloadMigration : IMigration
             return content;
         }
 
-        // Look for Fold method calls with IObjectDocument parameter
-        // Pattern: .Fold(event, document) or Fold<T>(event, document, ...)
         var foldPattern = @"\.Fold\s*(<[^>]+>)?\s*\(\s*(@?\w+)\s*,\s*(\w+)\s*(?:,\s*[^)]+)?\)";
-
-        // Check if the file contains Fold calls that might need migration
         var matches = Regex.Matches(content, foldPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
 
         foreach (Match match in matches)
         {
-            // Check if this looks like it's using IObjectDocument (variable named 'document' or similar)
-            var secondParam = match.Groups[3].Value;
-            if (secondParam.Contains("document", StringComparison.OrdinalIgnoreCase) ||
-                secondParam.Contains("doc", StringComparison.OrdinalIgnoreCase))
-            {
-                // Add a TODO comment before this line
-                var lineStart = content.LastIndexOf('\n', match.Index);
-                if (lineStart >= 0)
-                {
-                    var indent = "";
-                    var lineContent = content.Substring(lineStart + 1);
-                    var indentMatch = Regex.Match(lineContent, @"^(\s*)", RegexOptions.None, TimeSpan.FromSeconds(1));
-                    if (indentMatch.Success)
-                    {
-                        indent = indentMatch.Groups[1].Value;
-                    }
-
-                    // Only add TODO if not already present
-                    var previousLine = content.Substring(Math.Max(0, lineStart - 100), Math.Min(100, lineStart));
-                    if (!previousLine.Contains("TODO") && !previousLine.Contains("VersionToken"))
-                    {
-                        content = content.Insert(lineStart + 1, $"{indent}// TODO: Migrate to Fold(event, versionToken) - IObjectDocument overload is deprecated\n");
-                    }
-                }
-            }
+            content = TryInsertFoldMigrationComment(content, match);
         }
 
         return content;
+    }
+
+    private static string TryInsertFoldMigrationComment(string content, Match match)
+    {
+        var secondParam = match.Groups[3].Value;
+        if (!IsDocumentParameter(secondParam))
+        {
+            return content;
+        }
+
+        var lineStart = content.LastIndexOf('\n', match.Index);
+        if (lineStart < 0)
+        {
+            return content;
+        }
+
+        if (HasExistingMigrationComment(content, lineStart))
+        {
+            return content;
+        }
+
+        var indent = ExtractIndent(content, lineStart);
+        return content.Insert(lineStart + 1, $"{indent}// TODO: Migrate to Fold(event, versionToken) - IObjectDocument overload is deprecated\n");
+    }
+
+    private static bool IsDocumentParameter(string paramName)
+    {
+        return paramName.Contains("document", StringComparison.OrdinalIgnoreCase) ||
+               paramName.Contains("doc", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasExistingMigrationComment(string content, int lineStart)
+    {
+        var previousLine = content.Substring(Math.Max(0, lineStart - 100), Math.Min(100, lineStart));
+        return previousLine.Contains("TODO") || previousLine.Contains("VersionToken");
+    }
+
+    private static string ExtractIndent(string content, int lineStart)
+    {
+        var lineContent = content.Substring(lineStart + 1);
+        var indentMatch = Regex.Match(lineContent, @"^(\s*)", RegexOptions.None, TimeSpan.FromSeconds(1));
+        return indentMatch.Success ? indentMatch.Groups[1].Value : "";
     }
 }

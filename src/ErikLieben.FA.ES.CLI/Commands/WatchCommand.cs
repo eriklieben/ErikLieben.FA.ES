@@ -380,105 +380,127 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
                 return;
             }
 
-            // Find which entities are affected by the changed files
             var affectedEntities = FindAffectedEntities(changedFiles);
 
             if (affectedEntities.Count == 0)
             {
-                // No tracked entities affected - might be a new file, do full regen
-                if (_display != null)
-                {
-                    _display.LogActivity(WatchDisplay.ActivityType.Warning, "Untracked file changed, running full regen");
-                }
-                else
-                {
-                    AnsiConsole.MarkupLine($"[yellow]New or untracked file changed, running full regeneration...[/]");
-                }
+                LogMessage(WatchDisplay.ActivityType.Warning, "Untracked file changed, running full regen",
+                    "[yellow]New or untracked file changed, running full regeneration...[/]");
                 await RegenerateFullAsync(solutionPath, folderPath, config, cancellationToken);
                 return;
             }
 
-            // Check if Extensions file needs regeneration (new aggregate/projection added)
             bool needsExtensionsRegen = affectedEntities.Any(e =>
                 e.StartsWith("Aggregate:", StringComparison.Ordinal) ||
                 e.StartsWith("Projection:", StringComparison.Ordinal));
 
-            if (_display != null)
-            {
-                _display.LogRegenStarted(isIncremental: true, affectedEntities.Count);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[blue]Incremental regeneration[/] [gray]({affectedEntities.Count} entities)[/]");
-            }
+            LogRegenStart(isIncremental: true, affectedEntities.Count);
 
-            // Re-analyze the solution to get updated definitions
-            // This is needed to detect what actually changed in the source files
-            var analyzer = new Analyze.Analyze(config);
-            (var newSolution, string resolvedSolutionPath) = await analyzer.AnalyzeAsync(solutionPath);
-
-            // Detect and log changes
-            var changes = _changeDetector.DetectChanges(_cachedSolution, newSolution);
-            if (_display != null && changes.Count > 0)
-            {
-                _display.LogChanges(changes, isInitial: false);
-            }
-
-            // Update cache with new solution
-            _cachedSolution = newSolution;
-            _cachedSolutionPath = resolvedSolutionPath;
-            BuildFileToEntityMap(newSolution, resolvedSolutionPath);
-
-            // Update entity counts in display
-            if (_display != null)
-            {
-                var aggregateCount = newSolution.Projects.Sum(p => p.Aggregates.Count);
-                var projectionCount = newSolution.Projects.Sum(p => p.Projections.Count);
-                var inheritedCount = newSolution.Projects.Sum(p => p.InheritedAggregates.Count);
-                var eventCount = newSolution.Projects.Sum(p =>
-                    p.Aggregates.Sum(a => a.Events.Count) + p.Projections.Sum(pr => pr.Events.Count));
-                _display.SetEntityCounts(aggregateCount, projectionCount, inheritedCount, eventCount);
-            }
-
-            // Regenerate affected entities with the NEW definitions
-            foreach (var entity in affectedEntities)
-            {
-                await RegenerateEntityAsync(entity, config, cancellationToken);
-            }
-
-            // Regenerate extensions if needed (fast - just registration code)
-            if (needsExtensionsRegen)
-            {
-                await new GenerateExtensionCode(_cachedSolution, config, _cachedSolutionPath!).Generate();
-            }
+            await PerformIncrementalRegeneration(solutionPath, config, affectedEntities, needsExtensionsRegen, cancellationToken);
 
             stopwatch.Stop();
             _lastRegeneration = DateTime.UtcNow;
-
-            if (_display != null)
-            {
-                _display.LogRegenCompleted(isIncremental: true, stopwatch.ElapsedMilliseconds);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[green]✓ Incremental regeneration complete[/] [gray]({stopwatch.ElapsedMilliseconds}ms)[/]");
-            }
+            LogRegenEnd(isIncremental: true, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            if (_display != null)
-            {
-                _display.LogRegenFailed(ex.Message);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]✗ Regeneration failed[/] [gray]({stopwatch.ElapsedMilliseconds}ms)[/]");
-                AnsiConsole.MarkupLine($"[red]{ex.Message}[/]");
-            }
-
-            // On error, clear cache to force full regen next time
+            LogRegenError(ex.Message, stopwatch.ElapsedMilliseconds);
             _cachedSolution = null;
+        }
+    }
+
+    private async Task PerformIncrementalRegeneration(string solutionPath, Config config, HashSet<string> affectedEntities, bool needsExtensionsRegen, CancellationToken cancellationToken)
+    {
+        var analyzer = new Analyze.Analyze(config);
+        (var newSolution, string resolvedSolutionPath) = await analyzer.AnalyzeAsync(solutionPath);
+
+        var changes = _changeDetector.DetectChanges(_cachedSolution, newSolution);
+        if (_display != null && changes.Count > 0)
+        {
+            _display.LogChanges(changes, isInitial: false);
+        }
+
+        _cachedSolution = newSolution;
+        _cachedSolutionPath = resolvedSolutionPath;
+        BuildFileToEntityMap(newSolution, resolvedSolutionPath);
+
+        UpdateDisplayEntityCounts(newSolution);
+
+        foreach (var entity in affectedEntities)
+        {
+            await RegenerateEntityAsync(entity, config, cancellationToken);
+        }
+
+        if (needsExtensionsRegen)
+        {
+            await new GenerateExtensionCode(_cachedSolution, config, _cachedSolutionPath!).Generate();
+        }
+    }
+
+    private void UpdateDisplayEntityCounts(SolutionDefinition solution)
+    {
+        if (_display == null)
+        {
+            return;
+        }
+
+        var aggregateCount = solution.Projects.Sum(p => p.Aggregates.Count);
+        var projectionCount = solution.Projects.Sum(p => p.Projections.Count);
+        var inheritedCount = solution.Projects.Sum(p => p.InheritedAggregates.Count);
+        var eventCount = solution.Projects.Sum(p =>
+            p.Aggregates.Sum(a => a.Events.Count) + p.Projections.Sum(pr => pr.Events.Count));
+        _display.SetEntityCounts(aggregateCount, projectionCount, inheritedCount, eventCount);
+    }
+
+    private void LogMessage(WatchDisplay.ActivityType type, string tuiMessage, string simpleMessage)
+    {
+        if (_display != null)
+        {
+            _display.LogActivity(type, tuiMessage);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine(simpleMessage);
+        }
+    }
+
+    private void LogRegenStart(bool isIncremental, int entityCount = 0)
+    {
+        if (_display != null)
+        {
+            _display.LogRegenStarted(isIncremental: isIncremental, entityCount);
+        }
+        else
+        {
+            var label = isIncremental ? "Incremental" : "Full";
+            AnsiConsole.MarkupLine($"[blue]{label} regeneration[/] [gray]({entityCount} entities)[/]");
+        }
+    }
+
+    private void LogRegenEnd(bool isIncremental, long elapsedMs)
+    {
+        if (_display != null)
+        {
+            _display.LogRegenCompleted(isIncremental: isIncremental, elapsedMs);
+        }
+        else
+        {
+            var label = isIncremental ? "Incremental" : "Full";
+            AnsiConsole.MarkupLine($"[green]✓ {label} regeneration complete[/] [gray]({elapsedMs}ms)[/]");
+        }
+    }
+
+    private void LogRegenError(string errorMessage, long elapsedMs)
+    {
+        if (_display != null)
+        {
+            _display.LogRegenFailed(errorMessage);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]✗ Regeneration failed[/] [gray]({elapsedMs}ms)[/]");
+            AnsiConsole.MarkupLine($"[red]{errorMessage}[/]");
         }
     }
 
@@ -488,34 +510,31 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
 
         foreach (var file in changedFiles)
         {
-            // Normalize path for lookup
             var normalizedFile = file.Replace('/', '\\');
-
-            if (_fileToEntityMap.TryGetValue(normalizedFile, out var entities))
-            {
-                foreach (var entity in entities)
-                {
-                    affected.Add(entity);
-                }
-            }
-            else
-            {
-                // Try partial match (file might be stored with relative path)
-                foreach (var kvp in _fileToEntityMap)
-                {
-                    if (normalizedFile.EndsWith(kvp.Key, StringComparison.OrdinalIgnoreCase) ||
-                        kvp.Key.EndsWith(Path.GetFileName(normalizedFile), StringComparison.OrdinalIgnoreCase))
-                    {
-                        foreach (var entity in kvp.Value)
-                        {
-                            affected.Add(entity);
-                        }
-                    }
-                }
-            }
+            AddEntitiesForFile(normalizedFile, affected);
         }
 
         return affected;
+    }
+
+    private void AddEntitiesForFile(string normalizedFile, HashSet<string> affected)
+    {
+        if (_fileToEntityMap.TryGetValue(normalizedFile, out var entities))
+        {
+            affected.UnionWith(entities);
+            return;
+        }
+
+        // Try partial match (file might be stored with relative path)
+        var fileName = Path.GetFileName(normalizedFile);
+        foreach (var kvp in _fileToEntityMap)
+        {
+            if (normalizedFile.EndsWith(kvp.Key, StringComparison.OrdinalIgnoreCase) ||
+                kvp.Key.EndsWith(fileName, StringComparison.OrdinalIgnoreCase))
+            {
+                affected.UnionWith(kvp.Value);
+            }
+        }
     }
 
     private async Task RegenerateEntityAsync(string entityKey, Config config, CancellationToken cancellationToken)
@@ -534,58 +553,67 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
         switch (entityType)
         {
             case "Aggregate":
-                var aggregateWithProject = _cachedSolution.Projects
-                    .SelectMany(p => p.Aggregates.Select(a => (Project: p, Aggregate: a)))
-                    .FirstOrDefault(x => x.Aggregate.IdentifierName == entityName);
-                if (aggregateWithProject.Aggregate != null)
-                {
-                    if (_display != null)
-                    {
-                        _display.LogEntityRegenerated("aggregate", entityName);
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"  [gray]→[/] Regenerating aggregate: [green]{entityName}[/]");
-                    }
-                    await GenerateSingleAggregate(aggregateWithProject.Project, aggregateWithProject.Aggregate, _cachedSolutionPath, config);
-                }
+                await RegenerateAggregateEntity(entityName, config);
                 break;
 
             case "Projection":
-                var projectionWithProject = _cachedSolution.Projects
-                    .SelectMany(p => p.Projections.Select(proj => (Project: p, Projection: proj)))
-                    .FirstOrDefault(x => x.Projection.Name == entityName);
-                if (projectionWithProject.Projection != null)
-                {
-                    if (_display != null)
-                    {
-                        _display.LogEntityRegenerated("projection", entityName);
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"  [gray]→[/] Regenerating projection: [yellow]{entityName}[/]");
-                    }
-                    await GenerateSingleProjection(projectionWithProject.Project, projectionWithProject.Projection, _cachedSolutionPath, config);
-                }
+                await RegenerateProjectionEntity(entityName, config);
                 break;
 
             case "InheritedAggregate":
-                var inheritedWithProject = _cachedSolution.Projects
-                    .SelectMany(p => p.InheritedAggregates.Select(ia => (Project: p, Inherited: ia)))
-                    .FirstOrDefault(x => x.Inherited.IdentifierName == entityName);
-                if (inheritedWithProject.Inherited != null)
-                {
-                    if (_display != null)
-                    {
-                        _display.LogEntityRegenerated("inherited", entityName);
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"  [gray]→[/] Regenerating inherited aggregate: [green]{entityName}[/]");
-                    }
-                    await GenerateSingleInheritedAggregate(inheritedWithProject.Project, inheritedWithProject.Inherited, _cachedSolutionPath, config);
-                }
+                await RegenerateInheritedAggregateEntity(entityName, config);
                 break;
+        }
+    }
+
+    private async Task RegenerateAggregateEntity(string entityName, Config config)
+    {
+        var match = _cachedSolution!.Projects
+            .SelectMany(p => p.Aggregates.Select(a => (Project: p, Aggregate: a)))
+            .FirstOrDefault(x => x.Aggregate.IdentifierName == entityName);
+
+        if (match.Aggregate == null)
+            return;
+
+        LogEntityRegen("aggregate", entityName, $"  [gray]->[/] Regenerating aggregate: [green]{entityName}[/]");
+        await GenerateSingleAggregate(match.Project, match.Aggregate, _cachedSolutionPath!, config);
+    }
+
+    private async Task RegenerateProjectionEntity(string entityName, Config config)
+    {
+        var match = _cachedSolution!.Projects
+            .SelectMany(p => p.Projections.Select(proj => (Project: p, Projection: proj)))
+            .FirstOrDefault(x => x.Projection.Name == entityName);
+
+        if (match.Projection == null)
+            return;
+
+        LogEntityRegen("projection", entityName, $"  [gray]->[/] Regenerating projection: [yellow]{entityName}[/]");
+        await GenerateSingleProjection(match.Project, match.Projection, _cachedSolutionPath!, config);
+    }
+
+    private async Task RegenerateInheritedAggregateEntity(string entityName, Config config)
+    {
+        var match = _cachedSolution!.Projects
+            .SelectMany(p => p.InheritedAggregates.Select(ia => (Project: p, Inherited: ia)))
+            .FirstOrDefault(x => x.Inherited.IdentifierName == entityName);
+
+        if (match.Inherited == null)
+            return;
+
+        LogEntityRegen("inherited", entityName, $"  [gray]->[/] Regenerating inherited aggregate: [green]{entityName}[/]");
+        await GenerateSingleInheritedAggregate(match.Project, match.Inherited, _cachedSolutionPath!, config);
+    }
+
+    private void LogEntityRegen(string entityType, string entityName, string simpleMessage)
+    {
+        if (_display != null)
+        {
+            _display.LogEntityRegenerated(entityType, entityName);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine(simpleMessage);
         }
     }
 
@@ -633,132 +661,151 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
 
         try
         {
-            if (_display != null && !isTuiMode)
-            {
-                _display.LogRegenStarted(isIncremental: false);
-            }
-            else if (_display == null)
-            {
-                AnsiConsole.MarkupLine($"[blue]Full regeneration...[/]");
-            }
+            LogFullRegenStart(isTuiMode);
 
-            // Analyze solution - use silent mode when in TUI
-            Analyze.Analyze analyzer;
-            if (isTuiMode && _display != null)
-            {
-                _display.LogActivity(WatchDisplay.ActivityType.Info, "Starting solution analysis...");
-                analyzer = new Analyze.Analyze(config);
-                string? lastProjectName = null;
-                analyzer.OnProgress = (current, total, message) =>
-                {
-                    _display.SetAnalysisProgress(current, total, message);
-
-                    // Log when we start analyzing a new project
-                    if (message.StartsWith("Analyzing ") && message.EndsWith("..."))
-                    {
-                        var projectName = message["Analyzing ".Length..^3];
-                        if (projectName != lastProjectName)
-                        {
-                            lastProjectName = projectName;
-                            _display.LogAnalysisProgress($"Analyzing: {projectName}");
-                        }
-                    }
-                };
-            }
-            else if (_display != null)
-            {
-                // Regeneration while TUI is running - use silent mode
-                analyzer = new Analyze.Analyze(config);
-            }
-            else
-            {
-                // Simple mode - use progress bar
-                analyzer = new Analyze.Analyze(config, AnsiConsole.Console);
-            }
-
+            var analyzer = CreateAnalyzer(config, isTuiMode);
             (var def, string resolvedSolutionPath) = await analyzer.AnalyzeAsync(solutionPath);
 
-            // Detect changes between previous and current solution
-            // Use _cachedSolution (the last successfully analyzed solution) as the baseline
             var isInitialAnalysis = _cachedSolution == null;
             var changes = _changeDetector.DetectChanges(_cachedSolution, def);
 
-            // Cache for incremental updates
-            // _cachedSolution becomes the new baseline for next comparison
             _cachedSolution = def;
             _cachedSolutionPath = resolvedSolutionPath;
             BuildFileToEntityMap(def, resolvedSolutionPath);
 
-            // Update display with entity counts and detected changes
-            if (_display != null)
-            {
-                var aggregateCount = def.Projects.Sum(p => p.Aggregates.Count);
-                var projectionCount = def.Projects.Sum(p => p.Projections.Count);
-                var inheritedCount = def.Projects.Sum(p => p.InheritedAggregates.Count);
-                var eventCount = def.Projects.Sum(p =>
-                    p.Aggregates.Sum(a => a.Events.Count) + p.Projections.Sum(pr => pr.Events.Count));
-                _display.SetEntityCounts(aggregateCount, projectionCount, inheritedCount, eventCount);
-                _display.SetFileCounts(_fileToEntityMap.Count, aggregateCount + projectionCount + inheritedCount);
+            UpdateDisplayAfterAnalysis(def, changes, isInitialAnalysis, isTuiMode);
 
-                // Log detected changes
-                if (!isInitialAnalysis && changes.Count > 0)
-                {
-                    _display.LogChanges(changes, isInitial: false);
-                }
-
-                if (isTuiMode)
-                {
-                    if (isInitialAnalysis)
-                    {
-                        _display.LogActivity(WatchDisplay.ActivityType.Info,
-                            $"Found {aggregateCount} aggregates, {projectionCount} projections");
-                    }
-                    _display.SetStatus(WatchDisplay.WatchStatus.Initializing, "Generating code...");
-                    _display.LogActivity(WatchDisplay.ActivityType.Info, "Generating code...");
-                }
-            }
-
-            // Save analyzed data
-            var analyzeDir = Path.Combine(folderPath, ".elfa");
-            Directory.CreateDirectory(analyzeDir);
-            var analyzePath = Path.Combine(analyzeDir, "eriklieben.fa.es.analyzed-data.json");
-            var newJsonDef = JsonSerializer.Serialize(def, AnalyzeJsonOptions);
-            await File.WriteAllTextAsync(analyzePath, newJsonDef, cancellationToken);
-
-            // Generate code
-            await new GenerateAggregateCode(def, config, resolvedSolutionPath).Generate();
-            await new GenerateProjectionCode(def, config, resolvedSolutionPath).Generate();
-            await new GenerateInheritedAggregateCode(def, config, resolvedSolutionPath).Generate();
-            await new GenerateExtensionCode(def, config, resolvedSolutionPath).Generate();
-            await new GenerateVersionTokenOfTCode(def, config, resolvedSolutionPath).Generate();
-            await new GenerateVersionTokenOfTJsonConverterCode(def, config, resolvedSolutionPath).Generate();
+            await SaveAnalyzedData(folderPath, def, cancellationToken);
+            await RunAllCodeGenerators(def, config, resolvedSolutionPath);
 
             stopwatch.Stop();
             _lastRegeneration = DateTime.UtcNow;
 
-            var entityCount = def.Projects.Sum(p => p.Aggregates.Count + p.Projections.Count);
-            if (_display != null)
-            {
-                _display.LogRegenCompleted(isIncremental: false, stopwatch.ElapsedMilliseconds);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[green]✓ Full regeneration complete[/] [gray]({stopwatch.ElapsedMilliseconds}ms, {entityCount} entities cached)[/]");
-            }
+            LogFullRegenComplete(def, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            if (_display != null)
-            {
-                _display.LogRegenFailed(ex.Message);
-            }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]✗ Full regeneration failed[/] [gray]({stopwatch.ElapsedMilliseconds}ms)[/]");
-                AnsiConsole.MarkupLine($"[red]{ex.Message}[/]");
-            }
+            LogRegenError(ex.Message, stopwatch.ElapsedMilliseconds);
             _cachedSolution = null;
+        }
+    }
+
+    private void LogFullRegenStart(bool isTuiMode)
+    {
+        if (_display != null && !isTuiMode)
+        {
+            _display.LogRegenStarted(isIncremental: false);
+        }
+        else if (_display == null)
+        {
+            AnsiConsole.MarkupLine($"[blue]Full regeneration...[/]");
+        }
+    }
+
+    private Analyze.Analyze CreateAnalyzer(Config config, bool isTuiMode)
+    {
+        if (isTuiMode && _display != null)
+        {
+            return CreateTuiAnalyzer(config);
+        }
+
+        if (_display != null)
+        {
+            return new Analyze.Analyze(config);
+        }
+
+        return new Analyze.Analyze(config, AnsiConsole.Console);
+    }
+
+    private Analyze.Analyze CreateTuiAnalyzer(Config config)
+    {
+        _display!.LogActivity(WatchDisplay.ActivityType.Info, "Starting solution analysis...");
+        var analyzer = new Analyze.Analyze(config);
+        string? lastProjectName = null;
+        analyzer.OnProgress = (current, total, message) =>
+        {
+            _display.SetAnalysisProgress(current, total, message);
+
+            if (message.StartsWith("Analyzing ") && message.EndsWith("..."))
+            {
+                var projectName = message["Analyzing ".Length..^3];
+                if (projectName != lastProjectName)
+                {
+                    lastProjectName = projectName;
+                    _display.LogAnalysisProgress($"Analyzing: {projectName}");
+                }
+            }
+        };
+        return analyzer;
+    }
+
+    private void UpdateDisplayAfterAnalysis(SolutionDefinition def, IReadOnlyList<Abstractions.DetectedChange> changes, bool isInitialAnalysis, bool isTuiMode)
+    {
+        if (_display == null)
+        {
+            return;
+        }
+
+        UpdateDisplayEntityCounts(def);
+        _display.SetFileCounts(_fileToEntityMap.Count,
+            def.Projects.Sum(p => p.Aggregates.Count + p.Projections.Count + p.InheritedAggregates.Count));
+
+        if (!isInitialAnalysis && changes.Count > 0)
+        {
+            _display.LogChanges(changes, isInitial: false);
+        }
+
+        UpdateDisplayForTuiMode(def, isInitialAnalysis, isTuiMode);
+    }
+
+    private void UpdateDisplayForTuiMode(SolutionDefinition def, bool isInitialAnalysis, bool isTuiMode)
+    {
+        if (!isTuiMode)
+        {
+            return;
+        }
+
+        if (isInitialAnalysis)
+        {
+            var aggregateCount = def.Projects.Sum(p => p.Aggregates.Count);
+            var projectionCount = def.Projects.Sum(p => p.Projections.Count);
+            _display!.LogActivity(WatchDisplay.ActivityType.Info,
+                $"Found {aggregateCount} aggregates, {projectionCount} projections");
+        }
+        _display!.SetStatus(WatchDisplay.WatchStatus.Initializing, "Generating code...");
+        _display.LogActivity(WatchDisplay.ActivityType.Info, "Generating code...");
+    }
+
+    private static async Task SaveAnalyzedData(string folderPath, SolutionDefinition def, CancellationToken cancellationToken)
+    {
+        var analyzeDir = Path.Combine(folderPath, ".elfa");
+        Directory.CreateDirectory(analyzeDir);
+        var analyzePath = Path.Combine(analyzeDir, "eriklieben.fa.es.analyzed-data.json");
+        var newJsonDef = JsonSerializer.Serialize(def, AnalyzeJsonOptions);
+        await File.WriteAllTextAsync(analyzePath, newJsonDef, cancellationToken);
+    }
+
+    private static async Task RunAllCodeGenerators(SolutionDefinition def, Config config, string resolvedSolutionPath)
+    {
+        await new GenerateAggregateCode(def, config, resolvedSolutionPath).Generate();
+        await new GenerateProjectionCode(def, config, resolvedSolutionPath).Generate();
+        await new GenerateInheritedAggregateCode(def, config, resolvedSolutionPath).Generate();
+        await new GenerateExtensionCode(def, config, resolvedSolutionPath).Generate();
+        await new GenerateVersionTokenOfTCode(def, config, resolvedSolutionPath).Generate();
+        await new GenerateVersionTokenOfTJsonConverterCode(def, config, resolvedSolutionPath).Generate();
+    }
+
+    private void LogFullRegenComplete(SolutionDefinition def, long elapsedMs)
+    {
+        var entityCount = def.Projects.Sum(p => p.Aggregates.Count + p.Projections.Count);
+        if (_display != null)
+        {
+            _display.LogRegenCompleted(isIncremental: false, elapsedMs);
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[green]✓ Full regeneration complete[/] [gray]({elapsedMs}ms, {entityCount} entities cached)[/]");
         }
     }
 
@@ -770,56 +817,39 @@ public class WatchCommand : AsyncCommand<WatchCommand.Settings>
         {
             foreach (var aggregate in project.Aggregates)
             {
-                foreach (var fileLocation in aggregate.FileLocations)
-                {
-                    var fullPath = Path.Combine(solutionPath, fileLocation.Replace('/', '\\'));
-                    var normalizedPath = Path.GetFullPath(fullPath);
-
-                    if (!_fileToEntityMap.TryGetValue(normalizedPath, out var entities))
-                    {
-                        entities = [];
-                        _fileToEntityMap[normalizedPath] = entities;
-                    }
-                    entities.Add($"Aggregate:{aggregate.IdentifierName}");
-                }
+                MapFileLocationsToEntity(aggregate.FileLocations, $"Aggregate:{aggregate.IdentifierName}", solutionPath);
             }
 
             foreach (var projection in project.Projections)
             {
-                foreach (var fileLocation in projection.FileLocations)
-                {
-                    var fullPath = Path.Combine(solutionPath, fileLocation.Replace('/', '\\'));
-                    var normalizedPath = Path.GetFullPath(fullPath);
-
-                    if (!_fileToEntityMap.TryGetValue(normalizedPath, out var entities))
-                    {
-                        entities = [];
-                        _fileToEntityMap[normalizedPath] = entities;
-                    }
-                    entities.Add($"Projection:{projection.Name}");
-                }
+                MapFileLocationsToEntity(projection.FileLocations, $"Projection:{projection.Name}", solutionPath);
             }
 
             foreach (var inherited in project.InheritedAggregates)
             {
-                foreach (var fileLocation in inherited.FileLocations)
-                {
-                    var fullPath = Path.Combine(solutionPath, fileLocation.Replace('/', '\\'));
-                    var normalizedPath = Path.GetFullPath(fullPath);
-
-                    if (!_fileToEntityMap.TryGetValue(normalizedPath, out var entities))
-                    {
-                        entities = [];
-                        _fileToEntityMap[normalizedPath] = entities;
-                    }
-                    entities.Add($"InheritedAggregate:{inherited.IdentifierName}");
-                }
+                MapFileLocationsToEntity(inherited.FileLocations, $"InheritedAggregate:{inherited.IdentifierName}", solutionPath);
             }
         }
 
         if (_display == null)
         {
             AnsiConsole.MarkupLine($"[gray]Mapped {_fileToEntityMap.Count} source files to entities[/]");
+        }
+    }
+
+    private void MapFileLocationsToEntity(List<string> fileLocations, string entityKey, string solutionPath)
+    {
+        foreach (var fileLocation in fileLocations)
+        {
+            var fullPath = Path.Combine(solutionPath, fileLocation.Replace('/', '\\'));
+            var normalizedPath = Path.GetFullPath(fullPath);
+
+            if (!_fileToEntityMap.TryGetValue(normalizedPath, out var entities))
+            {
+                entities = [];
+                _fileToEntityMap[normalizedPath] = entities;
+            }
+            entities.Add(entityKey);
         }
     }
 

@@ -299,6 +299,16 @@ public class BulkMigrationBuilder : IMigrationBuilder
 
         builder.CopyToNewStream(targetStreamId);
 
+        ApplyTransformationOptions(builder);
+        ApplyLockOptions(builder);
+        ApplyOptionalBuilderActions(builder);
+        ApplyMigrationFlags(builder);
+
+        return await builder.ExecuteAsync(cancellationToken);
+    }
+
+    private void ApplyTransformationOptions(MigrationBuilder builder)
+    {
         if (transformer != null)
         {
             builder.WithTransformation(transformer);
@@ -308,24 +318,32 @@ public class BulkMigrationBuilder : IMigrationBuilder
         {
             builder.WithPipeline(_ => { }); // Pipeline already built
         }
+    }
 
-        if (lockOptions != null)
+    private void ApplyLockOptions(MigrationBuilder builder)
+    {
+        if (lockOptions == null)
         {
-            builder.WithDistributedLock(o =>
-            {
-                o.LockTimeout(lockOptions.LockTimeoutValue);
-                o.HeartbeatInterval(lockOptions.HeartbeatIntervalValue);
-                if (lockOptions.LockLocation != null)
-                {
-                    o.UseLease(lockOptions.LockLocation);
-                }
-                if (lockOptions.ProviderName != null)
-                {
-                    o.UseProvider(lockOptions.ProviderName);
-                }
-            });
+            return;
         }
 
+        builder.WithDistributedLock(o =>
+        {
+            o.LockTimeout(lockOptions.LockTimeoutValue);
+            o.HeartbeatInterval(lockOptions.HeartbeatIntervalValue);
+            if (lockOptions.LockLocation != null)
+            {
+                o.UseLease(lockOptions.LockLocation);
+            }
+            if (lockOptions.ProviderName != null)
+            {
+                o.UseProvider(lockOptions.ProviderName);
+            }
+        });
+    }
+
+    private void ApplyOptionalBuilderActions(MigrationBuilder builder)
+    {
         if (backupConfigure != null)
         {
             builder.WithBackup(backupConfigure);
@@ -345,7 +363,10 @@ public class BulkMigrationBuilder : IMigrationBuilder
         {
             builder.WithProgress(progressConfigure);
         }
+    }
 
+    private void ApplyMigrationFlags(MigrationBuilder builder)
+    {
         if (isDryRun)
         {
             builder.DryRun();
@@ -360,8 +381,6 @@ public class BulkMigrationBuilder : IMigrationBuilder
         {
             builder.WithRollbackSupport();
         }
-
-        return await builder.ExecuteAsync(cancellationToken);
     }
 
     private void ValidateConfiguration()

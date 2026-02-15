@@ -252,39 +252,49 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
         string checkpointId,
         CancellationToken cancellationToken)
     {
+        TableEntity? entity;
         try
         {
-            // Try old "projection" partition key format
             var response = await tableClient.GetEntityAsync<TableEntity>(
                 LegacyProjectionPartitionKey,
                 checkpointId,
                 cancellationToken: cancellationToken);
 
-            if (response?.Value != null)
-            {
-                var entity = response.Value;
-
-                // Check if data is compressed
-                if (entity.TryGetValue("IsCompressed", out var isCompressed) && isCompressed is bool compressed && compressed)
-                {
-                    if (entity.TryGetValue("CheckpointData", out var dataValue) && dataValue is byte[] compressedData)
-                    {
-                        return DecompressJson(compressedData);
-                    }
-                }
-                else
-                {
-                    // Uncompressed JSON
-                    return entity.GetString("CheckpointJson");
-                }
-            }
+            entity = response?.Value;
         }
         catch (Azure.RequestFailedException ex) when (ex.Status == 404)
         {
-            // Not found in legacy format
+            return null;
         }
 
-        return null;
+        if (entity == null)
+        {
+            return null;
+        }
+
+        return ExtractLegacyCheckpointJson(entity);
+    }
+
+    private static string? ExtractLegacyCheckpointJson(TableEntity entity)
+    {
+        if (IsCompressedLegacyCheckpoint(entity))
+        {
+            if (entity.TryGetValue("CheckpointData", out var dataValue) && dataValue is byte[] compressedData)
+            {
+                return DecompressJson(compressedData);
+            }
+
+            return null;
+        }
+
+        return entity.GetString("CheckpointJson");
+    }
+
+    private static bool IsCompressedLegacyCheckpoint(TableEntity entity)
+    {
+        return entity.TryGetValue("IsCompressed", out var isCompressed)
+            && isCompressed is bool compressed
+            && compressed;
     }
 
     /// <inheritdoc />
