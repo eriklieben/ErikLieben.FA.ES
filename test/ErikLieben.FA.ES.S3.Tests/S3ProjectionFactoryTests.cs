@@ -214,7 +214,8 @@ public class S3ProjectionFactoryTests
                 .Throws(new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound });
 
             // Should not throw
-            await factory.DeleteAsync();
+            var exception = await Record.ExceptionAsync(() => factory.DeleteAsync());
+            Assert.Null(exception);
         }
     }
 

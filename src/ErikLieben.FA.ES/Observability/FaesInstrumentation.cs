@@ -15,13 +15,13 @@ namespace ErikLieben.FA.ES.Observability;
 /// <code>
 /// builder.Services.AddOpenTelemetry()
 ///     .WithTracing(t => t
-///         .AddSource(FaesInstrumentation.ActivitySources.Core)
-///         .AddSource(FaesInstrumentation.ActivitySources.Storage)
-///         .AddSource(FaesInstrumentation.ActivitySources.Projections))
+///         .AddSource(FaesInstrumentation.ActivitySources.CoreName)
+///         .AddSource(FaesInstrumentation.ActivitySources.StorageName)
+///         .AddSource(FaesInstrumentation.ActivitySources.ProjectionsName))
 ///     .WithMetrics(m => m
-///         .AddMeter(FaesInstrumentation.Meters.Core)
-///         .AddMeter(FaesInstrumentation.Meters.Storage)
-///         .AddMeter(FaesInstrumentation.Meters.Projections));
+///         .AddMeter(FaesInstrumentation.Meters.CoreName)
+///         .AddMeter(FaesInstrumentation.Meters.StorageName)
+///         .AddMeter(FaesInstrumentation.Meters.ProjectionsName));
 /// </code>
 /// <para>
 /// Or use the extension methods:
@@ -44,32 +44,32 @@ public static class FaesInstrumentation
     /// <summary>
     /// ActivitySource for core event stream operations (read, write, session, aggregate).
     /// </summary>
-    public static readonly ActivitySource Core = new(ActivitySources.Core, LibraryVersion);
+    public static readonly ActivitySource Core = new(ActivitySources.CoreName, LibraryVersion);
 
     /// <summary>
     /// ActivitySource for storage provider operations (Blob, Table, CosmosDB).
     /// </summary>
-    public static readonly ActivitySource Storage = new(ActivitySources.Storage, LibraryVersion);
+    public static readonly ActivitySource Storage = new(ActivitySources.StorageName, LibraryVersion);
 
     /// <summary>
     /// ActivitySource for projection operations (update, catch-up, factory operations).
     /// </summary>
-    public static readonly ActivitySource Projections = new(ActivitySources.Projections, LibraryVersion);
+    public static readonly ActivitySource Projections = new(ActivitySources.ProjectionsName, LibraryVersion);
 
     /// <summary>
     /// Meter for core event stream metrics (events appended/read, commits, durations).
     /// </summary>
-    public static readonly Meter CoreMeter = new(Meters.Core, LibraryVersion);
+    public static readonly Meter CoreMeter = new(Meters.CoreName, LibraryVersion);
 
     /// <summary>
     /// Meter for storage provider metrics (read/write latency, operation counts).
     /// </summary>
-    public static readonly Meter StorageMeter = new(Meters.Storage, LibraryVersion);
+    public static readonly Meter StorageMeter = new(Meters.StorageName, LibraryVersion);
 
     /// <summary>
     /// Meter for projection metrics (update counts, durations, events folded).
     /// </summary>
-    public static readonly Meter ProjectionsMeter = new(Meters.Projections, LibraryVersion);
+    public static readonly Meter ProjectionsMeter = new(Meters.ProjectionsName, LibraryVersion);
 
     /// <summary>
     /// Contains the ActivitySource names for configuring OpenTelemetry tracing.
@@ -80,19 +80,19 @@ public static class FaesInstrumentation
         /// ActivitySource name for core event stream operations.
         /// Covers: EventStream.Read, EventStream.Session, Session.Commit, Aggregate.Fold.
         /// </summary>
-        public const string Core = "ErikLieben.FA.ES";
+        public const string CoreName = "ErikLieben.FA.ES";
 
         /// <summary>
         /// ActivitySource name for storage provider operations.
         /// Covers: DataStore read/write operations, SnapshotStore operations.
         /// </summary>
-        public const string Storage = "ErikLieben.FA.ES.Storage";
+        public const string StorageName = "ErikLieben.FA.ES.Storage";
 
         /// <summary>
         /// ActivitySource name for projection operations.
         /// Covers: Projection.UpdateToVersion, ProjectionFactory operations, CatchUp operations.
         /// </summary>
-        public const string Projections = "ErikLieben.FA.ES.Projections";
+        public const string ProjectionsName = "ErikLieben.FA.ES.Projections";
     }
 
     /// <summary>
@@ -103,17 +103,17 @@ public static class FaesInstrumentation
         /// <summary>
         /// Meter name for core event stream metrics.
         /// </summary>
-        public const string Core = "ErikLieben.FA.ES";
+        public const string CoreName = "ErikLieben.FA.ES";
 
         /// <summary>
         /// Meter name for storage provider metrics.
         /// </summary>
-        public const string Storage = "ErikLieben.FA.ES.Storage";
+        public const string StorageName = "ErikLieben.FA.ES.Storage";
 
         /// <summary>
         /// Meter name for projection metrics.
         /// </summary>
-        public const string Projections = "ErikLieben.FA.ES.Projections";
+        public const string ProjectionsName = "ErikLieben.FA.ES.Projections";
     }
 
     /// <summary>

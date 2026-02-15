@@ -19,15 +19,15 @@ using ErikLieben.FA.ES.Observability;
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("MyEventSourcedApp"))
     .WithTracing(t => t
-        .AddSource(FaesInstrumentation.ActivitySources.Core)
-        .AddSource(FaesInstrumentation.ActivitySources.Storage)
-        .AddSource(FaesInstrumentation.ActivitySources.Projections)
+        .AddSource(FaesInstrumentation.ActivitySources.CoreName)
+        .AddSource(FaesInstrumentation.ActivitySources.StorageName)
+        .AddSource(FaesInstrumentation.ActivitySources.ProjectionsName)
         .AddAspNetCoreInstrumentation()
         .AddOtlpExporter())
     .WithMetrics(m => m
-        .AddMeter(FaesInstrumentation.Meters.Core)
-        .AddMeter(FaesInstrumentation.Meters.Storage)
-        .AddMeter(FaesInstrumentation.Meters.Projections)
+        .AddMeter(FaesInstrumentation.Meters.CoreName)
+        .AddMeter(FaesInstrumentation.Meters.StorageName)
+        .AddMeter(FaesInstrumentation.Meters.ProjectionsName)
         .AddAspNetCoreInstrumentation()
         .AddOtlpExporter());
 ```

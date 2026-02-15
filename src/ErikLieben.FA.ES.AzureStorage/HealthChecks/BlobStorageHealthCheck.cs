@@ -21,7 +21,6 @@ namespace ErikLieben.FA.ES.AzureStorage.HealthChecks;
 public class BlobStorageHealthCheck : IHealthCheck
 {
     private readonly IAzureClientFactory<BlobServiceClient> _clientFactory;
-    private readonly EventStreamBlobSettings _settings;
     private readonly string _clientName;
 
     /// <summary>
@@ -39,7 +38,6 @@ public class BlobStorageHealthCheck : IHealthCheck
         ArgumentNullException.ThrowIfNull(settings);
 
         _clientFactory = clientFactory;
-        _settings = settings;
         _clientName = clientName;
     }
 

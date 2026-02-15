@@ -137,7 +137,8 @@ public class S3ExtensionsTests
                 .Throws(new AmazonS3Exception("Bucket already exists") { ErrorCode = "BucketAlreadyOwnedByYou" });
 
             // Should not throw
-            await s3Client.EnsureBucketAsync("my-bucket");
+            var exception = await Record.ExceptionAsync(() => s3Client.EnsureBucketAsync("my-bucket"));
+            Assert.Null(exception);
         }
     }
 

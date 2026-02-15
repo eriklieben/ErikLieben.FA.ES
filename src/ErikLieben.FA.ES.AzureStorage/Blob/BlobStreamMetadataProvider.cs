@@ -92,6 +92,7 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
+            _logger?.LogDebug(ex, "Container or blob not found for {ObjectName}/{ObjectId}", objectName, objectId);
             return null;
         }
     }

@@ -144,7 +144,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
                 .ThrowsAsync(CreateCosmosException(HttpStatusCode.NotFound));
 
             // Should not throw - just returns when document not found
-            await sut.StartCatchUpAsync(token);
+            var exception = await Record.ExceptionAsync(() => sut.StartCatchUpAsync(token));
+            Assert.Null(exception);
         }
 
         [Fact]
@@ -211,7 +212,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
                 Arg.Any<CancellationToken>())
                 .ThrowsAsync(CreateCosmosException(HttpStatusCode.NotFound));
 
-            await sut.MarkReadyAsync(token);
+            var exception = await Record.ExceptionAsync(() => sut.MarkReadyAsync(token));
+            Assert.Null(exception);
         }
 
         [Fact]
@@ -261,7 +263,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
                 Arg.Any<CancellationToken>())
                 .ThrowsAsync(CreateCosmosException(HttpStatusCode.NotFound));
 
-            await sut.CompleteRebuildAsync(token);
+            var exception = await Record.ExceptionAsync(() => sut.CompleteRebuildAsync(token));
+            Assert.Null(exception);
         }
 
         [Fact]
@@ -313,7 +316,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
                 Arg.Any<CancellationToken>())
                 .ThrowsAsync(CreateCosmosException(HttpStatusCode.NotFound));
 
-            await sut.CancelRebuildAsync(token, "test error");
+            var exception = await Record.ExceptionAsync(() => sut.CancelRebuildAsync(token, "test error"));
+            Assert.Null(exception);
         }
 
         [Fact]
@@ -422,7 +426,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
                 Arg.Any<CancellationToken>())
                 .ThrowsAsync(CreateCosmosException(HttpStatusCode.NotFound));
 
-            await sut.EnableAsync("TestProjection", "obj-1");
+            var exception = await Record.ExceptionAsync(() => sut.EnableAsync("TestProjection", "obj-1"));
+            Assert.Null(exception);
         }
 
         [Fact]

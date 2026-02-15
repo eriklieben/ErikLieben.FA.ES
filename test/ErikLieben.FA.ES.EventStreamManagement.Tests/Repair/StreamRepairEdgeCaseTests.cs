@@ -481,11 +481,9 @@ public class StreamRepairEdgeCaseTests
         // Act - manual repair with partial range (doesn't cover all orphaned)
         await service.RepairBrokenStreamAsync(document, 5, 7);
 
-        // Assert - stream is still broken (partial cleanup)
-        // Note: This depends on implementation. If partial cleanup should clear,
-        // this test documents that behavior. If not, it should remain broken.
-        // Current implementation clears broken state even on partial cleanup.
+        // Assert - current implementation clears broken state even on partial cleanup.
         // This test documents the actual behavior.
+        Assert.False(document.Active.IsBroken);
     }
 
     #endregion

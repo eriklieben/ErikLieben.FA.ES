@@ -57,9 +57,9 @@ public static class Extensions
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation()
                     // ErikLieben.FA.ES event sourcing metrics
-                    .AddMeter(FaesInstrumentation.Meters.Core)
-                    .AddMeter(FaesInstrumentation.Meters.Storage)
-                    .AddMeter(FaesInstrumentation.Meters.Projections);
+                    .AddMeter(FaesInstrumentation.Meters.CoreName)
+                    .AddMeter(FaesInstrumentation.Meters.StorageName)
+                    .AddMeter(FaesInstrumentation.Meters.ProjectionsName);
             })
             .WithTracing(tracing =>
             {
@@ -69,9 +69,9 @@ public static class Extensions
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation()
                     // ErikLieben.FA.ES event sourcing tracing
-                    .AddSource(FaesInstrumentation.ActivitySources.Core)
-                    .AddSource(FaesInstrumentation.ActivitySources.Storage)
-                    .AddSource(FaesInstrumentation.ActivitySources.Projections);
+                    .AddSource(FaesInstrumentation.ActivitySources.CoreName)
+                    .AddSource(FaesInstrumentation.ActivitySources.StorageName)
+                    .AddSource(FaesInstrumentation.ActivitySources.ProjectionsName);
             });
 
         builder.AddOpenTelemetryExporters();

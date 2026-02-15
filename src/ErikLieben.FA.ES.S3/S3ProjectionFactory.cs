@@ -125,31 +125,31 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
             var projection = LoadFromJson(json, documentFactory, eventStreamFactory);
             if (projection != null)
             {
-                // If external checkpoint is enabled, load it separately using the CheckpointFingerprint
-                if (HasExternalCheckpoint && !string.IsNullOrEmpty(projection.CheckpointFingerprint))
-                {
-                    var checkpoint = await LoadCheckpointAsync(projection.CheckpointFingerprint, cancellationToken);
-                    if (checkpoint != null)
-                    {
-                        projection.Checkpoint = checkpoint;
-                    }
-                }
-
-                if (activity?.IsAllDataRequested == true)
-                {
-                    activity.SetTag(FaesSemanticConventions.LoadedFromCache, true);
-                }
-
+                await RestoreExternalCheckpointAsync(projection, cancellationToken);
+                activity?.SetTag(FaesSemanticConventions.LoadedFromCache, true);
                 return projection;
             }
         }
 
-        if (activity?.IsAllDataRequested == true)
+        activity?.SetTag(FaesSemanticConventions.LoadedFromCache, false);
+        return New();
+    }
+
+    /// <summary>
+    /// Restores the external checkpoint for a projection if applicable.
+    /// </summary>
+    private async Task RestoreExternalCheckpointAsync(T projection, CancellationToken cancellationToken)
+    {
+        if (!HasExternalCheckpoint || string.IsNullOrEmpty(projection.CheckpointFingerprint))
         {
-            activity.SetTag(FaesSemanticConventions.LoadedFromCache, false);
+            return;
         }
 
-        return New();
+        var checkpoint = await LoadCheckpointAsync(projection.CheckpointFingerprint, cancellationToken);
+        if (checkpoint != null)
+        {
+            projection.Checkpoint = checkpoint;
+        }
     }
 
     /// <summary>

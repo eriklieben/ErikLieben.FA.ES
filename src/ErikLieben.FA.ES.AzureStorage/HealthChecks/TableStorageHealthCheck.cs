@@ -21,7 +21,6 @@ namespace ErikLieben.FA.ES.AzureStorage.HealthChecks;
 public class TableStorageHealthCheck : IHealthCheck
 {
     private readonly IAzureClientFactory<TableServiceClient> _clientFactory;
-    private readonly EventStreamTableSettings _settings;
     private readonly string _clientName;
 
     /// <summary>
@@ -39,7 +38,6 @@ public class TableStorageHealthCheck : IHealthCheck
         ArgumentNullException.ThrowIfNull(settings);
 
         _clientFactory = clientFactory;
-        _settings = settings;
         _clientName = clientName;
     }
 

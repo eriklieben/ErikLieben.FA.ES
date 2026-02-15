@@ -13,19 +13,17 @@ public class InMemoryProjectionStatusCoordinator : IProjectionStatusCoordinator
 {
     private readonly ConcurrentDictionary<string, ProjectionStatusInfo> _statuses = new();
     private readonly ConcurrentDictionary<string, RebuildToken> _activeRebuilds = new();
-    private readonly ProjectionOptions _options;
     private readonly ILogger<InMemoryProjectionStatusCoordinator>? _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="InMemoryProjectionStatusCoordinator"/> class.
     /// </summary>
-    /// <param name="options">The projection options.</param>
+    /// <param name="options">The projection options (reserved for future use).</param>
     /// <param name="logger">Optional logger.</param>
     public InMemoryProjectionStatusCoordinator(
         IOptions<ProjectionOptions>? options = null,
         ILogger<InMemoryProjectionStatusCoordinator>? logger = null)
     {
-        _options = options?.Value ?? new ProjectionOptions();
         _logger = logger;
     }
 
