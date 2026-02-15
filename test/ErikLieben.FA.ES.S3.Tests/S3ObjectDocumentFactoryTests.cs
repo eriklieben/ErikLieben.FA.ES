@@ -123,6 +123,54 @@ public class S3ObjectDocumentFactoryTests
         }
     }
 
+    public class GetByDocumentTagAsync
+    {
+        [Fact]
+        public async Task Should_throw_when_object_name_is_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            var sut = new S3ObjectDocumentFactory(docStore);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.GetByDocumentTagAsync(null!, "tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_when_tag_is_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            var sut = new S3ObjectDocumentFactory(docStore);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.GetByDocumentTagAsync("test", null!));
+        }
+
+        [Fact]
+        public async Task Should_return_documents_from_store()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            var docs = new List<IObjectDocument> { Substitute.For<IObjectDocument>() };
+            docStore.GetByDocumentByTagAsync("test", "tag", null, null).Returns(docs);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+            var result = await sut.GetByDocumentTagAsync("test", "tag");
+
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task Should_return_empty_when_store_returns_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            docStore.GetByDocumentByTagAsync("test", "tag", null, null).Returns((IEnumerable<IObjectDocument>?)null);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+            var result = await sut.GetByDocumentTagAsync("test", "tag");
+
+            Assert.Empty(result);
+        }
+    }
+
     public class GetFirstByObjectDocumentTag
     {
         [Fact]
@@ -143,6 +191,19 @@ public class S3ObjectDocumentFactoryTests
 
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
                 sut.GetFirstByObjectDocumentTag("test", null!));
+        }
+
+        [Fact]
+        public async Task Should_return_document_from_store()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            var expected = Substitute.For<IObjectDocument>();
+            docStore.GetFirstByDocumentByTagAsync("test", "tag", null, null).Returns(expected);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+            var result = await sut.GetFirstByObjectDocumentTag("test", "tag");
+
+            Assert.Same(expected, result);
         }
     }
 
@@ -166,6 +227,61 @@ public class S3ObjectDocumentFactoryTests
 
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
                 sut.GetByObjectDocumentTag("test", null!));
+        }
+
+        [Fact]
+        public async Task Should_return_documents_from_store()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            var docs = new List<IObjectDocument> { Substitute.For<IObjectDocument>() };
+            docStore.GetByDocumentByTagAsync("test", "tag", "tagStore", "store").Returns(docs);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+            var result = await sut.GetByObjectDocumentTag("test", "tag", "tagStore", "store");
+
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task Should_return_empty_when_store_returns_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            docStore.GetByDocumentByTagAsync("test", "tag", null, null).Returns((IEnumerable<IObjectDocument>?)null);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+            var result = await sut.GetByObjectDocumentTag("test", "tag");
+
+            Assert.Empty(result);
+        }
+    }
+
+    public class GetOrCreateAsyncNullResult
+    {
+        [Fact]
+        public async Task Should_throw_when_store_returns_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            docStore.CreateAsync("test", "123", null).Returns((IObjectDocument?)null);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                sut.GetOrCreateAsync("Test", "123"));
+        }
+    }
+
+    public class GetAsyncNullResult
+    {
+        [Fact]
+        public async Task Should_throw_when_store_returns_null()
+        {
+            var docStore = Substitute.For<IS3DocumentStore>();
+            docStore.GetAsync("test", "123", null).Returns((IObjectDocument?)null);
+
+            var sut = new S3ObjectDocumentFactory(docStore);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                sut.GetAsync("Test", "123"));
         }
     }
 }

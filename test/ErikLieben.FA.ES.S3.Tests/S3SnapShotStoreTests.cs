@@ -1,12 +1,35 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Processors;
 using ErikLieben.FA.ES.S3.Configuration;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace ErikLieben.FA.ES.S3.Tests;
+
+/// <summary>
+/// A minimal aggregate-like type that implements IBase for snapshot store tests.
+/// </summary>
+public class TestAggregate : IBase
+{
+    public string? Name { get; set; }
+    public int Value { get; set; }
+
+    public Task Fold() => Task.CompletedTask;
+    public void Fold(IEvent @event) { }
+    public void ProcessSnapshot(object snapshot) { }
+}
+
+[JsonSerializable(typeof(TestAggregate))]
+internal partial class TestAggregateJsonContext : JsonSerializerContext
+{
+}
 
 public class S3SnapShotStoreTests
 {
@@ -25,6 +48,122 @@ public class S3SnapShotStoreTests
         doc.ObjectName.Returns(objectName);
         doc.ObjectId.Returns(objectId);
         return doc;
+    }
+
+    public class SetAsync
+    {
+        [Fact]
+        public async Task Should_put_snapshot_to_s3()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            // EnsureBucket
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            // PutObjectAsync for the extension method
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutObjectResponse { ETag = "\"snap-etag\"" });
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+            var document = CreateDocument();
+            var aggregate = new TestAggregate { Name = "test-snap", Value = 42 };
+            JsonTypeInfo jsonTypeInfo = TestAggregateJsonContext.Default.TestAggregate;
+
+            await sut.SetAsync(aggregate, jsonTypeInfo, document, 10);
+
+            await s3Client.Received(1).PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>());
+        }
+    }
+
+    public class GetAsyncTyped
+    {
+        [Fact]
+        public async Task Should_return_null_when_not_found()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            // EnsureBucket
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            // GetObjectAsync (GetObjectRequest overload) - not found
+            s3Client.GetObjectAsync(Arg.Any<GetObjectRequest>(), Arg.Any<CancellationToken>())
+                .Throws(new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound });
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+            var document = CreateDocument();
+
+            var result = await sut.GetAsync(TestAggregateJsonContext.Default.TestAggregate, document, 5);
+
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task Should_return_entity_when_found()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            // EnsureBucket
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            var aggregate = new TestAggregate { Name = "restored", Value = 99 };
+            var json = JsonSerializer.Serialize(aggregate, TestAggregateJsonContext.Default.TestAggregate);
+
+            s3Client.GetObjectAsync(Arg.Any<GetObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new GetObjectResponse
+                {
+                    ResponseStream = new MemoryStream(Encoding.UTF8.GetBytes(json)),
+                    ETag = "\"snap-etag\""
+                });
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+            var document = CreateDocument();
+
+            var result = await sut.GetAsync(TestAggregateJsonContext.Default.TestAggregate, document, 5);
+
+            Assert.NotNull(result);
+            Assert.Equal("restored", result.Name);
+            Assert.Equal(99, result.Value);
+        }
+    }
+
+    public class GetAsyncUntyped
+    {
+        [Fact]
+        public async Task Should_return_null_when_not_found()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            // EnsureBucket
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            // GetObjectAsync (2-param overload) - not found
+            s3Client.GetObjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Throws(new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound });
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+            var document = CreateDocument();
+            JsonTypeInfo jsonTypeInfo = TestAggregateJsonContext.Default.TestAggregate;
+
+            var result = await sut.GetAsync(jsonTypeInfo, document, 5);
+
+            Assert.Null(result);
+        }
     }
 
     public class DeleteAsync
@@ -71,6 +210,42 @@ public class S3SnapShotStoreTests
 
             Assert.True(result);
             await s3Client.Received(1).DeleteObjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_use_default_snapshot_store_when_not_configured()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            // Object exists
+            s3Client.GetObjectMetadataAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(new GetObjectMetadataResponse());
+
+            // EnsureBucket
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+
+            // Create a document with empty SnapShotStore so it falls back to DefaultSnapShotStore
+            var doc = Substitute.For<IObjectDocument>();
+            var streamInfo = new StreamInformation
+            {
+                StreamIdentifier = "abc0000000000",
+                SnapShotStore = "" // empty = should fall back to settings.DefaultSnapShotStore
+            };
+            doc.Active.Returns(streamInfo);
+            doc.ObjectName.Returns("test");
+            doc.ObjectId.Returns("123");
+
+            var result = await sut.DeleteAsync(doc, 5);
+
+            Assert.True(result);
+            // Verify CreateClient was called with the default snap shot store name from settings
+            clientFactory.Received(1).CreateClient("s3");
         }
     }
 
@@ -161,6 +336,56 @@ public class S3SnapShotStoreTests
             Assert.Equal(10, result[0].Version);
             Assert.Equal(5, result[1].Version);
             Assert.Equal(1, result[2].Version);
+        }
+
+        [Fact]
+        public async Task Should_throw_when_document_is_null()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                sut.ListSnapshotsAsync(null!));
+        }
+
+        [Fact]
+        public async Task Should_parse_named_snapshots()
+        {
+            var clientFactory = Substitute.For<IS3ClientFactory>();
+            var s3Client = Substitute.For<IAmazonS3>();
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(s3Client);
+
+            s3Client.PutBucketAsync(Arg.Any<PutBucketRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new PutBucketResponse());
+
+            var lastModified = new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+            s3Client.ListObjectsV2Async(Arg.Any<ListObjectsV2Request>(), Arg.Any<CancellationToken>())
+                .Returns(new ListObjectsV2Response
+                {
+                    S3Objects = new List<S3Object>
+                    {
+                        new() { Key = "snapshot/abc0000000000-00000000000000000005_v2format.json", Size = 150, LastModified = lastModified },
+                        new() { Key = "snapshot/abc0000000000-00000000000000000010.json", Size = 200, LastModified = lastModified },
+                    },
+                    IsTruncated = false
+                });
+
+            var settings = CreateSettings();
+            var sut = new S3SnapShotStore(clientFactory, settings);
+            var document = CreateDocument();
+
+            var result = await sut.ListSnapshotsAsync(document);
+
+            Assert.Equal(2, result.Count);
+            // Ordered by version descending
+            Assert.Equal(10, result[0].Version);
+            Assert.Null(result[0].Name);
+            Assert.Equal(200, result[0].SizeBytes);
+
+            Assert.Equal(5, result[1].Version);
+            Assert.Equal("v2format", result[1].Name);
+            Assert.Equal(150, result[1].SizeBytes);
         }
     }
 }
