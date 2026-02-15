@@ -41,12 +41,12 @@ public class RebuildInfoTests
     }
 
     [Fact]
-    public void WithProgress_UpdatesLastUpdatedAt()
+    public async Task WithProgress_UpdatesLastUpdatedAt()
     {
         var info = RebuildInfo.Start(RebuildStrategy.BlueGreen);
         var originalTime = info.LastUpdatedAt;
 
-        Thread.Sleep(10); // Small delay to ensure time difference
+        await Task.Delay(15);
         var updatedInfo = info.WithProgress();
 
         Assert.True(updatedInfo.LastUpdatedAt >= originalTime);
@@ -79,10 +79,10 @@ public class RebuildInfoTests
     }
 
     [Fact]
-    public void Duration_ReturnsCorrectValue_WhenInProgress()
+    public async Task Duration_ReturnsCorrectValue_WhenInProgress()
     {
         var info = RebuildInfo.Start(RebuildStrategy.BlueGreen);
-        Thread.Sleep(50);
+        await Task.Delay(50);
 
         var duration = info.Duration;
 
@@ -90,10 +90,10 @@ public class RebuildInfoTests
     }
 
     [Fact]
-    public void Duration_ReturnsCorrectValue_WhenCompleted()
+    public async Task Duration_ReturnsCorrectValue_WhenCompleted()
     {
         var info = RebuildInfo.Start(RebuildStrategy.BlueGreen);
-        Thread.Sleep(50);
+        await Task.Delay(50);
         var completedInfo = info.WithCompletion();
 
         var duration = completedInfo.Duration;

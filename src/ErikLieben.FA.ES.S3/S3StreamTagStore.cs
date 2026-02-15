@@ -83,7 +83,7 @@ public partial class S3StreamTagStore : IDocumentTagStore
             }
         }
 
-        var (doc, _, etag) = await client.GetObjectAsEntityAsync(
+        var (doc, _, _) = await client.GetObjectAsEntityAsync(
             bucketName,
             key,
             S3DocumentTagStoreDocumentContext.Default.S3DocumentTagStoreDocument);

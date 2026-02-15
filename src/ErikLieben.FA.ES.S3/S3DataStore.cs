@@ -406,7 +406,7 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
     /// <param name="chunk">The chunk identifier, or null when not chunked.</param>
     /// <param name="forAppend">When true, uses the last chunk for append operations.</param>
     /// <returns>A tuple of (bucketName, key).</returns>
-    private (string BucketName, string Key) GetDataStoreLocation(IObjectDocument document, int? chunk, bool forAppend = false)
+    private static (string BucketName, string Key) GetDataStoreLocation(IObjectDocument document, int? chunk, bool forAppend = false)
     {
         var bucketName = document.ObjectName.ToLowerInvariant();
 

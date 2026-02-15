@@ -76,7 +76,7 @@ public class StreamActionEventStream(IEventStream eventStream)
     /// <param name="untilVersion">The ending version (inclusive). If null, reads to the latest version.</param>
     /// <param name="useExternalSequencer">Whether to use an external sequencer for ordering events.</param>
     /// <returns>A read-only collection of events.</returns>
-    public new Task<IReadOnlyCollection<IEvent>> ReadAsync(int startVersion = 0, int? untilVersion = null, bool useExternalSequencer = false)
+    public Task<IReadOnlyCollection<IEvent>> ReadAsync(int startVersion = 0, int? untilVersion = null, bool useExternalSequencer = false)
     {
         return eventStream.ReadAsync(startVersion, untilVersion, useExternalSequencer);
     }
@@ -87,7 +87,7 @@ public class StreamActionEventStream(IEventStream eventStream)
     /// <param name="context">The action to execute within the session context.</param>
     /// <param name="constraint">The concurrency constraint for the session. Defaults to <see cref="Constraint.Loose"/>.</param>
     /// <returns>A task representing the asynchronous session operation.</returns>
-    public new async Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose)
+    public async Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose)
     {
         var session = new StreamActionLeasedSession(GetSession([]));
         context(session);
@@ -101,7 +101,7 @@ public class StreamActionEventStream(IEventStream eventStream)
     /// <param name="untilVersion">The version up to which to create the snapshot.</param>
     /// <param name="name">Optional name for the snapshot.</param>
     /// <returns>A task representing the asynchronous snapshot operation.</returns>
-    public new Task Snapshot<T>(int untilVersion, string? name = null) where T : class, IBase
+    public Task Snapshot<T>(int untilVersion, string? name = null) where T : class, IBase
     {
         return eventStream.Snapshot<T>(untilVersion, name);
     }
@@ -112,7 +112,7 @@ public class StreamActionEventStream(IEventStream eventStream)
     /// <param name="version">The version of the snapshot to retrieve.</param>
     /// <param name="name">Optional name of the snapshot.</param>
     /// <returns>The snapshot object, or null if not found.</returns>
-    public new Task<object?> GetSnapShot(int version, string? name = null)
+    public Task<object?> GetSnapShot(int version, string? name = null)
     {
         return eventStream.GetSnapShot(version, name);
     }

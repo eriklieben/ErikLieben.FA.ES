@@ -212,12 +212,10 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
             // Extract chunk index from RowKey: "{fingerprint}_{index}"
             var rowKey = entity.RowKey;
             var indexPart = rowKey.Substring(fingerprint.Length + 1);
-            if (int.TryParse(indexPart, out var chunkIndex))
+            if (int.TryParse(indexPart, out var chunkIndex)
+                && entity.TryGetValue("Data", out var dataValue) && dataValue is byte[] data)
             {
-                if (entity.TryGetValue("Data", out var dataValue) && dataValue is byte[] data)
-                {
-                    chunks.Add((chunkIndex, data));
-                }
+                chunks.Add((chunkIndex, data));
             }
         }
 
@@ -783,12 +781,10 @@ public abstract class TableProjectionFactory<T> : IProjectionFactory<T>, IProjec
                 pointerRowKey,
                 cancellationToken: cancellationToken);
 
-            if (response?.Value != null && response.Value.TryGetValue("Status", out var statusValue))
+            if (response?.Value != null && response.Value.TryGetValue("Status", out var statusValue)
+                && statusValue is int statusInt)
             {
-                if (statusValue is int statusInt)
-                {
-                    return (ProjectionStatus)statusInt;
-                }
+                return (ProjectionStatus)statusInt;
             }
         }
         catch (Azure.RequestFailedException ex) when (ex.Status == 404)

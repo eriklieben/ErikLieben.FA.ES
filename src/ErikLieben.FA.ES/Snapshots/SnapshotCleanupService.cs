@@ -94,7 +94,6 @@ public class SnapshotCleanupService : ISnapshotCleanupService
         {
             var snapshot = snapshots[i];
             var shouldDelete = false;
-            var reason = string.Empty;
 
             // Always keep at least one snapshot (the most recent)
             if (i == 0)
@@ -107,14 +106,12 @@ public class SnapshotCleanupService : ISnapshotCleanupService
             if (policy.KeepSnapshots > 0 && i >= policy.KeepSnapshots)
             {
                 shouldDelete = true;
-                reason = "Exceeds retention count";
             }
 
             // Check age limit
             if (policy.MaxAge is not null && snapshot.IsOlderThan(policy.MaxAge.Value))
             {
                 shouldDelete = true;
-                reason = "Exceeds max age";
             }
 
             if (shouldDelete)

@@ -466,12 +466,10 @@ public abstract class S3ProjectionFactory<T> : IProjectionFactory<T>, IProjectio
         }
 
         using var document = JsonDocument.Parse(json);
-        if (document.RootElement.TryGetProperty("$status", out var statusElement))
+        if (document.RootElement.TryGetProperty("$status", out var statusElement)
+            && statusElement.TryGetInt32(out var statusValue))
         {
-            if (statusElement.TryGetInt32(out var statusValue))
-            {
-                return (ProjectionStatus)statusValue;
-            }
+            return (ProjectionStatus)statusValue;
         }
 
         return ProjectionStatus.Active;

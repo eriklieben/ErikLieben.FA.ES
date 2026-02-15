@@ -100,7 +100,7 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
         {
             var lastEvent = committedEvents[^1];
             // Try to resolve event type from registry or use the event type name
-            lastEventType = ResolveEventType(lastEvent.EventType);
+            lastEventType = ResolveEventType();
         }
 
         // Update tracker with committed events
@@ -197,7 +197,7 @@ public class InlineSnapshotHandler : IInlineSnapshotHandler
         }
     }
 
-    private static Type? ResolveEventType(string eventTypeName)
+    private static Type? ResolveEventType()
     {
         // Simple type resolution - in production this would use the event registry
         // For now, return null and rely on policy.OnEvents containing concrete types
