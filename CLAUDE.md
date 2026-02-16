@@ -321,22 +321,29 @@ public async Task Order_ShouldBeShipped_WhenShipCommandExecuted()
 ## Event Upcasting (Schema Evolution)
 
 ```csharp
+using ErikLieben.FA.ES.Upcasting;
+
 // Define upcaster for event version migration
-public class OrderCreatedUpcast : IEventUpcast<OrderCreatedV1, OrderCreatedV2>
+public class OrderCreatedV1ToV2Upcaster : IUpcastEvent
 {
-    public OrderCreatedV2 Upcast(OrderCreatedV1 source)
+    public bool CanUpcast(IEvent @event)
+        => @event.EventType == "order.created" && @event.SchemaVersion == 1;
+
+    public IEnumerable<IEvent> UpCast(IEvent @event)
     {
-        return new OrderCreatedV2(
-            source.CustomerId,
-            source.CreatedAt,
-            CustomerEmail: null // New field with default
-        );
+        var v1 = JsonEvent.To(@event, OrderCreatedV1Context.Default.OrderCreatedV1);
+        yield return new JsonEvent
+        {
+            EventType = "order.created",
+            SchemaVersion = 2,
+            Payload = JsonSerializer.Serialize(new OrderCreatedV2(v1.OrderId, ""))
+        };
     }
 }
 
 // Register on aggregate
 [Aggregate]
-[UseUpcaster<OrderCreatedUpcast>]
+[UseUpcaster<OrderCreatedV1ToV2Upcaster>]
 public partial class Order : Aggregate { }
 ```
 
