@@ -1072,6 +1072,7 @@ public class GenerateProjectionCode
         }
     }
 
+
     private static (StringBuilder CtorCode, List<ConstructorParameter> ExtraParams) SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
     {
         var ctorCode = new StringBuilder();
