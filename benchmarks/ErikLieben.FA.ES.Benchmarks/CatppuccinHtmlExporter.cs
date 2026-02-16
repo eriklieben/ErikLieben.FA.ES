@@ -476,7 +476,7 @@ public partial class CatppuccinHtmlExporter : IExporter
         var cpuCores = "";
         try
         {
-            var cpuInfo = hostInfo.CpuInfo.Value;
+            var cpuInfo = hostInfo.Cpu.Value;
             if (cpuInfo != null)
             {
                 // ProcessorName might be null or contain class name on Windows 11
@@ -521,7 +521,7 @@ public partial class CatppuccinHtmlExporter : IExporter
         var osVersion = "Unknown";
         try
         {
-            osVersion = hostInfo.OsVersion.Value ?? "Unknown";
+            osVersion = System.Runtime.InteropServices.RuntimeInformation.OSDescription ?? "Unknown";
         }
         catch { /* Ignore OS info errors */ }
 

@@ -38,7 +38,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
 
         var cosmosClientOptions = new CosmosClientOptions
         {
-            ConnectionMode = ConnectionMode.Gateway,
+            ConnectionMode = Microsoft.Azure.Cosmos.ConnectionMode.Gateway,
             HttpClientFactory = () => _cosmosDbContainer.HttpClient,
             // Use System.Text.Json to recognize [JsonPropertyName] attributes
             UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions

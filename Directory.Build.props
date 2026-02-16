@@ -43,7 +43,6 @@
 
     <!-- Code Analysis packages -->
     <MicrosoftCodeAnalysisVersion>5.0.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisCSharpVersion>4.14.0</MicrosoftCodeAnalysisCSharpVersion>
     <MicrosoftCodeAnalysisAnalyzersVersion>4.14.0</MicrosoftCodeAnalysisAnalyzersVersion>
 
     <!-- Health checks -->
