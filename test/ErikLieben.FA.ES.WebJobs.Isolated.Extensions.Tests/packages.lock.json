@@ -4,17 +4,17 @@
     "net9.0": {
       "coverlet.collector": {
         "type": "Direct",
-        "requested": "[6.0.4, )",
-        "resolved": "6.0.4",
-        "contentHash": "lkhqpF8Pu2Y7IiN7OntbsTtdbpR1syMsm2F3IgX6ootA4ffRqWL5jF7XipHuZQTdVuWG/gVAAcf8mjk8Tz0xPg=="
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "EMkj/2F6n6IVPrvGYkqzGJs6phuGGkq6N+E7KW9rNyzNxXbwQ1KfMqWyXNf9nCNEQOA6IjFwmOLvkriwKE7Orw=="
       },
       "Microsoft.Azure.WebJobs": {
         "type": "Direct",
-        "requested": "[3.0.42, )",
-        "resolved": "3.0.42",
-        "contentHash": "Nk24VvZNRkM5jV/KXn7+jqRuoXjeyFs58ILPw/imrft6Y9R9xMYSiPaPC2z8SlWXnqZu7amWaGUnXGvIvwlRhg==",
+        "requested": "[3.0.44, )",
+        "resolved": "3.0.44",
+        "contentHash": "nNrNJfUrGZ98zFJIOdv+CUYrH9sIL9QnyHJ71uxpOA8xAtpIbJGRbhslr5GjuykHUtpDXK36ldA2lah625KVRg==",
         "dependencies": {
-          "Microsoft.Azure.WebJobs.Core": "3.0.42",
+          "Microsoft.Azure.WebJobs.Core": "3.0.44",
           "Microsoft.Extensions.Configuration": "2.1.1",
           "Microsoft.Extensions.Configuration.Abstractions": "2.1.1",
           "Microsoft.Extensions.Configuration.EnvironmentVariables": "2.1.0",
@@ -30,9 +30,9 @@
       },
       "Microsoft.Azure.WebJobs.Core": {
         "type": "Direct",
-        "requested": "[3.0.42, )",
-        "resolved": "3.0.42",
-        "contentHash": "om1PWPfOCVIWYqQWSoufBRcyXFfairoQIDfHsu7+4xCV2S8DrDehymruLi65CuU7FwEopsq5apxkgTrS8grrtw==",
+        "requested": "[3.0.44, )",
+        "resolved": "3.0.44",
+        "contentHash": "/moT0kVygdlp3glGtE+q3xeogp2qSVJoLdSMuV86TYQ7t5Ekxr2R5uUmHZBVO2A6w0Kj+DCviITQxMJoQSMMKw==",
         "dependencies": {
           "System.ComponentModel.Annotations": "4.4.0",
           "System.Diagnostics.TraceSource": "4.3.0",
@@ -41,12 +41,12 @@
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
-        "requested": "[18.0.0, )",
-        "resolved": "18.0.0",
-        "contentHash": "bvxj2Asb7nT+tqOFFerrhQeEjUYLwx0Poi0Rznu63WbqN+A4uDn1t5NWXfAOOQsF6lpmK6N2v+Vvgso7KWZS7g==",
+        "requested": "[18.0.1, )",
+        "resolved": "18.0.1",
+        "contentHash": "WNpu6vI2rA0pXY4r7NKxCN16XRWl5uHu6qjuyVLoDo6oYEggIQefrMjkRuibQHm/NslIUNCcKftvoWAN80MSAg==",
         "dependencies": {
-          "Microsoft.CodeCoverage": "18.0.0",
-          "Microsoft.TestPlatform.TestHost": "18.0.0"
+          "Microsoft.CodeCoverage": "18.0.1",
+          "Microsoft.TestPlatform.TestHost": "18.0.1"
         }
       },
       "NSubstitute": {
@@ -85,8 +85,8 @@
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
-        "resolved": "18.0.0",
-        "contentHash": "DFPhMrsIofgJ1DDU3ModqqRArDm15/bNl4ecmcuBspZkZ4ONYnCC0R8U27WzK7cYv6r8l6Q/fRmvg7cb+I/dJA=="
+        "resolved": "18.0.1",
+        "contentHash": "O+utSr97NAJowIQT/OVp3Lh9QgW/wALVTP4RG1m2AfFP4IyJmJz0ZBmFJUsRQiAPgq6IRC0t8AAzsiPIsaUDEA=="
       },
       "Microsoft.Extensions.Configuration": {
         "type": "Transitive",
@@ -263,18 +263,18 @@
       },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
-        "resolved": "18.0.0",
-        "contentHash": "Al/a99ymb8UdEEh6DKNiaoFn5i8fvX5PdM9LfU9Z/Q8NJrlyHHzF+LRHLbR+t89gRsJ2fFMpwYxgEn3eH1BQwA==",
+        "resolved": "18.0.1",
+        "contentHash": "qT/mwMcLF9BieRkzOBPL2qCopl8hQu6A1P7JWAoj/FMu5i9vds/7cjbJ/LLtaiwWevWLAeD5v5wjQJ/l6jvhWQ==",
         "dependencies": {
           "System.Reflection.Metadata": "8.0.0"
         }
       },
       "Microsoft.TestPlatform.TestHost": {
         "type": "Transitive",
-        "resolved": "18.0.0",
-        "contentHash": "aAxE8Thr9ZHGrljOYaDeLJqitQi75iE4xeEFn6CEGFirlHSn1KwpKPniuEn6zCLZ90Z3XqNlrC3ZJTuvBov45w==",
+        "resolved": "18.0.1",
+        "contentHash": "uDJKAEjFTaa2wHdWlfo6ektyoh+WD4/Eesrwb4FpBFKsLGehhACVnwwTI4qD3FrIlIEPlxdXg3SyrYRIcO+RRQ==",
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "18.0.0",
+          "Microsoft.TestPlatform.ObjectModel": "18.0.1",
           "Newtonsoft.Json": "13.0.3"
         }
       },
@@ -532,8 +532,8 @@
       "eriklieben.fa.es.webjobs.isolated.extensions": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Azure.WebJobs": "[3.0.42, )",
-          "Microsoft.Azure.WebJobs.Core": "[3.0.42, )"
+          "Microsoft.Azure.WebJobs": "[3.0.44, )",
+          "Microsoft.Azure.WebJobs.Core": "[3.0.44, )"
         }
       }
     }

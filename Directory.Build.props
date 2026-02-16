@@ -12,18 +12,18 @@
 
   <!-- .NET 9 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <MicrosoftExtensionsVersion>9.0.10</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>9.0.10</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>9.0.10</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>9.0.10</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftExtensionsVersion>9.0.13</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>9.0.13</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>9.0.13</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>9.0.13</MicrosoftBclAsyncInterfacesVersion>
   </PropertyGroup>
 
   <!-- .NET 10 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <MicrosoftExtensionsVersion>10.0.0</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>10.0.0</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>10.0.0</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>10.0.0</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftExtensionsVersion>10.0.3</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>10.0.3</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>10.0.3</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>10.0.3</MicrosoftBclAsyncInterfacesVersion>
   </PropertyGroup>
 
   <!-- Shared versions (not framework-dependent) -->
