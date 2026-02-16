@@ -16,6 +16,7 @@
     <SystemTextJsonVersion>9.0.13</SystemTextJsonVersion>
     <SystemFormatsAsn1Version>9.0.13</SystemFormatsAsn1Version>
     <MicrosoftBclAsyncInterfacesVersion>9.0.13</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>
   </PropertyGroup>
 
   <!-- .NET 10 specific versions -->
@@ -24,6 +25,7 @@
     <SystemTextJsonVersion>10.0.3</SystemTextJsonVersion>
     <SystemFormatsAsn1Version>10.0.3</SystemFormatsAsn1Version>
     <MicrosoftBclAsyncInterfacesVersion>10.0.3</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftBuildTasksCoreVersion>18.3.3</MicrosoftBuildTasksCoreVersion>
   </PropertyGroup>
 
   <!-- Shared versions (not framework-dependent) -->
@@ -50,7 +52,6 @@
 
     <!-- Other packages -->
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
-    <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>
     <SpectreConsoleVersion>0.53.0</SpectreConsoleVersion>
     <PastelVersion>7.0.1</PastelVersion>
   </PropertyGroup>
