@@ -502,6 +502,14 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         ClosedStreamCache.Clear();
     }
 
+    /// <summary>
+    /// Clears the verified tables cache. Primarily intended for testing scenarios.
+    /// </summary>
+    public static void ClearVerifiedTablesCache()
+    {
+        VerifiedTables.Clear();
+    }
+
     private async Task<TableClient> GetTableClientAsync(IObjectDocument document)
     {
         ArgumentNullException.ThrowIfNull(document.ObjectName);

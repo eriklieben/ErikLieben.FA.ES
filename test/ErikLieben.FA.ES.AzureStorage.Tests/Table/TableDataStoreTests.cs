@@ -31,6 +31,9 @@ public class TableDataStoreTests
 
     public TableDataStoreTests()
     {
+        TableDataStore.ClearClosedStreamCache();
+        TableDataStore.ClearVerifiedTablesCache();
+
         ClientFactory = Substitute.For<IAzureClientFactory<TableServiceClient>>();
         TableServiceClient = Substitute.For<TableServiceClient>();
         EventTableClient = Substitute.For<TableClient>();
@@ -326,6 +329,9 @@ public class TableDataStoreTests
             EventTableClient.QueryAsync<TableEventEntity>(
                 Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
                 .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Clear right before act to avoid race with parallel tests
+            TableDataStore.ClearVerifiedTablesCache();
 
             // Act
             await sut.ReadAsync(document);
@@ -652,13 +658,9 @@ public class TableDataStoreTests
             var document = CreateMockDocument("TestObject", "test-id");
             var events = new IEvent[] { CreateTableJsonEvent(5) };
 
-            // Setup stream with existing non-closed events
-            var existingEvent = CreateEventEntity(document.Active.StreamIdentifier, 4, "SomeEvent");
-            var streamEvents = new List<TableEventEntity> { existingEvent };
-
-            EventTableClient.QueryAsync<TableEventEntity>(
-                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
-                .Returns(CreateAsyncPageable(streamEvents));
+            // CheckStreamNotClosedAsync queries only for EventStream.Closed events.
+            // When no closed events are found, the stream is open and append should succeed.
+            SetupEmptyStreamQuery();
 
             // Act & Assert - should not throw
             await sut.AppendAsync(document, default, events);

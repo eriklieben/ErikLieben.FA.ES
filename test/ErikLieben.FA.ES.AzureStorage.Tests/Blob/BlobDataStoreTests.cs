@@ -29,6 +29,8 @@ public class BlobDataStoreTests
 
     public BlobDataStoreTests()
     {
+        BlobDataStore.ClearVerifiedContainersCache();
+
         clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
         blobServiceClient = Substitute.For<BlobServiceClient>();
         containerClient = Substitute.For<BlobContainerClient>();
@@ -296,7 +298,8 @@ public class BlobDataStoreTests
         {
             // Arrange
             var sut = new BlobDataStore(clientFactory, false);
-            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(new RequestFailedException(404, "Not found", "BlobNotFound", null));
 
             var uploadResponse = Response.FromValue(
                 BlobsModelFactory.BlobContentInfo(new ETag("test-etag"), DateTimeOffset.Now, null, null, "test-hash",
@@ -416,7 +419,8 @@ public class BlobDataStoreTests
         {
             // Arrange
             var sut = new BlobDataStore(clientFactory, false);
-            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));;
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(new RequestFailedException(404, "Not found", "BlobNotFound", null));
 
             var uploadResponse = Response.FromValue(
                 BlobsModelFactory.BlobContentInfo(new ETag("test-etag"), DateTimeOffset.Now, null, null, "test-hash",
@@ -549,11 +553,14 @@ public class BlobDataStoreTests
             blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
                 .ThrowsAsync(requestFailedException);
 
+            // Clear right before act to avoid race with parallel tests
+            BlobDataStore.ClearVerifiedContainersCache();
+
             // Act
             await sut.ReadAsync(objectDocument);
 
             // Assert
-            containerClient.Received(1).CreateIfNotExists();
+            await containerClient.Received(1).CreateIfNotExistsAsync();
         }
 
         [Fact]
@@ -570,7 +577,7 @@ public class BlobDataStoreTests
             await sut.ReadAsync(objectDocument);
 
             // Assert
-            containerClient.DidNotReceive().CreateIfNotExists();
+            await containerClient.DidNotReceive().CreateIfNotExistsAsync();
         }
 
         [Fact]

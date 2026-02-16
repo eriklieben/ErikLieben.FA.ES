@@ -21,6 +21,14 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 public class BlobDataStore : IDataStore, IDataStoreRecovery
 {
     private static readonly ConcurrentDictionary<string, bool> VerifiedContainers = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Clears the verified containers cache. Primarily intended for testing scenarios.
+    /// </summary>
+    public static void ClearVerifiedContainersCache()
+    {
+        VerifiedContainers.Clear();
+    }
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
 
