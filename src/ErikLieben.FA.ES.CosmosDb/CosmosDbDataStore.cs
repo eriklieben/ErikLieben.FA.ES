@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Runtime.CompilerServices;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
@@ -27,12 +28,12 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// to avoid querying CosmosDB on every append (saves 1 RU per append).
     /// </summary>
     /// <remarks>
-    /// This is a simple HashSet rather than a time-based cache because:
+    /// Uses ConcurrentDictionary for thread-safe access without locks because:
     /// - Closed streams never reopen (immutable property)
     /// - Memory usage is minimal (just stream ID strings)
     /// - Cleared on application restart (safe default)
     /// </remarks>
-    private static readonly HashSet<string> ClosedStreamCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, byte> ClosedStreamCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CosmosDbDataStore"/> class.
@@ -376,7 +377,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     private static async Task CheckStreamNotClosedAsync(Container container, string streamId, CancellationToken cancellationToken)
     {
         // Check cache first to avoid unnecessary CosmosDB query (saves 1 RU per append)
-        if (ClosedStreamCache.Contains(streamId))
+        if (ClosedStreamCache.ContainsKey(streamId))
         {
             throw new EventStreamClosedException(
                 streamId,
@@ -403,10 +404,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
             if (response.Count > 0)
             {
                 // Cache this closed status - streams never reopen
-                lock (ClosedStreamCache)
-                {
-                    ClosedStreamCache.Add(streamId);
-                }
+                ClosedStreamCache.TryAdd(streamId, 0);
 
                 throw new EventStreamClosedException(
                     streamId,
@@ -425,10 +423,7 @@ public class CosmosDbDataStore : IDataStore, IDataStoreRecovery
     /// </remarks>
     public static void ClearClosedStreamCache()
     {
-        lock (ClosedStreamCache)
-        {
-            ClosedStreamCache.Clear();
-        }
+        ClosedStreamCache.Clear();
     }
 
     private async Task<Container> GetEventsContainerAsync()
