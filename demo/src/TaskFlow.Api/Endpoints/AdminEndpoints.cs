@@ -3844,23 +3844,24 @@ public static class AdminEndpoints
     /// </summary>
     private static IResult GetBenchmarkFile(string filename, IWebHostEnvironment env)
     {
-        // Validate filename to prevent path traversal
-        if (filename.Contains("..") || filename.Contains('/') || filename.Contains('\\'))
+        // Validate filename: only allow safe characters (alphanumeric, dash, underscore, dot)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(filename, @"^[\w\-\.]+$") ||
+            filename.Contains(".."))
         {
             return Results.BadRequest("Invalid filename");
         }
 
         var contentRoot = env.ContentRootPath;
         var benchmarkResultsPath = Path.GetFullPath(Path.Combine(contentRoot, "..", "..", "..", "benchmarks", "ErikLieben.FA.ES.Benchmarks", "BenchmarkDotNet.Artifacts", "results"));
-        var filePath = Path.Combine(benchmarkResultsPath, filename);
+        var filePath = Path.GetFullPath(Path.Combine(benchmarkResultsPath, filename));
 
         if (!System.IO.File.Exists(filePath))
         {
             return Results.NotFound($"Benchmark file '{filename}' not found");
         }
 
-        // Ensure the resolved path is still within the expected directory
-        if (!Path.GetFullPath(filePath).StartsWith(benchmarkResultsPath))
+        // Ensure the resolved path is still within the expected directory (case-insensitive for Windows)
+        if (!filePath.StartsWith(benchmarkResultsPath, StringComparison.OrdinalIgnoreCase))
         {
             return Results.BadRequest("Invalid filename");
         }
