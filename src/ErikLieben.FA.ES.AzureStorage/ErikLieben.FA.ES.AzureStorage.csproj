@@ -35,7 +35,7 @@
     </PropertyGroup>
   	<ItemGroup>
 		<PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="$(AzureStorageBlobsVersion)" />
 		<PackageReference Include="Azure.Data.Tables" Version="$(AzureDataTablesVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="$(MicrosoftExtensionsAzureVersion)" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
