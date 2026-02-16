@@ -261,9 +261,7 @@
       "eriklieben.fa.es.eventstreammanagement": {
         "type": "Project",
         "dependencies": {
-          "ErikLieben.FA.ES": "[1.0.0, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.3, )",
-          "Microsoft.Extensions.Options": "[10.0.3, )"
+          "ErikLieben.FA.ES": "[1.0.0, )"
         }
       }
     },
@@ -540,9 +538,7 @@
       "eriklieben.fa.es.eventstreammanagement": {
         "type": "Project",
         "dependencies": {
-          "ErikLieben.FA.ES": "[1.0.0, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.3, )",
-          "Microsoft.Extensions.Options": "[10.0.3, )"
+          "ErikLieben.FA.ES": "[1.0.0, )"
         }
       }
     }
