@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Runtime.CompilerServices;
 using Amazon.S3;
@@ -17,6 +18,7 @@ namespace ErikLieben.FA.ES.S3;
 /// </summary>
 public class S3DataStore : IDataStore, IDataStoreRecovery
 {
+    private static readonly ConcurrentDictionary<string, bool> VerifiedBuckets = new(StringComparer.OrdinalIgnoreCase);
     private readonly IS3ClientFactory clientFactory;
     private readonly EventStreamS3Settings settings;
 
@@ -222,15 +224,24 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
         var (bucketName, key) = GetDataStoreLocation(document, chunk: null, forAppend: true);
         var s3Client = CreateS3Client(document);
 
-        if (settings.AutoCreateBucket)
+        // Cache bucket existence to avoid a PutBucket round-trip on every append.
+        // Buckets don't disappear in normal operation, so a per-process cache is safe.
+        if (settings.AutoCreateBucket && VerifiedBuckets.TryAdd(bucketName, true))
         {
             await s3Client.EnsureBucketAsync(bucketName);
         }
 
-        var exists = await s3Client.ObjectExistsAsync(bucketName, key);
+        // Attempt to download the object directly instead of checking ObjectExistsAsync first.
+        // GetObjectAsEntityAsync already returns (null, null, null) on 404, and provides
+        // the ETag in its response — eliminating both ObjectExistsAsync and GetObjectETagAsync.
+        var downloadResult = await s3Client.GetObjectAsEntityAsync(
+            bucketName,
+            key,
+            S3DataStoreDocumentContext.Default.S3DataStoreDocument);
 
-        if (!exists)
+        if (downloadResult.Document == null)
         {
+            // Object does not exist — create a new one
             var newDoc = new S3DataStoreDocument
             {
                 ObjectId = document.ObjectId,
@@ -265,18 +276,8 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
             return;
         }
 
-        // Get the current ETag for optimistic concurrency
-        var etag = await s3Client.GetObjectETagAsync(bucketName, key);
-
-        // Download the document with the same ETag, so that we're sure it's not overridden in the meantime
-        var downloadResult = await s3Client.GetObjectAsEntityAsync(
-            bucketName,
-            key,
-            S3DataStoreDocumentContext.Default.S3DataStoreDocument,
-            etag);
-
-        var doc = downloadResult.Document
-            ?? throw new InvalidOperationException($"Unable to find document '{document.ObjectName.ToLowerInvariant()}/{key}' while processing save.");
+        var doc = downloadResult.Document;
+        var etag = downloadResult.ETag;
 
         // Check if the stream is closed - if the last event is EventStream.Closed, reject new events
         if (doc.Events.Count > 0)
