@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
 
     <PackageId>ErikLieben.FA.ES.CosmosDb</PackageId>
-    <Version>1.0.0</Version>
+    <PackageVersion Condition="'$(PackageVersion)' == '' and '$(Version)' != ''">$(Version)</PackageVersion>
     <Authors>Erik Lieben</Authors>
     <Description>Azure Cosmos DB storage provider for ErikLieben.FA.ES event sourcing framework. Optimized for RU efficiency with proper partition key strategies.</Description>
     <PackageTags>event-sourcing;cosmosdb;azure;cqrs;ddd</PackageTags>
