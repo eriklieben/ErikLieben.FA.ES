@@ -474,11 +474,13 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var closedEventType = "EventStream.Closed";
         var filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and EventType eq {closedEventType}");
 
-        await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(
+        await using var enumerator = tableClient.QueryAsync<TableEventEntity>(
             filter,
             maxPerPage: 1,
             select: new[] { "EventType" },
-            cancellationToken: cancellationToken))
+            cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
+
+        if (await enumerator.MoveNextAsync())
         {
             // Cache this closed status — streams never reopen
             ClosedStreamCache.TryAdd(streamId, 0);
