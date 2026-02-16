@@ -13,11 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ErikLieben.FA.Results" Version="1.1.0" />
-    <PackageReference Include="ErikLieben.FA.Results.Validations" Version="1.1.0" />
-    <PackageReference Include="ErikLieben.FA.Specifications" Version="1.0.7" />
-    <PackageReference Include="ErikLieben.FA.StronglyTypedIds" Version="2.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+    <PackageReference Include="ErikLieben.FA.Results" Version="1.1.2" />
+    <PackageReference Include="ErikLieben.FA.Results.Validations" Version="1.1.2" />
+    <PackageReference Include="ErikLieben.FA.Specifications" Version="1.0.8" />
+    <PackageReference Include="ErikLieben.FA.StronglyTypedIds" Version="2.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -38,12 +38,12 @@
         <InternalsVisibleTo Include="ErikLieben.FA.ES.S3.Tests" />
     </ItemGroup>
   	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="4.0.0.3" />
-		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.2" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftExtensionsVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftExtensionsDiagnosticsHealthChecksVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="$(MicrosoftExtensionsVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
+		<PackageReference Include="AWSSDK.S3" Version="4.0.18.6" />
+		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.22" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
