@@ -49,7 +49,7 @@ builder.Services.AddAzureClients(clientBuilder =>
     // Main storage account (for events and projections)
     // Use "blob-events" resource connection string (defined in AppHost as storage.AddBlobContainer("blob-events", "events"))
     var eventsConnectionString = builder.Configuration.GetConnectionString("blob-events");
-    logger.LogInformation($"blob-events connection string: {(string.IsNullOrEmpty(eventsConnectionString) ? "NULL/EMPTY" : "Found")}");
+    logger.LogInformation("blob-events connection string: {Status}", string.IsNullOrEmpty(eventsConnectionString) ? "NOT FOUND" : "Configured");
 
     if (string.IsNullOrEmpty(eventsConnectionString))
     {
@@ -59,7 +59,7 @@ builder.Services.AddAzureClients(clientBuilder =>
     }
 
     var storeConnectionString = BuildFullStorageConnectionString(eventsConnectionString);
-    logger.LogInformation($"Store connection string: {storeConnectionString?.Substring(0, Math.Min(50, storeConnectionString?.Length ?? 0))}...");
+    logger.LogInformation("Store connection string: {Status}", string.IsNullOrEmpty(storeConnectionString) ? "NOT FOUND" : "Configured");
 
     if (!string.IsNullOrEmpty(storeConnectionString))
     {
@@ -74,9 +74,9 @@ builder.Services.AddAzureClients(clientBuilder =>
     // User data storage account (for user profiles and object documents)
     // Use "userprofile" container connection string and build full storage connection string
     var userProfileConnectionString = builder.Configuration.GetConnectionString("userprofile");
-    logger.LogInformation($"userprofile connection string: {(string.IsNullOrEmpty(userProfileConnectionString) ? "NULL/EMPTY" : "Found")}");
+    logger.LogInformation("userprofile connection string: {Status}", string.IsNullOrEmpty(userProfileConnectionString) ? "NOT FOUND" : "Configured");
     var userDataConnectionString = BuildFullStorageConnectionString(userProfileConnectionString);
-    logger.LogInformation($"UserDataStore connection string: {userDataConnectionString}");
+    logger.LogInformation("UserDataStore connection string: {Status}", string.IsNullOrEmpty(userDataConnectionString) ? "NOT FOUND" : "Configured");
 
     if (!string.IsNullOrEmpty(userDataConnectionString))
     {
@@ -116,7 +116,7 @@ builder.Services.AddAzureClients(clientBuilder =>
 
     if (!string.IsNullOrEmpty(tableStorageConnectionString))
     {
-        logger.LogInformation($"Registering TableServiceClient with connection string: {tableStorageConnectionString?.Substring(0, Math.Min(100, tableStorageConnectionString?.Length ?? 0))}...");
+        logger.LogInformation("Registering TableServiceClient with connection string: {Status}", "Configured");
         // Register with name "tables" to match Aspire resource name and table settings
         clientBuilder.AddTableServiceClient(tableStorageConnectionString)
             .WithName("tables");
@@ -278,6 +278,31 @@ builder.Services.AddSingleton<TaskFlow.Domain.Aggregates.IReleaseFactory>(sp =>
     var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
     var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
     return new TaskFlow.Domain.Aggregates.ReleaseFactory(sp, eventStreamFactory, objectDocumentFactory);
+});
+
+// Register ReleaseDashboard projection factory and singleton
+// The projection is stored in Blob, but reads release events from S3
+builder.Services.AddSingleton<ReleaseDashboardFactory>(sp =>
+{
+    var blobServiceClientFactory = sp.GetRequiredService<IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient>>();
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
+    return new ReleaseDashboardFactory(blobServiceClientFactory, objectDocumentFactory, eventStreamFactory);
+});
+
+builder.Services.AddSingleton<ReleaseDashboard>(sp =>
+{
+    var factory = sp.GetRequiredService<ReleaseDashboardFactory>();
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
+    try
+    {
+        return factory.GetOrCreateAsync(objectDocumentFactory, eventStreamFactory).GetAwaiter().GetResult();
+    }
+    catch
+    {
+        return new ReleaseDashboard(objectDocumentFactory, eventStreamFactory);
+    }
 });
 
 // Register ReleaseDashboard projection handler
