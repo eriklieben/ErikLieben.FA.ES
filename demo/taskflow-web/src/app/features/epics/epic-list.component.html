@@ -33,10 +33,10 @@
           <button mat-raised-button color="primary" (click)="seedDemoEpics()" [disabled]="isSeeding()">
             @if (isSeeding()) {
               <mat-spinner diameter="20"></mat-spinner>
-              Seeding...
+              <span>Seeding...</span>
             } @else {
               <mat-icon>add</mat-icon>
-              Seed Demo Epics
+              <span>Seed Demo Epics</span>
             }
           </button>
         </div>
@@ -51,10 +51,10 @@
           <button mat-raised-button color="primary" (click)="seedDemoEpics()" [disabled]="isSeeding()">
             @if (isSeeding()) {
               <mat-spinner diameter="20"></mat-spinner>
-              Seeding...
+              <span>Seeding...</span>
             } @else {
               <mat-icon>add</mat-icon>
-              Seed Demo Epics
+              <span>Seed Demo Epics</span>
             }
           </button>
         </div>
@@ -143,7 +143,7 @@
             } @else {
               <mat-icon>add</mat-icon>
             }
-            Seed More Epics
+            <span>Seed More Epics</span>
           </button>
         </div>
       }

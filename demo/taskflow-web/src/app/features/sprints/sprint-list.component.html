@@ -67,10 +67,10 @@
           <button mat-raised-button color="primary" (click)="seedDemoSprints()" [disabled]="isSeeding()">
             @if (isSeeding()) {
               <mat-spinner diameter="20"></mat-spinner>
-              Seeding...
+              <span>Seeding...</span>
             } @else {
               <mat-icon>add</mat-icon>
-              Seed Demo Sprints
+              <span>Seed Demo Sprints</span>
             }
           </button>
         </div>
@@ -85,10 +85,10 @@
           <button mat-raised-button color="primary" (click)="seedDemoSprints()" [disabled]="isSeeding()">
             @if (isSeeding()) {
               <mat-spinner diameter="20"></mat-spinner>
-              Seeding...
+              <span>Seeding...</span>
             } @else {
               <mat-icon>add</mat-icon>
-              Seed Demo Sprints
+              <span>Seed Demo Sprints</span>
             }
           </button>
         </div>
@@ -174,7 +174,7 @@
             } @else {
               <mat-icon>add</mat-icon>
             }
-            Seed More Sprints
+            <span>Seed More Sprints</span>
           </button>
         </div>
       }

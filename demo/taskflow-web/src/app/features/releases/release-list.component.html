@@ -1,0 +1,188 @@
+<div class="releases-container">
+  <mat-card class="releases-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>new_releases</mat-icon>
+        Releases
+      </mat-card-title>
+      <mat-card-subtitle>
+        Stored in S3-compatible storage (MinIO)
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Storage Info Banner -->
+      <div class="storage-info">
+        <mat-icon>cloud</mat-icon>
+        <span>Releases are stored in S3-compatible storage (MinIO) to demonstrate the S3 provider. Bucket: <code>eventstore</code></span>
+      </div>
+
+      <!-- Statistics -->
+      @if (statistics()) {
+        <div class="statistics-row">
+          <div class="stat-card">
+            <mat-icon>event_note</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.totalReleases }}</span>
+              <span class="stat-label">Total Releases</span>
+            </div>
+          </div>
+          <div class="stat-card draft">
+            <mat-icon>edit</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.draftCount }}</span>
+              <span class="stat-label">Draft</span>
+            </div>
+          </div>
+          <div class="stat-card staged">
+            <mat-icon>pending</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.stagedCount }}</span>
+              <span class="stat-label">Staged</span>
+            </div>
+          </div>
+          <div class="stat-card deployed">
+            <mat-icon>rocket_launch</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.deployedCount }}</span>
+              <span class="stat-label">Deployed</span>
+            </div>
+          </div>
+          <div class="stat-card completed">
+            <mat-icon>check_circle</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.completedCount }}</span>
+              <span class="stat-label">Completed</span>
+            </div>
+          </div>
+          <div class="stat-card rolledback">
+            <mat-icon>undo</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">{{ statistics()!.rolledBackCount }}</span>
+              <span class="stat-label">Rolled Back</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span>Loading releases...</span>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (error()) {
+        <div class="error-container">
+          <mat-icon>warning</mat-icon>
+          <span>{{ error() }}</span>
+          <button mat-raised-button color="primary" (click)="seedDemoReleases()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Seeding...</span>
+            } @else {
+              <mat-icon>add</mat-icon>
+              <span>Seed Demo Releases</span>
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Empty State -->
+      @if (!isLoading() && !error() && releases().length === 0) {
+        <div class="empty-container">
+          <mat-icon>new_releases</mat-icon>
+          <h3>No Releases Found</h3>
+          <p>Get started by seeding demo releases to see the S3 provider in action.</p>
+          <button mat-raised-button color="primary" (click)="seedDemoReleases()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Seeding...</span>
+            } @else {
+              <mat-icon>add</mat-icon>
+              <span>Seed Demo Releases</span>
+            }
+          </button>
+        </div>
+      }
+
+      <!-- Releases Table -->
+      @if (!isLoading() && !error() && releases().length > 0) {
+        <table mat-table [dataSource]="releases()" class="releases-table">
+          <!-- Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Release Name</th>
+            <td mat-cell *matCellDef="let release">
+              <span class="release-name">{{ release.name }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Version Column -->
+          <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef>Version</th>
+            <td mat-cell *matCellDef="let release">
+              <span class="release-version">{{ release.version }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let release">
+              <mat-chip [color]="getStatusColor(release.status)" selected>
+                <mat-icon>{{ getStatusIcon(release.status) }}</mat-icon>
+                {{ release.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Project ID Column -->
+          <ng-container matColumnDef="projectId">
+            <th mat-header-cell *matHeaderCellDef>Project</th>
+            <td mat-cell *matCellDef="let release">
+              <span class="release-project">{{ release.projectId }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Created At Column -->
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let release">
+              <span class="release-date">{{ formatDate(release.createdAt) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let release">
+              <button mat-icon-button matTooltip="View Details (Coming Soon)" disabled>
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="table-actions">
+          <button mat-stroked-button (click)="loadReleases()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+          <button mat-stroked-button color="primary" (click)="seedDemoReleases()" [disabled]="isSeeding()">
+            @if (isSeeding()) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <mat-icon>add</mat-icon>
+            }
+            <span>Seed More Releases</span>
+          </button>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
