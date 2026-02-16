@@ -256,13 +256,21 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         var documentPath = GetDocumentPathForAppend(document);
         var blob = await CreateBlobClientAsync(document, documentPath);
 
-        if (!await blob.ExistsAsync(cancellationToken))
+        // Try to get properties directly instead of checking ExistsAsync first,
+        // saving one network round-trip on every append
+        BlobProperties? properties;
+        try
         {
+            properties = (await blob.GetPropertiesAsync(cancellationToken: cancellationToken)).Value;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            // Blob does not exist yet — create a new one
             await CreateNewBlobAsync(blob, document, blobDoc, preserveTimestamp, activity, timer, cancellationToken, events);
             return;
         }
 
-        await AppendToExistingBlobAsync(blob, document, blobDoc, documentPath, preserveTimestamp, timer, cancellationToken, events);
+        await AppendToExistingBlobAsync(blob, document, blobDoc, documentPath, properties.ETag, preserveTimestamp, timer, cancellationToken, events);
     }
 
     private static string GetDocumentPathForAppend(IObjectDocument document)
@@ -320,14 +328,12 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         IObjectDocument document,
         BlobEventStreamDocument blobDoc,
         string documentPath,
+        ETag etag,
         bool preserveTimestamp,
         System.Diagnostics.Stopwatch? timer,
         CancellationToken cancellationToken,
         IEvent[] events)
     {
-        var properties = await blob.GetPropertiesAsync(cancellationToken: cancellationToken);
-        var etag = properties.Value.ETag;
-
         // Download the document with the same tag, so that we're sure it's not overriden in the meantime
         var doc = (await blob.AsEntityAsync(
             BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
