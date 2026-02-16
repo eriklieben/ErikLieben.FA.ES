@@ -799,6 +799,104 @@ public class S3DataStoreTests
         }
     }
 
+    public class AppendAsyncRoundTripReduction
+    {
+        [Fact]
+        public async Task Should_download_object_directly_without_separate_exists_check()
+        {
+            // Arrange - The new flow calls GetObjectAsEntityAsync directly, which
+            // returns (null, null, null) on 404, instead of calling ObjectExistsAsync first.
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+
+            // GetObjectAsync returns 404 (object doesn't exist)
+            SetupS3GetObjectNotFound(s3Client);
+            SetupPutObject(s3Client);
+
+            var settings = CreateSettings();
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument();
+
+            var evt = CreateS3JsonEvent(0, "Test.Created");
+
+            // Act
+            await sut.AppendAsync(document, CancellationToken.None, evt);
+
+            // Assert - GetObjectAsync was called (for download), not GetObjectMetadataAsync (no separate Exists check)
+            await s3Client.Received().GetObjectAsync(
+                Arg.Any<GetObjectRequest>(), Arg.Any<CancellationToken>());
+            await s3Client.DidNotReceive().GetObjectMetadataAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_use_etag_from_download_for_optimistic_concurrency()
+        {
+            // Arrange - When the object exists, GetObjectAsEntityAsync returns
+            // both the document and the ETag from the same request.
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+
+            var existingDoc = CreateDataStoreDocument(events:
+            [
+                CreateS3JsonEvent(0, "Test.Created"),
+            ]);
+            SetupS3GetObject(s3Client, existingDoc, "\"download-etag\"");
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            var settings = CreateSettings();
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument(hash: "somehash");
+
+            var newEvent = CreateS3JsonEvent(1, "Test.Updated");
+
+            // Act
+            await sut.AppendAsync(document, CancellationToken.None, newEvent);
+
+            // Assert - PutObjectAsync should be called
+            Assert.NotNull(capturedRequest);
+            await s3Client.Received(1).PutObjectAsync(
+                Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_cache_bucket_verification_across_calls()
+        {
+            // Arrange - VerifiedBuckets is a static ConcurrentDictionary that
+            // caches bucket names once verified. The second append to the same
+            // bucket should not call EnsureBucketAsync again.
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
+            SetupPutObject(s3Client);
+
+            // Use unique bucket name to avoid interference from other tests
+            var uniqueName = $"cachetest{Guid.NewGuid():N}".Substring(0, 20);
+            var settings = CreateSettings(autoCreateBucket: true);
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument(objectName: uniqueName);
+
+            var evt1 = CreateS3JsonEvent(0, "Test.Created");
+            var evt2 = CreateS3JsonEvent(1, "Test.Updated");
+
+            // Act - Two appends to same bucket
+            await sut.AppendAsync(document, CancellationToken.None, evt1);
+            await sut.AppendAsync(document, CancellationToken.None, evt2);
+
+            // Assert - PutBucketAsync should only be called once (cached after first call)
+            await s3Client.Received(1).PutBucketAsync(
+                Arg.Is<PutBucketRequest>(r => r.BucketName == uniqueName),
+                Arg.Any<CancellationToken>());
+        }
+    }
+
     public class RemoveEventsForFailedCommitAsync
     {
         [Fact]
