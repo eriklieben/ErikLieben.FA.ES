@@ -23,6 +23,11 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
     private readonly EventStreamS3Settings settings;
 
     /// <summary>
+    /// Clears the verified buckets cache. Used by tests to prevent cross-test pollution.
+    /// </summary>
+    public static void ClearVerifiedBucketsCache() => VerifiedBuckets.Clear();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="S3DataStore"/> class.
     /// </summary>
     /// <param name="clientFactory">The S3 client factory used to create <see cref="IAmazonS3"/> instances.</param>

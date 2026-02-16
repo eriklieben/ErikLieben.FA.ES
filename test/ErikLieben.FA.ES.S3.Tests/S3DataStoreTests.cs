@@ -570,6 +570,9 @@ public class S3DataStoreTests
 
             var evt = CreateS3JsonEvent(0);
 
+            // Clear static cache to ensure bucket creation is triggered
+            S3DataStore.ClearVerifiedBucketsCache();
+
             await sut.AppendAsync(document, CancellationToken.None, evt);
 
             await s3Client.Received().PutBucketAsync(
