@@ -196,21 +196,18 @@ public abstract class BaseEventStream : IEventStream
             return;
         }
 
-        var upcastedTo = upcast.UpCast(@event).ToArray();
-        switch (upcastedTo.Length)
+        var upcastedTo = upcast.UpCast(@event).ToList();
+        switch (upcastedTo.Count)
         {
             case 1:
                 @event = upcastedTo[0];
                 events[i] = @event;
                 break;
             case > 1:
-                {
-                    @event = upcastedTo[0];
-                    var nextItem = i < events.Count ? (Index)(i + 1) : (Index)(events.Count - 1);
-                    var prevItem = i > 0 ? (Index)(i - 1) : (Index)0;
-                    events = [.. events[0..prevItem], .. upcastedTo, .. events[nextItem..]];
-                    break;
-                }
+                @event = upcastedTo[0];
+                events.RemoveAt(i);
+                events.InsertRange(i, upcastedTo);
+                break;
             default:
                 events[i] = @event;
                 break;
