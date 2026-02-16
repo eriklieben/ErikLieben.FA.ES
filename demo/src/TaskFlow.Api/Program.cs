@@ -262,13 +262,13 @@ else
 // This demonstrates using S3 as a storage provider for event streams
 var s3Settings = new ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings("s3")
 {
-    ServiceUrl = "http://localhost:9000",
-    AccessKey = "minioadmin",
-    SecretKey = "minioadmin",
-    BucketName = "eventstore",
+    ServiceUrl = builder.Configuration["S3:ServiceUrl"] ?? "http://localhost:9000",
+    AccessKey = builder.Configuration["S3:AccessKey"] ?? "minioadmin",
+    SecretKey = builder.Configuration["S3:SecretKey"] ?? "minioadmin",
+    BucketName = builder.Configuration["S3:BucketName"] ?? "eventstore",
     ForcePathStyle = true,
     AutoCreateBucket = true,
-    Region = "us-east-1"
+    Region = builder.Configuration["S3:Region"] ?? "us-east-1"
 };
 builder.Services.ConfigureS3EventStore(s3Settings);
 
