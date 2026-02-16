@@ -429,7 +429,7 @@ public class TableDocumentStore : ITableDocumentStore
         try
         {
             await foreach (var entity in chunkTableClient.QueryAsync<TableStreamChunkEntity>(
-                filter: $"PartitionKey eq '{objectId}'"))
+                filter: TableClient.CreateQueryFilter($"PartitionKey eq {objectId}")))
             {
                 chunks.Add(new StreamChunk(
                     entity.ChunkIdentifier,
@@ -453,7 +453,7 @@ public class TableDocumentStore : ITableDocumentStore
         try
         {
             await foreach (var entity in snapShotTableClient.QueryAsync<TableDocumentSnapShotEntity>(
-                filter: $"PartitionKey eq '{objectId}'"))
+                filter: TableClient.CreateQueryFilter($"PartitionKey eq {objectId}")))
             {
                 snapShots.Add(new StreamSnapShot
                 {
@@ -478,7 +478,7 @@ public class TableDocumentStore : ITableDocumentStore
         try
         {
             await foreach (var entity in terminatedStreamTableClient.QueryAsync<TableTerminatedStreamEntity>(
-                filter: $"PartitionKey eq '{objectId}'"))
+                filter: TableClient.CreateQueryFilter($"PartitionKey eq {objectId}")))
             {
                 terminatedStreams.Add(new TerminatedStream
                 {

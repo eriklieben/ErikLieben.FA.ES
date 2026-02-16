@@ -59,7 +59,7 @@ public class TableObjectIdProvider : IObjectIdProvider
         var tableClient = serviceClient.GetTableClient(tableSettings.DefaultDocumentTableName);
 
         // Filter by partition key (objectName)
-        var filter = $"PartitionKey eq '{objectNameLower}'";
+        var filter = TableClient.CreateQueryFilter($"PartitionKey eq {objectNameLower}");
 
         try
         {
@@ -159,7 +159,7 @@ public class TableObjectIdProvider : IObjectIdProvider
         var serviceClient = clientFactory.CreateClient(tableSettings.DefaultDocumentStore);
         var tableClient = serviceClient.GetTableClient(tableSettings.DefaultDocumentTableName);
 
-        var filter = $"PartitionKey eq '{objectNameLower}'";
+        var filter = TableClient.CreateQueryFilter($"PartitionKey eq {objectNameLower}");
 
         try
         {

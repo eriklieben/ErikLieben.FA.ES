@@ -90,7 +90,7 @@ public partial class TableDocumentTagStore : IDocumentTagStore
         var sanitizedTag = SanitizeForTableKey(tag);
         var partitionKey = $"{objectName.ToLowerInvariant()}_{sanitizedTag}";
 
-        var filter = $"PartitionKey eq '{partitionKey}'";
+        var filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey}");
         var objectIds = new List<string>();
 
         try

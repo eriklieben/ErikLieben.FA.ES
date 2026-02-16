@@ -30,8 +30,11 @@ public static class BlobExtensions
         {
             using MemoryStream s = new();
             await blobClient.DownloadToAsync(s, requestOptions);
-            var json = Encoding.UTF8.GetString(s.GetBuffer(), 0, (int)s.Length);
-            return (JsonSerializer.Deserialize(json, jsonTypeInfo), ComputeSha256Hash(json));
+            var length = (int)s.Length;
+            var buffer = s.GetBuffer();
+            var hash = ComputeSha256Hash(buffer, 0, length);
+            var document = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(buffer, 0, length), jsonTypeInfo);
+            return (document, hash);
         }
         catch (RequestFailedException ex)
             when (ex.ErrorCode == BlobErrorCode.BlobNotFound || ex.ErrorCode == BlobErrorCode.ContainerNotFound)
@@ -203,17 +206,6 @@ public static class BlobExtensions
                 ex.ErrorCode,
                 ex);
         }
-    }
-
-    /// <summary>
-    /// Computes the hexadecimal SHA-256 hash for the specified text using UTF-8 encoding.
-    /// </summary>
-    /// <param name="rawData">The input text to hash.</param>
-    /// <returns>The lowercase hexadecimal SHA-256 string.</returns>
-    private static string ComputeSha256Hash(string rawData)
-    {
-        var inputBytes = Encoding.UTF8.GetBytes(rawData);
-        return ComputeSha256Hash(inputBytes, 0, inputBytes.Length);
     }
 
     /// <summary>

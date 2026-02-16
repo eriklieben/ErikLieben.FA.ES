@@ -89,11 +89,11 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         string filter;
         if (endRowKey != null)
         {
-            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}' and RowKey le '{endRowKey}'";
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and RowKey ge {startRowKey} and RowKey le {endRowKey}");
         }
         else
         {
-            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}'";
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and RowKey ge {startRowKey}");
         }
 
         var events = new List<IEvent>();
@@ -189,11 +189,11 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         string filter;
         if (endRowKey != null)
         {
-            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}' and RowKey le '{endRowKey}'";
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and RowKey ge {startRowKey} and RowKey le {endRowKey}");
         }
         else
         {
-            filter = $"PartitionKey eq '{partitionKey}' and RowKey ge '{startRowKey}'";
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and RowKey ge {startRowKey}");
         }
 
         // Use await foreach to stream results directly from Azure Table Storage
@@ -471,7 +471,8 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var partitionKey = GetPartitionKey(document, chunkIdentifier);
 
         // Query only for EventStream.Closed events instead of scanning the full partition
-        var filter = $"PartitionKey eq '{partitionKey}' and EventType eq 'EventStream.Closed'";
+        var closedEventType = "EventStream.Closed";
+        var filter = TableClient.CreateQueryFilter($"PartitionKey eq {partitionKey} and EventType eq {closedEventType}");
 
         await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(
             filter,
