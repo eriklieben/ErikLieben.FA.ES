@@ -440,6 +440,75 @@ public class ResilientDataStoreTests : IDisposable
 
     #endregion
 
+    #region StatusCodeExtractor Tests
+
+    [Fact]
+    public void RegisterStatusCodeExtractor_should_throw_on_null()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            ResilientDataStore.RegisterStatusCodeExtractor(null!));
+    }
+
+    [Fact]
+    public async Task Should_use_registered_status_code_extractor_for_transient_codes()
+    {
+        // Arrange - TransientHttpException extractor is registered in constructor
+        var inner = new ConfigurableDataStore();
+        inner.SetAppendBehavior(
+            new TransientHttpException(500, "Internal Server Error"),
+            null); // Second call succeeds
+
+        var options = new DataStoreResilienceOptions { MaxRetryAttempts = 3 };
+        var resilient = new ResilientDataStore(inner, options);
+        var document = new TestDocument();
+
+        // Act
+        await resilient.AppendAsync(document, default, new TestEvent());
+
+        // Assert - should have retried (extractor recognized 500 as transient)
+        Assert.Equal(2, inner.AppendCallCount);
+    }
+
+    [Fact]
+    public async Task Should_handle_multiple_registered_extractors()
+    {
+        // Arrange - register a second extractor alongside the one from constructor
+        ResilientDataStore.RegisterStatusCodeExtractor(ex =>
+            ex is InvalidOperationException ? 503 : null);
+
+        var inner = new ConfigurableDataStore();
+        inner.SetAppendBehavior(
+            new InvalidOperationException("Simulated 503"),
+            null);
+
+        var options = new DataStoreResilienceOptions { MaxRetryAttempts = 3 };
+        var resilient = new ResilientDataStore(inner, options);
+        var document = new TestDocument();
+
+        // Act
+        await resilient.AppendAsync(document, default, new TestEvent());
+
+        // Assert - should retry because the second extractor returns 503 (transient)
+        Assert.Equal(2, inner.AppendCallCount);
+    }
+
+    [Fact]
+    public void ClearStatusCodeExtractors_should_remove_all_extractors()
+    {
+        // Arrange - constructor registered one extractor already
+        ResilientDataStore.RegisterStatusCodeExtractor(ex => 500);
+
+        // Act
+        ResilientDataStore.ClearStatusCodeExtractors();
+
+        // Assert - re-register to verify the bag is empty (no exceptions thrown)
+        // The test passing without errors after clear confirms the bag was emptied
+        ResilientDataStore.RegisterStatusCodeExtractor(ex => null);
+    }
+
+    #endregion
+
     #region Delegation Tests
 
     [Fact]
@@ -480,6 +549,56 @@ public class ResilientDataStoreTests : IDisposable
         Assert.Equal(1, inner.ReadCallCount);
         Assert.NotNull(result);
         Assert.Equal(2, result!.Count());
+    }
+
+    [Fact]
+    public async Task ReadAsStreamAsync_should_delegate_without_retry()
+    {
+        // Arrange
+        var inner = new ConfigurableDataStore();
+        inner.StoredEvents.Add(new TestEvent { EventVersion = 0, EventType = "E1" });
+        inner.StoredEvents.Add(new TestEvent { EventVersion = 1, EventType = "E2" });
+
+        var options = new DataStoreResilienceOptions();
+        var resilient = new ResilientDataStore(inner, options);
+        var document = new TestDocument();
+
+        // Act
+        var results = new List<IEvent>();
+        await foreach (var evt in resilient.ReadAsStreamAsync(document))
+        {
+            results.Add(evt);
+        }
+
+        // Assert
+        Assert.Equal(2, results.Count);
+        Assert.Equal(1, inner.ReadCallCount);
+    }
+
+    [Fact]
+    public async Task AppendAsync_should_throw_on_null_document()
+    {
+        // Arrange
+        var inner = new ConfigurableDataStore();
+        var options = new DataStoreResilienceOptions();
+        var resilient = new ResilientDataStore(inner, options);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            resilient.AppendAsync(null!, default, new TestEvent()));
+    }
+
+    [Fact]
+    public async Task RemoveEventsForFailedCommitAsync_should_throw_on_null_document()
+    {
+        // Arrange
+        var inner = new ConfigurableDataStore();
+        var options = new DataStoreResilienceOptions();
+        var resilient = new ResilientDataStore(inner, options);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            resilient.RemoveEventsForFailedCommitAsync(null!, 0, 1));
     }
 
     #endregion

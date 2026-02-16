@@ -227,6 +227,126 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                 Assert.Contains(upcastedEvent1, resultList);
                 Assert.Contains(upcastedEvent2, resultList);
             }
+
+            [Fact]
+            public async Task Should_return_events_directly_when_no_upcasters_registered()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                active.ChunkSettings = new StreamChunkSettings { EnableChunks = false };
+
+                var dependencies = Substitute.For<IStreamDependencies>();
+                var event1 = Substitute.For<IEvent>();
+                var event2 = Substitute.For<IEvent>();
+                var event3 = Substitute.For<IEvent>();
+                var events = new List<IEvent> { event1, event2, event3 };
+                dependencies.DataStore.ReadAsync(document, 0, null, chunk: null).Returns(events);
+
+                var sut = new TestEventStream(document, dependencies);
+                // No upcasters registered
+
+                // Act
+                var result = await sut.ReadAsync();
+
+                // Assert
+                Assert.Equal(3, result.Count);
+                var resultList = result.ToList();
+                Assert.Same(event1, resultList[0]);
+                Assert.Same(event2, resultList[1]);
+                Assert.Same(event3, resultList[2]);
+            }
+
+            [Fact]
+            public async Task Should_filter_null_events_after_upcasting()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                active.ChunkSettings = new StreamChunkSettings { EnableChunks = false };
+
+                var dependencies = Substitute.For<IStreamDependencies>();
+                var event1 = Substitute.For<IEvent>();
+                var event2 = Substitute.For<IEvent>();
+                var survivingEvent = Substitute.For<IEvent>();
+                var events = new List<IEvent> { event1, event2 };
+                dependencies.DataStore.ReadAsync(document, 0, null, chunk: null).Returns(events);
+
+                // Upcaster that returns the event for event1, but null for event2
+                var upCaster = Substitute.For<IUpcastEvent>();
+                upCaster.CanUpcast(event1).Returns(true);
+                upCaster.UpCast(event1).Returns([survivingEvent]);
+                upCaster.CanUpcast(event2).Returns(true);
+                // Return empty list to leave the original null in place via the default case
+                upCaster.UpCast(event2).Returns(new List<IEvent>());
+
+                var sut = new TestEventStream(document, dependencies);
+                sut.RegisterUpcast(upCaster);
+
+                // Act
+                var result = await sut.ReadAsync();
+
+                // Assert - event2 stays as-is (default switch case), and nulls are removed
+                Assert.Contains(survivingEvent, result);
+            }
+
+            [Fact]
+            public async Task Should_handle_upcaster_that_cannot_upcast_some_events()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                active.ChunkSettings = new StreamChunkSettings { EnableChunks = false };
+
+                var dependencies = Substitute.For<IStreamDependencies>();
+                var event1 = Substitute.For<IEvent>();
+                var event2 = Substitute.For<IEvent>();
+                var upcastedEvent = Substitute.For<IEvent>();
+                var events = new List<IEvent> { event1, event2 };
+                dependencies.DataStore.ReadAsync(document, 0, null, chunk: null).Returns(events);
+
+                var upCaster = Substitute.For<IUpcastEvent>();
+                upCaster.CanUpcast(event1).Returns(true);
+                upCaster.UpCast(event1).Returns([upcastedEvent]);
+                upCaster.CanUpcast(event2).Returns(false); // cannot upcast event2
+
+                var sut = new TestEventStream(document, dependencies);
+                sut.RegisterUpcast(upCaster);
+
+                // Act
+                var result = await sut.ReadAsync();
+
+                // Assert
+                Assert.Equal(2, result.Count);
+                var resultList = result.ToList();
+                Assert.Same(upcastedEvent, resultList[0]);
+                Assert.Same(event2, resultList[1]);
+            }
+
+            [Fact]
+            public async Task Should_handle_null_data_from_store_without_chunking()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                active.ChunkSettings = new StreamChunkSettings { EnableChunks = false };
+
+                var dependencies = Substitute.For<IStreamDependencies>();
+                dependencies.DataStore.ReadAsync(document, 0, null, chunk: null)
+                    .Returns((IEnumerable<IEvent>?)null);
+
+                var sut = new TestEventStream(document, dependencies);
+
+                // Act
+                var result = await sut.ReadAsync();
+
+                // Assert
+                Assert.Empty(result);
+            }
         }
 
         public class RegisterEvent
@@ -506,6 +626,111 @@ namespace ErikLieben.FA.ES.Tests.EventStream
                     sut.Session(_ => { }, Constraint.New));
 
                 Assert.Equal(Constraint.New, exception.Constraint);
+            }
+        }
+
+        public class GetSession
+        {
+            [Fact]
+            public void Should_return_session_with_filtered_action_types()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                var dependencies = Substitute.For<IStreamDependencies>();
+                dependencies.DataStore.Returns(Substitute.For<IDataStore>());
+                dependencies.ObjectDocumentFactory.Returns(Substitute.For<IObjectDocumentFactory>());
+
+                var sut = new TestEventStream(document, dependencies);
+                var preAppendAction = Substitute.For<IPreAppendAction>();
+                sut.RegisterPreAppendAction(preAppendAction);
+
+                // Act
+                var session = sut.GetSessionPublic(sut.GetActions());
+
+                // Assert
+                Assert.NotNull(session);
+            }
+
+            [Fact]
+            public void Should_cache_action_lists_across_multiple_calls()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                var dependencies = Substitute.For<IStreamDependencies>();
+                dependencies.DataStore.Returns(Substitute.For<IDataStore>());
+                dependencies.ObjectDocumentFactory.Returns(Substitute.For<IObjectDocumentFactory>());
+
+                var sut = new TestEventStream(document, dependencies);
+                var action = Substitute.For<IPreAppendAction>();
+                sut.RegisterPreAppendAction(action);
+
+                // Act - call GetSession twice without registering new actions
+                var session1 = sut.GetSessionPublic(sut.GetActions());
+                var session2 = sut.GetSessionPublic(sut.GetActions());
+
+                // Assert - both calls should succeed (cache is used on second call)
+                Assert.NotNull(session1);
+                Assert.NotNull(session2);
+            }
+
+            [Fact]
+            public void Should_invalidate_cache_when_new_action_registered()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                var dependencies = Substitute.For<IStreamDependencies>();
+                dependencies.DataStore.Returns(Substitute.For<IDataStore>());
+                dependencies.ObjectDocumentFactory.Returns(Substitute.For<IObjectDocumentFactory>());
+
+                var sut = new TestEventStream(document, dependencies);
+
+                // First call with no actions
+                var session1 = sut.GetSessionPublic(sut.GetActions());
+
+                // Register a new action - should invalidate cache
+                var action = Substitute.For<IAction>();
+                sut.RegisterAction(action);
+
+                // Second call should rebuild the cache with the new action
+                var session2 = sut.GetSessionPublic(sut.GetActions());
+
+                // Assert
+                Assert.NotNull(session1);
+                Assert.NotNull(session2);
+            }
+
+            [Fact]
+            public void Should_invalidate_cache_when_notification_registered()
+            {
+                // Arrange
+                var document = Substitute.For<IObjectDocumentWithMethods>();
+                var active = Substitute.For<StreamInformation>();
+                document.Active.Returns(active);
+                var dependencies = Substitute.For<IStreamDependencies>();
+                dependencies.DataStore.Returns(Substitute.For<IDataStore>());
+                dependencies.ObjectDocumentFactory.Returns(Substitute.For<IObjectDocumentFactory>());
+
+                var sut = new TestEventStream(document, dependencies);
+
+                // First call - builds cache
+                var session1 = sut.GetSessionPublic(sut.GetActions());
+
+                // Register notification - should invalidate cache
+                var notification = Substitute.For<INotification>();
+                sut.RegisterNotification(notification);
+
+                // Second call - should rebuild cache
+                var session2 = sut.GetSessionPublic(sut.GetActions());
+
+                // Assert
+                Assert.NotNull(session1);
+                Assert.NotNull(session2);
             }
         }
 

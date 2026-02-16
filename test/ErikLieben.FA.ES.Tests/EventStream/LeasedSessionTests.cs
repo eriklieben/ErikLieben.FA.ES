@@ -360,6 +360,72 @@ namespace ErikLieben.FA.ES.Tests.EventStream
             }
 
             [Fact]
+            public void Should_pass_original_payload_to_pre_append_actions()
+            {
+                // Arrange
+                var dependencies = CreateDependencies();
+                var preAppendAction = Substitute.For<IPreAppendAction>();
+                dependencies.PreAppendActions = [preAppendAction];
+
+                var sut = CreateSut(dependencies);
+                var originalPayload = new TestPayload { Id = 1, Name = "Original" };
+                var activeStream = Substitute.For<StreamInformation>();
+                activeStream.CurrentStreamVersion = 0;
+                dependencies.Document.Active.Returns(activeStream);
+                dependencies.EventTypeRegistry.Add(typeof(TestPayload), "TestEvent", TestJsonSerializerContext.Default.TestPayload);
+
+                TestPayload? receivedPayload = null;
+                preAppendAction.PreAppend(Arg.Any<TestPayload>(), Arg.Any<JsonEvent>(), Arg.Any<IObjectDocument>())
+                    .Returns(callInfo =>
+                    {
+                        receivedPayload = callInfo.ArgAt<TestPayload>(0);
+                        return (Func<TestPayload>)(() => receivedPayload);
+                    });
+
+                // Act
+                sut.Append(originalPayload);
+
+                // Assert - pre-append action should receive the original payload object
+                Assert.NotNull(receivedPayload);
+                Assert.Equal(1, receivedPayload!.Id);
+                Assert.Equal("Original", receivedPayload.Name);
+            }
+
+            [Fact]
+            public void Should_serialize_only_once_after_all_pre_append_actions()
+            {
+                // Arrange
+                var dependencies = CreateDependencies();
+                var preAppendAction1 = Substitute.For<IPreAppendAction>();
+                var preAppendAction2 = Substitute.For<IPreAppendAction>();
+                dependencies.PreAppendActions = [preAppendAction1, preAppendAction2];
+
+                var sut = CreateSut(dependencies);
+                var originalPayload = new TestPayload { Id = 1, Name = "Original" };
+                var activeStream = Substitute.For<StreamInformation>();
+                activeStream.CurrentStreamVersion = 0;
+                dependencies.Document.Active.Returns(activeStream);
+                dependencies.EventTypeRegistry.Add(typeof(TestPayload), "TestEvent", TestJsonSerializerContext.Default.TestPayload);
+
+                // First action transforms the payload
+                var intermediatePayload = new TestPayload { Id = 2, Name = "Intermediate" };
+                preAppendAction1.PreAppend(Arg.Any<TestPayload>(), Arg.Any<JsonEvent>(), Arg.Any<IObjectDocument>())
+                    .Returns(_ => (Func<TestPayload>)(() => intermediatePayload));
+
+                // Second action transforms further - receives the intermediate result
+                var finalPayload = new TestPayload { Id = 3, Name = "Final" };
+                preAppendAction2.PreAppend(Arg.Any<TestPayload>(), Arg.Any<JsonEvent>(), Arg.Any<IObjectDocument>())
+                    .Returns(_ => (Func<TestPayload>)(() => finalPayload));
+
+                // Act
+                sut.Append(originalPayload);
+
+                // Assert - the buffer should contain the serialization of the final payload
+                Assert.Single(sut.Buffer);
+                Assert.Equal("{\"Id\":3,\"Name\":\"Final\"}", sut.Buffer[0].Payload);
+            }
+
+            [Fact]
             public void Should_set_schema_version_from_registry()
             {
                 // Arrange
