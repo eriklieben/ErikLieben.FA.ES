@@ -287,7 +287,10 @@ public static class AdminEndpoints
         [FromServices] ErikLieben.FA.ES.IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IProjectionService projectionService)
     {
-        var workItemId = Guid.Parse(id);
+        if (!Guid.TryParse(id, out var workItemId))
+        {
+            return Results.BadRequest($"Invalid work item ID format: '{id}'");
+        }
 
         // Use factory's built-in time travel support to rebuild the aggregate at the specified version
         // This INCLUDES any upcasting logic that may be registered
@@ -352,7 +355,10 @@ public static class AdminEndpoints
         [FromServices] ErikLieben.FA.ES.IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IProjectionService projectionService)
     {
-        var projectId = Guid.Parse(id);
+        if (!Guid.TryParse(id, out var projectId))
+        {
+            return Results.BadRequest($"Invalid project ID format: '{id}'");
+        }
 
         // Use factory's built-in time travel support to rebuild the aggregate at the specified version
         // This INCLUDES upcasting: legacy ProjectCompleted events are transformed to specific outcome events
@@ -413,7 +419,10 @@ public static class AdminEndpoints
         [FromServices] ErikLieben.FA.ES.IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IProjectionService projectionService)
     {
-        var projectId = Guid.Parse(id);
+        if (!Guid.TryParse(id, out var projectId))
+        {
+            return Results.BadRequest($"Invalid project ID format: '{id}'");
+        }
 
         // Use factory's built-in time travel support to rebuild the aggregate at the specified version
         var project = await factory.GetAsync(ProjectId.From(projectId.ToString()), (int)version);
