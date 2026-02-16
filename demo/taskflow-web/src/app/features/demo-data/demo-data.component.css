@@ -107,10 +107,14 @@
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 20px;
 
-  @media (max-width: 1000px) {
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 800px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -216,6 +220,14 @@
     }
   }
 
+  &.s3 {
+    border-top: 3px solid var(--ctp-peach);
+    .card-icon {
+      background: color-mix(in srgb, var(--ctp-peach) 15%, transparent);
+      mat-icon { color: var(--ctp-peach); }
+    }
+  }
+
   &.projections {
     border-top: 3px solid var(--ctp-lavender);
     .card-icon {
@@ -296,6 +308,11 @@
     &.cosmos {
       border-color: var(--ctp-sky);
       mat-icon { color: var(--ctp-sky); }
+    }
+
+    &.s3 {
+      border-color: var(--ctp-peach);
+      mat-icon { color: var(--ctp-peach); }
     }
   }
 
@@ -627,6 +644,10 @@
 }
 
 .overview-card.cosmos.completed {
+  border-top-color: var(--ctp-green);
+}
+
+.overview-card.s3.completed {
   border-top-color: var(--ctp-green);
 }
 

@@ -151,6 +151,51 @@
         </div>
       </div>
 
+      <div class="overview-card s3"
+           [class.seeding]="seedingProgress().s3 === 'seeding'"
+           [class.completed]="seedingProgress().s3 === 'completed'"
+           [class.error]="seedingProgress().s3 === 'error'"
+           [class.disabled]="!isS3Available()">
+        <div class="card-icon">
+          @if (!isS3Available()) {
+            <mat-icon class="status-icon disabled">cloud_off</mat-icon>
+          } @else if (seedingProgress().s3 === 'seeding') {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (seedingProgress().s3 === 'completed') {
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+          } @else if (seedingProgress().s3 === 'error') {
+            <mat-icon class="status-icon error">error</mat-icon>
+          } @else {
+            <mat-icon>storage</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">S3-Compatible Storage</span>
+          @if (!isS3Available()) {
+            <div class="unavailable-status">
+              <mat-icon>info_outline</mat-icon>
+              <span>Not configured</span>
+            </div>
+          } @else if (seedingProgress().s3 === 'seeding') {
+            <div class="seeding-status">
+              <span class="status-text">Creating releases... {{ seedingPercentages().s3 }}%</span>
+              <mat-progress-bar mode="determinate" [value]="seedingPercentages().s3"></mat-progress-bar>
+            </div>
+          } @else if (seedingProgress().s3 === 'completed') {
+            <div class="completed-status">
+              <mat-icon>done_all</mat-icon>
+              <span>Completed</span>
+            </div>
+          }
+          <div class="stats" [class.muted]="seedingProgress().s3 !== 'idle' || !isS3Available()">
+            <div class="stat">
+              <strong>5</strong>
+              <span>Releases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="overview-card projections" [class.pending]="isSeeding()" [class.seeding]="isBuildingProjections()">
         <div class="card-icon">
           @if (isBuildingProjections()) {
@@ -218,6 +263,12 @@
             <strong>{{ seedResult()!.sprintsCreated }}</strong> Sprints
           </div>
         }
+        @if (seedResult()!.releasesCreated) {
+          <div class="stat-chip s3">
+            <mat-icon>storage</mat-icon>
+            <strong>{{ seedResult()!.releasesCreated }}</strong> Releases
+          </div>
+        }
       </div>
 
       <div class="result-actions">
@@ -239,6 +290,12 @@
           <button mat-stroked-button (click)="viewSprints()">
             <mat-icon>sprint</mat-icon>
             Sprints
+          </button>
+        }
+        @if (seedResult()!.releasesCreated) {
+          <button mat-stroked-button (click)="viewReleases()">
+            <mat-icon>storage</mat-icon>
+            Releases
           </button>
         }
       </div>

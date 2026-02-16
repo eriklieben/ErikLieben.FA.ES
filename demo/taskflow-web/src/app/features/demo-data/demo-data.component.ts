@@ -29,11 +29,21 @@ export interface SprintSeedResult {
   note: string;
 }
 
+export interface ReleaseSeedResult {
+  success: boolean;
+  message: string;
+  releaseIds: string[];
+  releasesCreated: number;
+  note: string;
+}
+
 export interface CombinedSeedResult extends SeedDataResult {
   epicsCreated?: number;
   epicIds?: string[];
   sprintsCreated?: number;
   sprintIds?: string[];
+  releasesCreated?: number;
+  releaseIds?: string[];
 }
 
 export type SeedingStatus = 'idle' | 'seeding' | 'completed' | 'error';
@@ -42,12 +52,14 @@ export interface SeedingProgress {
   blob: SeedingStatus;
   table: SeedingStatus;
   cosmos: SeedingStatus;
+  s3: SeedingStatus;
 }
 
 export interface SeedingPercentages {
   blob: number;
   table: number;
   cosmos: number;
+  s3: number;
 }
 
 @Component({
@@ -80,12 +92,14 @@ export class DemoDataComponent implements OnInit, OnDestroy {
   readonly isSeedingBlob = signal(false);
   readonly isSeedingTable = signal(false);
   readonly isSeedingCosmosDb = signal(false);
+  readonly isSeedingS3 = signal(false);
   readonly seedResult = signal<CombinedSeedResult | null>(null);
-  readonly seedingProgress = signal<SeedingProgress>({ blob: 'idle', table: 'idle', cosmos: 'idle' });
-  readonly seedingPercentages = signal<SeedingPercentages>({ blob: 0, table: 0, cosmos: 0 });
+  readonly seedingProgress = signal<SeedingProgress>({ blob: 'idle', table: 'idle', cosmos: 'idle', s3: 'idle' });
+  readonly seedingPercentages = signal<SeedingPercentages>({ blob: 0, table: 0, cosmos: 0, s3: 0 });
   readonly blobSeedResult = signal<SeedDataResult | null>(null);
   readonly tableSeedResult = signal<EpicSeedResult | null>(null);
   readonly cosmosDbSeedResult = signal<SprintSeedResult | null>(null);
+  readonly s3SeedResult = signal<ReleaseSeedResult | null>(null);
   readonly isBuildingProjections = signal(false);
   readonly buildProgress = signal<ProjectionBuildProgressEvent[]>([]);
   readonly buildResult = signal<{ success: boolean; message: string } | null>(null);
@@ -93,6 +107,7 @@ export class DemoDataComponent implements OnInit, OnDestroy {
   // Provider availability status
   readonly providerStatus = signal<StorageProviderStatus | null>(null);
   readonly isCosmosDbAvailable = signal(true); // Assume available until we know otherwise
+  readonly isS3Available = signal(true); // Assume available until we know otherwise
 
   ngOnInit() {
     // Fetch provider status on component init
@@ -100,6 +115,7 @@ export class DemoDataComponent implements OnInit, OnDestroy {
       next: (status) => {
         this.providerStatus.set(status);
         this.isCosmosDbAvailable.set(status.providers.cosmos.enabled);
+        this.isS3Available.set(status.providers.s3.enabled);
       },
       error: (error) => {
         console.error('Failed to fetch provider status:', error);
@@ -160,6 +176,7 @@ export class DemoDataComponent implements OnInit, OnDestroy {
    */
   seedAllAndTriggerProjections() {
     const cosmosAvailable = this.isCosmosDbAvailable();
+    const s3Available = this.isS3Available();
 
     this.isSeeding.set(true);
     this.seedResult.set(null);
@@ -168,9 +185,10 @@ export class DemoDataComponent implements OnInit, OnDestroy {
     this.seedingProgress.set({
       blob: 'seeding',
       table: 'seeding',
-      cosmos: cosmosAvailable ? 'seeding' : 'idle'
+      cosmos: cosmosAvailable ? 'seeding' : 'idle',
+      s3: s3Available ? 'seeding' : 'idle'
     });
-    this.seedingPercentages.set({ blob: 0, table: 0, cosmos: 0 });
+    this.seedingPercentages.set({ blob: 0, table: 0, cosmos: 0, s3: 0 });
 
     // Subscribe to seed progress updates from SignalR
     this.seedProgressSubscription?.unsubscribe();
@@ -192,16 +210,19 @@ export class DemoDataComponent implements OnInit, OnDestroy {
     let demoDataResult: SeedDataResult | null = null;
     let epicsResult: EpicSeedResult | null = null;
     let sprintsResult: SprintSeedResult | null = cosmosAvailable ? null : { success: true, message: 'Skipped', sprintIds: [], note: 'CosmosDB not available' };
+    let releasesResult: ReleaseSeedResult | null = s3Available ? null : { success: true, message: 'Skipped', releaseIds: [], releasesCreated: 0, note: 'S3 not available' };
 
     const checkAllComplete = () => {
-      if (demoDataResult && epicsResult && sprintsResult) {
+      if (demoDataResult && epicsResult && sprintsResult && releasesResult) {
         this.isSeeding.set(false);
         const combinedResult: CombinedSeedResult = {
           ...demoDataResult,
           epicsCreated: epicsResult.epicIds?.length || 0,
           epicIds: epicsResult.epicIds || [],
           sprintsCreated: sprintsResult.sprintIds?.length || 0,
-          sprintIds: sprintsResult.sprintIds || []
+          sprintIds: sprintsResult.sprintIds || [],
+          releasesCreated: releasesResult.releasesCreated || 0,
+          releaseIds: releasesResult.releaseIds || []
         };
         this.seedResult.set(combinedResult);
         this.triggerProjectionsInBackground();
@@ -254,6 +275,24 @@ export class DemoDataComponent implements OnInit, OnDestroy {
       });
     } else {
       // CosmosDB not available, mark as complete immediately
+      checkAllComplete();
+    }
+
+    // Only seed releases if S3 is available
+    if (s3Available) {
+      this.adminApi.seedDemoReleases().subscribe({
+        next: (result) => {
+          releasesResult = result;
+          this.seedingProgress.update(p => ({ ...p, s3: 'completed' }));
+          checkAllComplete();
+        },
+        error: (error) => {
+          console.error('Error seeding S3 data:', error);
+          this.seedingProgress.update(p => ({ ...p, s3: 'error' }));
+        }
+      });
+    } else {
+      // S3 not available, mark as complete immediately
       checkAllComplete();
     }
   }
@@ -326,6 +365,10 @@ export class DemoDataComponent implements OnInit, OnDestroy {
 
   viewSprints() {
     this.router.navigate(['/sprints']);
+  }
+
+  viewReleases() {
+    this.router.navigate(['/releases']);
   }
 
   viewProjections() {
@@ -417,8 +460,36 @@ export class DemoDataComponent implements OnInit, OnDestroy {
     });
   }
 
+  seedS3Only() {
+    this.isSeedingS3.set(true);
+    this.s3SeedResult.set(null);
+
+    this.adminApi.seedDemoReleases().subscribe({
+      next: (result) => {
+        this.isSeedingS3.set(false);
+        this.s3SeedResult.set(result);
+        this.snackBar.open(`S3 Storage seeded: ${result.releasesCreated || 0} releases created`, 'Close', {
+          duration: 5000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top',
+          panelClass: 'success-snackbar'
+        });
+      },
+      error: (error) => {
+        this.isSeedingS3.set(false);
+        console.error('Error seeding S3 data:', error);
+        this.snackBar.open('Failed to seed S3 Storage. See console for details.', 'Close', {
+          duration: 5000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top',
+          panelClass: 'error-snackbar'
+        });
+      }
+    });
+  }
+
   isAnySeedingInProgress(): boolean {
-    return this.isSeeding() || this.isSeedingBlob() || this.isSeedingTable() || this.isSeedingCosmosDb() || this.isBuildingProjections();
+    return this.isSeeding() || this.isSeedingBlob() || this.isSeedingTable() || this.isSeedingCosmosDb() || this.isSeedingS3() || this.isBuildingProjections();
   }
 
   buildProjections() {

@@ -172,6 +172,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/sprints/sprint-list.component').then(m => m.SprintListComponent)
   },
   {
+    path: 'releases',
+    loadComponent: () => import('./features/releases/release-list.component').then(m => m.ReleaseListComponent)
+  },
+  {
     path: 'connections',
     loadComponent: () => import('./features/admin/admin-full.component').then(m => m.AdminFullComponent)
   },

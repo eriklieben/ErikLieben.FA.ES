@@ -101,6 +101,10 @@ export class AdminApiService {
     return this.http.post<any>(`${this.baseUrl}/demo/seed-sprints`, {});
   }
 
+  seedDemoReleases(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/demo/seed-releases`, {});
+  }
+
   // Storage connection
   getStorageConnection(): Observable<StorageConnection> {
     return this.http.get(`${this.baseUrl}/storage/connection`).pipe(
@@ -168,6 +172,7 @@ export interface StorageProviderStatus {
     blob: StorageProviderInfo;
     table: StorageProviderInfo;
     cosmos: StorageProviderInfo;
+    s3: StorageProviderInfo;
   };
   timestamp: string;
 }
