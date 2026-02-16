@@ -58,7 +58,7 @@ export class BenchmarksComponent implements OnInit {
 
   readonly availableTypes = computed(() => {
     const types = new Set(this.summaries().map(s => s.type));
-    return Array.from(types).sort();
+    return Array.from(types).sort((a, b) => a.localeCompare(b));
   });
 
   readonly groupedByType = computed(() => {

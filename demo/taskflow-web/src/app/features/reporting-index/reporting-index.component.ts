@@ -55,7 +55,7 @@ export class ReportingIndexComponent implements OnInit {
   // Unique projects for filtering
   readonly projects = computed(() => {
     const projectIds = new Set(this.items().map(i => i.partitionKey));
-    return Array.from(projectIds).sort();
+    return Array.from(projectIds).sort((a, b) => a.localeCompare(b));
   });
 
   readonly selectedProject = signal<string | null>(null);
