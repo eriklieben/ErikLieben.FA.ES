@@ -76,7 +76,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         {
             documentPath = $"{document.Active.StreamIdentifier}.json";
         }
-        var blob = CreateBlobClient(document, documentPath);
+        var blob = await CreateBlobClientAsync(document, documentPath);
 
 
 
@@ -172,7 +172,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             documentPath = $"{document.Active.StreamIdentifier}.json";
         }
 
-        var blob = CreateBlobClient(document, documentPath);
+        var blob = await CreateBlobClientAsync(document, documentPath);
 
         BlobDataStoreDocument? dataDocument;
         try
@@ -252,7 +252,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         }
 
         var documentPath = GetDocumentPathForAppend(document);
-        var blob = CreateBlobClient(document, documentPath);
+        var blob = await CreateBlobClientAsync(document, documentPath);
 
         if (!await blob.ExistsAsync(cancellationToken))
         {
@@ -378,7 +378,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         }
     }
 
-    private BlobClient CreateBlobClient(IObjectDocument objectDocument, string documentPath)
+    private async Task<BlobClient> CreateBlobClientAsync(IObjectDocument objectDocument, string documentPath)
     {
         ArgumentNullException.ThrowIfNull(objectDocument.ObjectName);
 
@@ -393,7 +393,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
 
         if (autoCreateContainer)
         {
-            container.CreateIfNotExists();
+            await container.CreateIfNotExistsAsync();
         }
 
         var blob = container.GetBlobClient(documentPath)
@@ -429,7 +429,7 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             documentPath = $"{document.Active.StreamIdentifier}.json";
         }
 
-        var blob = CreateBlobClient(document, documentPath);
+        var blob = await CreateBlobClientAsync(document, documentPath);
 
         try
         {

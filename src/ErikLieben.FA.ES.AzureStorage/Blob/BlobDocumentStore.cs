@@ -66,7 +66,7 @@ public BlobDocumentStore(
     {
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
-        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var blob = await CreateBlobClientAsync(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         try
         {
@@ -164,7 +164,7 @@ public async Task<IObjectDocument> GetAsync(
 
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
-        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var blob = await CreateBlobClientAsync(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         ETag? etag;
         try
@@ -259,7 +259,7 @@ public async Task<IObjectDocument> GetAsync(
 
         // Use document-specific store if configured, otherwise fall back to default
         var documentStore = GetDocumentConnectionName(document);
-        var blob = CreateBlobClient(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var blob = await CreateBlobClientAsync(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         // Use SerializeBlobEventStreamDocument to exclude legacy *ConnectionName properties
         var serializeDoc = SerializeBlobEventStreamDocument.From(document);
@@ -285,7 +285,7 @@ public async Task<IObjectDocument> GetAsync(
         document.SetHash(hash, document.Hash);
     }
 
-    private BlobClient CreateBlobClient(
+    private async Task<BlobClient> CreateBlobClientAsync(
         string connectionName,
         string objectDocumentContainerName,
         string documentPath)
@@ -295,7 +295,7 @@ public async Task<IObjectDocument> GetAsync(
         var container = client.GetBlobContainerClient(objectDocumentContainerName.ToLowerInvariant());
         if (blobSettings.AutoCreateContainer)
         {
-            container.CreateIfNotExists();
+            await container.CreateIfNotExistsAsync();
         }
         var blob = container.GetBlobClient(documentPath)
             ?? throw new DocumentConfigurationException("Unable to create blobClient.");
