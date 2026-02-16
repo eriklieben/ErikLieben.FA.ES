@@ -79,6 +79,13 @@ public abstract class BaseEventStream : IEventStream
     /// </summary>
     protected JsonTypeInfo? JsonTypeInfoAgg;
 
+    // Cached filtered action/notification lists for GetSession, rebuilt when registrations change
+    private bool _sessionCacheDirty = true;
+    private List<IStreamDocumentChunkClosedNotification> _cachedChunkClosedNotifications = [];
+    private List<IAsyncPostCommitAction> _cachedPostCommitActions = [];
+    private List<IPreAppendAction> _cachedPreAppendActions = [];
+    private List<IPostReadAction> _cachedPostReadActions = [];
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseEventStream"/> class.
     /// </summary>
@@ -250,6 +257,7 @@ public abstract class BaseEventStream : IEventStream
         activity?.SetTag(FaesSemanticConventions.ActionType, action?.GetType().FullName);
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -261,6 +269,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -272,6 +281,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -283,6 +293,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -294,6 +305,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(notification);
         Notifications.Add(notification);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -448,14 +460,23 @@ public abstract class BaseEventStream : IEventStream
     /// <returns>A new leased session instance.</returns>
     protected ILeasedSession GetSession(List<IAction> actions)
     {
+        if (_sessionCacheDirty)
+        {
+            _cachedChunkClosedNotifications = Notifications.OfType<IStreamDocumentChunkClosedNotification>().ToList();
+            _cachedPostCommitActions = actions.OfType<IAsyncPostCommitAction>().ToList();
+            _cachedPreAppendActions = actions.OfType<IPreAppendAction>().ToList();
+            _cachedPostReadActions = actions.OfType<IPostReadAction>().ToList();
+            _sessionCacheDirty = false;
+        }
+
         return new LeasedSession(
             this,
             Document,
             StreamDependencies.DataStore,
             StreamDependencies.ObjectDocumentFactory,
-            Notifications.OfType<IStreamDocumentChunkClosedNotification>(),
-            actions.OfType<IAsyncPostCommitAction>(),
-            actions.OfType<IPreAppendAction>(),
-            actions.OfType<IPostReadAction>());
+            _cachedChunkClosedNotifications,
+            _cachedPostCommitActions,
+            _cachedPreAppendActions,
+            _cachedPostReadActions);
     }
 }
