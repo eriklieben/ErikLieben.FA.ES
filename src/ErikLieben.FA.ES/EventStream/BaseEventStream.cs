@@ -154,13 +154,14 @@ public abstract class BaseEventStream : IEventStream
         if (UpCasters.Count != 0)
         {
             events = TryUpcasting(events);
+            // Upcasting may introduce nulls; remove them
+            events.RemoveAll(e => e == null);
         }
 
-        var result = events.Where(e => e != null).ToList();
-        activity?.SetTag(FaesSemanticConventions.EventCount, result.Count);
-        FaesMetrics.RecordEventsRead(result.Count, Document.ObjectName, "blob");
+        activity?.SetTag(FaesSemanticConventions.EventCount, events.Count);
+        FaesMetrics.RecordEventsRead(events.Count, Document.ObjectName, "blob");
 
-        return result;
+        return events;
     }
 
     private List<IEvent> TryUpcasting(List<IEvent> events)
