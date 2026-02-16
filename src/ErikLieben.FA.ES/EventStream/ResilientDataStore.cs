@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -214,7 +215,7 @@ public class ResilientDataStore : IDataStore, IDataStoreRecovery
     /// Azure.RequestFailedException and CosmosException handlers should be registered
     /// by the respective provider packages to enable retry based on their status codes.
     /// </remarks>
-    private static readonly List<Func<Exception, int?>> StatusCodeExtractors = [];
+    private static readonly ConcurrentBag<Func<Exception, int?>> StatusCodeExtractors = [];
 
     /// <summary>
     /// Registers a custom status code extractor for exception types.
