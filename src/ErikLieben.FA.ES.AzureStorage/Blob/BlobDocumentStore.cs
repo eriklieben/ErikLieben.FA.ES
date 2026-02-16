@@ -1,4 +1,5 @@
-﻿using Azure;
+﻿using System.Collections.Concurrent;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
@@ -20,6 +21,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// </summary>
 public class BlobDocumentStore : IBlobDocumentStore
 {
+    private static readonly ConcurrentDictionary<string, bool> VerifiedContainers = new(StringComparer.OrdinalIgnoreCase);
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamBlobSettings blobSettings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
@@ -292,8 +294,9 @@ public async Task<IObjectDocument> GetAsync(
     {
         var client = clientFactory.CreateClient(connectionName);
 
-        var container = client.GetBlobContainerClient(objectDocumentContainerName.ToLowerInvariant());
-        if (blobSettings.AutoCreateContainer)
+        var containerNameLower = objectDocumentContainerName.ToLowerInvariant();
+        var container = client.GetBlobContainerClient(containerNameLower);
+        if (blobSettings.AutoCreateContainer && VerifiedContainers.TryAdd(containerNameLower, true))
         {
             await container.CreateIfNotExistsAsync();
         }

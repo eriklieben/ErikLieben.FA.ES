@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Azure;
 using Azure.Storage.Blobs;
@@ -19,6 +20,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// </summary>
 public class BlobDataStore : IDataStore, IDataStoreRecovery
 {
+    private static readonly ConcurrentDictionary<string, bool> VerifiedContainers = new(StringComparer.OrdinalIgnoreCase);
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
 
@@ -391,7 +393,8 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
-        if (autoCreateContainer)
+        var containerName = objectDocument.ObjectName.ToLowerInvariant();
+        if (autoCreateContainer && VerifiedContainers.TryAdd(containerName, true))
         {
             await container.CreateIfNotExistsAsync();
         }

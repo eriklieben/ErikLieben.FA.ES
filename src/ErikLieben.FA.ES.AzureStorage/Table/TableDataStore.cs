@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -19,6 +20,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Table;
 /// </summary>
 public class TableDataStore : IDataStore, IDataStoreRecovery
 {
+    private static readonly ConcurrentDictionary<string, bool> VerifiedTables = new(StringComparer.OrdinalIgnoreCase);
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings settings;
 
@@ -483,7 +485,7 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
         var serviceClient = clientFactory.CreateClient(connectionName);
         var tableClient = serviceClient.GetTableClient(settings.DefaultEventTableName);
 
-        if (settings.AutoCreateTable)
+        if (settings.AutoCreateTable && VerifiedTables.TryAdd(settings.DefaultEventTableName, true))
         {
             await tableClient.CreateIfNotExistsAsync();
         }
