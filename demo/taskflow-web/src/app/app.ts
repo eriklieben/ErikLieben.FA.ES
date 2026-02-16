@@ -1,13 +1,15 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, DestroyRef } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule, MatDrawerMode } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { ThemeService } from './core/services/theme.service';
 import { SignalRService } from './core/services/signalr.service';
@@ -55,8 +57,12 @@ export class App implements OnInit, OnDestroy {
   readonly signalrService = inject(SignalRService);
   readonly userContext = inject(UserContextService);
   readonly snackBar = inject(MatSnackBar);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly title = 'TaskFlow';
+  readonly isMobile = signal(false);
+  readonly sidenavMode = computed<MatDrawerMode>(() => this.isMobile() ? 'over' : 'side');
   readonly sidenavOpened = signal(true);
 
   // Collapsible section states (all expanded by default)
@@ -84,6 +90,17 @@ export class App implements OnInit, OnDestroy {
   readonly connectionState = signal<HubConnectionState>(HubConnectionState.Disconnected);
 
   ngOnInit() {
+    // Observe mobile breakpoint to switch sidenav mode
+    this.breakpointObserver
+      .observe('(max-width: 768px)')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        this.isMobile.set(result.matches);
+        if (result.matches) {
+          this.sidenavOpened.set(false);
+        }
+      });
+
     // Connect to SignalR hub
     this.signalrService.connect().catch(err => {
       console.error('Failed to connect to SignalR:', err);
@@ -133,6 +150,10 @@ export class App implements OnInit, OnDestroy {
 
   toggleSidenav() {
     this.sidenavOpened.update(v => !v);
+  }
+
+  onSidenavClosed() {
+    this.sidenavOpened.set(false);
   }
 
   get isConnected(): boolean {

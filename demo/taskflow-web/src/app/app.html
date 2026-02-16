@@ -2,7 +2,8 @@
   <mat-sidenav
     #sidenav
     [opened]="sidenavOpened()"
-    mode="side"
+    [mode]="sidenavMode()"
+    (closedStart)="onSidenavClosed()"
     class="app-sidenav">
     <div class="sidenav-content">
       <!-- Sidebar Header - aligns with main header -->
@@ -60,6 +61,10 @@
             <a mat-list-item routerLink="/sprints" routerLinkActive="active-link">
               <mat-icon matListItemIcon>sprint</mat-icon>
               <span matListItemTitle>Sprints</span>
+            </a>
+            <a mat-list-item routerLink="/releases" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>new_releases</mat-icon>
+              <span matListItemTitle>Releases</span>
             </a>
           </div>
         </div>
