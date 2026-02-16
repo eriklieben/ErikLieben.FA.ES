@@ -140,7 +140,7 @@ public class BlobObjectIdProviderTests
                 .Returns(Response.FromValue(true, Substitute.For<Response>()));
 
             var mockAsyncPageable = CreateMockAsyncPageable([], null);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -148,6 +148,7 @@ public class BlobObjectIdProviderTests
 
             // Assert
             containerClient.Received().GetBlobsAsync(
+                Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(),
                 prefix: "project/",
                 cancellationToken: Arg.Any<CancellationToken>());
         }
@@ -168,7 +169,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncPageable(blobItems, null);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -197,7 +198,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncPageable(blobItems, null);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -224,7 +225,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncPageable(blobItems, continuationToken);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -249,7 +250,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncPageable(blobItems, null);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -479,7 +480,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncEnumerable(blobItems);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -505,7 +506,7 @@ public class BlobObjectIdProviderTests
             };
 
             var mockAsyncPageable = CreateMockAsyncEnumerable(blobItems);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -524,7 +525,7 @@ public class BlobObjectIdProviderTests
                 .Returns(Response.FromValue(true, Substitute.For<Response>()));
 
             var mockAsyncPageable = CreateMockAsyncEnumerable([]);
-            containerClient.GetBlobsAsync(prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
+            containerClient.GetBlobsAsync(Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(), prefix: Arg.Any<string>(), cancellationToken: Arg.Any<CancellationToken>())
                 .Returns(mockAsyncPageable);
 
             // Act
@@ -532,6 +533,7 @@ public class BlobObjectIdProviderTests
 
             // Assert
             containerClient.Received().GetBlobsAsync(
+                Arg.Any<BlobTraits>(), Arg.Any<BlobStates>(),
                 prefix: "project/",
                 cancellationToken: Arg.Any<CancellationToken>());
         }

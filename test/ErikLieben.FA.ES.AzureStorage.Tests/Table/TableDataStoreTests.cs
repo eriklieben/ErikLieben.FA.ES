@@ -1321,6 +1321,132 @@ public class TableDataStoreTests
         }
     }
 
+    /// <summary>
+    /// Tests for the closed stream cache optimization in TableDataStore.
+    /// Uses unique stream IDs per test to avoid interference.
+    /// </summary>
+    [Collection("TableClosedStreamCache")]
+    public class ClosedStreamCacheTests
+    {
+        private readonly IAzureClientFactory<TableServiceClient> clientFactory;
+        private readonly TableServiceClient tableServiceClient;
+        private readonly TableClient eventTableClient;
+        private readonly EventStreamTableSettings tableSettings;
+
+        public ClosedStreamCacheTests()
+        {
+            TableDataStore.ClearClosedStreamCache();
+            clientFactory = Substitute.For<IAzureClientFactory<TableServiceClient>>();
+            tableServiceClient = Substitute.For<TableServiceClient>();
+            eventTableClient = Substitute.For<TableClient>();
+            tableSettings = new EventStreamTableSettings("test-connection");
+
+            clientFactory.CreateClient(Arg.Any<string>()).Returns(tableServiceClient);
+            tableServiceClient.GetTableClient(tableSettings.DefaultEventTableName).Returns(eventTableClient);
+        }
+
+        [Fact]
+        public async Task Should_cache_closed_stream_and_skip_query_on_second_call()
+        {
+            // Arrange
+            var sut = new TableDataStore(clientFactory, tableSettings);
+            var uniqueStreamId = $"closed-table-{Guid.NewGuid():N}-0000000000";
+            var doc = CreateDocumentWithStream(uniqueStreamId);
+            var evt = CreateTableJsonEvent(0);
+
+            // First call: query returns a closed event
+            var closedEntity = new TableEventEntity { EventType = "EventStream.Closed" };
+            eventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(CreateAsyncPageable(new[] { closedEntity }));
+
+            // Act - First call should query and throw
+            await Assert.ThrowsAsync<EventStreamClosedException>(() =>
+                sut.AppendAsync(doc, default, evt));
+
+            // Reset received calls to track second invocation
+            eventTableClient.ClearReceivedCalls();
+
+            // Act - Second call should throw immediately from cache
+            await Assert.ThrowsAsync<EventStreamClosedException>(() =>
+                sut.AppendAsync(doc, default, evt));
+
+            // Assert - No query was made on second call
+            eventTableClient.DidNotReceive().QueryAsync<TableEventEntity>(
+                Arg.Any<string>(), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public void Should_clear_cache_without_error()
+        {
+            TableDataStore.ClearClosedStreamCache();
+            // No exception means it works
+            Assert.True(true);
+        }
+
+        [Fact]
+        public async Task Should_query_table_for_closed_event_type_only()
+        {
+            // Arrange - The query should filter on EventType = 'EventStream.Closed'
+            // using parameterized CreateQueryFilter, not scan the full partition.
+            var sut = new TableDataStore(clientFactory, tableSettings);
+            var doc = CreateDocumentWithStream($"query-filter-{Guid.NewGuid():N}-0000000000");
+            var evt = CreateTableJsonEvent(0);
+
+            string? capturedFilter = null;
+            eventTableClient.QueryAsync<TableEventEntity>(
+                Arg.Do<string>(f => capturedFilter = f), Arg.Any<int?>(), Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+                .Returns(AsyncPageable<TableEventEntity>.FromPages(Array.Empty<Page<TableEventEntity>>()));
+
+            // Act
+            await sut.AppendAsync(doc, default, evt);
+
+            // Assert - Filter should contain EventType eq 'EventStream.Closed'
+            Assert.NotNull(capturedFilter);
+            Assert.Contains("EventType eq 'EventStream.Closed'", capturedFilter);
+        }
+
+        private static IObjectDocument CreateDocumentWithStream(string streamId)
+        {
+            var doc = Substitute.For<IObjectDocument>();
+            var streamInfo = new StreamInformation
+            {
+                StreamIdentifier = streamId,
+                DataStore = "test-connection"
+            };
+            doc.Active.Returns(streamInfo);
+            doc.ObjectName.Returns("TestObject");
+            doc.ObjectId.Returns("test-id");
+            doc.Hash.Returns((string?)null);
+            doc.TerminatedStreams.Returns(new List<TerminatedStream>());
+            return doc;
+        }
+
+        private static TableJsonEvent CreateTableJsonEvent(int version)
+        {
+            return new TableJsonEvent
+            {
+                EventVersion = version,
+                EventType = "TestEvent",
+                SchemaVersion = 1,
+                Payload = "{}",
+                ActionMetadata = new ActionMetadata(),
+                Metadata = new Dictionary<string, string>()
+            };
+        }
+
+        private static AsyncPageable<T> CreateAsyncPageable<T>(IEnumerable<T> items) where T : notnull
+        {
+            var page = Page<T>.FromValues(items.ToList(), null, Substitute.For<Response>());
+            return AsyncPageable<T>.FromPages(new[] { page });
+        }
+    }
+
+    [CollectionDefinition("TableClosedStreamCache", DisableParallelization = true)]
+    public class TableClosedStreamCacheCollection
+    {
+    }
+
     public class PayloadChunkingReadAsStreamTests : TableDataStoreTests
     {
         [Fact]
