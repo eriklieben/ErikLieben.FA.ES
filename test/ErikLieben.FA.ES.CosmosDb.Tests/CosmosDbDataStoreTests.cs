@@ -1034,6 +1034,128 @@ public class CosmosDbDataStoreTests
             // This verifies the method exists and doesn't throw
             Assert.True(true);
         }
+
+        [Fact]
+        public async Task Should_handle_concurrent_access_to_closed_stream_cache()
+        {
+            // The ClosedStreamCache uses ConcurrentDictionary for thread-safe access.
+            // Pre-populate the cache, then verify concurrent reads don't corrupt it.
+            CosmosDbDataStore.ClearClosedStreamCache();
+
+            var freshCosmosClient = Substitute.For<CosmosClient>();
+            var freshDatabase = Substitute.For<Database>();
+            var freshContainer = Substitute.For<Container>();
+
+            var testSettings = new EventStreamCosmosDbSettings
+            {
+                DatabaseName = "concurrent-test-db",
+                EventsContainerName = "concurrent-test-events",
+                AutoCreateContainers = false
+            };
+
+            freshCosmosClient.GetDatabase(testSettings.DatabaseName).Returns(freshDatabase);
+            freshDatabase.GetContainer(testSettings.EventsContainerName).Returns(freshContainer);
+
+            // Return a fresh iterator for each call so the HasMoreResults sequence works
+            var closedEvent = new CosmosDbEventEntity { EventType = "EventStream.Closed" };
+            freshContainer.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(_ =>
+            {
+                var iter = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+                iter.HasMoreResults.Returns(true, false);
+                var resp = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+                resp.Count.Returns(1);
+                resp.GetEnumerator().Returns(__ => new List<CosmosDbEventEntity> { closedEvent }.GetEnumerator());
+                iter.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(resp);
+                return iter;
+            });
+
+            // Use unique stream ID for each concurrent task to populate cache entries
+            var tasks = new List<Task>();
+            for (int i = 0; i < 10; i++)
+            {
+                var streamId = $"concurrent-closed-{i}";
+                var streamInfo = new StreamInformation { StreamIdentifier = streamId };
+                var doc = Substitute.For<IObjectDocument>();
+                doc.Active.Returns(streamInfo);
+                doc.ObjectId.Returns("test-id");
+                doc.ObjectName.Returns("TestObject");
+
+                var sut = new CosmosDbDataStore(freshCosmosClient, testSettings);
+                var jsonEvent = new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = "{}" };
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    await Assert.ThrowsAsync<EventStreamClosedException>(() =>
+                        sut.AppendAsync(doc, default, jsonEvent));
+                }));
+            }
+
+            // Act & Assert - All tasks should complete without deadlocks or data corruption
+            await Task.WhenAll(tasks);
+        }
+
+        [Fact]
+        public async Task Should_throw_from_cache_on_subsequent_calls_without_querying()
+        {
+            CosmosDbDataStore.ClearClosedStreamCache();
+
+            var freshCosmosClient = Substitute.For<CosmosClient>();
+            var freshDatabase = Substitute.For<Database>();
+            var freshContainer = Substitute.For<Container>();
+
+            var testSettings = new EventStreamCosmosDbSettings
+            {
+                DatabaseName = "cache-verify-db",
+                EventsContainerName = "cache-verify-events",
+                AutoCreateContainers = false
+            };
+
+            freshCosmosClient.GetDatabase(testSettings.DatabaseName).Returns(freshDatabase);
+            freshDatabase.GetContainer(testSettings.EventsContainerName).Returns(freshContainer);
+
+            var uniqueStreamId = $"cache-verify-{Guid.NewGuid():N}";
+            var streamInfo = new StreamInformation { StreamIdentifier = uniqueStreamId };
+            var doc = Substitute.For<IObjectDocument>();
+            doc.Active.Returns(streamInfo);
+            doc.ObjectId.Returns("test-id");
+            doc.ObjectName.Returns("TestObject");
+
+            var sut = new CosmosDbDataStore(freshCosmosClient, testSettings);
+            var jsonEvent = new JsonEvent { EventType = "TestEvent", EventVersion = 0, Payload = "{}" };
+
+            // First call returns closed event from query
+            var closedEvent = new CosmosDbEventEntity { EventType = "EventStream.Closed" };
+            var feedIterator = Substitute.For<FeedIterator<CosmosDbEventEntity>>();
+            feedIterator.HasMoreResults.Returns(true, false);
+            var feedResponse = Substitute.For<FeedResponse<CosmosDbEventEntity>>();
+            feedResponse.Count.Returns(1);
+            feedResponse.GetEnumerator().Returns(new List<CosmosDbEventEntity> { closedEvent }.GetEnumerator());
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+
+            freshContainer.GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
+
+            // First call populates cache
+            await Assert.ThrowsAsync<EventStreamClosedException>(() =>
+                sut.AppendAsync(doc, default, jsonEvent));
+
+            freshContainer.ClearReceivedCalls();
+
+            // Second call should use cache
+            await Assert.ThrowsAsync<EventStreamClosedException>(() =>
+                sut.AppendAsync(doc, default, jsonEvent));
+
+            // No query was made
+            freshContainer.DidNotReceive().GetItemQueryIterator<CosmosDbEventEntity>(
+                Arg.Any<QueryDefinition>(),
+                Arg.Any<string>(),
+                Arg.Any<QueryRequestOptions>());
+        }
     }
 
     /// <summary>
