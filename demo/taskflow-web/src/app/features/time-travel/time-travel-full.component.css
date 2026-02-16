@@ -92,7 +92,7 @@ mat-card {
       width: 100%;
     }
 
-    // Set slider value indicator text to dark color for contrast with mauve background
+    /* Set slider value indicator text to dark color for contrast with mauve background */
     ::ng-deep {
       .mdc-slider__value-indicator-text {
         color: var(--ctp-crust);

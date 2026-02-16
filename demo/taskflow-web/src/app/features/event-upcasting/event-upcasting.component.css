@@ -439,7 +439,7 @@ mat-card {
     margin: 4px 0;
   }
 
-  // Green highlight for new events
+  /* Green highlight for new events */
   .event-column.new & {
     &.highlight {
       background-color: rgba(166, 227, 161, 0.1);
@@ -476,7 +476,7 @@ mat-card {
     box-shadow: 0 0 0 2px var(--ctp-peach);
   }
 
-  // Green dot for new events
+  /* Green dot for new events */
   .event-column.new & {
     &.highlight {
       background-color: var(--ctp-green);

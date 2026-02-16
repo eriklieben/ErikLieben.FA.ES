@@ -53,7 +53,7 @@ mat-card {
   }
 }
 
-// Developer toast styling - distinctive diagonal stripe pattern
+/* Developer toast styling - distinctive diagonal stripe pattern */
 :host ::ng-deep .dev-toast {
   .mdc-snackbar__surface {
     background: linear-gradient(
