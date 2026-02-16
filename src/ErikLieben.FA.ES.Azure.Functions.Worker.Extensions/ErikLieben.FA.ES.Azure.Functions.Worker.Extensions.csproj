@@ -11,7 +11,7 @@
         <Title>ErikLieben.FA.ES.Azure.Functions.Worker.Extensions</Title>
         <Authors>Erik Lieben</Authors>
         <Company>Erik Lieben</Company>
-        <Description>A lightweight, AOT-friendly Event Sourcing toolkit for .NET</Description>
+        <Description>Azure Functions Worker Extensions for ErikLieben.FA.ES event sourcing framework. Provides input and trigger bindings for aggregates and projections.</Description>
         <PackageTags>eventsourcing;aot;dotnet;csharp</PackageTags>
         <RepositoryUrl>https://github.com/eriklieben/ErikLieben.FA.ES</RepositoryUrl>
 
@@ -33,15 +33,15 @@
 	<ItemGroup>
 		<PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
 		<PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="$(MicrosoftAzureFunctionsExtensionsVersion)" />
-		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="$(MicrosoftAzureFunctionsWorkerVersion)" />
-		<PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="$(MicrosoftAzureFunctionsWorkerCoreVersion)" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="2.51.0" />
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions" Version="$(MicrosoftAzureFunctionsWorkerExtensionsAbstractionsVersion)" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="$(MicrosoftBclAsyncInterfacesVersion)" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.3" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="$(MicrosoftExtensionsAzureVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="$(MicrosoftExtensionsVersion)" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
 		<PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
-		<PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+		<PackageReference Include="System.Text.Json" Version="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>

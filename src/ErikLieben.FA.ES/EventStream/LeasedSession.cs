@@ -118,24 +118,24 @@ public class LeasedSession : ILeasedSession
             EventType = eventName,
             EventVersion = version,
             SchemaVersion = eventTypeInfo.SchemaVersion,
-            Payload = JsonSerializer.Serialize(payload, eventTypeInfo.JsonTypeInfo),
             ActionMetadata = actionMetadata ?? EmptyActionMetadata,
             ExternalSequencer = externalSequencer,
             Metadata = metadata ?? EmptyMetadata,
         };
 
-        // PRE-APPEND ACTIONS
+        // Run pre-append actions before serialization so we only serialize once
         if (preAppendActions.Count != 0)
         {
             foreach (var action in preAppendActions)
             {
-                @event = @event with
-                {
-                    Payload =
-                    JsonSerializer.Serialize(action.PreAppend(payload, @event, document)(), eventTypeInfo.JsonTypeInfo),
-                };
+                payload = action.PreAppend(payload, @event, document)();
             }
         }
+
+        @event = @event with
+        {
+            Payload = JsonSerializer.Serialize(payload, eventTypeInfo.JsonTypeInfo),
+        };
 
         Buffer.Add(@event);
 
