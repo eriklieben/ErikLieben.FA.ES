@@ -1746,14 +1746,15 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Seed Demo Data Failed",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, environment),
                 statusCode: 500);
         }
     }
 
     private static async Task<IResult> SeedDemoUsers(
         [FromServices] IUserProfileFactory userProfileFactory,
-        [FromServices] IProjectionService projectionService)
+        [FromServices] IProjectionService projectionService,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -1822,7 +1823,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Seed Users Failed",
-                detail: ex.Message,
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -1904,7 +1905,8 @@ public static class AdminEndpoints
 
     private static async Task<IResult> GetStorageDebugInfo(
         [FromServices] IConfiguration configuration,
-        [FromServices] Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient> clientFactory)
+        [FromServices] Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient> clientFactory,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -1939,7 +1941,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Storage Debug Failed",
-                detail: ex.Message,
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -1979,6 +1981,7 @@ public static class AdminEndpoints
 
     private static async Task<IResult> GetCosmosDbDocuments(
         [FromServices] IServiceProvider serviceProvider,
+        [FromServices] IWebHostEnvironment env,
         [FromQuery] string? objectName = null,
         [FromQuery] string? containerName = null)
     {
@@ -2027,14 +2030,15 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "CosmosDB Query Failed",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500);
         }
     }
 
     private static async Task<IResult> GetProjectionStatus(
         [FromServices] IProjectionService projectionService,
-        [FromServices] IServiceProvider serviceProvider)
+        [FromServices] IServiceProvider serviceProvider,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -2214,7 +2218,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to get projection status",
-                detail: ex.Message,
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500);
         }
     }
@@ -2348,7 +2352,8 @@ public static class AdminEndpoints
     private static async Task<IResult> SetProjectionStatusEndpoint(
         string name,
         [FromBody] SetProjectionStatusRequest request,
-        [FromServices] IServiceProvider serviceProvider)
+        [FromServices] IServiceProvider serviceProvider,
+        [FromServices] IWebHostEnvironment env)
     {
         if (!Enum.TryParse<ProjectionStatus>(request.Status, ignoreCase: true, out var status))
         {
@@ -2392,7 +2397,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to set projection status",
-                detail: ex.Message,
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500);
         }
     }
@@ -2552,7 +2557,8 @@ public static class AdminEndpoints
         [FromServices] ProjectDashboardFactory projectDashboardFactory,
         [FromServices] UserProfilesFactory userProfilesFactory,
         [FromServices] EventUpcastingDemonstrationFactory eventUpcastingDemonstrationFactory,
-        [FromServices] ProjectKanbanBoardFactory projectKanbanBoardFactory)
+        [FromServices] ProjectKanbanBoardFactory projectKanbanBoardFactory,
+        [FromServices] IWebHostEnvironment env)
     {
         var results = new List<object>();
         var projectionNames = new[] { "ActiveWorkItems", "ProjectDashboard", "UserProfiles", "EventUpcastingDemonstration", "ProjectKanbanBoard", "EpicSummary", "SprintDashboard" };
@@ -2736,7 +2742,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to build projections",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500);
         }
     }
@@ -2782,7 +2788,8 @@ public static class AdminEndpoints
 
     private static async Task<IResult> GetProjectionMetadata(
         string name,
-        [FromServices] Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient> clientFactory)
+        [FromServices] Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient> clientFactory,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -2807,7 +2814,7 @@ public static class AdminEndpoints
         }
         catch (Exception ex)
         {
-            return Results.Problem($"Failed to get projection metadata: {ex.Message}");
+            return Results.Problem(SafeErrorDetail(ex, env));
         }
     }
 
@@ -2833,7 +2840,8 @@ public static class AdminEndpoints
 
     private static async Task<IResult> GetUserProfilesProjectionStatus(
         [FromServices] IProjectionService projectionService,
-        [FromServices] TaskFlow.Domain.Projections.UserProfilesFactory userProfilesFactory)
+        [FromServices] TaskFlow.Domain.Projections.UserProfilesFactory userProfilesFactory,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -2870,7 +2878,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to get UserProfiles projection status",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -2885,7 +2893,8 @@ public static class AdminEndpoints
         [FromServices] IProjectFactory projectFactory,
         [FromServices] IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IEnumerable<TaskFlow.Api.Projections.IProjectionHandler> projectionHandlers,
-        [FromServices] IHubContext<TaskFlowHub> hubContext)
+        [FromServices] IHubContext<TaskFlowHub> hubContext,
+        [FromServices] IWebHostEnvironment env)
     {
         // Disable projection publishing during seeding - projections should be built separately
         using var projectionDisableScope = PublishProjectionUpdateAction.DisableScope();
@@ -3090,7 +3099,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to seed demo epics",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -3108,6 +3117,7 @@ public static class AdminEndpoints
         [FromServices] IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IEnumerable<TaskFlow.Api.Projections.IProjectionHandler> projectionHandlers,
         [FromServices] IHubContext<TaskFlowHub> hubContext,
+        [FromServices] IWebHostEnvironment env,
         [FromServices] CosmosClient? cosmosClient = null)
     {
         // Disable projection publishing during seeding - projections should be built separately
@@ -3180,7 +3190,7 @@ public static class AdminEndpoints
                 Console.WriteLine($"[SEED-SPRINTS] CosmosDB error: {cosmosEx.StatusCode} - {cosmosEx.Message}");
                 return Results.Problem(
                     title: "CosmosDB Error",
-                    detail: $"CosmosDB returned error {cosmosEx.StatusCode}: {cosmosEx.Message}",
+                    detail: SafeErrorDetail(cosmosEx, env),
                     statusCode: 503
                 );
             }
@@ -3189,7 +3199,7 @@ public static class AdminEndpoints
                 Console.WriteLine($"[SEED-SPRINTS] CosmosDB connection test failed: {ex.GetType().Name} - {ex.Message}");
                 return Results.Problem(
                     title: "CosmosDB Connection Failed",
-                    detail: $"Failed to connect to CosmosDB: {ex.Message}",
+                    detail: SafeErrorDetail(ex, env),
                     statusCode: 503
                 );
             }
@@ -3491,7 +3501,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to seed demo sprints",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -3502,7 +3512,8 @@ public static class AdminEndpoints
         [FromServices] IUserProfileFactory userProfileFactory,
         [FromServices] IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IHubContext<TaskFlowHub> hubContext,
-        [FromServices] IEnumerable<TaskFlow.Api.Projections.IProjectionHandler> projectionHandlers)
+        [FromServices] IEnumerable<TaskFlow.Api.Projections.IProjectionHandler> projectionHandlers,
+        [FromServices] IWebHostEnvironment env)
     {
         // Disable projection publishing during seeding - projections should be built separately
         using var projectionDisableScope = PublishProjectionUpdateAction.DisableScope();
@@ -3710,7 +3721,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to seed demo releases",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -3723,7 +3734,8 @@ public static class AdminEndpoints
         string id,
         [FromServices] IObjectDocumentFactory objectDocumentFactory,
         [FromServices] IEventStreamFactory eventStreamFactory,
-        [FromServices] IEpicFactory epicFactory)
+        [FromServices] IEpicFactory epicFactory,
+        [FromServices] IWebHostEnvironment env)
     {
         try
         {
@@ -3779,7 +3791,7 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to get epic events",
-                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
@@ -3875,9 +3887,21 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to read benchmark file",
-                detail: ex.Message,
+                detail: SafeErrorDetail(ex, env),
                 statusCode: 500
             );
         }
+    }
+
+    private static string SafeErrorDetail(Exception ex, IWebHostEnvironment env)
+    {
+        if (env.IsDevelopment())
+        {
+            return ex.InnerException != null
+                ? $"{ex.Message}\nInner: {ex.InnerException.Message}"
+                : ex.Message;
+        }
+
+        return "An internal error occurred. Check server logs for details.";
     }
 }
