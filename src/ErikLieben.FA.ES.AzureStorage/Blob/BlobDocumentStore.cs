@@ -137,7 +137,8 @@ public BlobDocumentStore(
         }
         var newDoc = ToBlobEventStreamDocument(doc);
 
-        newDoc.SetHash(ComputeSha256Hash(json), ComputeSha256Hash(json));
+        var hash = ComputeSha256Hash(json);
+        newDoc.SetHash(hash, hash);
         return newDoc;
     }
 
