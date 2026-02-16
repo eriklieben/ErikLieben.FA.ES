@@ -84,10 +84,12 @@ public abstract class Aggregate : IBase, ISnapshotTracker
             events = await Stream.ReadAsync();
         }
 
-        var eventsToFold = events.ToList();
-        activity?.SetTag(FaesSemanticConventions.EventsFolded, eventsToFold.Count);
+        activity?.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
 
-        eventsToFold.ForEach(Fold);
+        foreach (var e in events)
+        {
+            Fold(e);
+        }
     }
 
     /// <summary>
