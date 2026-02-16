@@ -21,6 +21,14 @@ namespace ErikLieben.FA.ES.AzureStorage.Table;
 public class TableDataStore : IDataStore, IDataStoreRecovery
 {
     private static readonly ConcurrentDictionary<string, bool> VerifiedTables = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Cache of stream IDs that are known to be closed.
+    /// Once a stream is closed, it remains closed forever, so we can cache this
+    /// to avoid querying Table Storage on every append.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, byte> ClosedStreamCache = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly IAzureClientFactory<TableServiceClient> clientFactory;
     private readonly EventStreamTableSettings settings;
 
@@ -441,6 +449,17 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
 
     private static async Task CheckStreamNotClosedAsync(TableClient tableClient, IObjectDocument document, CancellationToken cancellationToken = default)
     {
+        var streamId = document.Active.StreamIdentifier;
+
+        // Check cache first to avoid unnecessary Table Storage query
+        if (ClosedStreamCache.ContainsKey(streamId))
+        {
+            throw new EventStreamClosedException(
+                streamId,
+                $"Cannot append events to closed stream '{streamId}'. " +
+                "The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+
         int? chunkIdentifier = null;
         if (document.Active.ChunkingEnabled())
         {
@@ -451,25 +470,35 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
 
         var partitionKey = GetPartitionKey(document, chunkIdentifier);
 
-        // Query for the last event to check if stream is closed
-        var filter = $"PartitionKey eq '{partitionKey}'";
+        // Query only for EventStream.Closed events instead of scanning the full partition
+        var filter = $"PartitionKey eq '{partitionKey}' and EventType eq 'EventStream.Closed'";
 
-        TableEventEntity? lastEvent = null;
-        await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(filter, cancellationToken: cancellationToken))
+        await foreach (var entity in tableClient.QueryAsync<TableEventEntity>(
+            filter,
+            maxPerPage: 1,
+            select: new[] { "EventType" },
+            cancellationToken: cancellationToken))
         {
-            if (lastEvent == null || entity.EventVersion > lastEvent.EventVersion)
-            {
-                lastEvent = entity;
-            }
-        }
+            // Cache this closed status — streams never reopen
+            ClosedStreamCache.TryAdd(streamId, 0);
 
-        if (lastEvent != null && lastEvent.EventType == "EventStream.Closed")
-        {
             throw new EventStreamClosedException(
-                document.Active.StreamIdentifier,
-                $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
+                streamId,
+                $"Cannot append events to closed stream '{streamId}'. " +
                 "The stream was closed and may have a continuation stream. Please retry on the active stream.");
         }
+    }
+
+    /// <summary>
+    /// Clears the closed stream cache. Primarily intended for testing scenarios.
+    /// </summary>
+    /// <remarks>
+    /// In production, this should rarely be needed as closed streams remain closed.
+    /// However, it can be useful after database resets in test environments.
+    /// </remarks>
+    public static void ClearClosedStreamCache()
+    {
+        ClosedStreamCache.Clear();
     }
 
     private async Task<TableClient> GetTableClientAsync(IObjectDocument document)
