@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,7 +31,7 @@ interface ServiceHealth {
   templateUrl: './admin-full.component.html',
   styleUrl: './admin-full.component.css'
 })
-export class AdminFullComponent implements OnInit, OnDestroy {
+export class AdminFullComponent implements OnInit {
   private readonly adminApi = inject(AdminApiService);
   private readonly functionsApi = inject(FunctionsApiService);
   private readonly snackBar = inject(MatSnackBar);
@@ -46,10 +46,6 @@ export class AdminFullComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadStorageConnection();
     this.refreshHealthChecks();
-  }
-
-  ngOnDestroy() {
-    // Cleanup if needed
   }
 
   refreshHealthChecks() {

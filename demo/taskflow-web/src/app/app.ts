@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -49,7 +49,7 @@ import { HubConnectionState } from '@microsoft/signalr';
     ])
   ]
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   readonly router = inject(Router);
   readonly themeService = inject(ThemeService);
   readonly signalrService = inject(SignalRService);
