@@ -217,7 +217,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
         var results = new List<ProjectionStatusInfo>();
 
 #pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
-        await foreach (var blobItem in _containerClient.GetBlobsAsync(cancellationToken: cancellationToken))
+        await foreach (var blobItem in _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: null, cancellationToken: cancellationToken))
         {
             if (!blobItem.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
@@ -244,7 +244,7 @@ public class BlobProjectionStatusCoordinator : IProjectionStatusCoordinator
         var recovered = 0;
 
 #pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
-        await foreach (var blobItem in _containerClient.GetBlobsAsync(cancellationToken: cancellationToken))
+        await foreach (var blobItem in _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: null, cancellationToken: cancellationToken))
         {
             if (!blobItem.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {

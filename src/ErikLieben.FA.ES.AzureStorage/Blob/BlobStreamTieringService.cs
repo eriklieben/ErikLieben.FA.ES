@@ -48,7 +48,7 @@ public class BlobStreamTieringService : IBlobStreamTieringService
             AccessTier? previousTier = null;
             var count = 0;
 
-            await foreach (var blob in container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+            await foreach (var blob in container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken))
             {
                 if (count == 0 && blob.Properties.AccessTier.HasValue)
                 {
@@ -91,7 +91,7 @@ public class BlobStreamTieringService : IBlobStreamTieringService
         var container = await GetContainerAsync(objectName);
         var prefix = GetStreamPrefix(streamId);
 
-        var enumerator = container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken)
+        var enumerator = container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
         try
         {
@@ -129,7 +129,7 @@ public class BlobStreamTieringService : IBlobStreamTieringService
 
             var needsRehydration = false;
 
-            await foreach (var blob in container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+            await foreach (var blob in container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken))
             {
                 if (blob.Properties.AccessTier == AccessTier.Archive)
                 {

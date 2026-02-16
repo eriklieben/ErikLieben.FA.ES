@@ -5,6 +5,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Migration;
 
 using Azure;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.EventStreamManagement.Cutover;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -192,7 +193,7 @@ public class BlobMigrationRoutingTable : IMigrationRoutingTable
 
             var objectIds = new List<string>();
 
-            await foreach (var blobItem in containerClient.GetBlobsAsync(cancellationToken: cancellationToken))
+            await foreach (var blobItem in containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: null, cancellationToken: cancellationToken))
             {
                 if (blobItem.Name.EndsWith(".routing.json"))
                 {

@@ -2,6 +2,7 @@ using ErikLieben.FA.ES.Processors;
 using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.Documents;
@@ -154,7 +155,7 @@ public partial class BlobSnapShotStore(
         var snapshots = new List<SnapshotMetadata>();
 
         // List all blobs with the snapshot prefix
-        await foreach (var blobItem in container.GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken))
+        await foreach (var blobItem in container.GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken))
         {
             var metadata = ParseSnapshotBlobName(blobItem.Name, blobItem.Properties.ContentLength, blobItem.Properties.CreatedOn);
             if (metadata is not null)

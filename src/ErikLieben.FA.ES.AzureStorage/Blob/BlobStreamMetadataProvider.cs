@@ -83,7 +83,7 @@ public class BlobStreamMetadataProvider : IStreamMetadataProvider
 
 #pragma warning disable S3267 // Loops should be simplified - await foreach cannot use LINQ without System.Linq.Async
         await foreach (var blobItem in containerClient.GetBlobsAsync(
-            prefix: prefix, cancellationToken: cancellationToken))
+            BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken))
         {
             eventCount++;
             UpdateDateRange(blobItem, ref oldest, ref newest);

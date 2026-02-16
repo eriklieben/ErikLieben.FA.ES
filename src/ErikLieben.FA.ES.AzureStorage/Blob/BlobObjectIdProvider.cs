@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using Microsoft.Extensions.Azure;
@@ -69,7 +70,7 @@ public class BlobObjectIdProvider : IObjectIdProvider
 
         // Use Azure Blob Storage's native pagination with continuation tokens
         var resultSegment = container
-            .GetBlobsAsync(prefix: prefix, cancellationToken: cancellationToken)
+            .GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix: prefix, cancellationToken: cancellationToken)
             .AsPages(continuationToken, pageSize);
 
         // Get only the first page (we only need one page per call)
@@ -155,6 +156,7 @@ public class BlobObjectIdProvider : IObjectIdProvider
         }
 
         await foreach (var blobItem in container.GetBlobsAsync(
+            BlobTraits.None, BlobStates.None,
             prefix: prefix,
             cancellationToken: cancellationToken))
         {
