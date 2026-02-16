@@ -10,10 +10,12 @@ namespace TaskFlow.Api.Middleware;
 public class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
+    private readonly IWebHostEnvironment _environment;
 
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IWebHostEnvironment environment)
     {
         _logger = logger;
+        _environment = environment;
     }
 
     public async ValueTask<bool> TryHandleAsync(
@@ -27,16 +29,18 @@ public class GlobalExceptionHandler : IExceptionHandler
             httpContext.Request.Path,
             httpContext.Request.Method);
 
+        var isDevelopment = _environment.IsDevelopment();
+
         var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
         {
             Status = (int)HttpStatusCode.InternalServerError,
             Title = "An error occurred while processing your request",
-            Detail = exception.Message,
+            Detail = isDevelopment ? exception.Message : "An internal error occurred. Check logs for details.",
             Instance = httpContext.Request.Path
         };
 
         // Add additional context in development mode
-        if (httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+        if (isDevelopment)
         {
             problemDetails.Extensions["stackTrace"] = exception.StackTrace;
             problemDetails.Extensions["exceptionType"] = exception.GetType().Name;
