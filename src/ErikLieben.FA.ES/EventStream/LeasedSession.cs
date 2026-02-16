@@ -13,6 +13,9 @@ namespace ErikLieben.FA.ES.EventStream;
 /// </summary>
 public class LeasedSession : ILeasedSession
 {
+    private static readonly ActionMetadata EmptyActionMetadata = new();
+    private static readonly Dictionary<string, string> EmptyMetadata = new();
+
     private readonly IDataStore datastore;
     private readonly IObjectDocument document;
     private readonly IObjectDocumentFactory documentstore;
@@ -116,9 +119,9 @@ public class LeasedSession : ILeasedSession
             EventVersion = version,
             SchemaVersion = eventTypeInfo.SchemaVersion,
             Payload = JsonSerializer.Serialize(payload, eventTypeInfo.JsonTypeInfo),
-            ActionMetadata = actionMetadata ?? new ActionMetadata(),
+            ActionMetadata = actionMetadata ?? EmptyActionMetadata,
             ExternalSequencer = externalSequencer,
-            Metadata = metadata ?? new Dictionary<string, string>(),
+            Metadata = metadata ?? EmptyMetadata,
         };
 
         // PRE-APPEND ACTIONS
