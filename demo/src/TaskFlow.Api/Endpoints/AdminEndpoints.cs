@@ -12,6 +12,7 @@ using TaskFlow.Domain.ValueObjects;
 using ErikLieben.FA.ES;
 using TaskFlow.Domain.ValueObjects.WorkItem;
 using TaskFlow.Domain.ValueObjects.Sprint;
+using TaskFlow.Domain.ValueObjects.Release;
 using TaskFlow.Domain.Projections;
 using TaskFlow.Api.Helpers;
 using ErikLieben.FA.ES.Projections;
@@ -67,6 +68,10 @@ public static class AdminEndpoints
         group.MapPost("/demo/seed-sprints", SeedDemoSprints)
             .WithName("SeedDemoSprints")
             .WithSummary("Seed demo sprints stored in Azure CosmosDB");
+
+        group.MapPost("/demo/seed-releases", SeedDemoReleases)
+            .WithName("SeedDemoReleases")
+            .WithSummary("Seed demo releases stored in S3-compatible storage");
 
         group.MapGet("/events/epic/{id}", GetEpicEvents)
             .WithName("GetEpicEvents")
@@ -147,7 +152,8 @@ public static class AdminEndpoints
             {
                 blob = new { enabled = status.BlobEnabled, name = "Azure Blob Storage" },
                 table = new { enabled = status.TableEnabled, name = "Azure Table Storage" },
-                cosmos = new { enabled = status.CosmosDbEnabled, name = "Azure CosmosDB" }
+                cosmos = new { enabled = status.CosmosDbEnabled, name = "Azure CosmosDB" },
+                s3 = new { enabled = status.S3Enabled, name = "S3-Compatible Storage" }
             },
             timestamp = DateTimeOffset.UtcNow
         });
@@ -354,27 +360,11 @@ public static class AdminEndpoints
         // This is displayed in the RIGHT side "State at Event" card
         var project = await factory.GetAsync(ProjectId.From(projectId.ToString()), (int)version);
 
-        // DEBUG: Log the outcome value and work item counts
-        Console.WriteLine($"[DEBUG] GetProjectAtVersion - ProjectId: {projectId}, Version: {version}");
-        Console.WriteLine($"[DEBUG] IsCompleted: {project.IsCompleted}, Outcome: {project.Outcome} ({(int)project.Outcome})");
-        Console.WriteLine($"[DEBUG] Planned Items: {project.PlannedItemsOrder.Count}");
-        Console.WriteLine($"[DEBUG] In Progress Items: {project.InProgressItemsOrder.Count}");
-        Console.WriteLine($"[DEBUG] Completed Items: {project.CompletedItemsOrder.Count}");
-        Console.WriteLine($"[DEBUG] Total Work Items: {project.PlannedItemsOrder.Count + project.InProgressItemsOrder.Count + project.CompletedItemsOrder.Count}");
-
         // Get document to read all events separately (for metadata)
         var document = await objectDocumentFactory.GetAsync("project", projectId.ToString());
         var eventStream = eventStreamFactory.Create(document);
         var allEvents = await eventStream.ReadAsync();
         var currentVersion = allEvents.MaxBy(e => e.EventVersion)?.EventVersion ?? 0;
-
-        // DEBUG: Log events up to this version
-        var eventsUpToVersion = allEvents.Where(e => e.EventVersion <= version).ToList();
-        Console.WriteLine($"[DEBUG] Events up to version {version}:");
-        foreach (var evt in eventsUpToVersion)
-        {
-            Console.WriteLine($"  - Version {evt.EventVersion}: {evt.EventType}");
-        }
 
         return Results.Ok(new
         {
@@ -3492,6 +3482,225 @@ public static class AdminEndpoints
         {
             return Results.Problem(
                 title: "Failed to seed demo sprints",
+                detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
+                statusCode: 500
+            );
+        }
+    }
+
+    private static async Task<IResult> SeedDemoReleases(
+        [FromServices] IReleaseFactory releaseFactory,
+        [FromServices] IUserProfileFactory userProfileFactory,
+        [FromServices] IObjectDocumentFactory objectDocumentFactory,
+        [FromServices] IHubContext<TaskFlowHub> hubContext,
+        [FromServices] IEnumerable<TaskFlow.Api.Projections.IProjectionHandler> projectionHandlers)
+    {
+        // Disable projection publishing during seeding - projections should be built separately
+        using var projectionDisableScope = PublishProjectionUpdateAction.DisableScope();
+
+        try
+        {
+            Console.WriteLine("[SEED-RELEASES] Starting release seeding...");
+
+            var now = DateTime.UtcNow;
+
+            // Get or create a demo user for Release operations
+            Console.WriteLine("[SEED-RELEASES] Looking up admin user...");
+            var adminEmail = "admin@taskflow.demo";
+            UserProfileId ownerId;
+            try
+            {
+                var existingUser = await objectDocumentFactory.GetFirstByObjectDocumentTag("userprofile", adminEmail);
+                if (existingUser != null)
+                {
+                    ownerId = UserProfileId.From(existingUser.ObjectId);
+                }
+                else
+                {
+                    var (result, userProfile) = await userProfileFactory.CreateProfileAsync(
+                        "Release Admin",
+                        adminEmail,
+                        "Release Manager");
+                    ownerId = userProfile?.Metadata?.Id ?? UserProfileId.New();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SEED-RELEASES] User lookup failed: {ex.Message}, creating new user...");
+                var (result, userProfile) = await userProfileFactory.CreateProfileAsync(
+                    "Release Admin",
+                    $"release-admin-{Guid.NewGuid():N}@taskflow.demo",
+                    "Release Manager");
+                ownerId = userProfile?.Metadata?.Id ?? UserProfileId.New();
+            }
+
+            // Get an existing project to associate releases with
+            Console.WriteLine("[SEED-RELEASES] Looking up project...");
+            ProjectId projectId;
+            try
+            {
+                var existingProject = await objectDocumentFactory.GetFirstByObjectDocumentTag("project", "demo");
+                if (existingProject != null)
+                {
+                    projectId = ProjectId.From(existingProject.ObjectId);
+                }
+                else
+                {
+                    projectId = ProjectId.From(Guid.NewGuid().ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SEED-RELEASES] Project lookup failed: {ex.Message}, using random ID");
+                projectId = ProjectId.From(Guid.NewGuid().ToString());
+            }
+
+            // Release templates: (name, version, targetStatus, notes, rollbackReason?)
+            var releaseTemplates = new (string Name, string Version, ReleaseStatus TargetStatus, string[] Notes, string? RollbackReason)[]
+            {
+                ("Backend API v2.1", "2.1.0", ReleaseStatus.Completed,
+                    new[] { "New REST endpoints for user management", "Performance improvements for batch operations" }, null),
+                ("Frontend Dashboard v3.0", "3.0.0", ReleaseStatus.Deployed,
+                    new[] { "Complete UI redesign with new component library", "Dark mode support" }, null),
+                ("Auth Service Hotfix", "1.5.2", ReleaseStatus.RolledBack,
+                    new[] { "Fix token refresh race condition" }, "Caused session invalidation in edge cases"),
+                ("Data Pipeline v1.0", "1.0.0", ReleaseStatus.Staged,
+                    new[] { "Initial release of real-time data pipeline", "Supports Kafka and EventHub sources" }, null),
+                ("Mobile App v4.2", "4.2.0", ReleaseStatus.Draft,
+                    new[] { "Push notification improvements", "Offline sync capability" }, null),
+            };
+
+            var createdReleases = new List<Release>();
+            var releaseIds = new List<ReleaseId>();
+            var totalReleases = releaseTemplates.Length;
+
+            await hubContext.BroadcastSeedProgress("s3", 0, totalReleases, "Creating releases...");
+
+            for (int i = 0; i < releaseTemplates.Length; i++)
+            {
+                var template = releaseTemplates[i];
+                var releaseId = ReleaseId.New();
+                releaseIds.Add(releaseId);
+
+                var createdAt = now.AddDays(-(totalReleases - i) * 7);
+
+                Console.WriteLine($"[SEED-RELEASES] Creating release {i + 1}/{totalReleases}: {template.Name}");
+
+                try
+                {
+                    var (createResult, release) = await releaseFactory.CreateReleaseWithIdAsync(
+                        releaseId,
+                        template.Name,
+                        template.Version,
+                        projectId,
+                        ownerId,
+                        createdAt: createdAt);
+
+                    if (createResult.IsSuccess && release != null)
+                    {
+                        createdReleases.Add(release);
+
+                        // Add notes
+                        foreach (var note in template.Notes)
+                        {
+                            await release.AddNote(note, ownerId, occurredAt: createdAt.AddHours(1));
+                        }
+
+                        // Progress through lifecycle based on target status
+                        if (template.TargetStatus >= ReleaseStatus.Staged)
+                        {
+                            await release.Stage(ownerId, occurredAt: createdAt.AddDays(1));
+                        }
+
+                        if (template.TargetStatus >= ReleaseStatus.Deployed)
+                        {
+                            await release.Deploy(ownerId, occurredAt: createdAt.AddDays(2));
+                        }
+
+                        if (template.TargetStatus == ReleaseStatus.Completed)
+                        {
+                            await release.Complete(ownerId, occurredAt: createdAt.AddDays(5));
+                        }
+
+                        if (template.TargetStatus == ReleaseStatus.RolledBack && template.RollbackReason != null)
+                        {
+                            await release.Rollback(template.RollbackReason, ownerId, occurredAt: createdAt.AddDays(3));
+                        }
+
+                        Console.WriteLine($"[SEED-RELEASES] Created release: {template.Name} ({template.TargetStatus})");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[SEED-RELEASES] Failed to create release: {template.Name} - {string.Join(", ", createResult.Errors.ToArray().Select(e => e.Message))}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SEED-RELEASES] Exception creating release {template.Name}: {ex.GetType().Name} - {ex.Message}");
+                }
+
+                await hubContext.BroadcastSeedProgress("s3", i + 1, totalReleases, $"Creating releases ({i + 1}/{totalReleases})...");
+            }
+
+            Console.WriteLine($"[SEED-RELEASES] Seeding complete, created {createdReleases.Count} releases");
+
+            // Trigger projection updates for the seeded releases
+            Console.WriteLine($"[SEED-RELEASES] Triggering projection updates for {releaseIds.Count} releases...");
+
+            var releaseProjectionEvents = new List<TaskFlow.Domain.Messaging.ProjectionUpdateRequested>();
+
+            foreach (var releaseId in releaseIds)
+            {
+                try
+                {
+                    var release = await releaseFactory.GetAsync(releaseId);
+                    if (release.Metadata != null)
+                    {
+                        var versionToken = release.Metadata.ToVersionToken("release").ToLatestVersion();
+                        releaseProjectionEvents.Add(new TaskFlow.Domain.Messaging.ProjectionUpdateRequested
+                        {
+                            VersionToken = versionToken,
+                            ObjectName = "release",
+                            StreamIdentifier = release.Metadata.StreamId!,
+                            EventCount = 1
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SEED-RELEASES] Warning: Failed to get version token for release {releaseId.Value}: {ex.Message}");
+                }
+            }
+
+            // Call all projection handlers with the release events
+            foreach (var handler in projectionHandlers)
+            {
+                try
+                {
+                    Console.WriteLine($"[SEED-RELEASES] Updating projection: {handler.ProjectionName}");
+                    await handler.HandleBatchAsync(releaseProjectionEvents);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[SEED-RELEASES] Warning: Failed to update projection {handler.ProjectionName}: {ex.Message}");
+                }
+            }
+
+            Console.WriteLine("[SEED-RELEASES] Projection updates complete.");
+
+            return Results.Ok(new
+            {
+                success = true,
+                message = $"Created {createdReleases.Count} demo releases stored in S3-compatible storage",
+                releaseIds = releaseIds.Select(r => r.Value).ToArray(),
+                releasesCreated = createdReleases.Count,
+                note = "Releases are stored in S3-compatible storage (MinIO)"
+            });
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Failed to seed demo releases",
                 detail: ex.Message + (ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : ""),
                 statusCode: 500
             );
