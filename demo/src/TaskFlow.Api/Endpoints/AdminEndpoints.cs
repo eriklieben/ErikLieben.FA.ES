@@ -1979,6 +1979,11 @@ public static class AdminEndpoints
         }
     }
 
+    private static readonly HashSet<string> AllowedCosmosContainers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "documents", "events", "tags", "projections", "leases"
+    };
+
     private static async Task<IResult> GetCosmosDbDocuments(
         [FromServices] IServiceProvider serviceProvider,
         [FromServices] IWebHostEnvironment env,
@@ -1987,6 +1992,15 @@ public static class AdminEndpoints
     {
         try
         {
+            var targetContainer = containerName ?? "documents";
+            if (!AllowedCosmosContainers.Contains(targetContainer))
+            {
+                return Results.BadRequest(new
+                {
+                    error = $"Invalid container name '{targetContainer}'. Allowed containers: {string.Join(", ", AllowedCosmosContainers)}"
+                });
+            }
+
             var cosmosClient = serviceProvider.GetService<CosmosClient>();
             if (cosmosClient == null)
             {
@@ -1994,7 +2008,6 @@ public static class AdminEndpoints
             }
 
             var db = cosmosClient.GetDatabase("eventstore");
-            var targetContainer = containerName ?? "documents";
             var container = db.GetContainer(targetContainer);
 
             var query = string.IsNullOrEmpty(objectName)
