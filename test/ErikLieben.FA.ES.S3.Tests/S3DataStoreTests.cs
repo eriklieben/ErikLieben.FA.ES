@@ -540,7 +540,7 @@ public class S3DataStoreTests
         {
             var (clientFactory, s3Client) = CreateMockClient();
             SetupEnsureBucket(s3Client);
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
             var settings = CreateSettings(autoCreateBucket: true);
@@ -561,7 +561,7 @@ public class S3DataStoreTests
         {
             var (clientFactory, s3Client) = CreateMockClient();
             SetupEnsureBucket(s3Client);
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
             var settings = CreateSettings(autoCreateBucket: true);
@@ -581,7 +581,7 @@ public class S3DataStoreTests
         public async Task Should_not_create_bucket_when_auto_create_disabled()
         {
             var (clientFactory, s3Client) = CreateMockClient();
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
             var settings = CreateSettings(autoCreateBucket: false);
@@ -729,7 +729,7 @@ public class S3DataStoreTests
         {
             var (clientFactory, s3Client) = CreateMockClient();
             SetupEnsureBucket(s3Client);
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
 
             // PutObjectAsync throws NoSuchBucket
             var bucketEx = new AmazonS3Exception("No such bucket") { ErrorCode = "NoSuchBucket" };
@@ -754,7 +754,7 @@ public class S3DataStoreTests
         {
             var (clientFactory, s3Client) = CreateMockClient();
             SetupEnsureBucket(s3Client);
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
             var settings = CreateSettings();
@@ -776,7 +776,7 @@ public class S3DataStoreTests
         {
             var (clientFactory, s3Client) = CreateMockClient();
             SetupEnsureBucket(s3Client);
-            SetupObjectNotExists(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
             var settings = CreateSettings();
