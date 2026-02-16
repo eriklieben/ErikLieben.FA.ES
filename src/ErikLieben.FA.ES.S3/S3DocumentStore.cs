@@ -4,6 +4,7 @@ using Amazon.S3;
 using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.S3.Configuration;
+using ErikLieben.FA.ES.Validation;
 using ErikLieben.FA.ES.S3.Extensions;
 using ErikLieben.FA.ES.S3.Model;
 using SerializeS3EventStreamDocumentContext = ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocumentContext;
@@ -58,6 +59,8 @@ public class S3DocumentStore : IS3DocumentStore
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
+
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? s3Settings.DefaultDocumentStore;
         var bucketName = s3Settings.DefaultDocumentContainerName.ToLowerInvariant();
@@ -153,6 +156,8 @@ public class S3DocumentStore : IS3DocumentStore
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
+
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? s3Settings.DefaultDocumentStore;
         var bucketName = s3Settings.DefaultDocumentContainerName.ToLowerInvariant();

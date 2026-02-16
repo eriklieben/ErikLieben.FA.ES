@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Validation;
 using Microsoft.Extensions.Azure;
 using System.Security.Cryptography;
 using System.Text;
@@ -66,6 +67,8 @@ public BlobDocumentStore(
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
+
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
         var blob = await CreateBlobClientAsync(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
@@ -163,6 +166,7 @@ public async Task<IObjectDocument> GetAsync(
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
 
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
