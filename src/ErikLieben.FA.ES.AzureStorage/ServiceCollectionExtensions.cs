@@ -1,4 +1,5 @@
 ﻿using Azure;
+using ErikLieben.FA.ES.AzureStorage.AppendBlob;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Table;
@@ -13,6 +14,7 @@ namespace ErikLieben.FA.ES.AzureStorage;
 public static class ServiceCollectionExtensions
 {
     private const string BlobServiceKey = "blob";
+    private const string AppendBlobServiceKey = "appendblob";
     private const string TableServiceKey = "table";
     private static bool _azureExceptionExtractorRegistered;
 
@@ -49,6 +51,26 @@ public static class ServiceCollectionExtensions
         services.AddKeyedSingleton<IObjectDocumentFactory, TableObjectDocumentFactory>(TableServiceKey);
         services.AddKeyedSingleton<IEventStreamFactory, TableEventStreamFactory>(TableServiceKey);
         services.AddKeyedSingleton<IObjectIdProvider, TableObjectIdProvider>(TableServiceKey);
+
+        // Register the Azure RequestFailedException status code extractor for ResilientDataStore
+        RegisterAzureExceptionExtractor();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the Append Blob-based implementations for document tags, documents, and event streams using the provided settings.
+    /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <param name="settings">The Append Blob settings controlling containers and defaults.</param>
+    /// <returns>The same <see cref="IServiceCollection"/> instance to allow chaining.</returns>
+    public static IServiceCollection ConfigureAppendBlobEventStore(this IServiceCollection services, EventStreamAppendBlobSettings settings)
+    {
+        services.AddSingleton(settings);
+        services.AddKeyedSingleton<IDocumentTagDocumentFactory, AppendBlobTagFactory>(AppendBlobServiceKey);
+        services.AddKeyedSingleton<IObjectDocumentFactory, AppendBlobObjectDocumentFactory>(AppendBlobServiceKey);
+        services.AddKeyedSingleton<IEventStreamFactory, AppendBlobEventStreamFactory>(AppendBlobServiceKey);
+        services.AddKeyedSingleton<IObjectIdProvider, AppendBlobObjectIdProvider>(AppendBlobServiceKey);
 
         // Register the Azure RequestFailedException status code extractor for ResilientDataStore
         RegisterAzureExceptionExtractor();

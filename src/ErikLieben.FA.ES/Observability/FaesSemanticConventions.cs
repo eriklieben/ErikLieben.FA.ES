@@ -214,6 +214,11 @@ public static class FaesSemanticConventions
     public const string DbSystemCosmosDb = "cosmosdb";
 
     /// <summary>
+    /// Database system value for Azure Append Blob Storage.
+    /// </summary>
+    public const string DbSystemAzureAppendBlob = "azure_appendblob";
+
+    /// <summary>
     /// Database system value for in-memory storage (testing).
     /// </summary>
     public const string DbSystemInMemory = "inmemory";
@@ -265,6 +270,11 @@ public static class FaesSemanticConventions
     /// Storage provider value for Azure Cosmos DB.
     /// </summary>
     public const string StorageProviderCosmosDb = "cosmosdb";
+
+    /// <summary>
+    /// Storage provider value for Azure Append Blob Storage.
+    /// </summary>
+    public const string StorageProviderAppendBlob = "appendblob";
 
     /// <summary>
     /// Storage provider value for in-memory storage (testing).
