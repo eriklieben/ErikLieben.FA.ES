@@ -68,6 +68,14 @@ public record EventStreamS3Settings
     public bool AutoCreateBucket { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the S3 provider supports conditional writes (If-Match, If-None-Match).
+    /// When true, enables S3 conditional writes for optimistic concurrency control.
+    /// Supported by AWS S3 (since Nov 2024) and Cloudflare R2.
+    /// When false, falls back to document hash-based concurrency (weaker guarantees for new stream creation).
+    /// </summary>
+    public bool SupportsConditionalWrites { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether event stream chunking is enabled.
     /// </summary>
     public bool EnableStreamChunks { get; init; }
@@ -104,6 +112,7 @@ public record EventStreamS3Settings
         bool forcePathStyle = true,
         string region = "us-east-1",
         bool autoCreateBucket = true,
+        bool supportsConditionalWrites = false,
         bool enableStreamChunks = false,
         int defaultChunkSize = 1000,
         string defaultDocumentContainerName = "object-document-store",
@@ -122,6 +131,7 @@ public record EventStreamS3Settings
         ForcePathStyle = forcePathStyle;
         Region = region;
         AutoCreateBucket = autoCreateBucket;
+        SupportsConditionalWrites = supportsConditionalWrites;
         EnableStreamChunks = enableStreamChunks;
         DefaultChunkSize = defaultChunkSize;
         DefaultDocumentContainerName = defaultDocumentContainerName;

@@ -30,6 +30,7 @@ public class BlobDataStoreTests
     public BlobDataStoreTests()
     {
         BlobDataStore.ClearVerifiedContainersCache();
+        BlobDataStore.ClearClosedStreamCache();
 
         clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
         blobServiceClient = Substitute.For<BlobServiceClient>();

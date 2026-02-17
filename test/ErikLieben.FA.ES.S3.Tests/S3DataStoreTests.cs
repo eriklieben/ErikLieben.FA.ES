@@ -17,6 +17,9 @@ public class S3DataStoreTests
     private static EventStreamS3Settings CreateSettings(bool autoCreateBucket = true) =>
         new("s3", serviceUrl: "http://localhost:9000", accessKey: "key", secretKey: "secret", autoCreateBucket: autoCreateBucket);
 
+    private static EventStreamS3Settings CreateSettingsWithConditionalWrites(bool supportsConditionalWrites = true, bool autoCreateBucket = true) =>
+        new("s3", serviceUrl: "http://localhost:9000", accessKey: "key", secretKey: "secret", autoCreateBucket: autoCreateBucket, supportsConditionalWrites: supportsConditionalWrites);
+
     private static IObjectDocument CreateDocument(
         string objectName = "test",
         string objectId = "123",
@@ -472,6 +475,11 @@ public class S3DataStoreTests
 
     public class AppendAsync
     {
+        public AppendAsync()
+        {
+            S3DataStore.ClearClosedStreamCache();
+        }
+
         [Fact]
         public async Task Should_throw_when_document_is_null()
         {
@@ -804,6 +812,11 @@ public class S3DataStoreTests
 
     public class AppendAsyncRoundTripReduction
     {
+        public AppendAsyncRoundTripReduction()
+        {
+            S3DataStore.ClearClosedStreamCache();
+        }
+
         [Fact]
         public async Task Should_download_object_directly_without_separate_exists_check()
         {
@@ -880,11 +893,12 @@ public class S3DataStoreTests
             SetupS3GetObjectNotFound(s3Client);
             SetupPutObject(s3Client);
 
-            // Use unique bucket name to avoid interference from other tests
+            // Use unique names to avoid interference from other tests' static caches
             var uniqueName = $"cachetest{Guid.NewGuid():N}".Substring(0, 20);
+            var uniqueStreamId = $"bucket-cache-{Guid.NewGuid():N}".Substring(0, 30) + "-0000000000";
             var settings = CreateSettings(autoCreateBucket: true);
             var sut = new S3DataStore(clientFactory, settings);
-            var document = CreateDocument(objectName: uniqueName);
+            var document = CreateDocument(objectName: uniqueName, streamId: uniqueStreamId);
 
             var evt1 = CreateS3JsonEvent(0, "Test.Created");
             var evt2 = CreateS3JsonEvent(1, "Test.Updated");
@@ -1136,6 +1150,101 @@ public class S3DataStoreTests
             Assert.Equal(2, writtenDoc!.Events.Count);
             Assert.Equal(0, writtenDoc.Events[0].EventVersion);
             Assert.Equal(4, writtenDoc.Events[1].EventVersion);
+        }
+    }
+
+    public class ConditionalWrites
+    {
+        public ConditionalWrites()
+        {
+            S3DataStore.ClearClosedStreamCache();
+            S3DataStore.ClearVerifiedBucketsCache();
+        }
+
+        [Fact]
+        public async Task Should_use_if_none_match_for_new_stream_when_enabled()
+        {
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            var uniqueStreamId = ($"cond-writes-{Guid.NewGuid():N}".Substring(0, 30) + "-0000000000");
+            var settings = CreateSettingsWithConditionalWrites(supportsConditionalWrites: true);
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument(streamId: uniqueStreamId);
+
+            var evt = CreateS3JsonEvent(0, "Test.Created");
+            await sut.AppendAsync(document, CancellationToken.None, evt);
+
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("*", capturedRequest!.Headers["If-None-Match"]);
+        }
+
+        [Fact]
+        public async Task Should_not_use_if_none_match_when_disabled()
+        {
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+            SetupS3GetObjectNotFound(s3Client);
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            var uniqueStreamId = ($"cond-writes-{Guid.NewGuid():N}".Substring(0, 30) + "-0000000000");
+            var settings = CreateSettingsWithConditionalWrites(supportsConditionalWrites: false);
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument(streamId: uniqueStreamId);
+
+            var evt = CreateS3JsonEvent(0, "Test.Created");
+            await sut.AppendAsync(document, CancellationToken.None, evt);
+
+            Assert.NotNull(capturedRequest);
+            Assert.True(string.IsNullOrEmpty(capturedRequest!.Headers["If-None-Match"]));
+        }
+
+        [Fact]
+        public async Task Should_pass_if_match_etag_for_existing_stream_when_enabled()
+        {
+            var (clientFactory, s3Client) = CreateMockClient();
+            SetupEnsureBucket(s3Client);
+
+            var existingDoc = CreateDataStoreDocument(events:
+            [
+                CreateS3JsonEvent(0, "Test.Created"),
+            ]);
+            SetupS3GetObject(s3Client, existingDoc, "\"etag-1\"");
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            var uniqueStreamId = ($"cond-writes-{Guid.NewGuid():N}".Substring(0, 30) + "-0000000000");
+            var settings = CreateSettingsWithConditionalWrites(supportsConditionalWrites: true);
+            var sut = new S3DataStore(clientFactory, settings);
+            var document = CreateDocument(hash: "somehash", streamId: uniqueStreamId);
+
+            var evt = CreateS3JsonEvent(1, "Test.Updated");
+            await sut.AppendAsync(document, CancellationToken.None, evt);
+
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("\"etag-1\"", capturedRequest!.Headers["If-Match"]);
         }
     }
 }

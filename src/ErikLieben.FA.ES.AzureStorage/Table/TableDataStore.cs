@@ -277,9 +277,19 @@ public class TableDataStore : IDataStore, IDataStoreRecovery
             throw new ArgumentException("No events provided to store.");
         }
 
+        // Fast path: if this stream is known to be closed, skip all I/O (table client creation + query)
+        var streamId = document.Active.StreamIdentifier;
+        if (ClosedStreamCache.ContainsKey(streamId))
+        {
+            throw new EventStreamClosedException(
+                streamId,
+                $"Cannot append events to closed stream '{streamId}'. " +
+                "The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+
         var tableClient = await GetTableClientAsync(document);
 
-        // Check if stream is closed by looking for the last event
+        // Full check: query Table Storage for closed events (also populates cache on hit)
         await CheckStreamNotClosedAsync(tableClient, document, cancellationToken);
 
         var chunkIdentifier = GetLastChunkIdentifier(document);

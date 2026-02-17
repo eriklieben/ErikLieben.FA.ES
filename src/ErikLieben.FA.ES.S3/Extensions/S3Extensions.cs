@@ -129,7 +129,8 @@ public static class S3Extensions
         string key,
         TDocument entity,
         JsonTypeInfo<TDocument> jsonTypeInfo,
-        string? ifMatchETag = null) where TDocument : class
+        string? ifMatchETag = null,
+        string? ifNoneMatch = null) where TDocument : class
     {
         var serialized = JsonSerializer.Serialize(entity, jsonTypeInfo);
         var bytes = Encoding.UTF8.GetBytes(serialized);
@@ -143,6 +144,16 @@ public static class S3Extensions
             InputStream = new MemoryStream(bytes),
         };
 
+        if (!string.IsNullOrEmpty(ifMatchETag))
+        {
+            request.Headers["If-Match"] = ifMatchETag;
+        }
+
+        if (!string.IsNullOrEmpty(ifNoneMatch))
+        {
+            request.Headers["If-None-Match"] = ifNoneMatch;
+        }
+
         try
         {
             var response = await s3Client.PutObjectAsync(request);
@@ -151,8 +162,14 @@ public static class S3Extensions
         catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.PreconditionFailed)
         {
             throw new InvalidOperationException(
-                $"ETag precondition failed for s3://{bucketName}/{key}. " +
-                $"The object was modified since it was last read (expected ETag: {ifMatchETag}).", ex);
+                $"Conditional write failed for s3://{bucketName}/{key}. " +
+                $"The object was modified since it was last read (If-Match ETag: {ifMatchETag}).", ex);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new InvalidOperationException(
+                $"Conditional write conflict for s3://{bucketName}/{key}. " +
+                $"The object already exists (If-None-Match precondition failed).", ex);
         }
         catch (AmazonS3Exception ex) when (ex.ErrorCode == "NoSuchBucket")
         {

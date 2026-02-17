@@ -23,11 +23,26 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
     private static readonly ConcurrentDictionary<string, bool> VerifiedContainers = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Cache of stream IDs that are known to be closed.
+    /// Once a stream is closed, it remains closed forever, so we can cache this
+    /// to avoid downloading the blob on every append attempt.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, bool> ClosedStreams = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Clears the verified containers cache. Primarily intended for testing scenarios.
     /// </summary>
     public static void ClearVerifiedContainersCache()
     {
         VerifiedContainers.Clear();
+    }
+
+    /// <summary>
+    /// Clears the closed streams cache. Primarily intended for testing scenarios.
+    /// </summary>
+    public static void ClearClosedStreamCache()
+    {
+        ClosedStreams.Clear();
     }
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly bool autoCreateContainer;
@@ -261,6 +276,15 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
             throw new ArgumentException("No events provided to store.");
         }
 
+        // Fast path: if this stream is known to be closed, skip all I/O
+        if (ClosedStreams.ContainsKey(document.Active.StreamIdentifier))
+        {
+            throw new EventStreamClosedException(
+                document.Active.StreamIdentifier,
+                $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
+                $"The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+
         var documentPath = GetDocumentPathForAppend(document);
         var blob = await CreateBlobClientAsync(document, documentPath);
 
@@ -370,6 +394,9 @@ public class BlobDataStore : IDataStore, IDataStoreRecovery
         var lastEvent = doc.Events[^1];
         if (lastEvent.EventType == "EventStream.Closed")
         {
+            // Cache this — closed streams never reopen
+            ClosedStreams.TryAdd(streamIdentifier, true);
+
             throw new EventStreamClosedException(
                 streamIdentifier,
                 $"Cannot append events to closed stream '{streamIdentifier}'. " +

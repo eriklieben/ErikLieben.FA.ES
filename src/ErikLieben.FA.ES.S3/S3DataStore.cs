@@ -19,6 +19,14 @@ namespace ErikLieben.FA.ES.S3;
 public class S3DataStore : IDataStore, IDataStoreRecovery
 {
     private static readonly ConcurrentDictionary<string, bool> VerifiedBuckets = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Cache of stream IDs that are known to be closed.
+    /// Once a stream is closed, it remains closed forever, so we can cache this
+    /// to avoid downloading the S3 object on every append attempt.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, bool> ClosedStreams = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly IS3ClientFactory clientFactory;
     private readonly EventStreamS3Settings settings;
 
@@ -26,6 +34,11 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
     /// Clears the verified buckets cache. Used by tests to prevent cross-test pollution.
     /// </summary>
     public static void ClearVerifiedBucketsCache() => VerifiedBuckets.Clear();
+
+    /// <summary>
+    /// Clears the closed streams cache. Primarily intended for testing scenarios.
+    /// </summary>
+    public static void ClearClosedStreamCache() => ClosedStreams.Clear();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="S3DataStore"/> class.
@@ -226,6 +239,15 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
             throw new ArgumentException("No events provided to store.");
         }
 
+        // Fast path: if this stream is known to be closed, skip all I/O
+        if (ClosedStreams.ContainsKey(document.Active.StreamIdentifier))
+        {
+            throw new EventStreamClosedException(
+                document.Active.StreamIdentifier,
+                $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
+                $"The stream was closed and may have a continuation stream. Please retry on the active stream.");
+        }
+
         var (bucketName, key) = GetDataStoreLocation(document, chunk: null, forAppend: true);
         var s3Client = CreateS3Client(document);
 
@@ -261,7 +283,16 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
                     bucketName,
                     key,
                     newDoc,
-                    S3DataStoreDocumentContext.Default.S3DataStoreDocument);
+                    S3DataStoreDocumentContext.Default.S3DataStoreDocument,
+                    ifNoneMatch: settings.SupportsConditionalWrites ? "*" : null);
+            }
+            catch (InvalidOperationException) when (settings.SupportsConditionalWrites)
+            {
+                // Conditional write conflict: another writer created this stream concurrently.
+                // Re-throw as a concurrency exception so the caller can retry.
+                throw new InvalidOperationException(
+                    $"Concurrent stream creation conflict for '{document.ObjectName.ToLowerInvariant()}/{key}'. " +
+                    "Another writer created this stream simultaneously. Please retry the operation.");
             }
             catch (AmazonS3Exception ex) when (ex.ErrorCode == "NoSuchBucket")
             {
@@ -290,6 +321,9 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
             var lastEvent = doc.Events[^1];
             if (lastEvent.EventType == "EventStream.Closed")
             {
+                // Cache this — closed streams never reopen
+                ClosedStreams.TryAdd(document.Active.StreamIdentifier, true);
+
                 throw new EventStreamClosedException(
                     document.Active.StreamIdentifier,
                     $"Cannot append events to closed stream '{document.Active.StreamIdentifier}'. " +
@@ -309,7 +343,7 @@ public class S3DataStore : IDataStore, IDataStoreRecovery
             key,
             doc,
             S3DataStoreDocumentContext.Default.S3DataStoreDocument,
-            etag);
+            ifMatchETag: settings.SupportsConditionalWrites ? etag : null);
 
         // Record metrics for existing object update
         if (timer != null)

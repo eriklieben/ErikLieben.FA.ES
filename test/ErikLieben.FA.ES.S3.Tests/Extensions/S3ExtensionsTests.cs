@@ -259,6 +259,105 @@ public class S3ExtensionsTests
         }
     }
 
+    public class PutObjectAsEntityAsyncConditionalWrites
+    {
+        [Fact]
+        public async Task Should_set_if_match_header_when_etag_provided()
+        {
+            var s3Client = Substitute.For<IAmazonS3>();
+            var entity = new S3DataStoreDocument { ObjectId = "id", ObjectName = "test", LastObjectDocumentHash = "*" };
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            await s3Client.PutObjectAsEntityAsync(
+                "bucket", "key", entity, S3DataStoreDocumentContext.Default.S3DataStoreDocument,
+                ifMatchETag: "\"test-etag\"");
+
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("\"test-etag\"", capturedRequest!.Headers["If-Match"]);
+        }
+
+        [Fact]
+        public async Task Should_set_if_none_match_header_when_provided()
+        {
+            var s3Client = Substitute.For<IAmazonS3>();
+            var entity = new S3DataStoreDocument { ObjectId = "id", ObjectName = "test", LastObjectDocumentHash = "*" };
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            await s3Client.PutObjectAsEntityAsync(
+                "bucket", "key", entity, S3DataStoreDocumentContext.Default.S3DataStoreDocument,
+                ifNoneMatch: "*");
+
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("*", capturedRequest!.Headers["If-None-Match"]);
+        }
+
+        [Fact]
+        public async Task Should_not_set_conditional_headers_when_not_provided()
+        {
+            var s3Client = Substitute.For<IAmazonS3>();
+            var entity = new S3DataStoreDocument { ObjectId = "id", ObjectName = "test", LastObjectDocumentHash = "*" };
+
+            PutObjectRequest? capturedRequest = null;
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    capturedRequest = callInfo.Arg<PutObjectRequest>();
+                    return new PutObjectResponse { ETag = "\"new-etag\"" };
+                });
+
+            await s3Client.PutObjectAsEntityAsync(
+                "bucket", "key", entity, S3DataStoreDocumentContext.Default.S3DataStoreDocument);
+
+            Assert.NotNull(capturedRequest);
+            Assert.True(string.IsNullOrEmpty(capturedRequest!.Headers["If-Match"]));
+            Assert.True(string.IsNullOrEmpty(capturedRequest!.Headers["If-None-Match"]));
+        }
+
+        [Fact]
+        public async Task Should_throw_on_precondition_failed()
+        {
+            var s3Client = Substitute.For<IAmazonS3>();
+            var entity = new S3DataStoreDocument { ObjectId = "id", ObjectName = "test", LastObjectDocumentHash = "*" };
+
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Throws(new AmazonS3Exception("Precondition Failed") { StatusCode = HttpStatusCode.PreconditionFailed });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                s3Client.PutObjectAsEntityAsync(
+                    "bucket", "key", entity, S3DataStoreDocumentContext.Default.S3DataStoreDocument,
+                    ifMatchETag: "\"some-etag\""));
+        }
+
+        [Fact]
+        public async Task Should_throw_on_conflict()
+        {
+            var s3Client = Substitute.For<IAmazonS3>();
+            var entity = new S3DataStoreDocument { ObjectId = "id", ObjectName = "test", LastObjectDocumentHash = "*" };
+
+            s3Client.PutObjectAsync(Arg.Any<PutObjectRequest>(), Arg.Any<CancellationToken>())
+                .Throws(new AmazonS3Exception("Conflict") { StatusCode = HttpStatusCode.Conflict });
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                s3Client.PutObjectAsEntityAsync(
+                    "bucket", "key", entity, S3DataStoreDocumentContext.Default.S3DataStoreDocument,
+                    ifNoneMatch: "*"));
+        }
+    }
+
     public class PutObjectAsync
     {
         [Fact]
