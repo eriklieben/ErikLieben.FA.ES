@@ -36,8 +36,6 @@
     </PropertyGroup>
 	<!-- Public API analyzer for tracking breaking changes -->
 	<PropertyGroup>
-	  <!-- RS0016: Symbol is not part of the declared public API - disable for now as API is still being defined -->
-	  <NoWarn>$(NoWarn);RS0016</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />

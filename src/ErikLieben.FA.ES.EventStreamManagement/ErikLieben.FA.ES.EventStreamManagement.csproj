@@ -36,6 +36,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
     </ItemGroup>
 

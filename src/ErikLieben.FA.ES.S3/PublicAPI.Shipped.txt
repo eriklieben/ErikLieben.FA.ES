@@ -1,0 +1,57 @@
+#nullable enable
+ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.AccessKey.get -> string?
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.AccessKey.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.AutoCreateBucket.get -> bool
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.AutoCreateBucket.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.BucketName.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.BucketName.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultChunkSize.get -> int
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultChunkSize.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDataStore.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDataStore.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentContainerName.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentContainerName.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentStore.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentStore.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentTagStore.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultDocumentTagStore.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultSnapShotStore.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.DefaultSnapShotStore.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.EnableStreamChunks.get -> bool
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.EnableStreamChunks.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.EventStreamS3Settings(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! original) -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.EventStreamS3Settings(string! defaultDataStore, string! bucketName = "event-store", string? defaultDocumentStore = null, string? defaultSnapShotStore = null, string? defaultDocumentTagStore = null, string? serviceUrl = null, string? accessKey = null, string? secretKey = null, bool forcePathStyle = true, string! region = "us-east-1", bool autoCreateBucket = true, bool supportsConditionalWrites = false, bool enableStreamChunks = false, int defaultChunkSize = 1000, string! defaultDocumentContainerName = "object-document-store", int? maxConnectionsPerServer = null) -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.ForcePathStyle.get -> bool
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.ForcePathStyle.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.MaxConnectionsPerServer.get -> int?
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.MaxConnectionsPerServer.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.Region.get -> string!
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.Region.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.SecretKey.get -> string?
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.SecretKey.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.ServiceUrl.get -> string?
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.ServiceUrl.init -> void
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.SupportsConditionalWrites.get -> bool
+ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.SupportsConditionalWrites.init -> void
+ErikLieben.FA.ES.S3.HealthChecks.S3HealthCheckBuilderExtensions
+ErikLieben.FA.ES.S3.HealthChecks.S3StorageHealthCheck
+ErikLieben.FA.ES.S3.HealthChecks.S3StorageHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+ErikLieben.FA.ES.S3.HealthChecks.S3StorageHealthCheck.S3StorageHealthCheck(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> void
+override ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.GetHashCode() -> int
+override ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.ToString() -> string!
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.ConfigureS3EventStore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.UseS3Storage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.UseS3Storage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, System.Action<ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings!>! configure) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.WithS3HealthCheck(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.WithS3ProjectionStatusCoordinator(this ErikLieben.FA.ES.Builder.IFaesBuilder\! builder, string\! prefix = "projection-status") -> ErikLieben.FA.ES.Builder.IFaesBuilder\!
+static ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.operator !=(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings? left, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings? right) -> bool
+static ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.operator ==(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings? left, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings? right) -> bool
+static ErikLieben.FA.ES.S3.HealthChecks.S3HealthCheckBuilderExtensions.AddS3StorageHealthCheck(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name = "s3-storage", Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = null, System.Collections.Generic.IEnumerable<string!>? tags = null, System.TimeSpan? timeout = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+virtual ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.<Clone>$() -> ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings!
+virtual ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.Equals(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings? other) -> bool
+virtual ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+

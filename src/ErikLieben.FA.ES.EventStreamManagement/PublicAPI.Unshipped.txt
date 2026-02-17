@@ -1,0 +1,380 @@
+#nullable enable
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.EventsRolledBackEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, string>>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.RollbackReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosedEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosureReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason>
+~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.BackupBuilder() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.IncludeObjectDocument() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.IncludeSnapshots() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.IncludeTerminatedStreams() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.ToLocation(string! location) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.ToProvider(string! providerName) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.WithCompression() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.WithRetention(System.TimeSpan retention) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.BackupContext() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Configuration.get -> ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Configuration.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Document.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Document.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Events.get -> System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext.Events.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.BackupDocumentAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.BackupManyAsync(System.Collections.Generic.IEnumerable<string!>! objectIds, string! objectName, ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.BackupRestoreService(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider! backupProvider, ErikLieben.FA.ES.Documents.IDocumentStore! documentStore, ErikLieben.FA.ES.EventStream.IDataStore! dataStore, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService!>! logger, ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry? backupRegistry = null) -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.BackupStreamAsync(string! objectName, string! objectId, ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.CleanupExpiredBackupsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.DeleteBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.GetBackupAsync(System.Guid backupId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle?>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.ListBackupsAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery? query = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.RestoreManyAsync(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>! handles, ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.RestoreStreamAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.RestoreToNewStreamAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, string! targetObjectId, ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupRestoreService.ValidateBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider.BackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.BackupContext! context, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress!>? progress, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider.RestoreAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext! context, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress!>? progress, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.DataStore.get -> ErikLieben.FA.ES.EventStream.IDataStore?
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.DataStore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.Overwrite.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.Overwrite.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.RestoreContext() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.TargetDocument.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreContext.TargetDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.ArchiveToStorage(string! storageLocation) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.BookClosingBuilder() -> void
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.CreateSnapshot() -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.MarkAsDeleted() -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.Reason(string! reason) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.BookClosingBuilder.WithMetadata(string! key, object! value) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.NoOpDistributedLockProvider
+ErikLieben.FA.ES.EventStreamManagement.Coordination.NoOpDistributedLockProvider.AcquireLockAsync(string! lockKey, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock?>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.NoOpDistributedLockProvider.IsLockedAsync(string! lockKey, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.NoOpDistributedLockProvider.NoOpDistributedLockProvider() -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.NoOpDistributedLockProvider.ProviderName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.BulkMigrationBuilder(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>! documents, ErikLieben.FA.ES.EventStream.IDataStore! dataStore, ErikLieben.FA.ES.Documents.IDocumentStore! documentStore, ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider! lockProvider, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.CopyToNewStream(string! streamIdentifier) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.CopyToNewStreams(System.Func<ErikLieben.FA.ES.Documents.IObjectDocument!, string!>! identifierFactory) -> ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.DryRun() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.ExecuteAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.ExecuteLiveMigrationAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.FromDryRunPlan(ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan! plan) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithBackup(System.Action<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithBookClosing(System.Action<ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithBulkProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress!>! onProgress) -> ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithContinueOnError(bool continueOnError = true) -> ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithDistributedLock(System.Action<ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithLiveMigration(System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!>? configure = null) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithMaxConcurrency(int maxConcurrency) -> ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithPauseSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithPipeline(System.Action<ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithRollbackSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithTransformation(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationBuilder.WithVerification(System.Action<ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.CancelMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.EventStreamMigrationService(ErikLieben.FA.ES.EventStream.IDataStore! dataStore, ErikLieben.FA.ES.Documents.IDocumentStore! documentStore, ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider! lockProvider, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.ForDocument(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.ForDocuments(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>! documents) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.GetActiveMigrationsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.GetMigrationStatusAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress?>!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.PauseMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.EventStreamMigrationService.ResumeMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.CopyToNewStream(string! streamIdentifier) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.DryRun() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.ExecuteAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.ExecuteLiveMigrationAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.FromDryRunPlan(ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan! plan) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.MigrationBuilder(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.EventStream.IDataStore! dataStore, ErikLieben.FA.ES.Documents.IDocumentStore! documentStore, ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider! lockProvider, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithBackup(System.Action<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithBookClosing(System.Action<ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithDistributedLock(System.Action<ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithLiveMigration(System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!>? configure = null) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithPauseSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithPipeline(System.Action<ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithRollbackSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithTransformation(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationBuilder.WithVerification(System.Action<ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BackupConfig.get -> ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BackupConfig.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BackupProvider.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BackupProvider.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BookClosingConfig.get -> ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.BookClosingConfig.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.DataStore.get -> ErikLieben.FA.ES.EventStream.IDataStore?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.DataStore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.DocumentStore.get -> ErikLieben.FA.ES.Documents.IDocumentStore?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.DocumentStore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.IsDryRun.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.IsDryRun.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.LockOptions.get -> ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.LockOptions.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Metadata.get -> System.Collections.Generic.Dictionary<string!, object!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Metadata.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.MigrationContext() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.MigrationId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Pipeline.get -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Pipeline.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.ProgressConfig.get -> ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.ProgressConfig.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SourceDocument.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SourceDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SourceStreamIdentifier.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SourceStreamIdentifier.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.StartedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.StartedAt.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Strategy.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Strategy.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SupportsPause.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SupportsPause.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SupportsRollback.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.SupportsRollback.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.TargetStreamIdentifier.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.TargetStreamIdentifier.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Transformer.get -> ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.Transformer.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.VerificationConfig.get -> ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext.VerificationConfig.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationExecutor
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationExecutor.ExecuteAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationExecutor.MigrationExecutor(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationContext! context, ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider! lockProvider, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CustomValidations.get -> System.Collections.Generic.List<(string! Name, System.Func<ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext!, System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!>!>! Validator)>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.DataStore.get -> ErikLieben.FA.ES.EventStream.IDataStore!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.DataStore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.DocumentStore.get -> ErikLieben.FA.ES.Documents.IDocumentStore!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.DocumentStore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.LiveMigrationContext() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.MigrationId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.Options.get -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.Options.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.SourceDocument.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.SourceDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.SourceStreamId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.SourceStreamId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.TargetDocument.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.TargetDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.TargetStreamId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.TargetStreamId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.Transformer.get -> ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext.Transformer.set -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationExecutor
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationExecutor.ExecuteAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationExecutor.LiveMigrationExecutor(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationContext! context, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.LiveMigrationJsonContext() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.LiveMigrationJsonContext(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.EventStreamManagement.LogMessages
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CanPause.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CanPause.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CanRollback.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CanRollback.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CurrentPhase.get -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CurrentPhase.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CustomMetrics.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>!
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.CustomMetrics.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.Elapsed.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.Elapsed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.ErrorMessage.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EstimatedRemaining.get -> System.TimeSpan?
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EstimatedRemaining.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EventsPerSecond.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EventsPerSecond.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EventsProcessed.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.EventsProcessed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.IsPaused.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.IsPaused.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.MigrationId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.MigrationProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.PercentageComplete.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.Status.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.Status.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgress.TotalEvents.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.GetProgress() -> ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.IncrementProcessed(long count = 1) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.MigrationProgressTracker(System.Guid migrationId, ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration? config, Microsoft.Extensions.Logging.ILogger! logger) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.Report() -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.ReportCompleted() -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.ReportFailed(System.Exception! exception) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.SetCustomMetric(string! name, object! value) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.SetError(string! error) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.SetPaused(bool paused) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.SetPhase(ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase phase) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.SetStatus(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus newStatus) -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Progress.MigrationProgressTracker.TotalEvents.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.EnableLogging() -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.OnCompleted(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.OnFailed(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!, System.Exception!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.OnProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.ProgressBuilder() -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.ReportEvery(System.TimeSpan interval) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.ProgressBuilder.TrackCustomMetric(string! metricName, System.Func<object!>! collector) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService.AppendRollbackMarkerAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.Documents.RollbackRecord! rollbackRecord, string? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService.FindBrokenStreamsAsync(string? objectName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService.RepairBrokenStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion, string? reason = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService.RepairBrokenStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService.StreamRepairService(ErikLieben.FA.ES.EventStream.IDataStore! dataStore, ErikLieben.FA.ES.Documents.IDocumentStore! documentStore, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairService!>! logger) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.CompositeTransformer
+ErikLieben.FA.ES.EventStreamManagement.Transformation.CompositeTransformer.CanTransform(string! eventName, int version) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Transformation.CompositeTransformer.CompositeTransformer(params ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer![]! transformers) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.CompositeTransformer.TransformAsync(ErikLieben.FA.ES.IEvent! sourceEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.FunctionTransformer
+ErikLieben.FA.ES.EventStreamManagement.Transformation.FunctionTransformer.CanTransform(string! eventName, int version) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Transformation.FunctionTransformer.FunctionTransformer(System.Func<ErikLieben.FA.ES.IEvent!, ErikLieben.FA.ES.IEvent!>! transformFunc, System.Func<string!, int, bool>? canTransformFunc = null) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.FunctionTransformer.FunctionTransformer(System.Func<ErikLieben.FA.ES.IEvent!, System.Threading.CancellationToken, System.Threading.Tasks.Task<ErikLieben.FA.ES.IEvent!>!>! transformFunc, System.Func<string!, int, bool>? canTransformFunc = null) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.FunctionTransformer.TransformAsync(ErikLieben.FA.ES.IEvent! sourceEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline.AddTransformer(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline.CanTransform(string! eventName, int version) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline.Count.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline.TransformAsync(ErikLieben.FA.ES.IEvent! sourceEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline.TransformationPipeline(Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipeline!>! logger) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder.AddFilter(System.Func<ErikLieben.FA.ES.IEvent!, bool>! predicate) -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder.AddTransformer(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder.AddTransformer<T>() -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder.Build() -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.TransformationPipelineBuilder.TransformationPipelineBuilder(Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.CustomValidation(string! name, System.Func<ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext!, System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!>!>! validator) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.IsFeasible.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.IsFeasible.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.MigrationPlan() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.PlanId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.PlanId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.Prerequisites.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.Prerequisites.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.RecommendedPhases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.RecommendedPhases.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.ResourceEstimate.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.ResourceEstimate.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.Risks.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.Risks.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.SourceAnalysis.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.SourceAnalysis.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.TransformationSimulation.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationPlan.TransformationSimulation.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.AddError(string! message) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.AddResult(ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult! result) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.AddWarning(string! message) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.Errors.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.MigrationVerificationResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.Passed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.Summary.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.ValidationResults.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationVerificationResult.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.CompareChecksums() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.CompareEventCounts() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.CustomValidation(string! name, System.Func<ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext!, System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!>!>! validator) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.FailFast(bool failFast = true) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.ValidateTransformations(int sampleSize = 100) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.VerificationBuilder() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationBuilder.VerifyStreamIntegrity() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.SourceStreamIdentifier.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.SourceStreamIdentifier.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.Statistics.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.Statistics.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.TargetStreamIdentifier.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.TargetStreamIdentifier.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.Transformer.get -> ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer?
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.Transformer.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.VerificationContext.VerificationContext() -> void
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.Default.get -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext!
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.AcquiredLock(this Microsoft.Extensions.Logging.ILogger! logger, string! lockId, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.AcquiringLock(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.ApplyingTransformer(this Microsoft.Extensions.Logging.ILogger! logger, string! transformerType, string! eventType, int version) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.BackupCreated(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid backupId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.BookClosingCompleted(this Microsoft.Extensions.Logging.ILogger! logger, string! streamId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CancelledMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CannotCancelMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CannotPauseMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CannotResumeMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CloseAttemptConcurrencyConflict(this Microsoft.Extensions.Logging.ILogger! logger, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CloseAttemptVersionConflict(this Microsoft.Extensions.Logging.ILogger! logger, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CreatingBulkMigrationBuilder(this Microsoft.Extensions.Logging.ILogger! logger, int documentCount) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CreatingMigrationBuilder(this Microsoft.Extensions.Logging.ILogger! logger, string! objectId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CustomMetricError(this Microsoft.Extensions.Logging.ILogger! logger, string! metricName, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.CutoverComplete(this Microsoft.Extensions.Logging.ILogger! logger, string! sourceStream, string! targetStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.EventsAddedDuringClose(this Microsoft.Extensions.Logging.ILogger! logger, int eventCount, int expectedVersion) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.EventsCopiedToTarget(this Microsoft.Extensions.Logging.ILogger! logger, int eventCount, int start, int end) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.EventTransformed(this Microsoft.Extensions.Logging.ILogger! logger, string! eventType) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.ExecutingDryRun(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.ExecutingMigrationSaga(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.HeartbeatError(this Microsoft.Extensions.Logging.ILogger! logger, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LateEventsCaughtUp(this Microsoft.Extensions.Logging.ILogger! logger, int eventCount) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationCancelled(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationCatchUp(this Microsoft.Extensions.Logging.ILogger! logger, int iteration, int targetVersion, int sourceVersion) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationCloseRetry(this Microsoft.Extensions.Logging.ILogger! logger, int iteration, int expected, int actual) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationCompleted(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, long totalEvents, System.TimeSpan duration) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationDrainPhase(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationError(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationFailed(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, int iterations, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationIteration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, int iteration, long eventsCopied, int newEvents) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationSourceClosed(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationStarted(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! sourceStream, string! targetStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LiveMigrationSuccess(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, long eventCount, int iterations, System.TimeSpan elapsed) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LockRenewalFailed(this Microsoft.Extensions.Logging.ILogger! logger, string! lockId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.LockRenewed(this Microsoft.Extensions.Logging.ILogger! logger, string! lockId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationCompleted(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, System.TimeSpan elapsed, long eventCount, double rate) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationFailed(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationFailedAfter(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, System.TimeSpan elapsed, long eventCount, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationNotFound(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationPhaseChanged(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! phase) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationProgress(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, long processed, long total, double percentage, double eventsPerSecond) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationProgressFailed(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! errorMessage) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationSagaFailed(this Microsoft.Extensions.Logging.ILogger! logger, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.MigrationStatusChanged(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! status) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.NoEventsInSourceStream(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.ObjectDocumentUpdated(this Microsoft.Extensions.Logging.ILogger! logger, string! targetStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.PausedMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.ResumedMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.RetrievedActiveMigrations(this Microsoft.Extensions.Logging.ILogger! logger, int count) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.RollbackFromBackup(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid backupId) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.RollingBackMigration(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.SourceStreamAlreadyClosed(this Microsoft.Extensions.Logging.ILogger! logger, string! sourceStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.SourceStreamAnalyzed(this Microsoft.Extensions.Logging.ILogger! logger, string! streamId, long eventCount) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.SourceStreamClosed(this Microsoft.Extensions.Logging.ILogger! logger, string! sourceStream, int version) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StartingLiveMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! sourceStream, string! targetStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StartingMigration(this Microsoft.Extensions.Logging.ILogger! logger, System.Guid migrationId, string! sourceStream, string! targetStream, bool isDryRun) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepAnalyzingSourceStream(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepClosingBooks(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepCopyingEvents(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepCreatingBackup(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepPerformingCutover(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.StepVerifyingMigration(this Microsoft.Extensions.Logging.ILogger! logger) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.TargetStreamWillBeCreated(this Microsoft.Extensions.Logging.ILogger! logger, string! targetStream) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.TransformerAddedToPipeline(this Microsoft.Extensions.Logging.ILogger! logger, string! transformerType, int count) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.TransformEventFailed(this Microsoft.Extensions.Logging.ILogger! logger, string! eventType, int version, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.TransformEventSkipped(this Microsoft.Extensions.Logging.ILogger! logger, string! eventType, int version, System.Exception! exception) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.TransformingEvent(this Microsoft.Extensions.Logging.ILogger! logger, string! eventType, int version) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.VerificationCompleted(this Microsoft.Extensions.Logging.ILogger! logger, int successCount, int failureCount) -> void
+static ErikLieben.FA.ES.EventStreamManagement.LogMessages.WroteEventsToTarget(this Microsoft.Extensions.Logging.ILogger! logger, int eventCount, string! targetStream) -> void
+

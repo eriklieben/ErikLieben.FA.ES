@@ -1,0 +1,80 @@
+#nullable enable
+ErikLieben.FA.ES.Testing.InMemory.InMemoryAggregateFactory
+ErikLieben.FA.ES.Testing.InMemory.InMemoryAggregateFactory.InMemoryAggregateFactory(System.IServiceProvider! serviceProvider, System.Func<System.Type?, System.Type!>![]! aggregateFactorGets) -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, bool preserveTimestamp, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.GetDataStoreFor(string! storeId) -> System.Collections.Generic.Dictionary<int, ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.InMemoryDataStore() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.ReadAsStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.ReadAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.RemoveEventsForFailedCommitAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.Store.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.Dictionary<int, ErikLieben.FA.ES.IEvent!>!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentStore
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentStore.CreateAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentStore.GetAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentStore.InMemoryDocumentStore() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.CreateDocumentTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.CreateDocumentTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.CreateDocumentTagStore(string! type) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.CreateStreamTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.CreateStreamTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagDocumentFactory.InMemoryDocumentTagDocumentFactory() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagStore
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagStore.InMemoryDocumentTagStore() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryDocumentTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryEventStreamFactory
+ErikLieben.FA.ES.Testing.InMemory.InMemoryEventStreamFactory.Create(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IEventStream!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryEventStreamFactory.InMemoryEventStreamFactory(ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagFactory, ErikLieben.FA.ES.IObjectDocumentFactory! objectDocumentFactory, ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore! dataSource, ErikLieben.FA.ES.Aggregates.IAggregateFactory! aggregateFactory) -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.GetAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.GetByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.GetFirstByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.GetOrCreateAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.InMemoryObjectDocumentFactory(ErikLieben.FA.ES.IDocumentTagStore! documentTagStore) -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryObjectDocumentFactory.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.DeleteAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.DeleteManyAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Collections.Generic.IEnumerable<int>! versions, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.GetAsync(System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.GetAsync<T>(System.Text.Json.Serialization.Metadata.JsonTypeInfo<T!>! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.InMemorySnapShotStore() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.ListSnapshotsAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.Snapshots.SnapshotMetadata!>!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemorySnapShotStore.SetAsync(ErikLieben.FA.ES.Processors.IBase! object, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStream
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStream.Events.get -> System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStream.InMemoryStream(ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods! document, ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore! inMemoryDataSource, ErikLieben.FA.ES.ISnapShotStore! snapShotStore, ErikLieben.FA.ES.IObjectDocumentFactory! objectDocumentFactory, ErikLieben.FA.ES.Aggregates.IAggregateFactory! aggregateFactory) -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamMetadataProvider
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamMetadataProvider.GetStreamMetadataAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Retention.StreamMetadata?>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamMetadataProvider.InMemoryStreamMetadataProvider(ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore! dataStore) -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamTagStore
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamTagStore.InMemoryStreamTagStore() -> void
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.InMemoryStreamTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.Events.get -> System.Collections.Generic.List<ErikLieben.FA.ES.JsonEvent!>!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.Events.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.InMemoryDataStoreDocument() -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.LastObjectDocumentHash.get -> string!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.LastObjectDocumentHash.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.ObjectId.get -> string!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.ObjectId.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.ObjectName.get -> string!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.ObjectName.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.SchemaVersion.get -> string!
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.Terminated.get -> bool
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryDataStoreDocument.Terminated.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument.DocumentPath.get -> string?
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument.DocumentPath.set -> void
+ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument.InMemoryEventStreamDocument(string! objectId, string! objectName, ErikLieben.FA.ES.Documents.StreamInformation! active, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.TerminatedStream!>! terminatedStream, string? schemaVersion = null, string? hash = null, string? prevHash = null, string? documentPath = null) -> void
+override ErikLieben.FA.ES.Testing.InMemory.InMemoryAggregateFactory.InternalGet(System.Type! type) -> System.Type!
+static ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore.GetStoreKey(string! objectName, string! objectId) -> string!
+static ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument.From(ErikLieben.FA.ES.Documents.IObjectDocument! objectDocument) -> ErikLieben.FA.ES.Testing.InMemory.Model.InMemoryEventStreamDocument!

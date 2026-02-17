@@ -1,1 +1,330 @@
 #nullable enable
+~ErikLieben.FA.ES.JsonEventSerializerContext.ActionMetadata.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.ActionMetadata>
+~ErikLieben.FA.ES.JsonEventSerializerContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
+~ErikLieben.FA.ES.JsonEventSerializerContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string, string>>
+~ErikLieben.FA.ES.JsonEventSerializerContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
+~ErikLieben.FA.ES.JsonEventSerializerContext.JsonEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.JsonEvent>
+~ErikLieben.FA.ES.JsonEventSerializerContext.NullableDateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset?>
+~ErikLieben.FA.ES.JsonEventSerializerContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+~ErikLieben.FA.ES.JsonEventSerializerContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken>
+~ErikLieben.FA.ES.VersionTokenJsonContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier>
+~ErikLieben.FA.ES.VersionTokenJsonContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>
+~ErikLieben.FA.ES.VersionTokenJsonContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken>
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.CoreName = "ErikLieben.FA.ES" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.ProjectionsName = "ErikLieben.FA.ES.Projections" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.StorageName = "ErikLieben.FA.ES.Storage" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.LibraryName = "ErikLieben.FA.ES" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.Meters.CoreName = "ErikLieben.FA.ES" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.Meters.ProjectionsName = "ErikLieben.FA.ES.Projections" -> string!
+const ErikLieben.FA.ES.Observability.FaesInstrumentation.Meters.StorageName = "ErikLieben.FA.ES.Storage" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ActionType = "faes.action.type" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ChunkCount = "faes.chunk.count" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ChunkingEnabled = "faes.chunking.enabled" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbName = "db.name" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperation = "db.operation" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperationDelete = "delete" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperationQuery = "query" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperationRead = "read" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperationUpsert = "upsert" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbOperationWrite = "write" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystem = "db.system" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemAzureAppendBlob = "azure_appendblob" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemAzureBlob = "azure_blob" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemAzureTable = "azure_table" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemCosmosDb = "cosmosdb" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemInMemory = "inmemory" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DurationMs = "faes.duration_ms" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventCount = "faes.event.count" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventName = "faes.event.name" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventsFolded = "faes.events.folded" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventType = "faes.event.type" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventVersion = "faes.event.version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.HasContinuation = "faes.has_continuation" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.LoadedFromCache = "faes.loaded_from_cache" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ObjectId = "faes.object.id" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ObjectName = "faes.object.name" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.PageSize = "faes.page.size" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ProjectionStatus = "faes.projection.status" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.ProjectionType = "faes.projection.type" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.RetryAttempt = "faes.retry.attempt" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.SchemaVersion = "faes.schema.version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.SessionConstraint = "faes.session.constraint" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.SnapshotName = "faes.snapshot.name" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.SnapshotVersion = "faes.snapshot.version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StartVersion = "faes.start.version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProvider = "faes.storage.provider" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProviderAppendBlob = "appendblob" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProviderBlob = "blob" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProviderCosmosDb = "cosmosdb" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProviderInMemory = "inmemory" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StorageProviderTable = "table" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.StreamId = "faes.stream.id" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.Success = "faes.success" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.TargetVersion = "faes.target.version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.TotalEstimate = "faes.total.estimate" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.UpcastFromVersion = "faes.upcast.from_version" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.UpcastToVersion = "faes.upcast.to_version" -> string!
+const ErikLieben.FA.ES.Uniqueness.UniqueIdGenerator.DefaultHashLength = 16 -> int
+ErikLieben.FA.ES.Actions.StreamActionDataStore
+ErikLieben.FA.ES.Actions.StreamActionDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, bool preserveTimestamp, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Actions.StreamActionDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Actions.StreamActionDataStore.ReadAsStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.Actions.StreamActionDataStore.ReadAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.Actions.StreamActionDataStore.RemoveEventsForFailedCommitAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.Actions.StreamActionDataStore.StreamActionDataStore(ErikLieben.FA.ES.EventStream.IDataStore! datastore) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream
+ErikLieben.FA.ES.Actions.StreamActionEventStream.Document.get -> ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.GetSnapShot(int version, string? name = null) -> System.Threading.Tasks.Task<object?>!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.ReadAsync(int startVersion = 0, int? untilVersion = null, bool useExternalSequencer = false) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyCollection<ErikLieben.FA.ES.IEvent!>!>!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.RegisterAction(ErikLieben.FA.ES.Actions.IAction! action) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.RegisterNotification(ErikLieben.FA.ES.Notifications.INotification! notification) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.RegisterPostAppendAction(ErikLieben.FA.ES.Actions.IPostAppendAction! action) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.RegisterPostReadAction(ErikLieben.FA.ES.Actions.IPostReadAction! action) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.RegisterPreAppendAction(ErikLieben.FA.ES.Actions.IPreAppendAction! action) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.Session(System.Action<ErikLieben.FA.ES.ILeasedSession!>! context, ErikLieben.FA.ES.Constraint constraint = ErikLieben.FA.ES.Constraint.Loose) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.SetAggregateType(System.Text.Json.Serialization.Metadata.JsonTypeInfo! typeInfo) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.SetSnapShotType(System.Text.Json.Serialization.Metadata.JsonTypeInfo! typeInfo, string? version = null) -> void
+ErikLieben.FA.ES.Actions.StreamActionEventStream.Settings.get -> ErikLieben.FA.ES.IEventStreamSettings!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.Snapshot<T>(int untilVersion, string? name = null) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Actions.StreamActionEventStream.StreamActionEventStream(ErikLieben.FA.ES.IEventStream! eventStream) -> void
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.Append<PayloadType>(PayloadType! payload, ErikLieben.FA.ES.ActionMetadata? actionMetadata = null, string? overrideEventType = null, string? externalSequencer = null, System.Collections.Generic.Dictionary<string!, string!>? metadata = null) -> ErikLieben.FA.ES.IEvent<PayloadType!>!
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.Buffer.get -> System.Collections.Generic.List<ErikLieben.FA.ES.JsonEvent!>!
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.CommitAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.IsTerminatedAsync(string! streamIdentifier, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.ReadAsync(int startVersion = 0, int? untilVersion = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.Actions.StreamActionLeasedSession.StreamActionLeasedSession(ErikLieben.FA.ES.ILeasedSession! session) -> void
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.CreateDocumentTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.CreateDocumentTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.CreateDocumentTagStore(string! type) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.CreateStreamTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.CreateStreamTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.Documents.DocumentTagDocumentFactory.DocumentTagDocumentFactory(System.Collections.Generic.IDictionary<string!, ErikLieben.FA.ES.IDocumentTagDocumentFactory!>! eventStreamFactories, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings) -> void
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.GetAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.GetByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.GetFirstByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.GetOrCreateAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.ObjectDocumentFactory(System.Collections.Generic.IDictionary<string!, ErikLieben.FA.ES.IObjectDocumentFactory!>! objectDocumentFactories, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagDocumentFactory, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings, ErikLieben.FA.ES.Configuration.IAggregateStorageRegistry? aggregateStorageRegistry = null) -> void
+ErikLieben.FA.ES.Documents.ObjectDocumentFactory.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Documents.ObjectDocumentWithTags
+ErikLieben.FA.ES.Documents.ObjectDocumentWithTags.ObjectDocumentWithTags(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.IDocumentTagStore! documentTagStore) -> void
+ErikLieben.FA.ES.Documents.ObjectDocumentWithTags.ObjectDocumentWithTags(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.IDocumentTagStore! documentTagStore, ErikLieben.FA.ES.IDocumentTagStore? streamTagStore) -> void
+ErikLieben.FA.ES.Documents.ObjectDocumentWithTags.RemoveTagAsync(string! tag, ErikLieben.FA.ES.Documents.TagTypes tagType = ErikLieben.FA.ES.Documents.TagTypes.DocumentTag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Documents.ObjectDocumentWithTags.SetTagAsync(string! tag, ErikLieben.FA.ES.Documents.TagTypes tagType = ErikLieben.FA.ES.Documents.TagTypes.DocumentTag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStream.BaseEventStream
+ErikLieben.FA.ES.EventStream.BaseEventStream.BaseEventStream(ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods! document, ErikLieben.FA.ES.EventStream.IStreamDependencies! streamDependencies) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.CurrentVersion.get -> int
+ErikLieben.FA.ES.EventStream.BaseEventStream.Document.get -> ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods!
+ErikLieben.FA.ES.EventStream.BaseEventStream.EventTypeRegistry.get -> ErikLieben.FA.ES.EventStream.EventTypeRegistry!
+ErikLieben.FA.ES.EventStream.BaseEventStream.EventUpcasterRegistry.get -> ErikLieben.FA.ES.EventStream.EventUpcasterRegistry!
+ErikLieben.FA.ES.EventStream.BaseEventStream.GetSession(System.Collections.Generic.List<ErikLieben.FA.ES.Actions.IAction!>! actions) -> ErikLieben.FA.ES.ILeasedSession!
+ErikLieben.FA.ES.EventStream.BaseEventStream.GetSnapShot(int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+ErikLieben.FA.ES.EventStream.BaseEventStream.JsonTypeInfoAgg -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+ErikLieben.FA.ES.EventStream.BaseEventStream.JsonTypeInfoSnapshot -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+ErikLieben.FA.ES.EventStream.BaseEventStream.ReadAsync(int startVersion = 0, int? untilVersion = null, bool useExternalSequencer = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyCollection<ErikLieben.FA.ES.IEvent!>!>!
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterAction(ErikLieben.FA.ES.Actions.IAction! action) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterEvent<T>(string! eventName, int schemaVersion, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterEvent<T>(string! eventName, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T>! jsonTypeInfo) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterNotification(ErikLieben.FA.ES.Notifications.INotification! notification) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterPostAppendAction(ErikLieben.FA.ES.Actions.IPostAppendAction! action) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterPostReadAction(ErikLieben.FA.ES.Actions.IPostReadAction! action) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterPreAppendAction(ErikLieben.FA.ES.Actions.IPreAppendAction! action) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterUpcast(ErikLieben.FA.ES.Upcasting.IUpcastEvent! upcast) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.RegisterUpcaster<TFrom, TTo>(string! eventName, int fromVersion, int toVersion, System.Func<TFrom!, TTo!>! upcast) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.Session(System.Action<ErikLieben.FA.ES.ILeasedSession!>! context, ErikLieben.FA.ES.Constraint constraint = ErikLieben.FA.ES.Constraint.Loose, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStream.BaseEventStream.SetAggregateType(System.Text.Json.Serialization.Metadata.JsonTypeInfo! typeInfo) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.SetSnapShotType(System.Text.Json.Serialization.Metadata.JsonTypeInfo! typeInfo, string? version = null) -> void
+ErikLieben.FA.ES.EventStream.BaseEventStream.Settings.get -> ErikLieben.FA.ES.IEventStreamSettings!
+ErikLieben.FA.ES.EventStream.BaseEventStream.Snapshot<T>(int untilVersion, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStream.BaseEventStream.StreamDependencies.get -> ErikLieben.FA.ES.EventStream.IStreamDependencies!
+ErikLieben.FA.ES.EventStream.BaseEventStream.StreamIdentifier.get -> string!
+ErikLieben.FA.ES.EventStream.EventStreamFactory
+ErikLieben.FA.ES.EventStream.EventStreamFactory.Create(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IEventStream!
+ErikLieben.FA.ES.EventStream.EventStreamFactory.EventStreamFactory(System.Collections.Generic.IDictionary<string!, ErikLieben.FA.ES.IEventStreamFactory!>! eventStreamFactories, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings) -> void
+ErikLieben.FA.ES.EventStream.LeasedSession
+ErikLieben.FA.ES.EventStream.LeasedSession.Append<TPayloadType>(TPayloadType! payload, ErikLieben.FA.ES.ActionMetadata? actionMetadata = null, string? overrideEventType = null, string? externalSequencer = null, System.Collections.Generic.Dictionary<string!, string!>? metadata = null) -> ErikLieben.FA.ES.IEvent<TPayloadType!>!
+ErikLieben.FA.ES.EventStream.LeasedSession.Buffer.get -> System.Collections.Generic.List<ErikLieben.FA.ES.JsonEvent!>!
+ErikLieben.FA.ES.EventStream.LeasedSession.CommitAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStream.LeasedSession.IsTerminatedAsync(string! streamIdentifier, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStream.LeasedSession.LeasedSession(ErikLieben.FA.ES.IEventStream! eventStream, ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.EventStream.IDataStore! datastore, ErikLieben.FA.ES.IObjectDocumentFactory! documentstore, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Notifications.IStreamDocumentChunkClosedNotification!>! docClosedNotificationActions, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Actions.IAsyncPostCommitAction!>! postCommitActions, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Actions.IPreAppendAction!>! preAppendActions, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Actions.IPostReadAction!>! postReadActions) -> void
+ErikLieben.FA.ES.EventStream.LeasedSession.ReadAsync(int startVersion = 0, int? untilVersion = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.EventStream.StreamDependencies
+ErikLieben.FA.ES.EventStream.StreamDependencies.AggregateFactory.get -> ErikLieben.FA.ES.Aggregates.IAggregateFactory!
+ErikLieben.FA.ES.EventStream.StreamDependencies.AggregateFactory.init -> void
+ErikLieben.FA.ES.EventStream.StreamDependencies.DataStore.get -> ErikLieben.FA.ES.EventStream.IDataStore!
+ErikLieben.FA.ES.EventStream.StreamDependencies.DataStore.init -> void
+ErikLieben.FA.ES.EventStream.StreamDependencies.ObjectDocumentFactory.get -> ErikLieben.FA.ES.IObjectDocumentFactory!
+ErikLieben.FA.ES.EventStream.StreamDependencies.ObjectDocumentFactory.init -> void
+ErikLieben.FA.ES.EventStream.StreamDependencies.SnapshotStore.get -> ErikLieben.FA.ES.ISnapShotStore!
+ErikLieben.FA.ES.EventStream.StreamDependencies.SnapshotStore.init -> void
+ErikLieben.FA.ES.EventStream.StreamDependencies.StreamDependencies() -> void
+ErikLieben.FA.ES.IEventToJsonEventConverter
+ErikLieben.FA.ES.IEventToJsonEventConverter.IEventToJsonEventConverter() -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload
+ErikLieben.FA.ES.IJsonEventWithoutPayload.ActionMetadata.get -> ErikLieben.FA.ES.ActionMetadata!
+ErikLieben.FA.ES.IJsonEventWithoutPayload.ActionMetadata.set -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload.EventType.get -> string!
+ErikLieben.FA.ES.IJsonEventWithoutPayload.EventType.set -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload.EventVersion.get -> int
+ErikLieben.FA.ES.IJsonEventWithoutPayload.EventVersion.set -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload.ExternalSequencer.get -> string?
+ErikLieben.FA.ES.IJsonEventWithoutPayload.ExternalSequencer.set -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload.Metadata.get -> System.Collections.Generic.Dictionary<string!, string!>!
+ErikLieben.FA.ES.IJsonEventWithoutPayload.Metadata.set -> void
+ErikLieben.FA.ES.IJsonEventWithoutPayload.SchemaVersion.get -> int
+ErikLieben.FA.ES.IJsonEventWithoutPayload.SchemaVersion.set -> void
+ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter
+ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter.ObjectIdentifierJsonConverter() -> void
+ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter
+ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter.VersionIdentifierJsonConverter() -> void
+ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter
+ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter.VersionTokenJsonConverter() -> void
+ErikLieben.FA.ES.JsonEventSerializerContext
+ErikLieben.FA.ES.JsonEventSerializerContext.JsonEventSerializerContext() -> void
+ErikLieben.FA.ES.JsonEventSerializerContext.JsonEventSerializerContext(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.ObjectIdProvider
+ErikLieben.FA.ES.ObjectIdProvider.CountAsync(string! objectName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<long>!
+ErikLieben.FA.ES.ObjectIdProvider.ExistsAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.ObjectIdProvider.GetObjectIdsAsync(string! objectName, string? continuationToken, int pageSize, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.PagedResult<string!>!>!
+ErikLieben.FA.ES.ObjectIdProvider.ObjectIdProvider(System.Collections.Generic.IDictionary<string!, ErikLieben.FA.ES.IObjectIdProvider!>! objectIdProviders, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings) -> void
+ErikLieben.FA.ES.Observability.FaesInstrumentation
+ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources
+ErikLieben.FA.ES.Observability.FaesInstrumentation.Meters
+ErikLieben.FA.ES.Observability.FaesMetrics
+ErikLieben.FA.ES.Observability.FaesSemanticConventions
+ErikLieben.FA.ES.Projections.BlobPathTemplateResolver
+ErikLieben.FA.ES.Projections.CatchUpDiscoveryService
+ErikLieben.FA.ES.Projections.CatchUpDiscoveryService.CatchUpDiscoveryService(ErikLieben.FA.ES.IObjectIdProvider! objectIdProvider) -> void
+ErikLieben.FA.ES.Projections.CatchUpDiscoveryService.DiscoverWorkItemsAsync(string![]! objectNames, int pageSize = 100, string? continuationToken = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.CatchUpDiscoveryResult!>!
+ErikLieben.FA.ES.Projections.CatchUpDiscoveryService.EstimateTotalWorkItemsAsync(string![]! objectNames, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<long>!
+ErikLieben.FA.ES.Projections.CatchUpDiscoveryService.StreamWorkItemsAsync(string![]! objectNames, int pageSize = 100, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.Projections.CatchUpWorkItem!>!
+ErikLieben.FA.ES.Projections.CheckpointDiffService
+ErikLieben.FA.ES.Projections.CheckpointDiffService.CheckpointDiffService(System.IServiceProvider! serviceProvider, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Projections.CheckpointDiffService!>? logger = null) -> void
+ErikLieben.FA.ES.Projections.CheckpointDiffService.CompareAsync<T>(string! objectId, int sourceVersion, int targetVersion, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.CheckpointComparisonResult!>!
+ErikLieben.FA.ES.Projections.CheckpointDiffService.ConvergentCatchUpAsync<T>(string! objectId, int sourceVersion, int targetVersion, ErikLieben.FA.ES.Projections.ConvergentCatchUpOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ConvergentCatchUpResult!>!
+ErikLieben.FA.ES.Projections.CheckpointDiffService.SyncAsync<T>(string! objectId, int sourceVersion, int targetVersion, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.CheckpointComparisonResult!>!
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.Document.get -> ErikLieben.FA.ES.Documents.IObjectDocument!
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.Document.init -> void
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.Event.get -> ErikLieben.FA.ES.IEvent<Te!>!
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.Event.init -> void
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.ExecutionContext(ErikLieben.FA.ES.IEvent<Te!>! event, ErikLieben.FA.ES.Documents.IObjectDocument! objectDocument, Td? item, ErikLieben.FA.ES.Projections.IExecutionContextWithData<Td!>? parentContext = null) -> void
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.IsRoot.get -> bool
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.Item.get -> Td?
+ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.ParentContext.get -> ErikLieben.FA.ES.Projections.IExecutionContext?
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.CancelRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, string? error = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.CompleteRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.DisableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.EnableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.GetByStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Projections.ProjectionStatusInfo!>!>!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.GetStatusAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatusInfo?>!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.InMemoryProjectionStatusCoordinator(Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Projections.ProjectionOptions!>? options = null, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator!>? logger = null) -> void
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.MarkReadyAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.RecoverStuckRebuildsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.StartCatchUpAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Projections.InMemoryProjectionStatusCoordinator.StartRebuildAsync(string! projectionName, string! objectId, ErikLieben.FA.ES.Projections.RebuildStrategy strategy, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.RebuildToken!>!
+ErikLieben.FA.ES.Projections.ProjectionLoader
+ErikLieben.FA.ES.Projections.ProjectionLoader.GetAsync<T>(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+ErikLieben.FA.ES.Projections.ProjectionLoader.GetVersionAsync<T>(string! objectId, int version, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+ErikLieben.FA.ES.Projections.ProjectionLoader.GetVersionMetadataAsync<T>(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionVersionMetadata!>!
+ErikLieben.FA.ES.Projections.ProjectionLoader.GetWithVersionCheckAsync<T>(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionLoadResult<T!>!>!
+ErikLieben.FA.ES.Projections.ProjectionLoader.ProjectionLoader(System.IServiceProvider! serviceProvider, ErikLieben.FA.ES.Projections.IProjectionStatusCoordinator! statusCoordinator, Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Projections.ProjectionOptions!>? options = null, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Projections.ProjectionLoader!>? logger = null) -> void
+ErikLieben.FA.ES.Projections.VersionTokenComparer
+ErikLieben.FA.ES.Projections.VersionTokenComparer.Compare(string? x, string? y) -> int
+ErikLieben.FA.ES.Projections.VersionTokenComparer.IsNewer(string! new, string? existing) -> bool
+ErikLieben.FA.ES.Projections.VersionTokenComparer.IsOlder(string! new, string? existing) -> bool
+ErikLieben.FA.ES.Projections.VersionTokenComparer.VersionTokenComparer() -> void
+ErikLieben.FA.ES.Retention.RetentionDiscoveryService
+ErikLieben.FA.ES.Retention.RetentionDiscoveryService.DiscoverViolationsAsync(ErikLieben.FA.ES.Retention.RetentionDiscoveryOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.Retention.RetentionViolation!>!
+ErikLieben.FA.ES.Retention.RetentionDiscoveryService.ProcessViolationAsync(ErikLieben.FA.ES.Retention.RetentionViolation! violation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Retention.RetentionProcessingResult!>!
+ErikLieben.FA.ES.Retention.RetentionDiscoveryService.ProcessViolationsAsync(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Retention.RetentionViolation!>! violations, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.Retention.RetentionProcessingResult!>!
+ErikLieben.FA.ES.Retention.RetentionDiscoveryService.RetentionDiscoveryService(ErikLieben.FA.ES.IObjectIdProvider! objectIdProvider, ErikLieben.FA.ES.Retention.IRetentionPolicyProvider! policyProvider, ErikLieben.FA.ES.Retention.IStreamMetadataProvider! metadataProvider, Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Retention.RetentionOptions!>? options = null, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Retention.RetentionDiscoveryService!>? logger = null) -> void
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.GetPolicy(System.Type! aggregateType) -> ErikLieben.FA.ES.Retention.RetentionPolicy?
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.GetPolicy<T>() -> ErikLieben.FA.ES.Retention.RetentionPolicy?
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.GetRegisteredTypes() -> System.Collections.Generic.IEnumerable<string!>!
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.RegisterPolicy(System.Type! aggregateType, ErikLieben.FA.ES.Retention.RetentionPolicy! policy) -> void
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.RetentionPolicyProvider(ErikLieben.FA.ES.Retention.RetentionOptions! options) -> void
+ErikLieben.FA.ES.Retention.RetentionPolicyProvider.RetentionPolicyProvider(Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Retention.RetentionOptions!>! options) -> void
+ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler
+ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler.HandlePostCommitAsync(ErikLieben.FA.ES.Processors.Aggregate! aggregate, ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.JsonEvent!>! committedEvents, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Snapshots.SnapshotResult!>!
+ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler.InlineSnapshotHandler(ErikLieben.FA.ES.ISnapShotStore! snapshotStore, ErikLieben.FA.ES.Snapshots.ISnapshotPolicyProvider! policyProvider, ErikLieben.FA.ES.Snapshots.SnapshotOptions! options, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler!>? logger = null) -> void
+ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler.InlineSnapshotHandler(ErikLieben.FA.ES.ISnapShotStore! snapshotStore, ErikLieben.FA.ES.Snapshots.ISnapshotPolicyProvider! policyProvider, Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Snapshots.SnapshotOptions!>! options, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Snapshots.InlineSnapshotHandler!>? logger = null) -> void
+ErikLieben.FA.ES.Snapshots.SnapshotCleanupService
+ErikLieben.FA.ES.Snapshots.SnapshotCleanupService.CleanupAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.Snapshots.SnapshotPolicy! policy, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Snapshots.SnapshotCleanupResult!>!
+ErikLieben.FA.ES.Snapshots.SnapshotCleanupService.CleanupAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Type! aggregateType, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Snapshots.SnapshotCleanupResult!>!
+ErikLieben.FA.ES.Snapshots.SnapshotCleanupService.SnapshotCleanupService(ErikLieben.FA.ES.ISnapShotStore! snapshotStore, ErikLieben.FA.ES.Snapshots.ISnapshotPolicyProvider! policyProvider, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.Snapshots.SnapshotCleanupService!>? logger = null) -> void
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider.GetPolicy(System.Type! aggregateType) -> ErikLieben.FA.ES.Snapshots.SnapshotPolicy?
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider.GetPolicy<T>() -> ErikLieben.FA.ES.Snapshots.SnapshotPolicy?
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider.RegisterPolicy(System.Type! aggregateType, ErikLieben.FA.ES.Snapshots.SnapshotPolicy! policy) -> void
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider.SnapshotPolicyProvider(ErikLieben.FA.ES.Snapshots.SnapshotOptions! options) -> void
+ErikLieben.FA.ES.Snapshots.SnapshotPolicyProvider.SnapshotPolicyProvider(Microsoft.Extensions.Options.IOptions<ErikLieben.FA.ES.Snapshots.SnapshotOptions!>! options) -> void
+ErikLieben.FA.ES.Uniqueness.UniqueIdGenerator
+ErikLieben.FA.ES.VersionTokenJsonContext
+ErikLieben.FA.ES.VersionTokenJsonContext.VersionTokenJsonContext() -> void
+ErikLieben.FA.ES.VersionTokenJsonContext.VersionTokenJsonContext(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.VersionTokenJsonConverterBase<T>
+ErikLieben.FA.ES.VersionTokenJsonConverterBase<T>.VersionTokenJsonConverterBase() -> void
+override ErikLieben.FA.ES.IEventToJsonEventConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.IEvent?
+override ErikLieben.FA.ES.IEventToJsonEventConverter.Write(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.IEvent! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!
+override ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter.ReadAsPropertyName(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!
+override ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.ObjectIdentifierJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!
+override ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter.ReadAsPropertyName(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!
+override ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.VersionIdentifierJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionToken!
+override ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter.ReadAsPropertyName(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> ErikLieben.FA.ES.VersionToken!
+override ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter.Write(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionToken! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter.WriteAsPropertyName(System.Text.Json.Utf8JsonWriter! writer, ErikLieben.FA.ES.VersionToken! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.JsonEventSerializerContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+override ErikLieben.FA.ES.JsonEventSerializerContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+override ErikLieben.FA.ES.Projections.ExecutionContext<Te, Td>.ToString() -> string!
+override ErikLieben.FA.ES.VersionTokenJsonContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+override ErikLieben.FA.ES.VersionTokenJsonContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+override ErikLieben.FA.ES.VersionTokenJsonConverterBase<T>.Write(System.Text.Json.Utf8JsonWriter! writer, T! value, System.Text.Json.JsonSerializerOptions! options) -> void
+readonly ErikLieben.FA.ES.EventStream.BaseEventStream.Actions -> System.Collections.Generic.List<ErikLieben.FA.ES.Actions.IAction!>!
+readonly ErikLieben.FA.ES.EventStream.BaseEventStream.Notifications -> System.Collections.Generic.List<ErikLieben.FA.ES.Notifications.INotification!>!
+readonly ErikLieben.FA.ES.EventStream.BaseEventStream.UpCasters -> System.Collections.Generic.List<ErikLieben.FA.ES.Upcasting.IUpcastEvent!>!
+readonly ErikLieben.FA.ES.VersionTokenJsonConverterBase<T>.Converter -> ErikLieben.FA.ES.JsonConverters.VersionTokenJsonConverter!
+static ErikLieben.FA.ES.JsonEventSerializerContext.Default.get -> ErikLieben.FA.ES.JsonEventSerializerContext!
+static ErikLieben.FA.ES.Observability.FaesInstrumentation.RecordException(System.Diagnostics.Activity? activity, System.Exception? exception) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordCatchUpItemProcessed(string! objectName) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordCommit(string! objectName, string! storageProvider, bool success = true) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordCommitDuration(double durationMs, string! objectName, string! storageProvider) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordEventsAppended(long count, string! objectName, string! storageProvider) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordEventsPerCommit(long eventCount, string! objectName) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordEventsRead(long count, string! objectName, string! storageProvider) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordProjectionEventsFolded(long eventCount, string! projectionType) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordProjectionUpdate(string! projectionType, string! storageProvider) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordProjectionUpdateDuration(double durationMs, string! projectionType) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordSnapshotCreated(string! objectName) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordStorageReadDuration(double durationMs, string! storageProvider, string! objectName) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordStorageWriteDuration(double durationMs, string! storageProvider, string! objectName) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.RecordUpcast(string! eventType, int fromVersion, int toVersion) -> void
+static ErikLieben.FA.ES.Observability.FaesMetrics.StartTimer() -> System.Diagnostics.Stopwatch!
+static ErikLieben.FA.ES.Observability.FaesMetrics.StopAndGetElapsedMs(System.Diagnostics.Stopwatch! stopwatch) -> double
+static ErikLieben.FA.ES.Projections.BlobPathTemplateResolver.ExtractValues(string! template, string! resolvedPath) -> System.Collections.Generic.Dictionary<string!, string!>!
+static ErikLieben.FA.ES.Projections.BlobPathTemplateResolver.GetContainerName(string! template) -> string!
+static ErikLieben.FA.ES.Projections.BlobPathTemplateResolver.GetPlaceholders(string! template) -> System.Collections.Generic.IEnumerable<string!>!
+static ErikLieben.FA.ES.Projections.BlobPathTemplateResolver.Resolve(string! template, string! partitionKey) -> string!
+static ErikLieben.FA.ES.Projections.BlobPathTemplateResolver.Resolve(string! template, System.Collections.Generic.Dictionary<string!, string!>! values) -> string!
+static ErikLieben.FA.ES.Uniqueness.UniqueIdGenerator.FromCompositeKey(string! prefix, System.Collections.Generic.IEnumerable<string!>! uniqueValues, int hashLength = 16) -> string!
+static ErikLieben.FA.ES.Uniqueness.UniqueIdGenerator.FromUniqueValue(string! prefix, string! uniqueValue, int hashLength = 16) -> string!
+static ErikLieben.FA.ES.Uniqueness.UniqueIdGenerator.ValidateId(string! prefix, string! id, string! expectedUniqueValue) -> bool
+static ErikLieben.FA.ES.VersionTokenJsonContext.Default.get -> ErikLieben.FA.ES.VersionTokenJsonContext!
+static ErikLieben.FA.ES.VersionTokenJsonContext.OptionsWithCustomConverters.get -> System.Text.Json.JsonSerializerOptions!
+static ErikLieben.FA.ES.VersionTokenJsonContext.WithConverters.get -> ErikLieben.FA.ES.VersionTokenJsonContext!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.Core -> System.Diagnostics.ActivitySource!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.CoreMeter -> System.Diagnostics.Metrics.Meter!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.Projections -> System.Diagnostics.ActivitySource!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.ProjectionsMeter -> System.Diagnostics.Metrics.Meter!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.Storage -> System.Diagnostics.ActivitySource!
+static readonly ErikLieben.FA.ES.Observability.FaesInstrumentation.StorageMeter -> System.Diagnostics.Metrics.Meter!
+

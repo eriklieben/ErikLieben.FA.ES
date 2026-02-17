@@ -1,0 +1,66 @@
+#nullable enable
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Binding.EventStreamBinder
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Binding.ProjectionBinder
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.EventStreamAttribute() -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.EventStreamAttribute(string! routeParameterName) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.ObjectType.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.ObjectType.set -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.RouteParameterName.get -> string!
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.Store.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStreamAttribute.Store.set -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.AggregateNotFoundException() -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.AggregateNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.AggregateNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.AggregateNotFoundException(System.Type! aggregateType, string! objectId, string! objectType) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.AggregateType.get -> System.Type?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.ObjectId.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.AggregateNotFoundException.ObjectType.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.BindingException() -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.BindingException(string! message) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.BindingException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.BindingException(string! parameterName, System.Type! parameterType, string! reason) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.BindingException(string! parameterName, System.Type! parameterType, string! reason, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.ParameterName.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.BindingException.ParameterType.get -> System.Type?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.BlobName.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.ProjectionNotFoundException() -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.ProjectionNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.ProjectionNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.ProjectionNotFoundException(System.Type! projectionType, string? blobName) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Exceptions.ProjectionNotFoundException.ProjectionType.get -> System.Type?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.ServiceCollectionExtensions
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Filters.ProjectionOutputFilter<TProjection>
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Filters.ProjectionOutputFilter<TProjection>.InvokeAsync(Microsoft.AspNetCore.Http.EndpointFilterInvocationContext! context, Microsoft.AspNetCore.Http.EndpointFilterDelegate! next) -> System.Threading.Tasks.ValueTask<object?>
+ErikLieben.FA.ES.AspNetCore.MinimalApis.Filters.ProjectionOutputFilter<TProjection>.ProjectionOutputFilter(string? blobNamePattern = null, bool saveAfterUpdate = true) -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.LogMessages
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute.BlobNamePattern.get -> string?
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute.ProjectionAttribute() -> void
+ErikLieben.FA.ES.AspNetCore.MinimalApis.ProjectionAttribute.ProjectionAttribute(string! blobNamePattern) -> void
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Binding.EventStreamBinder.BindAsync<TAggregate>(Microsoft.AspNetCore.Http.HttpContext! context, System.Reflection.ParameterInfo! parameter) -> System.Threading.Tasks.ValueTask<TAggregate?>
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Binding.ProjectionBinder.BindAsync<TProjection>(Microsoft.AspNetCore.Http.HttpContext! context, System.Reflection.ParameterInfo! parameter) -> System.Threading.Tasks.ValueTask<TProjection?>
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions.BindEventStreamAsync<TAggregate>(Microsoft.AspNetCore.Http.HttpContext! context, string! routeParameterName = "id", bool createIfNotExists = false, string? objectType = null, string? store = null) -> System.Threading.Tasks.Task<TAggregate!>!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions.BindEventStreamByIdAsync<TAggregate>(Microsoft.AspNetCore.Http.HttpContext! context, string! objectId, bool createIfNotExists = false, string? objectType = null, string? store = null) -> System.Threading.Tasks.Task<TAggregate!>!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions.BindProjectionAsync<TProjection>(Microsoft.AspNetCore.Http.HttpContext! context, string? blobNamePattern = null, bool createIfNotExists = true) -> System.Threading.Tasks.Task<TProjection!>!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions.CreateAggregateBindingDelegate<TAggregate>() -> System.Func<Microsoft.AspNetCore.Http.HttpContext!, System.Reflection.ParameterInfo!, System.Threading.Tasks.ValueTask<TAggregate?>>!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.EventStoreEndpointExtensions.CreateProjectionBindingDelegate<TProjection>() -> System.Func<Microsoft.AspNetCore.Http.HttpContext!, System.Reflection.ParameterInfo!, System.Threading.Tasks.ValueTask<TProjection?>>!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions.AndUpdateProjectionToLatest<TProjection>(this Microsoft.AspNetCore.Builder.RouteHandlerBuilder! builder) -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions.AndUpdateProjectionToLatest<TProjection>(this Microsoft.AspNetCore.Builder.RouteHandlerBuilder! builder, string! blobNamePattern) -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions.WithProjectionOutput<TProjection>(this Microsoft.AspNetCore.Builder.RouteHandlerBuilder! builder) -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions.WithProjectionOutput<TProjection>(this Microsoft.AspNetCore.Builder.RouteHandlerBuilder! builder, string! blobNamePattern) -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.RouteHandlerBuilderExtensions.WithProjectionOutput<TProjection>(this Microsoft.AspNetCore.Builder.RouteHandlerBuilder! builder, string? blobNamePattern, bool saveAfterUpdate) -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.Extensions.ServiceCollectionExtensions.AddEventStoreMinimalApis(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.LogMessages.ProjectionSavedGeneric(this Microsoft.Extensions.Logging.ILogger! logger, string! projectionType) -> void
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.LogMessages.ProjectionSavedNonGeneric(this Microsoft.Extensions.Logging.ILogger! logger, string! projectionType) -> void
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.LogMessages.ProjectionUpdated(this Microsoft.Extensions.Logging.ILogger! logger, string! projectionType) -> void
+static ErikLieben.FA.ES.AspNetCore.MinimalApis.LogMessages.UpdatingProjection(this Microsoft.Extensions.Logging.ILogger! logger, string! projectionType, string! blobName) -> void

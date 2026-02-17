@@ -1,0 +1,56 @@
+#nullable enable
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.Connection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.Connection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.CreateEmptyObjectWhenNonExistent.get -> bool
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.CreateEmptyObjectWhenNonExistent.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DefaultStreamConnection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DefaultStreamConnection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DefaultStreamType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DefaultStreamType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DocumentType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.DocumentType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.EventStreamAttribute(string! objectId) -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.ObjectId.get -> string!
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.ObjectId.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.ObjectType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttribute.ObjectType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.Connection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.Connection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.CreateEmptyObjectWhenNonExistent.get -> bool
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.CreateEmptyObjectWhenNonExistent.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DefaultStreamConnection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DefaultStreamConnection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DefaultStreamType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DefaultStreamType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DocumentType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.DocumentType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.EventStreamAttributeData() -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.ObjectId.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.ObjectId.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.ObjectType.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamAttributeData.ObjectType.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamExtensionConfigProvider
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamExtensionConfigProvider.EventStreamExtensionConfigProvider() -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.EventStreamExtensionConfigProvider.Initialize(Microsoft.Azure.WebJobs.Host.Config.ExtensionConfigContext! context) -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.BlobName.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.BlobName.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.Connection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.Connection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.ProjectionAttribute() -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttribute.ProjectionAttribute(string! blobName) -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.BlobName.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.BlobName.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.Connection.get -> string?
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.Connection.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.ProjectionAttributeData.ProjectionAttributeData() -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.Startup
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.Startup.Configure(Microsoft.Azure.WebJobs.IWebJobsBuilder! builder) -> void
+ErikLieben.FA.ES.WebJobs.Isolated.Extensions.Startup.Startup() -> void
