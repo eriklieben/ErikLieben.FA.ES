@@ -120,6 +120,7 @@ public class PublishProjectionUpdateAction : IAsyncPostCommitAction
             "sprint" => ["SprintDashboard"],
             "epic" => ["EpicSummary"],
             "release" => ["ReleaseDashboard"],
+            "timeSheet" => ["TimeSheetDashboard"],
             _ => null // null means all projections
         };
     }

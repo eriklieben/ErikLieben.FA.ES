@@ -19,11 +19,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="ErikLieben.FA.ES.Testing" Version="2.0.0-preview.6" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TaskFlow.Domain\TaskFlow.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.Testing\ErikLieben.FA.ES.Testing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

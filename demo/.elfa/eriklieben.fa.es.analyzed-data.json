@@ -9523,10 +9523,19 @@
                   "SubTypes": []
                 }
               ]
+            },
+            {
+              "Name": "ObjectName",
+              "IsNullable": true,
+              "Namespace": "System",
+              "Type": "String",
+              "GenericTypes": [],
+              "SubTypes": []
             }
           ],
           "FileLocations": [
-            "\\src\\TaskFlow.Domain\\Aggregates\\Release.cs"
+            "\\src\\TaskFlow.Domain\\Aggregates\\Release.cs",
+            "\\src\\TaskFlow.Domain\\Aggregates\\Release.Generated.cs"
           ],
           "PostWhen": {
             "Parameters": [
@@ -9545,6 +9554,7 @@
           "StreamActions": [],
           "Upcasters": [],
           "IsPartialClass": true,
+          "HasUserDefinedFactoryPartial": true,
           "EventStreamTypeAttribute": {
             "StreamType": "s3",
             "DocumentType": "s3"
@@ -10707,6 +10717,1064 @@
           "EventStreamTypeAttribute": {
             "StreamType": "cosmosdb",
             "DocumentType": "cosmosdb"
+          }
+        },
+        {
+          "IdentifierName": "TimeSheet",
+          "ObjectName": "timeSheet",
+          "IdentifierType": "TimeSheetId",
+          "IdentifierTypeNamespace": "TaskFlow.Domain.ValueObjects",
+          "Namespace": "TaskFlow.Domain.Aggregates",
+          "Constructors": [
+            {
+              "Parameters": [
+                {
+                  "Name": "stream",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStream",
+                  "GenericTypes": []
+                }
+              ]
+            }
+          ],
+          "Events": [
+            {
+              "TypeName": "TimeSheetOpened",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetOpened.cs",
+              "EventName": "TimeSheet.Opened",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetOpened",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "UserId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ProjectId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "PeriodStart",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "PeriodEnd",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "OpenedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeLogged",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeLogged.cs",
+              "EventName": "TimeSheet.TimeLogged",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeLogged",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "WorkItemId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Hours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Description",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Date",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "LoggedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeAdjusted",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeAdjusted.cs",
+              "EventName": "TimeSheet.TimeAdjusted",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeAdjusted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "NewHours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "NewDescription",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "AdjustedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeEntryRemoved",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeEntryRemoved.cs",
+              "EventName": "TimeSheet.EntryRemoved",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeEntryRemoved",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RemovedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeSheetSubmitted",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetSubmitted.cs",
+              "EventName": "TimeSheet.Submitted",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetSubmitted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "SubmittedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "TotalHours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "SubmittedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeSheetRejected",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetRejected.cs",
+              "EventName": "TimeSheet.Rejected",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetRejected",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "RejectedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RejectedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "TypeName": "TimeSheetApproved",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetApproved.cs",
+              "EventName": "TimeSheet.Approved",
+              "SchemaVersion": 1,
+              "ActivationType": "WhenTimeSheetApproved",
+              "Parameters": [],
+              "Properties": [
+                {
+                  "Name": "ApprovedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ApprovedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "Commands": [
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Open",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "userId",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "projectId",
+                  "Type": "ProjectId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "periodStart",
+                  "Type": "DateTime",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "periodEnd",
+                  "Type": "DateTime",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeSheetOpened",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetOpened.cs",
+                  "EventName": "TimeSheet.Opened",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "LogTime",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "workItemId",
+                  "Type": "WorkItemId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "hours",
+                  "Type": "Decimal",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "description",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "date",
+                  "Type": "DateTime",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeLogged",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeLogged.cs",
+                  "EventName": "TimeSheet.TimeLogged",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "AdjustTime",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "entryId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "newHours",
+                  "Type": "Decimal",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "newDescription",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "reason",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeAdjusted",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeAdjusted.cs",
+                  "EventName": "TimeSheet.TimeAdjusted",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "RemoveEntry",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "entryId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "reason",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeEntryRemoved",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeEntryRemoved.cs",
+                  "EventName": "TimeSheet.EntryRemoved",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Submit",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "submittedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeSheetSubmitted",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetSubmitted.cs",
+                  "EventName": "TimeSheet.Submitted",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Approve",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "approvedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeSheetApproved",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetApproved.cs",
+                  "EventName": "TimeSheet.Approved",
+                  "SchemaVersion": 1
+                }
+              ]
+            },
+            {
+              "ReturnType": {
+                "Namespace": "System.Threading.Tasks",
+                "Type": "Task"
+              },
+              "CommandName": "Reject",
+              "RequiresAwait": true,
+              "Parameters": [
+                {
+                  "Name": "rejectedBy",
+                  "Type": "UserProfileId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "reason",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "originatedFromUser",
+                  "Type": "VersionToken",
+                  "Namespace": "ErikLieben.FA.ES",
+                  "IsGeneric": true
+                },
+                {
+                  "Name": "occurredAt",
+                  "Type": "Nullable\u003CDateTime\u003E",
+                  "Namespace": "System",
+                  "IsGeneric": true,
+                  "GenericTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "ProducesEvents": [
+                {
+                  "TypeName": "TimeSheetRejected",
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetRejected.cs",
+                  "EventName": "TimeSheet.Rejected",
+                  "SchemaVersion": 1
+                }
+              ]
+            }
+          ],
+          "Properties": [
+            {
+              "Name": "UserId",
+              "IsNullable": true,
+              "Namespace": "TaskFlow.Domain.ValueObjects",
+              "Type": "UserProfileId",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "StronglyTypedId\u003CString\u003E",
+                  "Namespace": "ErikLieben.FA.StronglyTypedIds",
+                  "GenericTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "ProjectId",
+              "IsNullable": true,
+              "Namespace": "TaskFlow.Domain.ValueObjects",
+              "Type": "ProjectId",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "StronglyTypedId\u003CGuid\u003E",
+                  "Namespace": "ErikLieben.FA.StronglyTypedIds",
+                  "GenericTypes": [
+                    {
+                      "Name": "Guid",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ],
+                  "SubTypes": [
+                    {
+                      "Name": "Guid",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Guid",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "PeriodStart",
+              "Namespace": "System",
+              "Type": "DateTime",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "PeriodEnd",
+              "Namespace": "System",
+              "Type": "DateTime",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Status",
+              "Namespace": "TaskFlow.Domain.ValueObjects.TimeSheet",
+              "Type": "TimeSheetStatus",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "Entries",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "List",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "TimeEntry",
+                  "Namespace": "TaskFlow.Domain.Aggregates",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Boolean",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "TotalHours",
+              "Namespace": "System",
+              "Type": "Decimal",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CreatedAt",
+              "Namespace": "System",
+              "Type": "DateTime",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Metadata",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "ObjectMetadata",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "TimeSheetId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": [
+                {
+                  "Name": "TimeSheetId",
+                  "Namespace": "TaskFlow.Domain.ValueObjects",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "FileLocations": [
+            "\\src\\TaskFlow.Domain\\Aggregates\\TimeSheet.cs"
+          ],
+          "PostWhen": {
+            "Parameters": [
+              {
+                "Name": "document",
+                "Type": "IObjectDocument",
+                "Namespace": "ErikLieben.FA.ES.Documents"
+              },
+              {
+                "Name": "event",
+                "Type": "IEvent",
+                "Namespace": "ErikLieben.FA.ES"
+              }
+            ]
+          },
+          "StreamActions": [],
+          "Upcasters": [],
+          "IsPartialClass": true,
+          "HasUserDefinedFactoryPartial": true,
+          "EventStreamTypeAttribute": {
+            "StreamType": "appendblob",
+            "DocumentType": "appendblob"
           }
         },
         {
@@ -25564,6 +26632,24 @@
           "Constructors": [
             {
               "Parameters": []
+            },
+            {
+              "Parameters": [
+                {
+                  "Name": "documentFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IObjectDocumentFactory",
+                  "GenericTypes": []
+                },
+                {
+                  "Name": "eventStreamFactory",
+                  "IsNullable": true,
+                  "Namespace": "ErikLieben.FA.ES",
+                  "Type": "IEventStreamFactory",
+                  "GenericTypes": []
+                }
+              ]
             }
           ],
           "Events": [
@@ -26299,7 +27385,8 @@
             }
           ],
           "FileLocations": [
-            "src\\TaskFlow.Domain\\Projections\\ReleaseDashboard.cs"
+            "src\\TaskFlow.Domain\\Projections\\ReleaseDashboard.cs",
+            "src\\TaskFlow.Domain\\Projections\\ReleaseDashboard.Generated.cs"
           ],
           "ExternalCheckpoint": true,
           "BlobProjection": {
@@ -27928,6 +29015,997 @@
           "ExternalCheckpoint": true,
           "BlobProjection": {
             "Container": "projections/userprofiles/team-members.json",
+            "Connection": "BlobStorage"
+          }
+        },
+        {
+          "Name": "TimeSheetDashboard",
+          "Namespace": "TaskFlow.Domain.Projections",
+          "Constructors": [
+            {
+              "Parameters": []
+            }
+          ],
+          "Events": [
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeSheetOpened",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetOpened.cs",
+              "EventName": "TimeSheet.Opened",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetOpened",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "UserId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ProjectId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "PeriodStart",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "PeriodEnd",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "OpenedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeLogged",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeLogged.cs",
+              "EventName": "TimeSheet.TimeLogged",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeLogged",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "WorkItemId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Hours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Description",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Date",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "LoggedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeAdjusted",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeAdjusted.cs",
+              "EventName": "TimeSheet.TimeAdjusted",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeAdjusted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "NewHours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "NewDescription",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "AdjustedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeEntryRemoved",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeEntryRemoved.cs",
+              "EventName": "TimeSheet.EntryRemoved",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeEntryRemoved",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "EntryId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RemovedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeSheetSubmitted",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetSubmitted.cs",
+              "EventName": "TimeSheet.Submitted",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetSubmitted",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "SubmittedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "TotalHours",
+                  "Namespace": "System",
+                  "Type": "Decimal",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "SubmittedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeSheetApproved",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetApproved.cs",
+              "EventName": "TimeSheet.Approved",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetApproved",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "ApprovedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "ApprovedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "WhenParameterValueFactories": [
+                {
+                  "Type": {
+                    "Type": "TaskFlow.Domain.Projections.ObjectIdWhenValueFactory",
+                    "Namespace": ""
+                  },
+                  "ForType": {
+                    "Type": "string",
+                    "Namespace": "System"
+                  }
+                }
+              ],
+              "WhenParameterDeclarations": [
+                {
+                  "Name": "timeSheetId",
+                  "Type": "String",
+                  "Namespace": "System",
+                  "GenericArguments": []
+                }
+              ],
+              "TypeName": "TimeSheetRejected",
+              "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+              "File": "src\\TaskFlow.Domain\\Events\\TimeSheet\\TimeSheetRejected.cs",
+              "EventName": "TimeSheet.Rejected",
+              "SchemaVersion": 1,
+              "ActivationType": "When",
+              "Parameters": [
+                {
+                  "Name": "event",
+                  "IsNullable": true,
+                  "Namespace": "TaskFlow.Domain.Events.TimeSheet",
+                  "Type": "TimeSheetRejected",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "timeSheetId",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "Properties": [
+                {
+                  "Name": "RejectedBy",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Reason",
+                  "IsNullable": true,
+                  "Namespace": "System",
+                  "Type": "String",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "RejectedAt",
+                  "Namespace": "System",
+                  "Type": "DateTime",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            }
+          ],
+          "Properties": [
+            {
+              "Name": "TimeSheets",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "TimeSheetSummary",
+                  "Namespace": "TaskFlow.Domain.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "String",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "TimeSheetStatus",
+                      "Namespace": "TaskFlow.Domain.ValueObjects.TimeSheet",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "Decimal",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "WhenParameterValueFactories",
+              "IsNullable": true,
+              "Namespace": "System.Collections.Generic",
+              "Type": "Dictionary",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "IProjectionWhenParameterValueFactory",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "Checkpoint",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES",
+              "Type": "Checkpoint",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CheckpointFingerprint",
+              "IsNullable": true,
+              "Namespace": "System",
+              "Type": "String",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "Status",
+              "Namespace": "ErikLieben.FA.ES.Projections",
+              "Type": "ProjectionStatus",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "StatusChangedAt",
+              "Namespace": "System",
+              "Type": "Nullable",
+              "IsGeneric": true,
+              "GenericTypes": [
+                {
+                  "Name": "DateTimeOffset",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DayOfWeek",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "TimeSpan",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Double",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                }
+              ],
+              "SubTypes": []
+            },
+            {
+              "Name": "RebuildInfo",
+              "IsNullable": true,
+              "Namespace": "ErikLieben.FA.ES.Projections",
+              "Type": "RebuildInfo",
+              "GenericTypes": [],
+              "SubTypes": [
+                {
+                  "Name": "RebuildStrategy",
+                  "Namespace": "ErikLieben.FA.ES.Projections",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Enum",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DateTimeOffset",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "DateTime",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "DayOfWeek",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Enum",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    },
+                    {
+                      "Name": "TimeSpan",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": [
+                        {
+                          "Name": "Double",
+                          "Namespace": "System",
+                          "GenericTypes": [],
+                          "SubTypes": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "DateTime",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "DayOfWeek",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Enum",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "TimeSpan",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": [
+                    {
+                      "Name": "Double",
+                      "Namespace": "System",
+                      "GenericTypes": [],
+                      "SubTypes": []
+                    }
+                  ]
+                },
+                {
+                  "Name": "Double",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "String",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                },
+                {
+                  "Name": "Boolean",
+                  "Namespace": "System",
+                  "GenericTypes": [],
+                  "SubTypes": []
+                }
+              ]
+            },
+            {
+              "Name": "SchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "CodeSchemaVersion",
+              "Namespace": "System",
+              "Type": "Int32",
+              "GenericTypes": [],
+              "SubTypes": []
+            },
+            {
+              "Name": "NeedsSchemaUpgrade",
+              "Namespace": "System",
+              "Type": "Boolean",
+              "GenericTypes": [],
+              "SubTypes": []
+            }
+          ],
+          "FileLocations": [
+            "src\\TaskFlow.Domain\\Projections\\TimeSheetDashboard.cs"
+          ],
+          "ExternalCheckpoint": true,
+          "BlobProjection": {
+            "Container": "projections",
             "Connection": "BlobStorage"
           }
         },

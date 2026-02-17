@@ -310,12 +310,57 @@ builder.Services.AddSingleton<TaskFlow.Api.Projections.IProjectionHandler, TaskF
 
 Console.WriteLine("[STARTUP] S3/MinIO configured successfully for Release aggregates");
 
+// Configure Azure Append Blob Storage for TimeSheet aggregates
+// This demonstrates using Append Blobs for O(1) atomic appends (NDJSON format)
+// Time logging is naturally append-heavy, making it an ideal use case
+builder.Services.ConfigureAppendBlobEventStore(new EventStreamAppendBlobSettings("Store",
+    autoCreateContainer: true));
+
+// Override TimeSheetFactory registration to use appendblob keyed services
+builder.Services.AddSingleton<TaskFlow.Domain.Aggregates.ITimeSheetFactory>(sp =>
+{
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("appendblob");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("appendblob");
+    return new TaskFlow.Domain.Aggregates.TimeSheetFactory(sp, eventStreamFactory, objectDocumentFactory);
+});
+
+// Register TimeSheetDashboard projection factory and singleton
+// The projection is stored in Blob, but reads timesheet events from Append Blob
+builder.Services.AddSingleton<TimeSheetDashboardFactory>(sp =>
+{
+    var blobServiceClientFactory = sp.GetRequiredService<IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient>>();
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("appendblob");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("appendblob");
+    return new TimeSheetDashboardFactory(blobServiceClientFactory, objectDocumentFactory, eventStreamFactory);
+});
+
+builder.Services.AddSingleton<TimeSheetDashboard>(sp =>
+{
+    var factory = sp.GetRequiredService<TimeSheetDashboardFactory>();
+    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("appendblob");
+    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("appendblob");
+    try
+    {
+        return factory.GetOrCreateAsync(objectDocumentFactory, eventStreamFactory).GetAwaiter().GetResult();
+    }
+    catch
+    {
+        return new TimeSheetDashboard(objectDocumentFactory, eventStreamFactory);
+    }
+});
+
+// Register TimeSheetDashboard projection handler
+builder.Services.AddSingleton<TaskFlow.Api.Projections.IProjectionHandler, TaskFlow.Api.Projections.TimeSheetDashboardProjectionHandler>();
+
+Console.WriteLine("[STARTUP] Append Blob Storage configured successfully for TimeSheet aggregates");
+
 // Register storage provider status for UI feedback
 builder.Services.AddSingleton(new StorageProviderStatus(
     BlobEnabled: true,  // Always enabled - required for core functionality
     TableEnabled: true, // Always enabled - required for epics
     CosmosDbEnabled: cosmosDbEnabled,
-    S3Enabled: true
+    S3Enabled: true,
+    AppendBlobEnabled: true
 ));
 
 // Override EpicFactory registration to use Table Storage keyed services
@@ -546,6 +591,7 @@ app.MapStreamMigrationDemoEndpoints();
 app.MapEpicEndpoints();
 app.MapSprintEndpoints();
 app.MapReleaseEndpoints();
+app.MapTimeSheetEndpoints();
 app.MapIdempotencyDemoEndpoints();
 
 await app.RunAsync();
@@ -652,5 +698,6 @@ public record StorageProviderStatus(
     bool BlobEnabled,
     bool TableEnabled,
     bool CosmosDbEnabled,
-    bool S3Enabled
+    bool S3Enabled,
+    bool AppendBlobEnabled
 );
