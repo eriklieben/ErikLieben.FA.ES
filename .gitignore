@@ -105,3 +105,7 @@ sonarcloud-pr.ps1
 
 # Private documentation
 future_features/
+
+# Local generated docs (Claude-generated markdown, reviews, plans)
+local-docs/
+CLAUDE.md
