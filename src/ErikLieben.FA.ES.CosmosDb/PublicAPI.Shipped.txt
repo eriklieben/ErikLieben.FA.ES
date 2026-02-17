@@ -1,0 +1,123 @@
+#nullable enable
+ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions
+ErikLieben.FA.ES.CosmosDb.Configuration.CosmosClientOptionsFactory
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.AutoCreateContainers.get -> bool
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.AutoCreateContainers.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DatabaseName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DatabaseName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DatabaseThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DatabaseThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDataStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDataStore.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDocumentStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDocumentStore.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDocumentTagStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultDocumentTagStore.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultEventStreamTagType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultEventStreamTagType.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultSnapShotStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultSnapShotStore.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultTimeToLiveSeconds.get -> int
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DefaultTimeToLiveSeconds.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DocumentsContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DocumentsContainerName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DocumentsThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.DocumentsThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EnableBulkExecution.get -> bool
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EnableBulkExecution.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventsContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventsContainerName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventsThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventsThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventStreamCosmosDbSettings() -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EventStreamCosmosDbSettings(ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! original) -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.MaxBatchSize.get -> int
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.MaxBatchSize.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.ProjectionsContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.ProjectionsContainerName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.ProjectionsThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.ProjectionsThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.SnapshotsContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.SnapshotsContainerName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.SnapshotsThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.SnapshotsThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.StreamingPageSize.get -> int
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.StreamingPageSize.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.TagsContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.TagsContainerName.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.TagsThroughput.get -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings?
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.TagsThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.UseOptimisticConcurrency.get -> bool
+ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.UseOptimisticConcurrency.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.AutoscaleMaxThroughput.get -> int?
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.AutoscaleMaxThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.ManualThroughput.get -> int?
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.ManualThroughput.init -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.ThroughputSettings() -> void
+ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.ThroughputSettings(ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings! original) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.Connection.get -> string?
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.Connection.init -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.Container.get -> string!
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.CosmosDbJsonProjectionAttribute(string! container) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.PartitionKeyPath.get -> string!
+ErikLieben.FA.ES.CosmosDb.CosmosDbJsonProjectionAttribute.PartitionKeyPath.init -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.AutoCreateContainer.get -> bool
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.AutoCreateContainer.set -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.Connection.get -> string?
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.Connection.set -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.ContainerName.get -> string!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.CosmosDbMultiDocumentProjectionAttribute(string! containerName) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.PartitionKeyPath.get -> string!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionAttribute.PartitionKeyPath.set -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbContainerNotFoundException
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbContainerNotFoundException.CosmosDbContainerNotFoundException() -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbContainerNotFoundException.CosmosDbContainerNotFoundException(string! message) -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbContainerNotFoundException.CosmosDbContainerNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbDocumentNotFoundException
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbDocumentNotFoundException.CosmosDbDocumentNotFoundException() -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbDocumentNotFoundException.CosmosDbDocumentNotFoundException(string! message) -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbDocumentNotFoundException.CosmosDbDocumentNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbProcessingException
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbProcessingException.CosmosDbProcessingException() -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbProcessingException.CosmosDbProcessingException(string! message) -> void
+ErikLieben.FA.ES.CosmosDb.Exceptions.CosmosDbProcessingException.CosmosDbProcessingException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.CosmosDb.HealthChecks.CosmosDbHealthCheck
+ErikLieben.FA.ES.CosmosDb.HealthChecks.CosmosDbHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+ErikLieben.FA.ES.CosmosDb.HealthChecks.CosmosDbHealthCheck.CosmosDbHealthCheck(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.HealthChecks.HealthCheckBuilderExtensions
+ErikLieben.FA.ES.CosmosDb.ServiceCollectionExtensions
+override ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.ToString() -> string!
+override ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.ToString() -> string!
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.UseCosmosDb(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.UseCosmosDb(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, System.Action<ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings!>! configure) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.WithCosmosDbHealthCheck(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.WithCosmosDbProjectionStatusCoordinator(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! databaseName, string! containerName = "projection-status") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.WithCosmosDbStreamMetadataProvider(this ErikLieben.FA.ES.Builder.IFaesBuilder\! builder) -> ErikLieben.FA.ES.Builder.IFaesBuilder\!
+static ErikLieben.FA.ES.CosmosDb.Configuration.CosmosClientOptionsFactory.CreateDefault() -> Microsoft.Azure.Cosmos.CosmosClientOptions!
+static ErikLieben.FA.ES.CosmosDb.Configuration.CosmosClientOptionsFactory.CreateForDevelopment() -> Microsoft.Azure.Cosmos.CosmosClientOptions!
+static ErikLieben.FA.ES.CosmosDb.Configuration.CosmosClientOptionsFactory.CreateForDevelopment(System.Func<System.Net.Http.HttpClient!>! httpClientFactory) -> Microsoft.Azure.Cosmos.CosmosClientOptions!
+static ErikLieben.FA.ES.CosmosDb.Configuration.CosmosClientOptionsFactory.WithAotSerializer(this Microsoft.Azure.Cosmos.CosmosClientOptions! options) -> Microsoft.Azure.Cosmos.CosmosClientOptions!
+static ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.operator !=(ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings? left, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.operator ==(ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings? left, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.operator !=(ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings? left, ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.operator ==(ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings? left, ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.HealthChecks.HealthCheckBuilderExtensions.AddCosmosDbHealthCheck(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name = "azure-cosmosdb", Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = null, System.Collections.Generic.IEnumerable<string!>? tags = null, System.TimeSpan? timeout = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static ErikLieben.FA.ES.CosmosDb.ServiceCollectionExtensions.ConfigureCosmosDbEventStore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.CosmosDb.ServiceCollectionExtensions.RegisterCosmosExceptionExtractor() -> void
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.<Clone>$() -> ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings!
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.Equals(ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings? other) -> bool
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.<Clone>$() -> ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings!
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.Equals(ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings? other) -> bool
+virtual ErikLieben.FA.ES.CosmosDb.Configuration.ThroughputSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+

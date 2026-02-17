@@ -1,8 +1,9 @@
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ErikLieben.FA.ES.Projections;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace ErikLieben.FA.ES.CosmosDb;
 
@@ -80,8 +81,8 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
             Status = (int)ProjectionStatus.Rebuilding,
             StatusChangedAt = now,
             SchemaVersion = 0,
-            RebuildTokenJson = JsonConvert.SerializeObject(token),
-            RebuildInfoJson = JsonConvert.SerializeObject(rebuildInfo)
+            RebuildTokenJson = JsonSerializer.Serialize(token, CosmosDbProjectionStatusJsonContext.Default.RebuildToken),
+            RebuildInfoJson = JsonSerializer.Serialize(rebuildInfo, CosmosDbProjectionStatusJsonContext.Default.RebuildInfo)
         };
 
         await container.UpsertItemAsync(
@@ -117,7 +118,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         document.Status = (int)ProjectionStatus.CatchingUp;
         document.StatusChangedAt = DateTimeOffset.UtcNow;
-        document.RebuildInfoJson = JsonConvert.SerializeObject(rebuildInfo?.WithProgress());
+        document.RebuildInfoJson = SerializeRebuildInfo(rebuildInfo?.WithProgress());
 
         await container.ReplaceItemAsync(
             document,
@@ -152,7 +153,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
 
         document.Status = (int)ProjectionStatus.Ready;
         document.StatusChangedAt = DateTimeOffset.UtcNow;
-        document.RebuildInfoJson = JsonConvert.SerializeObject(rebuildInfo?.WithCompletion());
+        document.RebuildInfoJson = SerializeRebuildInfo(rebuildInfo?.WithCompletion());
 
         await container.ReplaceItemAsync(
             document,
@@ -188,7 +189,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
         document.Status = (int)ProjectionStatus.Active;
         document.StatusChangedAt = DateTimeOffset.UtcNow;
         document.RebuildTokenJson = null;
-        document.RebuildInfoJson = JsonConvert.SerializeObject(rebuildInfo?.WithCompletion());
+        document.RebuildInfoJson = SerializeRebuildInfo(rebuildInfo?.WithCompletion());
 
         await container.ReplaceItemAsync(
             document,
@@ -229,7 +230,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
         document.Status = (int)newStatus;
         document.StatusChangedAt = DateTimeOffset.UtcNow;
         document.RebuildTokenJson = null;
-        document.RebuildInfoJson = JsonConvert.SerializeObject(updatedRebuildInfo);
+        document.RebuildInfoJson = SerializeRebuildInfo(updatedRebuildInfo);
 
         await container.ReplaceItemAsync(
             document,
@@ -317,7 +318,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
                 document.Status = (int)ProjectionStatus.Failed;
                 document.StatusChangedAt = now;
                 document.RebuildTokenJson = null;
-                document.RebuildInfoJson = JsonConvert.SerializeObject(
+                document.RebuildInfoJson = SerializeRebuildInfo(
                     rebuildInfo?.WithError("Rebuild timed out"));
 
                 try
@@ -502,7 +503,7 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
             return null;
         }
 
-        return JsonConvert.DeserializeObject<RebuildToken>(json);
+        return JsonSerializer.Deserialize(json, CosmosDbProjectionStatusJsonContext.Default.RebuildToken);
     }
 
     private static RebuildInfo? DeserializeRebuildInfo(string? json)
@@ -512,7 +513,17 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
             return null;
         }
 
-        return JsonConvert.DeserializeObject<RebuildInfo>(json);
+        return JsonSerializer.Deserialize(json, CosmosDbProjectionStatusJsonContext.Default.RebuildInfo);
+    }
+
+    private static string? SerializeRebuildInfo(RebuildInfo? rebuildInfo)
+    {
+        if (rebuildInfo == null)
+        {
+            return null;
+        }
+
+        return JsonSerializer.Serialize(rebuildInfo, CosmosDbProjectionStatusJsonContext.Default.RebuildInfo);
     }
 
     private static ProjectionStatusInfo ToProjectionStatusInfo(CosmosStatusDocument document)
@@ -531,7 +542,6 @@ public class CosmosDbProjectionStatusCoordinator : IProjectionStatusCoordinator
 
 /// <summary>
 /// CosmosDB document model for storing projection status information.
-/// Uses Newtonsoft.Json attributes for serialization compatibility.
 /// </summary>
 /// <remarks>
 /// Partition key: <c>/projectionName</c>.
@@ -542,54 +552,65 @@ internal class CosmosStatusDocument
     /// <summary>
     /// Unique document identifier. Format: {projectionName}_{objectId}.
     /// </summary>
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
     /// The projection type name. Used as partition key.
     /// </summary>
-    [JsonProperty("projectionName")]
+    [JsonPropertyName("projectionName")]
     public string ProjectionName { get; set; } = string.Empty;
 
     /// <summary>
     /// The object identifier.
     /// </summary>
-    [JsonProperty("objectId")]
+    [JsonPropertyName("objectId")]
     public string ObjectId { get; set; } = string.Empty;
 
     /// <summary>
     /// The projection status as an integer (maps to <see cref="ProjectionStatus"/>).
     /// </summary>
-    [JsonProperty("status")]
+    [JsonPropertyName("status")]
     public int Status { get; set; }
 
     /// <summary>
     /// When the status was last changed.
     /// </summary>
-    [JsonProperty("statusChangedAt")]
+    [JsonPropertyName("statusChangedAt")]
     public DateTimeOffset? StatusChangedAt { get; set; }
 
     /// <summary>
     /// The stored schema version.
     /// </summary>
-    [JsonProperty("schemaVersion")]
+    [JsonPropertyName("schemaVersion")]
     public int SchemaVersion { get; set; }
 
     /// <summary>
     /// Serialized <see cref="RebuildToken"/> JSON. Null when no rebuild is active.
     /// </summary>
-    [JsonProperty("rebuildToken")]
+    [JsonPropertyName("rebuildToken")]
     public string? RebuildTokenJson { get; set; }
 
     /// <summary>
     /// Serialized <see cref="RebuildInfo"/> JSON. Contains rebuild metadata.
     /// </summary>
-    [JsonProperty("rebuildInfo")]
+    [JsonPropertyName("rebuildInfo")]
     public string? RebuildInfoJson { get; set; }
 
     /// <summary>
     /// CosmosDB ETag for optimistic concurrency.
     /// </summary>
-    [JsonProperty("_etag")]
+    [JsonPropertyName("_etag")]
     public string? ETag { get; set; }
+}
+
+/// <summary>
+/// AOT-compatible JSON serializer context for projection status coordinator types.
+/// Uses default (PascalCase) naming for backwards compatibility with existing serialized data.
+/// </summary>
+[JsonSerializable(typeof(RebuildToken))]
+[JsonSerializable(typeof(RebuildInfo))]
+[JsonSourceGenerationOptions(WriteIndented = false)]
+internal partial class CosmosDbProjectionStatusJsonContext : JsonSerializerContext
+{
 }

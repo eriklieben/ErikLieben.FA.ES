@@ -185,6 +185,7 @@ public class CosmosDbSystemTextJsonSerializer : CosmosLinqSerializer
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(ProjectionDocument))]
 [JsonSerializable(typeof(CheckpointDocument))]
+[JsonSerializable(typeof(CosmosStatusDocument))]
 internal partial class CosmosDbInternalTypesJsonContext : JsonSerializerContext
 {
 }

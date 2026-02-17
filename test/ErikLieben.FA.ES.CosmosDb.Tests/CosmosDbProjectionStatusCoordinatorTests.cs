@@ -2,7 +2,7 @@ using System.Net;
 using ErikLieben.FA.ES.Projections;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 
@@ -530,8 +530,8 @@ public class CosmosDbProjectionStatusCoordinatorTests
             Status = (int)ProjectionStatus.Rebuilding,
             StatusChangedAt = DateTimeOffset.UtcNow,
             SchemaVersion = 0,
-            RebuildTokenJson = JsonConvert.SerializeObject(token),
-            RebuildInfoJson = JsonConvert.SerializeObject(rebuildInfo),
+            RebuildTokenJson = JsonSerializer.Serialize(token),
+            RebuildInfoJson = JsonSerializer.Serialize(rebuildInfo),
             ETag = "test-etag"
         };
     }
