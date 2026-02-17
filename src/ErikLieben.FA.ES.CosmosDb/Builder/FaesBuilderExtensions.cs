@@ -2,6 +2,7 @@ using ErikLieben.FA.ES.Builder;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.CosmosDb.HealthChecks;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Retention;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -88,6 +89,26 @@ public static class FaesBuilderExtensions
             var cosmosClient = sp.GetRequiredService<CosmosClient>();
             var logger = sp.GetService<ILogger<CosmosDbProjectionStatusCoordinator>>();
             return new CosmosDbProjectionStatusCoordinator(cosmosClient, databaseName, containerName, logger);
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers the CosmosDB-backed stream metadata provider.
+    /// </summary>
+    /// <param name="builder">The FAES builder.</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFaesBuilder WithCosmosDbStreamMetadataProvider(this IFaesBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSingleton<IStreamMetadataProvider>(sp =>
+        {
+            var cosmosClient = sp.GetRequiredService<CosmosClient>();
+            var cosmosSettings = sp.GetRequiredService<EventStreamCosmosDbSettings>();
+            var metadataLogger = sp.GetService<ILogger<CosmosDbStreamMetadataProvider>>();
+            return new CosmosDbStreamMetadataProvider(cosmosClient, cosmosSettings, metadataLogger);
         });
 
         return builder;

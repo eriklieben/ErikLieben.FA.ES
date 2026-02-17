@@ -1,9 +1,11 @@
 using Amazon.S3;
 using ErikLieben.FA.ES.Builder;
 using ErikLieben.FA.ES.EventStream;
+using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.S3.Configuration;
 using ErikLieben.FA.ES.S3.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ErikLieben.FA.ES.S3.Builder;
 
@@ -89,6 +91,29 @@ public static class FaesBuilderExtensions
         RegisterS3ExceptionExtractor();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers the S3-backed projection status coordinator.
+    /// </summary>
+    /// <param name="builder">The FAES builder.</param>
+    /// <param name="prefix">The key prefix for projection status documents. Default: "projection-status".</param>
+    /// <returns>The builder for chaining.</returns>
+    public static IFaesBuilder WithS3ProjectionStatusCoordinator(
+        this IFaesBuilder builder,
+        string prefix = "projection-status")
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSingleton<IProjectionStatusCoordinator>(sp =>
+        {
+            var clientFactory = sp.GetRequiredService<IS3ClientFactory>();
+            var settings = sp.GetRequiredService<EventStreamS3Settings>();
+            var logger = sp.GetService<ILogger<S3ProjectionStatusCoordinator>>();
+            return new S3ProjectionStatusCoordinator(clientFactory, settings, prefix, logger);
+        });
+
+        return builder;
     }
 
     /// <summary>

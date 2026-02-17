@@ -3,6 +3,7 @@ using ErikLieben.FA.ES.CosmosDb.Builder;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
 using ErikLieben.FA.ES.EventStream;
 using ErikLieben.FA.ES.Projections;
+using ErikLieben.FA.ES.Retention;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -245,6 +246,43 @@ public class FaesBuilderExtensionsTests
 
             Assert.Same(builder, result);
             Assert.Contains(services, d => d.ServiceType == typeof(IProjectionStatusCoordinator));
+        }
+    }
+
+    public class WithCosmosDbStreamMetadataProviderMethod
+    {
+        [Fact]
+        public void Should_throw_when_builder_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                FaesBuilderExtensions.WithCosmosDbStreamMetadataProvider(null!));
+        }
+
+        [Fact]
+        public void Should_register_stream_metadata_provider()
+        {
+            var services = new ServiceCollection();
+            var builder = Substitute.For<IFaesBuilder>();
+            builder.Services.Returns(services);
+
+            builder.WithCosmosDbStreamMetadataProvider();
+
+            var descriptor = services.FirstOrDefault(d =>
+                d.ServiceType == typeof(IStreamMetadataProvider));
+            Assert.NotNull(descriptor);
+            Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+        }
+
+        [Fact]
+        public void Should_return_builder_for_chaining()
+        {
+            var services = new ServiceCollection();
+            var builder = Substitute.For<IFaesBuilder>();
+            builder.Services.Returns(services);
+
+            var result = builder.WithCosmosDbStreamMetadataProvider();
+
+            Assert.Same(builder, result);
         }
     }
 }
