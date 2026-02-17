@@ -61,6 +61,7 @@ if (filteredArgs.Length == 0)
     Console.WriteLine("  Core:");
     Console.WriteLine("    - EventStreamBenchmarks        - Event stream read/append/stream operations");
     Console.WriteLine("    - SessionBenchmarks            - Session commit and multi-event operations");
+    Console.WriteLine("    - ChunkingBenchmarks           - Chunked vs non-chunked read/append comparison");
     Console.WriteLine();
     Console.WriteLine("  Serialization:");
     Console.WriteLine("    - JsonEventBenchmarks          - Event serialization/deserialization");
@@ -80,6 +81,9 @@ if (filteredArgs.Length == 0)
     Console.WriteLine("  Storage:");
     Console.WriteLine("    - InMemoryDataStoreBenchmarks  - In-memory storage read/write baseline");
     Console.WriteLine();
+    Console.WriteLine("  Concurrency:");
+    Console.WriteLine("    - ConcurrentSessionBenchmarks  - Parallel vs sequential writer throughput");
+    Console.WriteLine();
     Console.WriteLine("  Snapshots:");
     Console.WriteLine("    - SnapshotLoadBenchmarks       - With vs without snapshot loading comparison");
     Console.WriteLine("    - SnapshotOperationBenchmarks  - Snapshot save/load/list operations");
@@ -91,6 +95,8 @@ if (filteredArgs.Length == 0)
     Console.WriteLine("  dotnet run -c Release -- --filter *Registry*    # Run registry benchmarks only");
     Console.WriteLine("  dotnet run -c Release -- --filter *Session*     # Run session benchmarks only");
     Console.WriteLine("  dotnet run -c Release -- --filter *Snapshot*    # Run snapshot benchmarks only");
+    Console.WriteLine("  dotnet run -c Release -- --filter *Chunking*    # Run chunking benchmarks only");
+    Console.WriteLine("  dotnet run -c Release -- --filter *Concurrent*  # Run concurrency benchmarks only");
     Console.WriteLine("  dotnet run -c Release -- --list flat            # List all benchmarks");
     Console.WriteLine();
     Console.WriteLine("Configurations (--config <name>):");

@@ -16,7 +16,7 @@ public class SessionBenchmarks
     private InMemoryEventStreamFactory _factory = null!;
     private InMemoryObjectDocumentFactory _documentFactory = null!;
 
-    [Params(1, 10)]
+    [Params(1, 10, 50)]
     public int EventsPerSession { get; set; }
 
     [GlobalSetup]

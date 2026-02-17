@@ -15,7 +15,7 @@ public class EventStreamBenchmarks
     private InMemoryObjectDocumentFactory _documentFactory = null!;
     private JsonEvent[] _events = null!;
 
-    [Params(1, 10)]
+    [Params(1, 10, 100, 500, 1000)]
     public int EventCount { get; set; }
 
     [GlobalSetup]
