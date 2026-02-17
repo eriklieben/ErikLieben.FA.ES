@@ -121,8 +121,10 @@ public class CosmosDbStreamMetadataProvider : IStreamMetadataProvider
         if (iterator.HasMoreResults)
         {
             var response = await iterator.ReadNextAsync(cancellationToken);
-            foreach (var result in response)
+            using var enumerator = response.GetEnumerator();
+            if (enumerator.MoveNext())
             {
+                var result = enumerator.Current;
                 if (result.EventCount == 0)
                 {
                     return null;
