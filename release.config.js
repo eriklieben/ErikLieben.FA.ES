@@ -12,7 +12,7 @@ module.exports = {
     }
   ],
   // Override version for vnext branch to target 2.0.0 previews
-  tagFormat: "${version}",
+  tagFormat: "v${version}",
   plugins: [
     [
       '@semantic-release/commit-analyzer',
