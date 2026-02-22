@@ -22,4 +22,12 @@ public interface IDocumentTagStore
     /// <param name="tag">The tag value to match.</param>
     /// <returns>An enumerable of document identifiers that match; empty when none found.</returns>
     Task<IEnumerable<string>> GetAsync(string objectName, string tag);
+
+    /// <summary>
+    /// Removes the specified tag from the given document.
+    /// </summary>
+    /// <param name="document">The document to remove the tag from.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    Task RemoveAsync(IObjectDocument document, string tag);
 }

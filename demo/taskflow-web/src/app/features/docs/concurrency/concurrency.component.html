@@ -1,0 +1,355 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Concurrency & Constraints</h1>
+      <p class="subtitle">Control how events are appended to streams with concurrency constraints</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        Event sourcing requires careful handling of concurrent modifications. The library provides three constraint types
+        that control when events can be appended to a stream, ensuring data consistency across concurrent operations.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>all_inclusive</mat-icon>
+          <h3>Loose</h3>
+          <p>No version constraint - append to new or existing streams.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>add_circle</mat-icon>
+          <h3>New</h3>
+          <p>Stream must not exist - create new aggregates safely.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>edit</mat-icon>
+          <h3>Existing</h3>
+          <p>Stream must exist - update existing aggregates only.</p>
+        </div>
+        <div class="feature-card">
+          <mat-icon>sync_alt</mat-icon>
+          <h3>Optimistic Locking</h3>
+          <p>Automatic version tracking prevents lost updates.</p>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Why Constraints Matter</strong>
+          <p>Without constraints, two processes could simultaneously create the same aggregate or update a deleted entity. Constraints prevent these race conditions and ensure business invariants are maintained.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Constraint Types Section -->
+    <section id="constraints" class="doc-section">
+      <h2><mat-icon>category</mat-icon> Constraint Types</h2>
+      <p class="section-description">
+        The <code>Constraint</code> enum defines three modes for controlling event stream access.
+      </p>
+
+      <div class="constraint-list">
+        <div class="constraint-item">
+          <div class="constraint-icon loose">
+            <mat-icon>all_inclusive</mat-icon>
+          </div>
+          <div class="constraint-content">
+            <h3>Constraint.Loose</h3>
+            <p>No version checking. The session can append events regardless of whether the stream exists or not. This is the most permissive mode.</p>
+            <div class="constraint-meta">
+              <span class="meta-item"><mat-icon>check_circle</mat-icon> New streams: Allowed</span>
+              <span class="meta-item"><mat-icon>check_circle</mat-icon> Existing streams: Allowed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="constraint-item">
+          <div class="constraint-icon new">
+            <mat-icon>add_circle</mat-icon>
+          </div>
+          <div class="constraint-content">
+            <h3>Constraint.New</h3>
+            <p>Only allows appending to streams that don't exist (version = 0). Use this when creating new aggregates to prevent duplicate creation.</p>
+            <div class="constraint-meta">
+              <span class="meta-item"><mat-icon>check_circle</mat-icon> New streams: Allowed</span>
+              <span class="meta-item"><mat-icon>cancel</mat-icon> Existing streams: Throws</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="constraint-item">
+          <div class="constraint-icon existing">
+            <mat-icon>edit</mat-icon>
+          </div>
+          <div class="constraint-content">
+            <h3>Constraint.Existing</h3>
+            <p>Only allows appending to streams that already exist (version > 0). Use this when updating aggregates that must be previously created.</p>
+            <div class="constraint-meta">
+              <span class="meta-item"><mat-icon>cancel</mat-icon> New streams: Throws</span>
+              <span class="meta-item"><mat-icon>check_circle</mat-icon> Existing streams: Allowed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Loose Constraint Section -->
+    <section id="loose" class="doc-section">
+      <h2><mat-icon>all_inclusive</mat-icon> Loose Constraint</h2>
+      <p class="section-description">
+        The <code>Constraint.Loose</code> mode allows appending events without checking whether the stream exists.
+        This is useful for scenarios where you don't care about creation vs. update semantics.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Loose Constraint Example</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="looseCodeHtml()"></div>
+      </div>
+
+      <h3>When to Use</h3>
+      <div class="usecase-list">
+        <div class="usecase-item">
+          <mat-icon>event</mat-icon>
+          <span><strong>Event logging</strong> - When you're just recording events without state validation</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>analytics</mat-icon>
+          <span><strong>Analytics</strong> - Recording metrics or telemetry data</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>import_export</mat-icon>
+          <span><strong>Data import</strong> - Bulk importing events from external sources</span>
+        </div>
+      </div>
+
+      <div class="info-callout warning">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>Use With Caution</strong>
+          <p>Loose mode bypasses important safety checks. Only use it when you're certain the business logic doesn't require creation or update validation.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- New Constraint Section -->
+    <section id="new" class="doc-section">
+      <h2><mat-icon>add_circle</mat-icon> New Constraint</h2>
+      <p class="section-description">
+        The <code>Constraint.New</code> mode ensures the stream doesn't exist before appending. This prevents duplicate
+        aggregate creation when multiple requests try to create the same entity.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>New Constraint Example</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="newCodeHtml()"></div>
+      </div>
+
+      <h3>When to Use</h3>
+      <div class="usecase-list">
+        <div class="usecase-item">
+          <mat-icon>person_add</mat-icon>
+          <span><strong>Creating users</strong> - Ensure user IDs are unique</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>shopping_cart</mat-icon>
+          <span><strong>Creating orders</strong> - Prevent duplicate order creation</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>inventory</mat-icon>
+          <span><strong>Creating products</strong> - Ensure product IDs are unique</span>
+        </div>
+      </div>
+
+      <div class="exception-note">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>ConcurrencyException</strong>
+          <p>If the stream already exists, <code>CommitAsync()</code> will throw a <code>ConcurrencyException</code>. Handle this to inform users the entity already exists.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Existing Constraint Section -->
+    <section id="existing" class="doc-section">
+      <h2><mat-icon>edit</mat-icon> Existing Constraint</h2>
+      <p class="section-description">
+        The <code>Constraint.Existing</code> mode ensures the stream exists before appending. This prevents operations
+        on non-existent aggregates and ensures proper state transitions.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Existing Constraint Example</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="existingCodeHtml()"></div>
+      </div>
+
+      <h3>When to Use</h3>
+      <div class="usecase-list">
+        <div class="usecase-item">
+          <mat-icon>update</mat-icon>
+          <span><strong>Updating entities</strong> - Modify only existing aggregates</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>local_shipping</mat-icon>
+          <span><strong>State transitions</strong> - Move entities through lifecycle states</span>
+        </div>
+        <div class="usecase-item">
+          <mat-icon>delete</mat-icon>
+          <span><strong>Soft deletes</strong> - Mark existing entities as deleted</span>
+        </div>
+      </div>
+
+      <div class="exception-note">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>ConcurrencyException</strong>
+          <p>If the stream doesn't exist, <code>CommitAsync()</code> will throw a <code>ConcurrencyException</code>. Handle this to inform users the entity wasn't found.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Optimistic Concurrency Section -->
+    <section id="optimistic" class="doc-section">
+      <h2><mat-icon>sync_alt</mat-icon> Optimistic Concurrency</h2>
+      <p class="section-description">
+        Beyond the basic constraints, the library implements optimistic concurrency control. Each session tracks the
+        expected version of the stream, and commits fail if another process modified the stream in the meantime.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Optimistic Concurrency</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="optimisticCodeHtml()"></div>
+      </div>
+
+      <h3>How It Works</h3>
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <span class="step-number">1</span>
+          <span class="step-label">Open Session</span>
+          <span class="step-desc">Records current version</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step">
+          <span class="step-number">2</span>
+          <span class="step-label">Append Events</span>
+          <span class="step-desc">Add to pending list</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step">
+          <span class="step-number">3</span>
+          <span class="step-label">Commit</span>
+          <span class="step-desc">Check version match</span>
+        </div>
+        <div class="flow-arrow"><mat-icon>arrow_forward</mat-icon></div>
+        <div class="flow-step success">
+          <span class="step-number">4</span>
+          <span class="step-label">Success/Conflict</span>
+          <span class="step-desc">Persists or throws</span>
+        </div>
+      </div>
+
+      <h3>Handling Conflicts</h3>
+      <p>When a concurrency conflict occurs, you typically need to retry the operation:</p>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Retry with Exponential Backoff</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="conflictCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Examples Section -->
+    <section id="examples" class="doc-section">
+      <h2><mat-icon>code</mat-icon> Real-World Example</h2>
+      <p class="section-description">
+        Here's a complete command handler example showing how to use constraints effectively in a typical CQRS application.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>OrderCommandHandler.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="commandHandlerCodeHtml()"></div>
+      </div>
+
+      <h3>Best Practices</h3>
+      <div class="best-practices">
+        <div class="practice-item">
+          <mat-icon>check_box</mat-icon>
+          <div>
+            <strong>Use New for creation commands</strong>
+            <p>Always use <code>Constraint.New</code> when handling CreateX commands to prevent duplicates.</p>
+          </div>
+        </div>
+        <div class="practice-item">
+          <mat-icon>check_box</mat-icon>
+          <div>
+            <strong>Use Existing for update commands</strong>
+            <p>Always use <code>Constraint.Existing</code> when handling UpdateX or DeleteX commands.</p>
+          </div>
+        </div>
+        <div class="practice-item">
+          <mat-icon>check_box</mat-icon>
+          <div>
+            <strong>Handle ConcurrencyException</strong>
+            <p>Always catch and handle concurrency exceptions appropriately - either retry or inform the user.</p>
+          </div>
+        </div>
+        <div class="practice-item">
+          <mat-icon>check_box</mat-icon>
+          <div>
+            <strong>Avoid Loose in business logic</strong>
+            <p>Reserve <code>Constraint.Loose</code> for infrastructure concerns like logging or data import.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

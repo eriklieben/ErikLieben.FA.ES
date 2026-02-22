@@ -112,7 +112,7 @@ public class AnalyzeProjectionsTests
             var syntaxTree = CSharpSyntaxTree.ParseText(code, path: "C\\\\Repo\\\\App\\\\Projections\\\\P.cs");
             var compilation = CSharpCompilation.Create(
                 assemblyName: "ErikLieben.FA.ES.Framework",
-                syntaxTrees: new[] { syntaxTree },
+                syntaxTrees: [syntaxTree],
                 references: References,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -186,6 +186,356 @@ namespace App.Projections {
             Assert.NotNull(p.PostWhen);
             Assert.True(p.HasPostWhenAllMethod);
         }
+
+        [Fact]
+        public void Should_collect_projection_with_cosmosdb_projection_attribute()
+        {
+            // Arrange: Define Projection base, CosmosDbJsonProjection attribute, and projection class
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} }
+namespace ErikLieben.FA.ES.Documents { public interface IObjectDocument {} }
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { public virtual Task PostWhenAll() => Task.CompletedTask; } }
+public class ProjectionWithExternalCheckpointAttribute : System.Attribute {}
+public class CosmosDbJsonProjectionAttribute : System.Attribute {
+    public CosmosDbJsonProjectionAttribute(string container) { Container = container; }
+    public string Container { get; }
+    public string Connection { get; set; }
+    public string PartitionKeyPath { get; set; } = ""/projectionName"";
+}
+namespace App.Events { public class UserCreated : ErikLieben.FA.ES.IEvent {} }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections; using ErikLieben.FA.ES; using ErikLieben.FA.ES.Documents; using App.Events;
+    [ProjectionWithExternalCheckpoint]
+    [CosmosDbJsonProjection(""projections"", Connection=""cosmosdb"", PartitionKeyPath=""/customKey"")]
+    public class SprintDashboard : Projection {
+        public string Name { get; private set; }
+        public SprintDashboard() { }
+        public void When(UserCreated e, IObjectDocument document) { }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\SprintDashboard.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.Equal("SprintDashboard", p.Name);
+            Assert.Equal("App.Projections", p.Namespace);
+            Assert.True(p.ExternalCheckpoint);
+
+            // Verify CosmosDB projection settings
+            Assert.NotNull(p.CosmosDbProjection);
+            Assert.Equal("projections", p.CosmosDbProjection!.Container);
+            Assert.Equal("cosmosdb", p.CosmosDbProjection!.Connection);
+            Assert.Equal("/customKey", p.CosmosDbProjection!.PartitionKeyPath);
+
+            // BlobProjection should be null
+            Assert.Null(p.BlobProjection);
+        }
+
+        [Fact]
+        public void Should_use_default_partition_key_path_when_not_specified()
+        {
+            // Arrange: Define Projection base with CosmosDbJsonProjection without custom partition key
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES { public interface IEvent {} }
+namespace ErikLieben.FA.ES.Documents { public interface IObjectDocument {} }
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+public class CosmosDbJsonProjectionAttribute : System.Attribute {
+    public CosmosDbJsonProjectionAttribute(string container) { Container = container; }
+    public string Container { get; }
+    public string Connection { get; set; }
+    public string PartitionKeyPath { get; set; } = ""/projectionName"";
+}
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    [CosmosDbJsonProjection(""my-container"", Connection=""myconn"")]
+    public class SimpleProjection : Projection { }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\SimpleProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.NotNull(p.CosmosDbProjection);
+            Assert.Equal("my-container", p.CosmosDbProjection!.Container);
+            Assert.Equal("myconn", p.CosmosDbProjection!.Connection);
+            Assert.Equal("/projectionName", p.CosmosDbProjection!.PartitionKeyPath);
+        }
+
+        [Fact]
+        public void Should_find_existing_projection_instead_of_creating_new()
+        {
+            // Arrange: Projection base and projection class
+            var code = @"
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    public class ExistingProjection : Projection { }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\ExistingProjection.cs");
+
+            // Pre-populate with an existing projection
+            var existingProjection = new ProjectionDefinition
+            {
+                Name = "ExistingProjection",
+                Namespace = "App.Projections",
+                FileLocations = ["Projections\\ExistingProjection.cs"],
+                ExternalCheckpoint = true
+            };
+            var list = new List<ProjectionDefinition> { existingProjection };
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            Assert.Same(existingProjection, list[0]);
+        }
+
+        [Fact]
+        public void Should_handle_routed_projection_with_destination()
+        {
+            // Arrange: RoutedProjection base and destination type
+            var code = @"
+using System.Threading.Tasks;
+namespace ErikLieben.FA.ES.Projections {
+    public abstract class Projection { }
+    public abstract class RoutedProjection : Projection {
+        protected void AddDestination<T>() where T : class { }
+    }
+}
+public class BlobJsonProjectionAttribute : System.Attribute {
+    public BlobJsonProjectionAttribute(string container) { Container = container; }
+    public string Container { get; }
+}
+public class ProjectionWithExternalCheckpointAttribute : System.Attribute {}
+namespace App.Destinations {
+    [BlobJsonProjection(""dest-container"")]
+    [ProjectionWithExternalCheckpoint]
+    public class MyDestination { }
+}
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    using App.Destinations;
+    public class MyRoutedProjection : RoutedProjection {
+        public MyRoutedProjection() {
+            AddDestination<MyDestination>();
+        }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\MyRoutedProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.True(p is RoutedProjectionDefinition);
+            var rp = (RoutedProjectionDefinition)p;
+            Assert.True(rp.IsRoutedProjection);
+            Assert.Equal("MyDestination", rp.DestinationType);
+            Assert.Contains("MyDestination", rp.DestinationPathTemplates.Keys);
+            Assert.Equal("dest-container", rp.DestinationPathTemplates["MyDestination"]);
+            Assert.Contains("MyDestination", rp.DestinationsWithExternalCheckpoint);
+        }
+
+        [Fact]
+        public void Should_handle_projection_without_external_checkpoint()
+        {
+            // Arrange: Projection without the attribute
+            var code = @"
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    public class NoCheckpointProjection : Projection { }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\NoCheckpointProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            Assert.False(list.First().ExternalCheckpoint);
+        }
+
+        [Fact]
+        public void Should_handle_projection_without_blob_or_cosmos_attributes()
+        {
+            // Arrange: Plain projection without storage attributes
+            var code = @"
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    public class PlainProjection : Projection { }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\PlainProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var p = list.First();
+            Assert.Null(p.BlobProjection);
+            Assert.Null(p.CosmosDbProjection);
+        }
+
+        [Fact]
+        public void Should_collect_multiple_events_from_when_methods()
+        {
+            // Arrange: Projection with multiple When methods
+            var code = @"
+namespace ErikLieben.FA.ES { public interface IEvent {} }
+namespace ErikLieben.FA.ES.Documents { public interface IObjectDocument {} }
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+namespace App.Events {
+    public class OrderCreated : ErikLieben.FA.ES.IEvent {}
+    public class OrderUpdated : ErikLieben.FA.ES.IEvent {}
+    public class OrderDeleted : ErikLieben.FA.ES.IEvent {}
+}
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections; using ErikLieben.FA.ES.Documents; using App.Events;
+    public class MultiEventProjection : Projection {
+        public void When(OrderCreated e, IObjectDocument doc) { }
+        public void When(OrderUpdated e, IObjectDocument doc) { }
+        public void When(OrderDeleted e, IObjectDocument doc) { }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\MultiEventProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            Assert.Equal(3, list.First().Events.Count);
+        }
+
+        [Fact]
+        public void Should_collect_multiple_properties()
+        {
+            // Arrange: Projection with multiple properties
+            var code = @"
+namespace ErikLieben.FA.ES.Projections { public abstract class Projection { } }
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    public class MultiPropProjection : Projection {
+        public string Name { get; set; }
+        public int Count { get; set; }
+        public System.DateTime Created { get; set; }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\MultiPropProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            Assert.Equal(3, list.First().Properties.Count);
+            Assert.Contains(list.First().Properties, p => p.Name == "Name");
+            Assert.Contains(list.First().Properties, p => p.Name == "Count");
+            Assert.Contains(list.First().Properties, p => p.Name == "Created");
+        }
+
+        [Fact]
+        public void Should_handle_routed_projection_with_destination_without_blob_attribute()
+        {
+            // Arrange: RoutedProjection with destination that has no BlobJsonProjection
+            var code = @"
+namespace ErikLieben.FA.ES.Projections {
+    public abstract class Projection { }
+    public abstract class RoutedProjection : Projection {
+        protected void AddDestination<T>() where T : class { }
+    }
+}
+namespace App.Destinations {
+    public class NoBlobDestination { }
+}
+namespace App.Projections {
+    using ErikLieben.FA.ES.Projections;
+    using App.Destinations;
+    public class RoutedNoBlobProjection : RoutedProjection {
+        public RoutedNoBlobProjection() {
+            AddDestination<NoBlobDestination>();
+        }
+    }
+}
+";
+            var (classSymbol, _, semanticModel, compilation) = GetFromCode(
+                code,
+                testAssembly: "AppAssembly",
+                filePath: "C:\\Repo\\App\\Projections\\RoutedNoBlobProjection.cs");
+            var sut = new AnalyzeProjections(classSymbol!, semanticModel, compilation!, "C:\\Repo\\App\\");
+            var list = new List<ProjectionDefinition>();
+
+            // Act
+            sut.Run(list);
+
+            // Assert
+            Assert.Single(list);
+            var rp = list.First() as RoutedProjectionDefinition;
+            Assert.NotNull(rp);
+            Assert.True(rp!.IsRoutedProjection);
+            Assert.Empty(rp.DestinationPathTemplates);
+        }
     }
 
     private static (INamedTypeSymbol?, ClassDeclarationSyntax?, SemanticModel, CSharpCompilation?) GetFromCode(
@@ -199,7 +549,7 @@ namespace App.Projections {
 
         var compilation = CSharpCompilation.Create(
             testAssembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -214,18 +564,19 @@ namespace App.Projections {
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "Dummy",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
         return (compilation.GetSemanticModel(syntaxTree), compilation);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

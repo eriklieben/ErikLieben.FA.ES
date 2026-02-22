@@ -62,11 +62,20 @@ public BlobDocumentTagStore(
                 Tag = tag,
                 ObjectIds = [document.ObjectId]
             };
-            await blob.SaveEntityAsync(
-                newDoc,
-                BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
-                new BlobRequestConditions { IfNoneMatch = new ETag("*") });
-            return;
+
+            try
+            {
+                await blob.SaveEntityAsync(
+                    newDoc,
+                    BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+                    new BlobRequestConditions { IfNoneMatch = new ETag("*") });
+                return;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                // Blob was created between ExistsAsync check and SaveEntityAsync call
+                // Fall through to update logic below
+            }
         }
 
         var properties = await blob.GetPropertiesAsync();
@@ -116,6 +125,55 @@ public BlobDocumentTagStore(
     }
 
     /// <summary>
+    /// Removes the specified tag from the given document by updating or deleting the tag document in Blob Storage.
+    /// </summary>
+    /// <param name="document">The document to remove the tag from.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A task that represents the asynchronous removal operation.</returns>
+    public async Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        var filename = ValidBlobFilenameRegex().Replace(tag.ToLowerInvariant(), string.Empty);
+        var documentPath = $"tags/document/{filename}.json";
+        var blob = CreateBlobClient(document, documentPath);
+
+        if (!await blob.ExistsAsync())
+        {
+            // Tag doesn't exist, nothing to remove
+            return;
+        }
+
+        var properties = await blob.GetPropertiesAsync();
+        var etag = properties.Value.ETag;
+
+        var (doc, _) = await blob.AsEntityAsync(
+            BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+            new BlobRequestConditions { IfMatch = etag });
+
+        if (doc == null)
+        {
+            return;
+        }
+
+        doc.ObjectIds.Remove(document.ObjectId);
+
+        if (doc.ObjectIds.Count == 0)
+        {
+            // No more documents with this tag, delete the blob
+            await blob.DeleteIfExistsAsync(conditions: new BlobRequestConditions { IfMatch = etag });
+        }
+        else
+        {
+            // Update the blob with the remaining documents
+            await blob.SaveEntityAsync(doc,
+                BlobDocumentTagStoreDocumentContext.Default.BlobDocumentTagStoreDocument,
+                new BlobRequestConditions { IfMatch = etag });
+        }
+    }
+
+    /// <summary>
     /// Creates a <see cref="BlobClient"/> for the given document and tag path, ensuring the container exists when configured.
     /// </summary>
     /// <param name="objectDocument">The object document that provides the container scope and connection name.</param>
@@ -126,7 +184,13 @@ public BlobDocumentTagStore(
     {
         ArgumentNullException.ThrowIfNullOrWhiteSpace(objectDocument.ObjectName);
 
-        var client = clientFactory.CreateClient(objectDocument.Active.DocumentTagConnectionName);
+        // Use DocumentTagStore, falling back to deprecated DocumentTagConnectionName for backwards compatibility
+#pragma warning disable CS0618 // Type or member is obsolete
+        var connectionName = !string.IsNullOrWhiteSpace(objectDocument.Active.DocumentTagStore)
+            ? objectDocument.Active.DocumentTagStore
+            : objectDocument.Active.DocumentTagConnectionName;
+#pragma warning restore CS0618
+        var client = clientFactory.CreateClient(connectionName);
         var container = client.GetBlobContainerClient(objectDocument.ObjectName.ToLowerInvariant());
 
         if (autoCreateContainer)

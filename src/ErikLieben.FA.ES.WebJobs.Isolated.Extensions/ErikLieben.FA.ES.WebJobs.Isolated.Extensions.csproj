@@ -11,7 +11,7 @@
         <Title>ErikLieben.FA.ES.WebJobs.Isolated.Extensions</Title>
         <Authors>Erik Lieben</Authors>
         <Company>Erik Lieben</Company>
-        <Description>A lightweight, AOT-friendly Event Sourcing toolkit for .NET</Description>
+        <Description>Azure WebJobs Isolated Extensions for ErikLieben.FA.ES event sourcing framework. Provides WebJobs bindings for event stream processing.</Description>
         <PackageTags>eventsourcing;aot;dotnet;csharp</PackageTags>
         <RepositoryUrl>https://github.com/eriklieben/ErikLieben.FA.ES</RepositoryUrl>
 
@@ -31,8 +31,11 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.42" />
-        <PackageReference Include="Microsoft.Azure.WebJobs.Core" Version="3.0.42" />
+        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.44" />
+        <PackageReference Include="Microsoft.Azure.WebJobs.Core" Version="3.0.44" />
     </ItemGroup>
     <ItemGroup>
         <None Include="..\\..\\README.md" Pack="true" PackagePath="" />

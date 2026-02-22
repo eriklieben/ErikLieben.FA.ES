@@ -1,0 +1,60 @@
+# ErikLieben.FA.ES - Cursor Rules
+
+This file provides patterns for the Cursor AI editor when working with this event sourcing library.
+
+## Required After Changes
+
+Run `dotnet faes` after modifying aggregates, projections, or events.
+
+## Aggregate Pattern
+
+```csharp
+[Aggregate]
+public partial class Order : Aggregate
+{
+    public Order(IEventStream stream) : base(stream) { }
+
+    // State with private setters
+    public string? Status { get; private set; }
+
+    // Commands use Fold(context.Append(...))
+    public async Task Create(string customerId)
+    {
+        await Stream.Session(context =>
+            Fold(context.Append(new OrderCreated(customerId, DateTime.UtcNow))));
+    }
+
+    // When methods apply events
+    private void When(OrderCreated @event) { Status = "Created"; }
+}
+```
+
+## Event Pattern
+
+```csharp
+[EventName("Order.Created")]
+public record OrderCreated(string CustomerId, DateTime CreatedAt);
+```
+
+## Projection Pattern
+
+```csharp
+[BlobJsonProjection("projections")]
+public partial class Dashboard : Projection
+{
+    public int Count { get; private set; }
+    private void When(OrderCreated @event) { Count++; }
+}
+```
+
+## Critical Rules
+
+- ALWAYS use `Fold(context.Append(...))` not just `context.Append(...)`
+- ALWAYS make classes partial
+- ALWAYS run `dotnet faes` after changes
+- Events are immutable records
+- State only changes in When methods
+
+## Reference Implementation
+
+See `demo/src/TaskFlow.Domain/` for complete examples.

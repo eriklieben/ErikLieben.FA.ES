@@ -46,6 +46,7 @@ public class BlobDataStoreDocument
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull )]
 [JsonSerializable(typeof(BlobDataStoreDocument))]
+[JsonSerializable(typeof(BlobJsonEvent))]
 internal partial class BlobDataStoreDocumentContext : JsonSerializerContext
 {
 }

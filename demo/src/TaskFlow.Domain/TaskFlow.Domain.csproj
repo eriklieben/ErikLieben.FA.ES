@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Use local project references for development/testing fixes -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.AzureStorage\ErikLieben.FA.ES.AzureStorage.csproj" />
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.CosmosDb\ErikLieben.FA.ES.CosmosDb.csproj" />
+    <ProjectReference Include="..\..\..\src\ErikLieben.FA.ES.S3\ErikLieben.FA.ES.S3.csproj" />
+    <PackageReference Include="ErikLieben.FA.ES.Analyzers" Version="2.0.0-preview.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ErikLieben.FA.Results" Version="1.1.2" />
+    <PackageReference Include="ErikLieben.FA.Results.Validations" Version="1.1.2" />
+    <PackageReference Include="ErikLieben.FA.Specifications" Version="1.0.8" />
+    <PackageReference Include="ErikLieben.FA.StronglyTypedIds" Version="2.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);SYSLIB0020</NoWarn>
+  </PropertyGroup>
+
+</Project>

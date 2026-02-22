@@ -1,0 +1,255 @@
+#nullable enable
+abstract ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder>.Build() -> TEvent
+ErikLieben.FA.ES.Testing.Aggregates.ITestableAggregate<TSelf, TId>
+ErikLieben.FA.ES.Testing.Aggregates.ITestableAggregate<TSelf>
+ErikLieben.FA.ES.Testing.Aggregates.ITestableAggregate<TSelf>.Create(ErikLieben.FA.ES.IEventStream! stream) -> TSelf
+ErikLieben.FA.ES.Testing.Aggregates.ITestableAggregate<TSelf>.ObjectName.get -> string!
+ErikLieben.FA.ES.Testing.AssertionExtension
+ErikLieben.FA.ES.Testing.AssertionExtension.AssertionExtension(ErikLieben.FA.ES.Testing.TestContext! context) -> void
+ErikLieben.FA.ES.Testing.AssertionExtension.ShouldHaveObject(string! objectName, string! objectId) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.AssertionExtension.ShouldHaveObject<TAggregate>(string! objectId) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.Aggregate.get -> TAggregate
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldContainEvent<TEvent>(System.Predicate<TEvent>! predicate) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveAppended<TEvent>() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveAppended<TEvent>(TEvent event) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveAppendedAtLeast(int count) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveAppendedCount(int count) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveProperty<TValue>(System.Func<TAggregate, TValue>! propertySelector, TValue expectedValue) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveState(System.Action<TAggregate>! assertion) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveState(System.Func<TAggregate, bool>! predicate) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldHaveThrown<TException>() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldMatchSnapshot(string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldMatchSnapshot(string! snapshotName, System.Func<TAggregate, object!>! stateSelector, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldNotHaveAppended<TEvent>() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldNotHaveAppendedAnyEvents() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldNotThrow() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>.ShouldThrow<TException>() -> ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!
+ErikLieben.FA.ES.Testing.Assertions.ISnapshotComparer<T>
+ErikLieben.FA.ES.Testing.Assertions.ISnapshotComparer<T>.Matches(T actual, T expected, out string? differenceMessage) -> bool
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.Projection.get -> TProjection!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveCheckpoint(string! objectName, string! objectId, int expectedVersion) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveCheckpointCount(int expectedCount) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveCheckpointFingerprint(string! expectedFingerprint) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveCheckpoints(System.Collections.Generic.Dictionary<(string! objectName, string! objectId), int>! expectedCheckpoints) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveNonEmptyCheckpoint() -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveProperty<TValue>(System.Func<TProjection!, TValue>! propertySelector, TValue expectedValue) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldHaveState(System.Action<TProjection!>! assertion) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldMatchSnapshot(string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldMatchSnapshot(string! snapshotName, System.Func<TProjection!, object!>! stateSelector, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldMatchSnapshotAsync(string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!>!
+ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection>.ShouldMatchSnapshotAsync(string! snapshotName, System.Func<TProjection!, object!>! stateSelector, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!>!
+ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion
+ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat
+ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat.Json = 0 -> ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat
+ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat.Text = 2 -> ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat
+ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat.Yaml = 1 -> ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.Format.get -> ErikLieben.FA.ES.Testing.Assertions.SnapshotFormat
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.Format.set -> void
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.IgnoredProperties.get -> System.Collections.Generic.List<string!>!
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.IgnoredProperties.set -> void
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.IgnoreWhitespace.get -> bool
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.IgnoreWhitespace.set -> void
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.JsonOptions.get -> System.Text.Json.JsonSerializerOptions?
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.JsonOptions.set -> void
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.PrettyPrint.get -> bool
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.PrettyPrint.set -> void
+ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions.SnapshotOptions() -> void
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.Given(params ErikLieben.FA.ES.IEvent![]! events) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.Given(params object![]! domainEvents) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.GivenEvents(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>! events) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.GivenNoPriorEvents() -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.GivenSnapshot<TSnapshot>(TSnapshot snapshot) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.Then() -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.ThenAggregate() -> System.Threading.Tasks.Task<TAggregate>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.When(System.Action<TAggregate>! command) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.When(System.Func<TAggregate, System.Threading.Tasks.Task!>! command) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilderExtensions
+ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder>
+ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder>.EventBuilder() -> void
+ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder>.This() -> TBuilder!
+ErikLieben.FA.ES.Testing.Builders.Data.EventBuilderExtensions
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.Add(TEvent event) -> ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.Add<TBuilder>(ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder!>! builder) -> ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.AddMany(int count, System.Func<int, TEvent>! factory) -> ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.AddRange(params TEvent[]! events) -> ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.Build() -> System.Collections.Generic.List<TEvent>!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.BuildArray() -> TEvent[]!
+ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.EventListBuilder() -> void
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Given<TAggregate, TId>(TId objectId, params ErikLieben.FA.ES.IEvent![]! events) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Given<TAggregate>(string! objectId, params ErikLieben.FA.ES.IEvent![]! events) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Given<TAggregate>(string! objectId, params object![]! domainEvents) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.GivenEvents(string! objectName, string! objectId, params ErikLieben.FA.ES.IEvent![]! events) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.GivenEvents(string! objectName, string! objectId, params object![]! domainEvents) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.GivenEventsFrom(params (string! objectName, string! objectId, ErikLieben.FA.ES.IEvent![]! events)[]! streams) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Projection.get -> TProjection!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Then() -> ErikLieben.FA.ES.Testing.Assertions.ProjectionAssertion<TProjection!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.UpdateToLatest() -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!>!
+ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.UpdateToVersion(ErikLieben.FA.ES.VersionToken! token) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!>!
+ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions
+ErikLieben.FA.ES.Testing.EventAssertionExtension
+ErikLieben.FA.ES.Testing.EventAssertionExtension.EventAssertionExtension(System.Collections.Generic.Dictionary<int, ErikLieben.FA.ES.IEvent!>! events) -> void
+ErikLieben.FA.ES.Testing.EventAssertionExtension.WithEventAtLastPosition<TEvent>(TEvent expected) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.EventAssertionExtension.WithEventAtPosition<TEvent>(int position, TEvent expected) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.EventAssertionExtension.WithEventCount(int expectedCount) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.EventAssertionExtension.WithSingleEvent<TEvent>(TEvent expected) -> ErikLieben.FA.ES.Testing.EventAssertionExtension!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.Metrics.get -> ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.PerformanceAssertion(ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics! metrics) -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.Should(System.Action<ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!>! assertion) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldAllocateLessThan(long maxBytes) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldAllocateLessThanPerOperation(double maxBytesPerOp) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldCompleteWithin(System.TimeSpan maxDuration) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldHaveAverageTimePerOperationOf(System.TimeSpan maxAverageDuration) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldHaveThroughputOf(double minOpsPerSecond) -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldNotCauseGarbageCollection() -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion.ShouldNotCauseGen2Collection() -> ErikLieben.FA.ES.Testing.Performance.PerformanceAssertion!
+ErikLieben.FA.ES.Testing.Performance.PerformanceMeasurement
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.AllocatedBytes.get -> long
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.AllocatedBytes.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.AllocatedBytesPerOperation.get -> double
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.AverageTimePerOperation.get -> System.TimeSpan
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.ElapsedTime.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen0Collections.get -> int
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen0Collections.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen1Collections.get -> int
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen1Collections.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen2Collections.get -> int
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.Gen2Collections.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.OperationCount.get -> int
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.OperationCount.set -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.OperationsPerSecond.get -> double
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.PerformanceMetrics() -> void
+ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.TotalCollections.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.Generators
+ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<T>
+ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<T>.Generate(System.Random! random) -> T
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.Iterations.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.Iterations.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.PropertyTestOptions() -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.Seed.get -> int?
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.Seed.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.StopOnFailure.get -> bool
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestOptions.StopOnFailure.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.FailureException.get -> System.Exception?
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.FailureException.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.FailureMessage.get -> string?
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.FailureMessage.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsExecuted.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsExecuted.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsFailed.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsFailed.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsPassed.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.IterationsPassed.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.PropertyTestResult() -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.Seed.get -> int
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.Seed.set -> void
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.Success.get -> bool
+ErikLieben.FA.ES.Testing.PropertyBased.PropertyTestResult.Success.set -> void
+ErikLieben.FA.ES.Testing.TestAssertionException
+ErikLieben.FA.ES.Testing.TestAssertionException.TestAssertionException(string! message) -> void
+ErikLieben.FA.ES.Testing.TestAssertionException.TestAssertionException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.Testing.TestContext
+ErikLieben.FA.ES.Testing.TestContext.Assert.get -> ErikLieben.FA.ES.Testing.AssertionExtension!
+ErikLieben.FA.ES.Testing.TestContext.DocumentFactory.get -> ErikLieben.FA.ES.IObjectDocumentFactory!
+ErikLieben.FA.ES.Testing.TestContext.Events.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.Dictionary<int, ErikLieben.FA.ES.IEvent!>!>!
+ErikLieben.FA.ES.Testing.TestContext.EventStreamFactory.get -> ErikLieben.FA.ES.IEventStreamFactory!
+ErikLieben.FA.ES.Testing.TestContext.GetEventStreamFor(string! objectName, string! objectId) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEventStream!>!
+ErikLieben.FA.ES.Testing.TestContext.GetEventStreamFor<TAggregate>(string! objectId) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEventStream!>!
+ErikLieben.FA.ES.Testing.TestContext.TestClock.get -> ErikLieben.FA.ES.Testing.Time.ITestClock?
+ErikLieben.FA.ES.Testing.TestContext.TestContext(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, ErikLieben.FA.ES.Testing.InMemory.InMemoryDataStore! dataStore, ErikLieben.FA.ES.Testing.Time.ITestClock? testClock = null) -> void
+ErikLieben.FA.ES.Testing.TestContextSettings
+ErikLieben.FA.ES.Testing.TestContextSettings.AggregateFactorGets.get -> System.Func<System.Type?, System.Type!>![]!
+ErikLieben.FA.ES.Testing.TestContextSettings.AggregateFactorGets.init -> void
+ErikLieben.FA.ES.Testing.TestContextSettings.Deconstruct(out System.IServiceProvider! ServiceProvider, out System.Func<System.Type?, System.Type!>![]! AggregateFactorGets) -> void
+ErikLieben.FA.ES.Testing.TestContextSettings.ServiceProvider.get -> System.IServiceProvider!
+ErikLieben.FA.ES.Testing.TestContextSettings.ServiceProvider.init -> void
+ErikLieben.FA.ES.Testing.TestContextSettings.TestContextSettings(ErikLieben.FA.ES.Testing.TestContextSettings! original) -> void
+ErikLieben.FA.ES.Testing.TestContextSettings.TestContextSettings(System.IServiceProvider! ServiceProvider, params System.Func<System.Type?, System.Type!>![]! AggregateFactorGets) -> void
+ErikLieben.FA.ES.Testing.TestSetup
+ErikLieben.FA.ES.Testing.Time.ITestClock
+ErikLieben.FA.ES.Testing.Time.ITestClock.AdvanceBy(System.TimeSpan duration) -> void
+ErikLieben.FA.ES.Testing.Time.ITestClock.Freeze() -> void
+ErikLieben.FA.ES.Testing.Time.ITestClock.IsFrozen.get -> bool
+ErikLieben.FA.ES.Testing.Time.ITestClock.Now.get -> System.DateTimeOffset
+ErikLieben.FA.ES.Testing.Time.ITestClock.SetTime(System.DateTimeOffset time) -> void
+ErikLieben.FA.ES.Testing.Time.ITestClock.Unfreeze() -> void
+ErikLieben.FA.ES.Testing.Time.ITestClock.UtcNow.get -> System.DateTimeOffset
+ErikLieben.FA.ES.Testing.Time.TestClock
+ErikLieben.FA.ES.Testing.Time.TestClock.Advance(System.TimeSpan delta) -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.AdvanceBy(System.TimeSpan duration) -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.Freeze() -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.IsFrozen.get -> bool
+ErikLieben.FA.ES.Testing.Time.TestClock.Now.get -> System.DateTimeOffset
+ErikLieben.FA.ES.Testing.Time.TestClock.SetTime(System.DateTimeOffset time) -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.SetUtcNow(System.DateTimeOffset time) -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.TestClock(System.DateTimeOffset? initialTime = null, System.TimeZoneInfo? localTimeZone = null) -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.Unfreeze() -> void
+ErikLieben.FA.ES.Testing.Time.TestClock.UtcNow.get -> System.DateTimeOffset
+override ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics.ToString() -> string!
+override ErikLieben.FA.ES.Testing.TestContextSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.Testing.TestContextSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.Testing.TestContextSettings.ToString() -> string!
+override ErikLieben.FA.ES.Testing.Time.TestClock.GetUtcNow() -> System.DateTimeOffset
+override ErikLieben.FA.ES.Testing.Time.TestClock.LocalTimeZone.get -> System.TimeZoneInfo!
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.MatchesSnapshot<T>(T actual, string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.ISnapshotComparer<T>! comparer) -> void
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.MatchesSnapshot<T>(T actual, string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> void
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.MatchesSnapshotAsync<T>(T actual, string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> System.Threading.Tasks.Task!
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.SnapshotDirectory.get -> string!
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.SnapshotDirectory.set -> void
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.UpdateSnapshot<T>(T actual, string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> void
+static ErikLieben.FA.ES.Testing.Assertions.SnapshotAssertion.UpdateSnapshotAsync<T>(T actual, string! snapshotName, ErikLieben.FA.ES.Testing.Assertions.SnapshotOptions? options = null) -> System.Threading.Tasks.Task!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder.For<TAggregate, TId>(TId objectId, ErikLieben.FA.ES.Testing.TestContext! context) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder.For<TAggregate, TId>(TId objectId, ErikLieben.FA.ES.Testing.TestContext! context, System.Func<ErikLieben.FA.ES.IEventStream!, TAggregate>! aggregateFactory) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder.For<TAggregate>(string! objectId, ErikLieben.FA.ES.Testing.TestContext! context) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder.For<TAggregate>(string! objectId, ErikLieben.FA.ES.Testing.TestContext! context, System.Func<ErikLieben.FA.ES.IEventStream!, TAggregate>! aggregateFactory) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>.For(string! objectName, string! objectId, ErikLieben.FA.ES.Testing.TestContext! context, System.Func<ErikLieben.FA.ES.IEventStream!, TAggregate>! aggregateFactory) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilderExtensions.Then<TAggregate>(this System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>! builderTask, System.Action<ErikLieben.FA.ES.Testing.Assertions.AggregateAssertion<TAggregate>!>! assertions) -> System.Threading.Tasks.Task!
+static ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder>.implicit operator TEvent(ErikLieben.FA.ES.Testing.Builders.Data.EventBuilder<TEvent, TBuilder!>! builder) -> TEvent
+static ErikLieben.FA.ES.Testing.Builders.Data.EventBuilderExtensions.Events<TEvent>() -> ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>!
+static ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.implicit operator System.Collections.Generic.List<TEvent>!(ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>! builder) -> System.Collections.Generic.List<TEvent>!
+static ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>.implicit operator TEvent[]!(ErikLieben.FA.ES.Testing.Builders.Data.EventListBuilder<TEvent>! builder) -> TEvent[]!
+static ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder.For<TProjection>(ErikLieben.FA.ES.Testing.TestContext! context) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+static ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Create(ErikLieben.FA.ES.Testing.TestContext! context, System.Func<ErikLieben.FA.ES.IObjectDocumentFactory!, ErikLieben.FA.ES.IEventStreamFactory!, TProjection!>! projectionFactory) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+static ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection>.Create(ErikLieben.FA.ES.Testing.TestContext! context, TProjection! projection) -> ErikLieben.FA.ES.Testing.Builders.ProjectionTestBuilder<TProjection!>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.AdvanceTimeBy<TAggregate>(this ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>! builder, System.TimeSpan duration) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.AdvanceTimeBy<TAggregate>(this System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>! builderTask, System.TimeSpan duration) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.AtTime<TAggregate>(this ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>! builder, System.DateTimeOffset time) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.AtTime<TAggregate>(this System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>! builderTask, System.DateTimeOffset time) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.FreezeTime<TAggregate>(this ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>! builder) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.FreezeTime<TAggregate>(this System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>! builderTask) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.UnfreezeTime<TAggregate>(this ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>! builder) -> ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!
+static ErikLieben.FA.ES.Testing.Builders.TimeTestingExtensions.UnfreezeTime<TAggregate>(this System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>! builderTask) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Builders.AggregateTestBuilder<TAggregate>!>!
+static ErikLieben.FA.ES.Testing.Performance.PerformanceMeasurement.Measure(System.Action! operation, int operationCount = 1, bool warmup = true) -> ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!
+static ErikLieben.FA.ES.Testing.Performance.PerformanceMeasurement.MeasureAsync(System.Func<System.Threading.Tasks.Task!>! operation, int operationCount = 1, bool warmup = true) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!>!
+static ErikLieben.FA.ES.Testing.Performance.PerformanceMeasurement.MeasureRepeated(System.Action! operation, int iterations, bool warmup = true) -> ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!
+static ErikLieben.FA.ES.Testing.Performance.PerformanceMeasurement.MeasureRepeatedAsync(System.Func<System.Threading.Tasks.Task!>! operation, int iterations, bool warmup = true) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Testing.Performance.PerformanceMetrics!>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Bool() -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<bool>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Custom<T>(System.Func<System.Random!, T>! generator) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<T>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Date(System.DateTimeOffset? min = null, System.DateTimeOffset? max = null) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<System.DateTimeOffset>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Decimal(decimal min = 0, decimal max = 1000000) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<decimal>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Guid() -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<System.Guid>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.Int(int min = -2147483648, int max = 2147483647) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<int>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.ListOf<T>(ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<T>! elementGenerator, int minCount = 0, int maxCount = 10) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<System.Collections.Generic.List<T>!>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.OneOf<T>(params T[]! values) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<T>!
+static ErikLieben.FA.ES.Testing.PropertyBased.Generators.String(int minLength = 0, int maxLength = 100, string? chars = null) -> ErikLieben.FA.ES.Testing.PropertyBased.IGenerator<string!>!
+static ErikLieben.FA.ES.Testing.TestContextSettings.operator !=(ErikLieben.FA.ES.Testing.TestContextSettings? left, ErikLieben.FA.ES.Testing.TestContextSettings? right) -> bool
+static ErikLieben.FA.ES.Testing.TestContextSettings.operator ==(ErikLieben.FA.ES.Testing.TestContextSettings? left, ErikLieben.FA.ES.Testing.TestContextSettings? right) -> bool
+static ErikLieben.FA.ES.Testing.TestSetup.GetContext(ErikLieben.FA.ES.Testing.TestContextSettings! settings) -> ErikLieben.FA.ES.Testing.TestContext!
+static ErikLieben.FA.ES.Testing.TestSetup.GetContext(System.IServiceProvider! serviceProvider, ErikLieben.FA.ES.Testing.Time.ITestClock? testClock, params System.Func<System.Type?, System.Type!>![]! aggregateFactorGets) -> ErikLieben.FA.ES.Testing.TestContext!
+static ErikLieben.FA.ES.Testing.TestSetup.GetContext(System.IServiceProvider! serviceProvider, params System.Func<System.Type?, System.Type!>![]! aggregateFactorGets) -> ErikLieben.FA.ES.Testing.TestContext!
+virtual ErikLieben.FA.ES.Testing.TestContextSettings.<Clone>$() -> ErikLieben.FA.ES.Testing.TestContextSettings!
+virtual ErikLieben.FA.ES.Testing.TestContextSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.Testing.TestContextSettings.Equals(ErikLieben.FA.ES.Testing.TestContextSettings? other) -> bool
+virtual ErikLieben.FA.ES.Testing.TestContextSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool

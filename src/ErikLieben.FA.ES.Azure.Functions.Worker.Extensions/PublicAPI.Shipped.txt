@@ -1,0 +1,67 @@
+#nullable enable
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.Connection.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.Connection.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.CreateEmptyObjectWhenNonExistent.get -> bool
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.CreateEmptyObjectWhenNonExistent.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DefaultStreamConnection.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DefaultStreamConnection.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DefaultStreamType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DefaultStreamType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DocumentType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.DocumentType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.EventStreamData(string! objectId, string! objectType, string! connection, string! documentType, string! defaultStreamType, string! defaultStreamConnection, bool createEmtpyObjectWhenNonExisting) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.ObjectId.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.ObjectId.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.ObjectType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamData.ObjectType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.Connection.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.Connection.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.CreateEmptyObjectWhenNonExistent.get -> bool
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.CreateEmptyObjectWhenNonExistent.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DefaultStreamConnection.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DefaultStreamConnection.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DefaultStreamType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DefaultStreamType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DocumentType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.DocumentType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.EventStreamInputAttribute(string! objectId) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.ObjectId.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.ObjectId.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.ObjectType.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.EventStreamInputAttribute.ObjectType.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.FunctionsEventStoreExtensions
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.BlobName.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.BlobName.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.ProjectionData() -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.ProjectionData(string! blobName) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionData.ProjectionData(string! blobName, bool createIfNotExists) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.BlobName.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.BlobName.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.CreateIfNotExists.get -> bool
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.CreateIfNotExists.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.ProjectionInputAttribute() -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionInputAttribute.ProjectionInputAttribute(string! blobName) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.BlobName.get -> string?
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.BlobName.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.ProjectionOutputAttribute(System.Type! projectionType) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.ProjectionType.get -> System.Type!
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.SaveAfterUpdate.get -> bool
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute.SaveAfterUpdate.set -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute<T>
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute<T>.ProjectionOutputAttribute() -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.LoadAndUpdateProjectionAsync(ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute! attribute) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.Projection?>!
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.ProcessProjectionOutputsAsync(System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute!>! outputAttributes, string! functionName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.ProjectionOutputProcessor(System.IServiceProvider! serviceProvider, ErikLieben.FA.ES.IObjectDocumentFactory! objectDocumentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, Microsoft.Extensions.Logging.ILogger! logger) -> void
+ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.SaveProjectionAsync(ErikLieben.FA.ES.Projections.Projection! projection, ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute! attribute) -> System.Threading.Tasks.Task!
+static ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.FunctionsEventStoreExtensions.ConfigureEventStoreBindings(this Microsoft.Azure.Functions.Worker.IFunctionsWorkerApplicationBuilder! builder) -> Microsoft.Azure.Functions.Worker.IFunctionsWorkerApplicationBuilder!
+static ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.FunctionsEventStoreExtensions.ConfigureEventStoreBindings(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.GetProjectionOutputAttributes(System.Reflection.MethodInfo? method) -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputAttribute!>!
+static ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.ProjectionOutputProcessor.ResolveTargetMethod(string? entryPoint) -> System.Reflection.MethodInfo?

@@ -1,4 +1,6 @@
-﻿namespace ErikLieben.FA.ES.Documents;
+#pragma warning disable S1133 // Deprecated code - legacy connection name properties maintained for backwards compatibility
+
+namespace ErikLieben.FA.ES.Documents;
 
 /// <summary>
 /// Provides concrete stream metadata including identifiers, connection names, and options such as chunking and snapshots.
@@ -28,21 +30,25 @@ public class StreamInformation : IStreamInformation
     /// <summary>
     /// Gets or sets the connection name used to access the event stream backend.
     /// </summary>
+    [Obsolete("Use DataStore instead. This property will be removed in a future version.")]
     public string StreamConnectionName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the connection name used for document tagging operations.
     /// </summary>
+    [Obsolete("Use DocumentTagStore instead. This property will be removed in a future version.")]
     public string DocumentTagConnectionName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the connection name used for stream tagging operations.
     /// </summary>
+    [Obsolete("Use StreamTagStore instead. This property will be removed in a future version.")]
     public string StreamTagConnectionName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the connection name used for snapshot persistence.
     /// </summary>
+    [Obsolete("Use SnapShotStore instead. This property will be removed in a future version.")]
     public string SnapShotConnectionName { get; set; } = string.Empty;
 
     /// <summary>
@@ -86,6 +92,12 @@ public class StreamInformation : IStreamInformation
     public string DocumentStore { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the connection name used for document persistence.
+    /// </summary>
+    [Obsolete("Use DocumentStore instead. This property will be removed in a future version.")]
+    public string DocumentConnectionName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the named connection for document tag storage.
     /// </summary>
     public string DocumentTagStore { get; set; } = string.Empty;
@@ -99,6 +111,31 @@ public class StreamInformation : IStreamInformation
     /// Gets or sets the named connection for snapshot storage.
     /// </summary>
     public string SnapShotStore { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the stream is in a broken state.
+    /// </summary>
+    /// <remarks>
+    /// A stream is marked as broken when a commit fails after events may have been
+    /// partially written, and the automatic cleanup also fails. Use IStreamRepairService
+    /// from the ErikLieben.FA.ES.EventStreamManagement package to repair broken streams.
+    /// </remarks>
+    public bool IsBroken { get; set; }
+
+    /// <summary>
+    /// Gets or sets details about why the stream is broken, if applicable.
+    /// </summary>
+    public BrokenStreamInfo? BrokenInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the history of rollback operations performed on this stream.
+    /// </summary>
+    /// <remarks>
+    /// Each record represents a successful cleanup of partially written events
+    /// after a commit failure. This provides an audit trail without affecting
+    /// stream version numbering.
+    /// </remarks>
+    public List<RollbackRecord>? RollbackHistory { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether chunking is enabled.

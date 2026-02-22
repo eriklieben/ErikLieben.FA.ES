@@ -1,0 +1,250 @@
+<div class="versioning-container">
+  <div class="page-header">
+    <h1>
+      <mat-icon class="header-icon">schema</mat-icon>
+      Event Schema Versioning
+    </h1>
+    <p class="subtitle">
+      Handle breaking changes in event schemas with the [EventVersion] attribute
+    </p>
+  </div>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>lightbulb</mat-icon>
+      <mat-card-title>What is Event Schema Versioning?</mat-card-title>
+      <mat-card-subtitle>Managing breaking changes in your event contracts</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Event Schema Versioning allows you to evolve your event schemas over time while maintaining backwards compatibility with existing stored events. Unlike Event Upcasting (which transforms events on read), Schema Versioning keeps both versions as separate event types.</p>
+
+      <h3>When to Use Schema Versioning vs Upcasting:</h3>
+      <ul>
+        <li><strong>Schema Versioning</strong> - When you need to support both old and new event formats simultaneously, or when the transformation is complex</li>
+        <li><strong>Event Upcasting</strong> - When you want to automatically transform old events to new formats on read</li>
+      </ul>
+
+      <h3>The [EventVersion] Attribute:</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Event Definitions</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="eventVersionAttributeCodeHtml()"></div>
+      </div>
+
+      <h3>Key Benefits:</h3>
+      <ul>
+        <li><strong>Type Safety</strong> - Each version has its own strongly-typed record</li>
+        <li><strong>AOT Compatible</strong> - Full Native AOT support with generated serialization contexts</li>
+        <li><strong>Storage Efficient</strong> - Version 1 events don't store <code>schemaVersion</code> property (defaults to 1)</li>
+        <li><strong>Clear Migration Path</strong> - Mark old commands as <code>[Obsolete]</code> to guide developers</li>
+      </ul>
+
+      <div class="feature-note">
+        <mat-icon>info</mat-icon>
+        <span>The CLI tool automatically generates dispatch code that routes events to the correct <code>When</code> handler based on the <code>schemaVersion</code> property in the stored event.</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Generated Code Example -->
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>code</mat-icon>
+      <mat-card-title>Generated Code</mat-card-title>
+      <mat-card-subtitle>How the CLI handles multiple schema versions</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-tab-group>
+        <mat-tab label="Fold Method">
+          <div class="tab-content">
+            <p>The generated <code>Fold</code> method dispatches to the correct handler based on schema version:</p>
+            <div class="code-block">
+              <div class="shiki-container" [innerHTML]="foldMethodCodeHtml()"></div>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="Event Registration">
+          <div class="tab-content">
+            <p>Both event versions are registered with their respective serializers:</p>
+            <div class="code-block">
+              <div class="shiki-container" [innerHTML]="eventRegistrationCodeHtml()"></div>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="When Handlers">
+          <div class="tab-content">
+            <p>Define separate handlers for each version in your aggregate:</p>
+            <div class="code-block">
+              <div class="shiki-container" [innerHTML]="whenHandlersCodeHtml()"></div>
+            </div>
+          </div>
+        </mat-tab>
+        <mat-tab label="JSON Storage">
+          <div class="tab-content">
+            <p>Events are stored with their schema version (version 1 omits the property to save space):</p>
+            <div class="code-block">
+              <div class="shiki-container" [innerHTML]="jsonStorageCodeHtml()"></div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Demo Projects -->
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>science</mat-icon>
+      <mat-card-title>Schema Versioning Demo</mat-card-title>
+      <mat-card-subtitle>Example projects demonstrating V1 and V2 MemberJoined events</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading demo projects...</p>
+        </div>
+      } @else if (noDataGenerated()) {
+        <div class="no-data-state">
+          <mat-icon>info</mat-icon>
+          <div class="no-data-content">
+            <h3>Demo Data Not Generated</h3>
+            <p>The schema versioning demo requires sample data to be generated first. This will create three projects that demonstrate how the <code>[EventVersion]</code> attribute handles different schema versions of the same event.</p>
+            <ul>
+              <li><strong>Enterprise CRM System</strong> - V1 events only (legacy, no permissions)</li>
+              <li><strong>Cloud Security Platform</strong> - V2 events only (with permissions)</li>
+              <li><strong>DevOps Pipeline Modernization</strong> - Mixed V1 and V2 events</li>
+            </ul>
+            <button mat-raised-button color="primary" (click)="goToGenerateDemoData()">
+              <mat-icon>rocket_launch</mat-icon>
+              Generate Demo Data
+            </button>
+          </div>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <mat-icon>error</mat-icon>
+          <p>{{ error() }}</p>
+        </div>
+      } @else {
+        <div class="demo-intro">
+          <mat-icon>info</mat-icon>
+          <p>
+            These three projects demonstrate schema versioning with real event data from the event store.
+            Each project shows how the <code>Project.MemberJoined</code> event exists in different schema versions.
+          </p>
+        </div>
+
+        <div class="demo-projects">
+          @for (project of demoProjects(); track project.id) {
+            <div class="project-card" [class]="project.schemaVersionType">
+              <div class="project-header">
+                <div class="project-info">
+                  <h4>{{ project.name }}</h4>
+                  <p class="project-description">{{ project.description }}</p>
+                  <p class="project-stats">{{ project.totalEvents }} total events in stream</p>
+                </div>
+                <mat-chip [class]="'version-chip ' + project.schemaVersionType">
+                  @switch (project.schemaVersionType) {
+                    @case ('v1-only') {
+                      <mat-icon>history</mat-icon> V1 Only (Legacy)
+                    }
+                    @case ('v2-only') {
+                      <mat-icon>new_releases</mat-icon> V2 Only (Modern)
+                    }
+                    @case ('mixed') {
+                      <mat-icon>merge_type</mat-icon> Mixed Versions
+                    }
+                  }
+                </mat-chip>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="members-section">
+                <h5>Team Members (MemberJoined Events)</h5>
+                @if (project.memberEvents.length === 0) {
+                  <p class="no-members">No MemberJoined events found in this project's event stream.</p>
+                } @else {
+                  <div class="members-list">
+                    @for (member of project.memberEvents; track member.memberId + member.eventVersion) {
+                      <div class="member-event" [class.v1]="member.schemaVersion === 1" [class.v2]="member.schemaVersion === 2">
+                        <div class="member-header">
+                          <div class="version-badge" [class.v1]="member.schemaVersion === 1" [class.v2]="member.schemaVersion === 2">
+                            V{{ member.schemaVersion }}
+                          </div>
+                          <span class="deserialization-type" [class.v1]="member.schemaVersion === 1" [class.v2]="member.schemaVersion === 2">
+                            <mat-icon>code</mat-icon>
+                            {{ member.deserializationType }}
+                          </span>
+                          <span class="member-role">{{ member.role }}</span>
+                          <span class="event-version">Event #{{ member.eventVersion }}</span>
+                        </div>
+                        <div class="member-details">
+                          <span class="member-id">{{ member.memberId }}</span>
+                          <span class="invited-by">Invited by: {{ member.invitedBy }}</span>
+                          <span class="joined-at">Joined: {{ formatDate(member.joinedAt) }}</span>
+                          @if (member.schemaVersion === 2 && member.permissions) {
+                            <div class="permissions">
+                              <span class="permission" [class.enabled]="member.permissions.canEdit">
+                                <mat-icon>{{ member.permissions.canEdit ? 'check' : 'close' }}</mat-icon> Edit
+                              </span>
+                              <span class="permission" [class.enabled]="member.permissions.canDelete">
+                                <mat-icon>{{ member.permissions.canDelete ? 'check' : 'close' }}</mat-icon> Delete
+                              </span>
+                              <span class="permission" [class.enabled]="member.permissions.canInvite">
+                                <mat-icon>{{ member.permissions.canInvite ? 'check' : 'close' }}</mat-icon> Invite
+                              </span>
+                              <span class="permission" [class.enabled]="member.permissions.canManageWorkItems">
+                                <mat-icon>{{ member.permissions.canManageWorkItems ? 'check' : 'close' }}</mat-icon> Manage
+                              </span>
+                            </div>
+                          } @else if (member.schemaVersion === 1) {
+                            <div class="no-permissions">
+                              <mat-icon>warning</mat-icon>
+                              <span>No permissions data (V1 event - schemaVersion not stored)</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="demo-note">
+          <mat-icon>lightbulb</mat-icon>
+          <p>
+            Notice how V1 events lack permission data while V2 events include granular permissions.
+            Both versions coexist in the same event stream and are handled by their respective <code>When</code> handlers.
+            The <code>schemaVersion</code> property is only stored for V2+ events to save storage space.
+          </p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Best Practices -->
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>tips_and_updates</mat-icon>
+      <mat-card-title>Best Practices</mat-card-title>
+      <mat-card-subtitle>Guidelines for event schema evolution</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <ul>
+        <li><strong>Use descriptive type names</strong> - Name V1 types with a suffix (e.g., <code>MemberJoinedProjectV1</code>) to clearly indicate they're legacy</li>
+        <li><strong>Mark old commands as obsolete</strong> - Use <code>[Obsolete("Use X instead")]</code> to guide developers to the new API</li>
+        <li><strong>Keep the same EventName</strong> - Both versions share the same <code>[EventName]</code> so they appear as the same logical event in the stream</li>
+        <li><strong>Document the changes</strong> - Add XML comments explaining what changed between versions</li>
+        <li><strong>Consider projections</strong> - Projections may need to handle both versions or only care about certain fields</li>
+        <li><strong>Test both paths</strong> - Ensure your aggregates correctly handle events of both schema versions</li>
+      </ul>
+    </mat-card-content>
+  </mat-card>
+</div>

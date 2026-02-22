@@ -1,0 +1,297 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Analyzer Rules Reference</h1>
+      <p class="subtitle">Roslyn analyzers for event sourcing best practices</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The <code>ErikLieben.FA.ES.Analyzers</code> package provides Roslyn analyzers that detect common issues and
+        enforce best practices in your event sourcing code. These analyzers run during compilation and in your IDE.
+      </p>
+
+      <div class="analyzer-summary">
+        <div class="summary-card">
+          <div class="summary-icon usage">
+            <mat-icon>build</mat-icon>
+          </div>
+          <div class="summary-content">
+            <h3>Usage Rules</h3>
+            <p>Detect incorrect API usage patterns</p>
+            <span class="rule-count">FAES0002, FAES0003</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-icon codegen">
+            <mat-icon>auto_fix_high</mat-icon>
+          </div>
+          <div class="summary-content">
+            <h3>Code Generation Rules</h3>
+            <p>Ensure generated code is up to date</p>
+            <span class="rule-count">FAES0005, FAES0006, FAES0007</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Installation</strong>
+          <p>Analyzers are automatically included when you reference the main <code>ErikLieben.FA.ES</code> package. No additional setup required.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- FAES0002 Section -->
+    <section id="faes0002" class="doc-section">
+      <h2><mat-icon>warning</mat-icon> FAES0002</h2>
+      <div class="rule-header">
+        <span class="rule-id">FAES0002</span>
+        <span class="rule-severity warning">Warning</span>
+        <span class="rule-category">Usage</span>
+      </div>
+
+      <h3>Appended event is not applied to active state</h3>
+      <p class="section-description">
+        This rule detects when an event is appended to a stream within an Aggregate's session but not applied
+        to the aggregate's active state. This is almost always a bug.
+      </p>
+
+      <div class="example-comparison">
+        <div class="example-block bad">
+          <div class="example-header">
+            <mat-icon>cancel</mat-icon>
+            <span>Incorrect</span>
+          </div>
+          <div class="code-block">
+            <div class="shiki-container" [innerHTML]="badExampleCodeHtml()"></div>
+          </div>
+        </div>
+
+        <div class="example-block good">
+          <div class="example-header">
+            <mat-icon>check_circle</mat-icon>
+            <span>Correct</span>
+          </div>
+          <div class="code-block">
+            <div class="shiki-container" [innerHTML]="goodExampleCodeHtml()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fix-note">
+        <mat-icon>build</mat-icon>
+        <div>
+          <strong>How to Fix</strong>
+          <p>Wrap the <code>context.Append(...)</code> call with <code>Fold(...)</code> or <code>When(...)</code> to apply the event to the aggregate's state.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- FAES0003 Section -->
+    <section id="faes0003" class="doc-section">
+      <h2><mat-icon>warning</mat-icon> FAES0003</h2>
+      <div class="rule-header">
+        <span class="rule-id">FAES0003</span>
+        <span class="rule-severity warning">Warning</span>
+        <span class="rule-category">Usage</span>
+      </div>
+
+      <h3>Aggregate-derived class should be partial</h3>
+      <p class="section-description">
+        Classes inheriting from <code>Aggregate</code> or <code>Projection</code> must be declared as <code>partial</code>
+        so the CLI tool can generate supporting code.
+      </p>
+
+      <div class="fix-steps">
+        <div class="step-item">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <p>Add the <code>partial</code> keyword to your class declaration:</p>
+            <code>public partial class OrderAggregate : Aggregate&lt;OrderState&gt;</code>
+          </div>
+        </div>
+        <div class="step-item">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <p>Run the CLI tool to generate supporting code:</p>
+            <code>dotnet faes</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- FAES0005 Section -->
+    <section id="faes0005" class="doc-section">
+      <h2><mat-icon>warning</mat-icon> FAES0005</h2>
+      <div class="rule-header">
+        <span class="rule-id">FAES0005</span>
+        <span class="rule-severity warning">Warning</span>
+        <span class="rule-category">CodeGeneration</span>
+      </div>
+
+      <h3>Generated file missing</h3>
+      <p class="section-description">
+        The analyzer detected an Aggregate or Projection class but couldn't find the corresponding generated file
+        (<code>{{ '{' }}ClassName{{ '}' }}.Generated.cs</code>).
+      </p>
+
+      <div class="fix-note">
+        <mat-icon>terminal</mat-icon>
+        <div>
+          <strong>How to Fix</strong>
+          <p>Run <code>dotnet faes</code> in your project directory to generate the supporting code. For continuous development, use <code>dotnet faes watch</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- FAES0006 Section -->
+    <section id="faes0006" class="doc-section">
+      <h2><mat-icon>warning</mat-icon> FAES0006</h2>
+      <div class="rule-header">
+        <span class="rule-id">FAES0006</span>
+        <span class="rule-severity warning">Warning</span>
+        <span class="rule-category">CodeGeneration</span>
+      </div>
+
+      <h3>Generated code is out of date</h3>
+      <p class="section-description">
+        A <code>When</code> method or <code>[When&lt;T&gt;]</code> attribute was added to an Aggregate or Projection,
+        but the generated <code>Fold</code> method doesn't include a case for it.
+      </p>
+
+      <div class="trigger-list">
+        <h4>This warning appears when:</h4>
+        <ul>
+          <li>You add a new <code>When(EventType evt)</code> method</li>
+          <li>You add a new <code>[When&lt;EventType&gt;]</code> attribute</li>
+          <li>You rename an event type</li>
+          <li>The generated file was manually edited or deleted</li>
+        </ul>
+      </div>
+
+      <div class="fix-note">
+        <mat-icon>sync</mat-icon>
+        <div>
+          <strong>How to Fix</strong>
+          <p>Run <code>dotnet faes</code> to regenerate the <code>Fold</code> method with the new event handler.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- FAES0007 Section -->
+    <section id="faes0007" class="doc-section">
+      <h2><mat-icon>warning</mat-icon> FAES0007</h2>
+      <div class="rule-header">
+        <span class="rule-id">FAES0007</span>
+        <span class="rule-severity warning">Warning</span>
+        <span class="rule-category">CodeGeneration</span>
+      </div>
+
+      <h3>Property not in generated interface</h3>
+      <p class="section-description">
+        A public property was added to an Aggregate or Projection class, but the generated interface
+        (<code>I{{ '{' }}ClassName{{ '}' }}</code>) doesn't include it.
+      </p>
+
+      <div class="trigger-list">
+        <h4>This warning appears when:</h4>
+        <ul>
+          <li>You add a new public property to an Aggregate</li>
+          <li>You change a property from private to public</li>
+          <li>You add an expression-bodied property</li>
+        </ul>
+      </div>
+
+      <div class="fix-note">
+        <mat-icon>sync</mat-icon>
+        <div>
+          <strong>How to Fix</strong>
+          <p>Run <code>dotnet faes</code> to regenerate the interface with the new property.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Configuration Section -->
+    <section id="configuration" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Configuration</h2>
+      <p class="section-description">
+        You can configure analyzer severity or suppress specific rules using standard .NET mechanisms.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Analyzer Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="configCodeHtml()"></div>
+      </div>
+
+      <h3>Severity Levels</h3>
+      <div class="severity-list">
+        <div class="severity-item error">
+          <mat-icon>error</mat-icon>
+          <div>
+            <strong>error</strong>
+            <p>Fails the build</p>
+          </div>
+        </div>
+        <div class="severity-item warning">
+          <mat-icon>warning</mat-icon>
+          <div>
+            <strong>warning</strong>
+            <p>Shows in build output (default)</p>
+          </div>
+        </div>
+        <div class="severity-item suggestion">
+          <mat-icon>lightbulb</mat-icon>
+          <div>
+            <strong>suggestion</strong>
+            <p>IDE-only, not in build</p>
+          </div>
+        </div>
+        <div class="severity-item silent">
+          <mat-icon>visibility_off</mat-icon>
+          <div>
+            <strong>silent / none</strong>
+            <p>Disabled</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

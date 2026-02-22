@@ -1,4 +1,10 @@
-﻿using Azure;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Blob;
@@ -8,6 +14,7 @@ using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 
@@ -22,6 +29,9 @@ public class BlobDataStoreTests
 
     public BlobDataStoreTests()
     {
+        BlobDataStore.ClearVerifiedContainersCache();
+        BlobDataStore.ClearClosedStreamCache();
+
         clientFactory = Substitute.For<IAzureClientFactory<BlobServiceClient>>();
         blobServiceClient = Substitute.For<BlobServiceClient>();
         containerClient = Substitute.For<BlobContainerClient>();
@@ -260,7 +270,7 @@ public class BlobDataStoreTests
             var sut = new BlobDataStore(clientFactory, false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(null!, events));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.AppendAsync(null!, default, events));
         }
 
         // [Fact]
@@ -281,7 +291,7 @@ public class BlobDataStoreTests
             var sut = new BlobDataStore(clientFactory, false);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, Array.Empty<IEvent>()));
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.AppendAsync(objectDocument, default, Array.Empty<IEvent>()));
         }
 
         [Fact]
@@ -289,7 +299,8 @@ public class BlobDataStoreTests
         {
             // Arrange
             var sut = new BlobDataStore(clientFactory, false);
-            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(new RequestFailedException(404, "Not found", "BlobNotFound", null));
 
             var uploadResponse = Response.FromValue(
                 BlobsModelFactory.BlobContentInfo(new ETag("test-etag"), DateTimeOffset.Now, null, null, "test-hash",
@@ -299,7 +310,7 @@ public class BlobDataStoreTests
                 .Returns(uploadResponse);
 
             // Act
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             // Assert
             await blobClient.Received(1).UploadAsync(
@@ -409,7 +420,8 @@ public class BlobDataStoreTests
         {
             // Arrange
             var sut = new BlobDataStore(clientFactory, false);
-            blobClient.ExistsAsync().Returns(Task.FromResult(Response.FromValue(false, Substitute.For<Response>())));;
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(new RequestFailedException(404, "Not found", "BlobNotFound", null));
 
             var uploadResponse = Response.FromValue(
                 BlobsModelFactory.BlobContentInfo(new ETag("test-etag"), DateTimeOffset.Now, null, null, "test-hash",
@@ -419,10 +431,103 @@ public class BlobDataStoreTests
                 .Returns(uploadResponse);
 
             // Act
-            await sut.AppendAsync(objectDocument, events);
+            await sut.AppendAsync(objectDocument, default, events);
 
             // Assert
             containerClient.Received(1).GetBlobClient("test-stream.json");
+        }
+
+        [Fact]
+        public async Task Should_get_properties_directly_instead_of_checking_exists()
+        {
+            // Arrange - The new flow calls GetPropertiesAsync directly and catches 404
+            // instead of calling ExistsAsync first, saving a network round-trip.
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException = new RequestFailedException(404, "Not found", "BlobNotFound", null);
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(requestFailedException);
+
+            var uploadResponse = Response.FromValue(
+                BlobsModelFactory.BlobContentInfo(new ETag("test-etag"), DateTimeOffset.Now, null, null, "test-hash", 1),
+                Substitute.For<Response>());
+            blobClient.UploadAsync(Arg.Any<Stream>(), Arg.Any<BlobUploadOptions>())
+                .Returns(uploadResponse);
+
+            // Act
+            await sut.AppendAsync(objectDocument, default, events);
+
+            // Assert - GetPropertiesAsync was called (not ExistsAsync)
+            await blobClient.Received(1).GetPropertiesAsync(
+                Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>());
+            await blobClient.DidNotReceive().ExistsAsync(Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_create_new_blob_when_get_properties_returns_404()
+        {
+            // Arrange - When GetPropertiesAsync returns 404, the blob doesn't exist yet.
+            // The code should then create a new blob with IfNoneMatch = "*".
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException = new RequestFailedException(404, "Not found", "BlobNotFound", null);
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .ThrowsAsync(requestFailedException);
+
+            var uploadResponse = Response.FromValue(
+                BlobsModelFactory.BlobContentInfo(new ETag("new-etag"), DateTimeOffset.Now, null, null, "hash", 1),
+                Substitute.For<Response>());
+            blobClient.UploadAsync(Arg.Any<Stream>(), Arg.Any<BlobUploadOptions>())
+                .Returns(uploadResponse);
+
+            // Act
+            await sut.AppendAsync(objectDocument, default, events);
+
+            // Assert - Upload should use IfNoneMatch condition for new blob creation
+            await blobClient.Received(1).UploadAsync(
+                Arg.Any<Stream>(),
+                Arg.Is<BlobUploadOptions>(o => o.Conditions != null && o.Conditions.IfNoneMatch.HasValue));
+        }
+
+        [Fact]
+        public async Task Should_download_and_append_when_blob_already_exists()
+        {
+            // Arrange - When GetPropertiesAsync succeeds, the blob exists.
+            // The code should download it with the same ETag and append events.
+            var sut = new BlobDataStore(clientFactory, false);
+            var etag = new ETag("existing-etag");
+            var properties = BlobsModelFactory.BlobProperties(eTag: etag);
+            var propertiesResponse = Response.FromValue(properties, Substitute.For<Response>());
+
+            blobClient.GetPropertiesAsync(Arg.Any<BlobRequestConditions>(), Arg.Any<CancellationToken>())
+                .Returns(propertiesResponse);
+
+            // Setup DownloadToAsync to populate the stream with a valid BlobDataStoreDocument JSON
+            var json = """{"objectId":"test-id","objectName":"TestObject","lastObjectDocumentHash":"*","events":[]}""";
+            var jsonBytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .Returns(callInfo =>
+                {
+                    var stream = callInfo.Arg<Stream>();
+                    stream.Write(jsonBytes, 0, jsonBytes.Length);
+                    return Substitute.For<Response>();
+                });
+
+            var uploadResponse = Response.FromValue(
+                BlobsModelFactory.BlobContentInfo(new ETag("new-etag"), DateTimeOffset.Now, null, null, "hash", 1),
+                Substitute.For<Response>());
+            blobClient.UploadAsync(Arg.Any<Stream>(), Arg.Any<BlobUploadOptions>())
+                .Returns(uploadResponse);
+
+            // Act
+            await sut.AppendAsync(objectDocument, default, events);
+
+            // Assert - Should download with ETag match and then upload with same ETag
+            await blobClient.Received(1).DownloadToAsync(
+                Arg.Any<Stream>(),
+                Arg.Is<BlobRequestConditions>(c => c.IfMatch == etag));
+            await blobClient.Received(1).UploadAsync(
+                Arg.Any<Stream>(),
+                Arg.Is<BlobUploadOptions>(o => o.Conditions != null && o.Conditions.IfMatch == etag));
         }
     }
 
@@ -449,11 +554,14 @@ public class BlobDataStoreTests
             blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
                 .ThrowsAsync(requestFailedException);
 
+            // Clear right before act to avoid race with parallel tests
+            BlobDataStore.ClearVerifiedContainersCache();
+
             // Act
             await sut.ReadAsync(objectDocument);
 
             // Assert
-            containerClient.Received(1).CreateIfNotExists();
+            await containerClient.Received(1).CreateIfNotExistsAsync();
         }
 
         [Fact]
@@ -470,7 +578,7 @@ public class BlobDataStoreTests
             await sut.ReadAsync(objectDocument);
 
             // Assert
-            containerClient.DidNotReceive().CreateIfNotExists();
+            await containerClient.DidNotReceive().CreateIfNotExistsAsync();
         }
 
         [Fact]
@@ -500,6 +608,95 @@ public class BlobDataStoreTests
 
             // Assert
             blobServiceClient.Received(1).GetBlobContainerClient("testobject");
+        }
+    }
+
+    public class ReadAsStreamAsync : BlobDataStoreTests
+    {
+        [Fact]
+        public async Task Should_yield_no_events_when_blob_does_not_exist()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Not found", BlobErrorCode.BlobNotFound.ToString(), null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            var eventsList = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                eventsList.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(eventsList);
+        }
+
+        [Fact]
+        public async Task Should_yield_no_events_when_container_not_found()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Container not found", "ContainerNotFound", null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            var eventsList = new List<IEvent>();
+            await foreach (var evt in sut.ReadAsStreamAsync(objectDocument))
+            {
+                eventsList.Add(evt);
+            }
+
+            // Assert
+            Assert.Empty(eventsList);
+        }
+
+        [Fact]
+        public async Task Should_respect_cancellation_token()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var cts = new CancellationTokenSource();
+
+            // Setup blob to throw when trying to download with cancelled token
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .Returns<Task>(callInfo =>
+                {
+                    cts.Token.ThrowIfCancellationRequested();
+                    return Task.CompletedTask;
+                });
+
+            cts.Cancel(); // Cancel before starting
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in sut.ReadAsStreamAsync(objectDocument, cancellationToken: cts.Token))
+                {
+                    // Should not get here
+                }
+            });
+        }
+
+        [Fact]
+        public async Task Should_use_non_chunked_path()
+        {
+            // Arrange
+            var sut = new BlobDataStore(clientFactory, false);
+            var requestFailedException =
+                new RequestFailedException(404, "Not found", BlobErrorCode.BlobNotFound.ToString(), null);
+            blobClient.DownloadToAsync(Arg.Any<Stream>(), Arg.Any<BlobRequestConditions>())
+                .ThrowsAsync(requestFailedException);
+
+            // Act
+            await foreach (var _ in sut.ReadAsStreamAsync(objectDocument)) { }
+
+            // Assert
+            containerClient.Received(1).GetBlobClient("test-stream.json");
         }
     }
 }

@@ -1,0 +1,930 @@
+#nullable enable
+const ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.EventTypeName = "EventStream.EventsRolledBack" -> string!
+const ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.EventTypeName = "EventStream.Closed" -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.BackupFailure() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ErrorMessage.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ErrorMessage.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.Exception.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ObjectId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ObjectId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ObjectName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure.ObjectName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.BackupMetadata() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.Checksum.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.Checksum.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.Custom.get -> System.Collections.Generic.Dictionary<string!, string!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.Custom.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesObjectDocument.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesObjectDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesSnapshots.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesSnapshots.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesTerminatedStreams.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IncludesTerminatedStreams.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IsCompressed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata.IsCompressed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.BackupOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Description.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Description.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.EnableCompression.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.EnableCompression.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeObjectDocument.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeObjectDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeSnapshots.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeSnapshots.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeTerminatedStreams.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.IncludeTerminatedStreams.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Location.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Location.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Retention.get -> System.TimeSpan?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Retention.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Tags.get -> System.Collections.Generic.Dictionary<string!, string!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Tags.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.BackupProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.BytesWritten.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.BytesWritten.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.EventsBackedUp.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.EventsBackedUp.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress.TotalEvents.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.BackupQuery() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.CreatedAfter.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.CreatedAfter.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.CreatedBefore.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.CreatedBefore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.IncludeExpired.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.IncludeExpired.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.MaxResults.get -> int?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.MaxResults.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.ObjectId.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.ObjectId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.ObjectName.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.ObjectName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.Tags.get -> System.Collections.Generic.Dictionary<string!, string!>?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery.Tags.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.BulkBackupOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.ContinueOnError.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.ContinueOnError.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.MaxConcurrency.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.MaxConcurrency.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.OnProgress.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress!>?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.OnProgress.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.BulkBackupProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.CurrentStreamId.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.CurrentStreamId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.FailedBackups.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.FailedBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.ProcessedStreams.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.ProcessedStreams.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.SuccessfulBackups.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.SuccessfulBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.TotalStreams.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupProgress.TotalStreams.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.BulkBackupResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.ElapsedTime.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.FailedBackups.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupFailure!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.FailedBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.FailureCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.FailureCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.IsFullyFailed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.IsFullySuccessful.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.IsPartialSuccess.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.SuccessCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.SuccessCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.SuccessfulBackups.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.SuccessfulBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.TotalProcessed.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult.TotalProcessed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.BulkRestoreOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.ContinueOnError.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.ContinueOnError.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.MaxConcurrency.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.MaxConcurrency.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.OnProgress.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress!>?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.OnProgress.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.BulkRestoreProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.CurrentBackupId.get -> System.Guid?
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.CurrentBackupId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.FailedRestores.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.FailedRestores.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.ProcessedBackups.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.ProcessedBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.SuccessfulRestores.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.SuccessfulRestores.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.TotalBackups.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreProgress.TotalBackups.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.BulkRestoreResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.ElapsedTime.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.FailedRestores.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.FailedRestores.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.FailureCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.FailureCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.IsFullyFailed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.IsFullySuccessful.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.IsPartialSuccess.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.SuccessCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.SuccessCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.SuccessfulRestores.get -> System.Collections.Generic.IReadOnlyList<System.Guid>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.SuccessfulRestores.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.TotalProcessed.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult.TotalProcessed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.IncludeObjectDocument() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.IncludeSnapshots() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.IncludeTerminatedStreams() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.ToLocation(string! location) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.ToProvider(string! providerName) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.WithCompression() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder.WithRetention(System.TimeSpan retention) -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.BackupId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.EventCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.Location.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.Metadata.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.BackupMetadata!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.ObjectId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.ObjectName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.ProviderName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.SizeBytes.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle.StreamVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider.DeleteBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider.ProviderName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupProvider.ValidateBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry.GetBackupAsync(System.Guid backupId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle?>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry.GetExpiredBackupsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry.QueryBackupsAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery? query, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry.RegisterBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions! options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRegistry.UnregisterBackupAsync(System.Guid backupId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.BackupDocumentAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.BackupManyAsync(System.Collections.Generic.IEnumerable<string!>! objectIds, string! objectName, ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.BackupStreamAsync(string! objectName, string! objectId, ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.BackupProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.CleanupExpiredBackupsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.DeleteBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.GetBackupAsync(System.Guid backupId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle?>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.ListBackupsAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.BackupQuery? query = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.RestoreManyAsync(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle!>! handles, ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.RestoreStreamAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.RestoreToNewStreamAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, string! targetObjectId, ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions? options = null, System.IProgress<ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupRestoreService.ValidateBackupAsync(ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupHandle! handle, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.BackupId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.BackupId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.ErrorMessage.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.ErrorMessage.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.Exception.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreFailure.RestoreFailure() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.Description.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.Description.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.Overwrite.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.Overwrite.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.RestoreObjectDocument.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.RestoreObjectDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.RestoreOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.RestoreSnapshots.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.RestoreSnapshots.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.ValidateBeforeRestore.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.ValidateBeforeRestore.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.EventsRestored.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.EventsRestored.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.RestoreProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreProgress.TotalEvents.set -> void
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder.ArchiveToStorage(string! storageLocation) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder.CreateSnapshot() -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder.MarkAsDeleted() -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder.Reason(string! reason) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder.WithMetadata(string! key, object! value) -> ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.DistributedLockOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.HeartbeatInterval(System.TimeSpan interval) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.HeartbeatIntervalValue.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.HeartbeatIntervalValue.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.LockLocation.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.LockLocation.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.LockTimeout(System.TimeSpan timeout) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.LockTimeoutValue.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.LockTimeoutValue.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.ProviderName.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.ProviderName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.UseLease(string! lockLocation) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.DistributedLockOptions.UseProvider(string! providerName) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.AcquiredAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.ExpiresAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.IsValid.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.IsValidAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.LockId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.LockKey.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.ReleaseAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock.RenewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions.HeartbeatInterval(System.TimeSpan interval) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions.LockTimeout(System.TimeSpan timeout) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions.UseLease(string! lockLocation) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions.UseProvider(string! providerName) -> ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider.AcquireLockAsync(string! lockKey, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLock?>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider.IsLockedAsync(string! lockKey, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockProvider.ProviderName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.BackupConfiguration() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.EnableCompression.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.EnableCompression.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeObjectDocument.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeObjectDocument.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeSnapshots.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeSnapshots.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeTerminatedStreams.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.IncludeTerminatedStreams.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.Location.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.Location.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.ProviderName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.ProviderName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.Retention.get -> System.TimeSpan?
+ErikLieben.FA.ES.EventStreamManagement.Core.BackupConfiguration.Retention.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.ArchiveLocation.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.ArchiveLocation.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.BookClosingConfiguration() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.CreateSnapshot.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.CreateSnapshot.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.MarkAsDeleted.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.MarkAsDeleted.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.Metadata.get -> System.Collections.Generic.Dictionary<string!, object!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.Metadata.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.Reason.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.BookClosingConfiguration.Reason.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.BulkMigrationProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.CurrentDocumentId.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.CurrentDocumentId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.FailedMigrations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.FailedMigrations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.ProcessedDocuments.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.ProcessedDocuments.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.SuccessfulMigrations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.SuccessfulMigrations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.TotalDocuments.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationProgress.TotalDocuments.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.BulkMigrationResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Duration.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Duration.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.FailedCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.FailedCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Failures.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Failures.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.IndividualResults.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.IndividualResults.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.MigrationId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Plan.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan?
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Progress.get -> ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Statistics.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics!
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Status.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Success.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.Success.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.SuccessfulCount.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.SuccessfulCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.TotalDocuments.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.TotalDocuments.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.BulkMigrationResult.VerificationResult.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult?
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.CancelMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.ForDocument(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.ForDocuments(System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>! documents) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.GetActiveMigrationsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.GetMigrationStatusAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress?>!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.PauseMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.IEventStreamMigrationService.ResumeMigrationAsync(System.Guid migrationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.CopyToNewStream(string! streamIdentifier) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.DryRun() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.ExecuteAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.ExecuteLiveMigrationAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.FromDryRunPlan(ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan! plan) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithBackup(System.Action<ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithBookClosing(System.Action<ErikLieben.FA.ES.EventStreamManagement.BookClosing.IBookClosingBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithDistributedLock(System.Action<ErikLieben.FA.ES.EventStreamManagement.Coordination.IDistributedLockOptions!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithLiveMigration(System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!>? configure = null) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithPauseSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithPipeline(System.Action<ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithRollbackSupport() -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithTransformation(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder.WithVerification(System.Action<ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!>! configure) -> ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Duration.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Plan.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan?
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Progress.get -> ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Statistics.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics!
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Status.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.Success.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.IMigrationResult.VerificationResult.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationException
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationException.MigrationException(string! message) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationException.MigrationException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ErrorMessage.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ErrorMessage.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.Exception.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.MigrationFailure() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ObjectId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ObjectId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ObjectName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationFailure.ObjectName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Duration.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Duration.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.ErrorMessage.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Exception.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.MigrationId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.MigrationResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Plan.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Plan.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Progress.get -> ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Progress.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Statistics.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics!
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Statistics.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Status.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Status.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Success.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.Success.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.VerificationResult.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.VerificationResult.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.AverageEventsPerSecond.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.AverageEventsPerSecond.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.CompletedAt.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.CompletedAt.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.EventsTransformed.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.EventsTransformed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.MigrationStatistics() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.MigrationStatistics(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.RolledBack.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.RolledBack.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.SnapshotCreated.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.SnapshotCreated.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.StartedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.StartedAt.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TotalBytes.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TotalBytes.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TotalEvents.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TransformationFailures.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.TransformationFailures.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.BackingUp = 10 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Cancelled = 7 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Completed = 5 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.CuttingOver = 4 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Failed = 6 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.InProgress = 1 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Paused = 2 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Pending = 0 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.RolledBack = 9 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.RollingBack = 8 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus.Verifying = 3 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy.CopyAndTransform = 0 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy.InPlaceTransform = 2 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy
+ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy.LazyTransform = 1 -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStrategy
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.CustomMetrics.get -> System.Collections.Generic.Dictionary<string!, System.Func<object!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.CustomMetrics.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.EnableLogging.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.EnableLogging.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnCompleted.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>?
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnCompleted.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnFailed.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!, System.Exception!>?
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnFailed.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnProgress.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>?
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.OnProgress.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.ProgressConfiguration() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.ReportInterval.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Core.ProgressConfiguration.ReportInterval.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CompareChecksums.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CompareChecksums.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CompareEventCounts.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CompareEventCounts.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.CustomValidations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.FailFast.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.FailFast.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.TransformationSampleSize.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.TransformationSampleSize.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.ValidateTransformations.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.ValidateTransformations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.VerificationConfiguration() -> void
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.VerifyStreamIntegrity.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Core.VerificationConfiguration.VerifyStreamIntegrity.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable.GetActiveMigrationsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<string!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable.GetPhaseAsync(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase>!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable.GetRoutingAsync(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!>!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable.RemoveRoutingAsync(string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.IMigrationRoutingTable.SetMigrationPhaseAsync(string! objectId, ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase phase, string! oldStream, string! newStream, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase.BookClosed = 4 -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase.Cutover = 3 -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase.DualRead = 2 -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase.DualWrite = 1 -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase.Normal = 0 -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.CreatedAt.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.MigrationId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.MigrationRoutingEntry() -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.NewStream.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.NewStream.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.ObjectId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.ObjectId.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.OldStream.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.OldStream.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.Phase.get -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.Phase.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.ToStreamRouting() -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.UpdatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationRoutingEntry.UpdatedAt.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Deconstruct(out ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase Phase, out string! PrimaryReadStream, out string! PrimaryWriteStream, out string? SecondaryReadStream, out string? SecondaryWriteStream) -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.IsDualReadActive.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.IsDualWriteActive.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Phase.get -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Phase.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.PrimaryReadStream.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.PrimaryReadStream.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.PrimaryWriteStream.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.PrimaryWriteStream.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.SecondaryReadStream.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.SecondaryReadStream.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.SecondaryWriteStream.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.SecondaryWriteStream.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.StreamRouting(ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase Phase, string! PrimaryReadStream, string! PrimaryWriteStream, string? SecondaryReadStream = null, string? SecondaryWriteStream = null) -> void
+ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.StreamRouting(ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent!
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.CorrelationId.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.CorrelationId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.Equals(ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent? other) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.EventsRemoved.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.EventsRemoved.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.EventsRolledBackEvent() -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.FromVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.FromVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.OriginalErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.OriginalErrorMessage.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.OriginalExceptionType.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.OriginalExceptionType.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.Reason.get -> ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.Reason.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.RolledBackAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.RolledBackAt.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.ToVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.ToVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason
+ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason.CommitFailure = 0 -> ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason
+ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason.ManualRepair = 1 -> ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason
+ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason.Migration = 2 -> ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent!
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ClosedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ClosedAt.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationDataStore.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationDataStore.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationDocumentStore.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationDocumentStore.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationStreamId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationStreamId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationStreamType.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ContinuationStreamType.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Equals(ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent? other) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.LastBusinessEventVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.LastBusinessEventVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Metadata.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.MigrationId.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.MigrationId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Reason.get -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Reason.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.StreamClosedEvent() -> void
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason.Archival = 2 -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason.Manual = 3 -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason.Migration = 0 -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason.SizeLimit = 1 -> ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy.Fail = 1 -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy.KeepTrying = 0 -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.OnBeforeAppend(System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.OnCatchUpProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.OnConvergenceFailure(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy strategy) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.OnEventCopied(System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.WithCatchUpDelay(System.TimeSpan delay) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.WithCloseTimeout(System.TimeSpan timeout) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions.WithMaxIterations(int maxIterations) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.ElapsedTime.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.Equals(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress? other) -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.EventType.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.EventType.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.EventVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.EventVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.Iteration.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.Iteration.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.LiveMigrationEventProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.NewSchemaVersion.get -> int?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.NewSchemaVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.OriginalEventType.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.OriginalEventType.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.OriginalSchemaVersion.get -> int?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.OriginalSchemaVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.SourceVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.SourceVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.TotalEventsCopied.get -> long
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.TotalEventsCopied.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.WasTransformed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.WasTransformed.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.BeforeAppendCallback.get -> System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.CatchUpDelay.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.CloseTimeout.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.EventCopiedCallback.get -> System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.FailureStrategy.get -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.LiveMigrationOptions() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.MaxIterations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.OnBeforeAppend(System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.OnCatchUpProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.OnConvergenceFailure(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ConvergenceFailureStrategy strategy) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.OnEventCopied(System.Func<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress!, System.Threading.Tasks.Task!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.ProgressCallback.get -> System.Action<ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress!>?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.WithCatchUpDelay(System.TimeSpan delay) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.WithCloseTimeout(System.TimeSpan timeout) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationOptions.WithMaxIterations(int maxIterations) -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.ILiveMigrationOptions!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.ElapsedTime.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.Equals(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress? other) -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.EventsBehind.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.EventsCopiedThisIteration.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.EventsCopiedThisIteration.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.IsSynced.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.Iteration.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.Iteration.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.LiveMigrationProgress() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.SourceVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.SourceVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.TargetVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.TargetVersion.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.TotalEventsCopied.get -> long
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.TotalEventsCopied.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.ElapsedTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.ElapsedTime.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Equals(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult? other) -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Error.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Error.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Exception.get -> System.Exception?
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Exception.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.IsFailure.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Iterations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Iterations.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.LiveMigrationResult() -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.MigrationId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.SourceStreamId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.SourceStreamId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Success.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Success.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.TargetStreamId.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.TargetStreamId.init -> void
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.TotalEventsCopied.get -> long
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.TotalEventsCopied.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.CancelAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.GetProgressAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.PauseAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.ResumeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationControl.RollbackAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.CanPause.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.CanRollback.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.CurrentPhase.get -> ErikLieben.FA.ES.EventStreamManagement.Cutover.MigrationPhase
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.CustomMetrics.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.Elapsed.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.EstimatedRemaining.get -> System.TimeSpan?
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.EventsPerSecond.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.EventsProcessed.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.IsPaused.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.MigrationId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.PercentageComplete.get -> double
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.Status.get -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatus
+ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress.TotalEvents.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.EnableLogging() -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.OnCompleted(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.OnFailed(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!, System.Exception!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.OnProgress(System.Action<ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress!>! callback) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.ReportEvery(System.TimeSpan interval) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder.TrackCustomMetric(string! metricName, System.Func<object!>! collector) -> ErikLieben.FA.ES.EventStreamManagement.Progress.IProgressBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Repair.IStreamRepairService
+ErikLieben.FA.ES.EventStreamManagement.Repair.IStreamRepairService.AppendRollbackMarkerAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, ErikLieben.FA.ES.Documents.RollbackRecord! rollbackRecord, string? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.EventStreamManagement.Repair.IStreamRepairService.FindBrokenStreamsAsync(string? objectName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.IStreamRepairService.RepairBrokenStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion, string? reason = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.IStreamRepairService.RepairBrokenStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Deconstruct(out bool Success, out int EventsRemoved, out ErikLieben.FA.ES.Documents.RollbackRecord? RollbackRecord, out string? ErrorMessage) -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.ErrorMessage.get -> string?
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.ErrorMessage.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.EventsRemoved.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.EventsRemoved.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.RollbackRecord.get -> ErikLieben.FA.ES.Documents.RollbackRecord?
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.RollbackRecord.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.StreamRepairResult(bool Success, int EventsRemoved, ErikLieben.FA.ES.Documents.RollbackRecord? RollbackRecord, string? ErrorMessage = null) -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.StreamRepairResult(ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Success.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Success.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.EventFilteredException
+ErikLieben.FA.ES.EventStreamManagement.Transformation.EventFilteredException.EventFilteredException(string! message) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer
+ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer.CanTransform(string! eventName, int version) -> bool
+ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer.TransformAsync(ErikLieben.FA.ES.IEvent! sourceEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline.AddTransformer(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> void
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline.Count.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder.AddFilter(System.Func<ErikLieben.FA.ES.IEvent!, bool>! predicate) -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder.AddTransformer(ErikLieben.FA.ES.EventStreamManagement.Transformation.IEventTransformer! transformer) -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder.AddTransformer<T>() -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipelineBuilder.Build() -> ErikLieben.FA.ES.EventStreamManagement.Transformation.ITransformationPipeline!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.IsFeasible.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.PlanId.get -> System.Guid
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.Prerequisites.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.RecommendedPhases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.ResourceEstimate.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.Risks.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.SourceAnalysis.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan.TransformationSimulation.get -> ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.CompareChecksums() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.CompareEventCounts() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.FailFast(bool failFast = true) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.ValidateTransformations(int sampleSize = 100) -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder.VerifyStreamIntegrity() -> ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationBuilder!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult.Errors.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult.Passed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult.Summary.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult.ValidationResults.get -> System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Category.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Category.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Description.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Description.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.MigrationRisk() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.MigrationRisk(ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Mitigations.get -> System.Collections.Generic.List<string!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Mitigations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Severity.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Severity.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Description.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Description.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.IsBlocking.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.IsBlocking.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.IsMet.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.IsMet.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Name.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Name.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Prerequisite() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Prerequisite(ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedBandwidthBytes.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedBandwidthBytes.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedCost.get -> decimal?
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedCost.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedDuration.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedDuration.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedStorageBytes.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EstimatedStorageBytes.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.ResourceEstimate() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.ResourceEstimate(ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.CurrentVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.CurrentVersion.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EarliestEvent.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EarliestEvent.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EventCount.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EventCount.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EventTypeDistribution.get -> System.Collections.Generic.Dictionary<string!, long>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EventTypeDistribution.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.LatestEvent.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.LatestEvent.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.SizeBytes.get -> long
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.SizeBytes.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.StreamAnalysis() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.StreamAnalysis(ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.Error.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.Error.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.EventName.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.EventName.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.EventVersion.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.EventVersion.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.TransformationFailure() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.TransformationFailure(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.AverageTransformTime.get -> System.TimeSpan
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.AverageTransformTime.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.FailedTransformations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.FailedTransformations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.Failures.get -> System.Collections.Generic.List<ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure!>!
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.Failures.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.SampleSize.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.SampleSize.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.SuccessfulTransformations.get -> int
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.SuccessfulTransformations.set -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.TransformationSimulation() -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.TransformationSimulation(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Details.get -> System.Collections.Generic.Dictionary<string!, object!>?
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Details.init -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Message.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Name.get -> string!
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Passed.get -> bool
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.ValidationResult(ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult! original) -> void
+ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.ValidationResult(string! name, bool passed, string! message) -> void
+override ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.ToString() -> string!
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.GetHashCode() -> int
+override ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.ToString() -> string!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Default.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions.Full.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.BackupOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions.Default.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.BulkBackupOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions.Default.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.BulkRestoreOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.Default.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions.WithOverwrite.get -> ErikLieben.FA.ES.EventStreamManagement.Backup.RestoreOptions!
+static ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.CreateDryRun(System.Guid migrationId, ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress! progress, ErikLieben.FA.ES.EventStreamManagement.Verification.IMigrationPlan! plan) -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult!
+static ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.CreateFailure(System.Guid migrationId, ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress! progress, System.Exception! exception, ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics! statistics) -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult!
+static ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult.CreateSuccess(System.Guid migrationId, ErikLieben.FA.ES.EventStreamManagement.Progress.IMigrationProgress! progress, ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics! statistics, ErikLieben.FA.ES.EventStreamManagement.Verification.IVerificationResult? verificationResult = null) -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationResult!
+static ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.operator !=(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics? left, ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.operator ==(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics? left, ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Cutover(string! newStream) -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.DualRead(string! oldStream, string! newStream) -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.DualWrite(string! oldStream, string! newStream) -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Normal(string! streamIdentifier) -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.operator !=(ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting? left, ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.operator ==(ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting? left, ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.operator !=(ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent? left, ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent.operator ==(ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent? left, ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.operator !=(ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent? left, ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent.operator ==(ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent? left, ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.operator !=(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress.operator ==(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationEventProgress? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.operator !=(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress.operator ==(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationProgress? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.operator !=(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult.operator ==(ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult? left, ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationResult? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Failed(string! errorMessage) -> ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!
+static ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.operator !=(ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult? left, ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.operator ==(ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult? left, ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Succeeded(int eventsRemoved, ErikLieben.FA.ES.Documents.RollbackRecord! rollbackRecord) -> ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!
+static ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk? left, ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk? left, ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite? left, ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite? left, ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate? left, ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate? left, ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis? left, ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis? left, ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure? left, ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure? left, ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation? left, ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation? left, ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.operator !=(ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult? left, ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult? right) -> bool
+static ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.operator ==(ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult? left, ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult? right) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics!
+virtual ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.Equals(ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Core.MigrationStatistics.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting!
+virtual ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.Equals(ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Cutover.StreamRouting.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult!
+virtual ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.Equals(ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Repair.StreamRepairResult.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.MigrationRisk.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.Prerequisite.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ResourceEstimate.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.StreamAnalysis.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationFailure.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.TransformationSimulation.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.<Clone>$() -> ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.Equals(ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult? other) -> bool
+virtual ErikLieben.FA.ES.EventStreamManagement.Verification.ValidationResult.PrintMembers(System.Text.StringBuilder! builder) -> bool

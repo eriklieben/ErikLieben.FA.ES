@@ -1,0 +1,340 @@
+<div class="demo-data-container">
+  <div class="hero-section">
+    <div class="hero-content">
+      <div class="hero-icon">
+        <mat-icon>rocket_launch</mat-icon>
+      </div>
+      <h1>Demo Data Generator</h1>
+      <p class="subtitle">Populate the system with realistic test data across all storage providers</p>
+
+      <button
+        mat-flat-button
+        class="seed-all-btn"
+        (click)="seedAllAndTriggerProjections()"
+        [disabled]="isAnySeedingInProgress()">
+        @if (isSeeding()) {
+          <span class="btn-content">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Generating Data...</span>
+          </span>
+        } @else {
+          <span class="btn-content">
+            <mat-icon>auto_awesome</mat-icon>
+            <span>Seed All Data & Trigger Projections</span>
+          </span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <div class="data-overview">
+    <h2>{{ isSeeding() ? 'Seeding in progress' : 'What gets created' }}</h2>
+    <div class="overview-grid">
+      <div class="overview-card blob" [class.seeding]="seedingProgress().blob === 'seeding'" [class.completed]="seedingProgress().blob === 'completed'" [class.error]="seedingProgress().blob === 'error'">
+        <div class="card-icon">
+          @if (seedingProgress().blob === 'seeding') {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (seedingProgress().blob === 'completed') {
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+          } @else if (seedingProgress().blob === 'error') {
+            <mat-icon class="status-icon error">error</mat-icon>
+          } @else {
+            <mat-icon>cloud_queue</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">Blob Storage</span>
+          @if (seedingProgress().blob === 'seeding') {
+            <div class="seeding-status">
+              <span class="status-text">Creating events... {{ seedingPercentages().blob }}%</span>
+              <mat-progress-bar mode="determinate" [value]="seedingPercentages().blob"></mat-progress-bar>
+            </div>
+          } @else if (seedingProgress().blob === 'completed') {
+            <div class="completed-status">
+              <mat-icon>done_all</mat-icon>
+              <span>Completed</span>
+            </div>
+          }
+          <div class="stats" [class.muted]="seedingProgress().blob !== 'idle'">
+            <div class="stat">
+              <strong>51</strong>
+              <span>Projects</span>
+            </div>
+            <div class="stat">
+              <strong>1,000</strong>
+              <span>Work Items</span>
+            </div>
+            <div class="stat">
+              <strong>150</strong>
+              <span>Users</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-card table" [class.seeding]="seedingProgress().table === 'seeding'" [class.completed]="seedingProgress().table === 'completed'" [class.error]="seedingProgress().table === 'error'">
+        <div class="card-icon">
+          @if (seedingProgress().table === 'seeding') {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (seedingProgress().table === 'completed') {
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+          } @else if (seedingProgress().table === 'error') {
+            <mat-icon class="status-icon error">error</mat-icon>
+          } @else {
+            <mat-icon>table_chart</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">Table Storage</span>
+          @if (seedingProgress().table === 'seeding') {
+            <div class="seeding-status">
+              <span class="status-text">Creating epics... {{ seedingPercentages().table }}%</span>
+              <mat-progress-bar mode="determinate" [value]="seedingPercentages().table"></mat-progress-bar>
+            </div>
+          } @else if (seedingProgress().table === 'completed') {
+            <div class="completed-status">
+              <mat-icon>done_all</mat-icon>
+              <span>Completed</span>
+            </div>
+          }
+          <div class="stats" [class.muted]="seedingProgress().table !== 'idle'">
+            <div class="stat">
+              <strong>8</strong>
+              <span>Epics</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-card cosmos"
+           [class.seeding]="seedingProgress().cosmos === 'seeding'"
+           [class.completed]="seedingProgress().cosmos === 'completed'"
+           [class.error]="seedingProgress().cosmos === 'error'"
+           [class.disabled]="!isCosmosDbAvailable()">
+        <div class="card-icon">
+          @if (!isCosmosDbAvailable()) {
+            <mat-icon class="status-icon disabled">cloud_off</mat-icon>
+          } @else if (seedingProgress().cosmos === 'seeding') {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (seedingProgress().cosmos === 'completed') {
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+          } @else if (seedingProgress().cosmos === 'error') {
+            <mat-icon class="status-icon error">error</mat-icon>
+          } @else {
+            <mat-icon>cloud</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">CosmosDB</span>
+          @if (!isCosmosDbAvailable()) {
+            <div class="unavailable-status">
+              <mat-icon>info_outline</mat-icon>
+              <span>Not configured</span>
+            </div>
+          } @else if (seedingProgress().cosmos === 'seeding') {
+            <div class="seeding-status">
+              <span class="status-text">Creating sprints... {{ seedingPercentages().cosmos }}%</span>
+              <mat-progress-bar mode="determinate" [value]="seedingPercentages().cosmos"></mat-progress-bar>
+            </div>
+          } @else if (seedingProgress().cosmos === 'completed') {
+            <div class="completed-status">
+              <mat-icon>done_all</mat-icon>
+              <span>Completed</span>
+            </div>
+          }
+          <div class="stats" [class.muted]="seedingProgress().cosmos !== 'idle' || !isCosmosDbAvailable()">
+            <div class="stat">
+              <strong>10</strong>
+              <span>Sprints</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-card s3"
+           [class.seeding]="seedingProgress().s3 === 'seeding'"
+           [class.completed]="seedingProgress().s3 === 'completed'"
+           [class.error]="seedingProgress().s3 === 'error'"
+           [class.disabled]="!isS3Available()">
+        <div class="card-icon">
+          @if (!isS3Available()) {
+            <mat-icon class="status-icon disabled">cloud_off</mat-icon>
+          } @else if (seedingProgress().s3 === 'seeding') {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (seedingProgress().s3 === 'completed') {
+            <mat-icon class="status-icon completed">check_circle</mat-icon>
+          } @else if (seedingProgress().s3 === 'error') {
+            <mat-icon class="status-icon error">error</mat-icon>
+          } @else {
+            <mat-icon>storage</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">S3-Compatible Storage</span>
+          @if (!isS3Available()) {
+            <div class="unavailable-status">
+              <mat-icon>info_outline</mat-icon>
+              <span>Not configured</span>
+            </div>
+          } @else if (seedingProgress().s3 === 'seeding') {
+            <div class="seeding-status">
+              <span class="status-text">Creating releases... {{ seedingPercentages().s3 }}%</span>
+              <mat-progress-bar mode="determinate" [value]="seedingPercentages().s3"></mat-progress-bar>
+            </div>
+          } @else if (seedingProgress().s3 === 'completed') {
+            <div class="completed-status">
+              <mat-icon>done_all</mat-icon>
+              <span>Completed</span>
+            </div>
+          }
+          <div class="stats" [class.muted]="seedingProgress().s3 !== 'idle' || !isS3Available()">
+            <div class="stat">
+              <strong>5</strong>
+              <span>Releases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-card projections" [class.pending]="isSeeding()" [class.seeding]="isBuildingProjections()">
+        <div class="card-icon">
+          @if (isBuildingProjections()) {
+            <mat-spinner diameter="24"></mat-spinner>
+          } @else if (isSeeding()) {
+            <mat-icon class="waiting-icon">hourglass_empty</mat-icon>
+          } @else {
+            <mat-icon>view_quilt</mat-icon>
+          }
+        </div>
+        <div class="card-content">
+          <span class="provider-label">Projections</span>
+          @if (isSeeding()) {
+            <div class="pending-status">
+              <mat-icon>schedule</mat-icon>
+              <span>Waiting for data...</span>
+            </div>
+          } @else if (isBuildingProjections()) {
+            <div class="seeding-status">
+              <span class="status-text">Building read models...</span>
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+            </div>
+          }
+          <div class="stats" [class.muted]="isSeeding() || isBuildingProjections()">
+            <div class="stat">
+              <strong>7</strong>
+              <span>Read Models</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (seedResult()) {
+    <div class="results-section">
+      <div class="result-header">
+        <mat-icon class="success-icon">check_circle</mat-icon>
+        <div>
+          <h3>Data Generated Successfully!</h3>
+          <p>{{ seedResult()!.message }}</p>
+        </div>
+      </div>
+
+      <div class="result-stats">
+        <div class="stat-chip">
+          <mat-icon>folder</mat-icon>
+          <strong>{{ seedResult()!.projectsCreated }}</strong> Projects
+        </div>
+        <div class="stat-chip">
+          <mat-icon>assignment</mat-icon>
+          <strong>{{ seedResult()!.workItemsCreated }}</strong> Work Items
+        </div>
+        @if (seedResult()!.epicsCreated) {
+          <div class="stat-chip table">
+            <mat-icon>flag</mat-icon>
+            <strong>{{ seedResult()!.epicsCreated }}</strong> Epics
+          </div>
+        }
+        @if (seedResult()!.sprintsCreated) {
+          <div class="stat-chip cosmos">
+            <mat-icon>sprint</mat-icon>
+            <strong>{{ seedResult()!.sprintsCreated }}</strong> Sprints
+          </div>
+        }
+        @if (seedResult()!.releasesCreated) {
+          <div class="stat-chip s3">
+            <mat-icon>storage</mat-icon>
+            <strong>{{ seedResult()!.releasesCreated }}</strong> Releases
+          </div>
+        }
+      </div>
+
+      <div class="result-actions">
+        <button mat-flat-button color="primary" (click)="viewProjects()">
+          <mat-icon>visibility</mat-icon>
+          View Projects
+        </button>
+        <button mat-stroked-button (click)="viewWorkItems()">
+          <mat-icon>list</mat-icon>
+          Work Items
+        </button>
+        @if (seedResult()!.epicsCreated) {
+          <button mat-stroked-button (click)="viewEpics()">
+            <mat-icon>flag</mat-icon>
+            Epics
+          </button>
+        }
+        @if (seedResult()!.sprintsCreated) {
+          <button mat-stroked-button (click)="viewSprints()">
+            <mat-icon>sprint</mat-icon>
+            Sprints
+          </button>
+        }
+        @if (seedResult()!.releasesCreated) {
+          <button mat-stroked-button (click)="viewReleases()">
+            <mat-icon>storage</mat-icon>
+            Releases
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (isBuildingProjections() || buildProgress().length > 0) {
+    <div class="projections-section">
+      <div class="projections-header">
+        <mat-icon>view_quilt</mat-icon>
+        <div>
+          <h3>Building Projections</h3>
+          <p>Read models are being generated in the background</p>
+        </div>
+        <button mat-stroked-button (click)="viewProjections()">
+          <mat-icon>visibility</mat-icon>
+          View All
+        </button>
+      </div>
+
+      @if (buildProgress().length > 0) {
+        <div class="progress-list">
+          @for (progress of buildProgress(); track progress.projectionName) {
+            <div class="progress-item" [class]="'status-' + progress.status">
+              <mat-icon>
+                @switch (progress.status) {
+                  @case ('building') { autorenew }
+                  @case ('completed') { check_circle }
+                  @case ('error') { error }
+                  @case ('skipped') { skip_next }
+                  @default { pending }
+                }
+              </mat-icon>
+              <span class="projection-name">{{ progress.projectionName }}</span>
+              <span class="status-text">{{ progress.status }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

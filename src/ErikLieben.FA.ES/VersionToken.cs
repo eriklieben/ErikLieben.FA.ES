@@ -127,17 +127,34 @@ public record VersionToken
     /// <exception cref="ArgumentException">Thrown when the input does not contain 4 parts separated by "__".</exception>
     protected void ParseFullString(string value)
     {
-        var parts = value.Split("__");
-        if (parts.Length != 4)
+        ReadOnlySpan<char> span = value.AsSpan();
+        const string separator = "__";
+
+        int firstIdx = span.IndexOf(separator);
+        if (firstIdx == -1)
         {
             throw new ArgumentException($"IdentifierString must consist out if 4 parts split by '__', current token is '{value}'");
         }
 
-        ObjectName = parts[0];
-        ObjectId = parts[1];
-        StreamIdentifier = parts[2];
-        Version = int.Parse(parts[3]);
-        VersionString = parts[3];
+        int secondIdx = span[(firstIdx + 2)..].IndexOf(separator);
+        if (secondIdx == -1)
+        {
+            throw new ArgumentException($"IdentifierString must consist out if 4 parts split by '__', current token is '{value}'");
+        }
+        secondIdx += firstIdx + 2;
+
+        int thirdIdx = span[(secondIdx + 2)..].IndexOf(separator);
+        if (thirdIdx == -1)
+        {
+            throw new ArgumentException($"IdentifierString must consist out if 4 parts split by '__', current token is '{value}'");
+        }
+        thirdIdx += secondIdx + 2;
+
+        ObjectName = span[..firstIdx].ToString();
+        ObjectId = span[(firstIdx + 2)..secondIdx].ToString();
+        StreamIdentifier = span[(secondIdx + 2)..thirdIdx].ToString();
+        VersionString = span[(thirdIdx + 2)..].ToString();
+        Version = int.Parse(VersionString);
         Value = value;
     }
 

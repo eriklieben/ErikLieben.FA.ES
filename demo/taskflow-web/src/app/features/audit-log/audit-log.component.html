@@ -1,0 +1,214 @@
+<div class="audit-log-container">
+  <mat-card class="audit-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Work Item Audit Log
+      </mat-card-title>
+      <mat-card-subtitle>
+        Multi-document CosmosDB projection for complete audit trail
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Storage Info Banner -->
+      <div class="storage-info">
+        <mat-icon>cloud</mat-icon>
+        <span>Audit logs are stored in Azure CosmosDB. Container: <code>{{ containerName() || 'workitemauditlog' }}</code></span>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="feature-grid">
+        <div class="feature-card">
+          <mat-icon>history</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Complete Audit Trail</span>
+            <span class="feature-desc">Every change is recorded as a separate document</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>query_stats</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Time-Range Queries</span>
+            <span class="feature-desc">Query changes within specific time periods</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>verified</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Compliance Ready</span>
+            <span class="feature-desc">Immutable audit records for regulatory requirements</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <mat-icon>bug_report</mat-icon>
+          <div class="feature-content">
+            <span class="feature-title">Debugging Support</span>
+            <span class="feature-desc">See exactly what happened and when</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Work Item Selector -->
+      <div class="work-item-selector">
+        <mat-form-field appearance="outline" class="work-item-field">
+          <mat-label>Select Work Item</mat-label>
+          <mat-select
+            [(ngModel)]="selectedWorkItemId"
+            (selectionChange)="onWorkItemSelected($event.value)"
+            [disabled]="loadingWorkItems()">
+            @if (loadingWorkItems()) {
+              <mat-option disabled>Loading work items...</mat-option>
+            } @else if (workItems().length === 0) {
+              <mat-option disabled>No work items available</mat-option>
+            } @else {
+              @for (item of workItems(); track item.rowKey) {
+                <mat-option [value]="item.rowKey">
+                  <span class="work-item-option">
+                    <span class="work-item-title">{{ item.title || 'Untitled' }}</span>
+                    <span class="work-item-meta">
+                      <mat-chip class="status-chip" [class]="'status-' + (item.status?.toLowerCase() || 'unknown')">
+                        {{ item.status || 'Unknown' }}
+                      </mat-chip>
+                      <span class="work-item-id">{{ item.rowKey }}</span>
+                    </span>
+                  </span>
+                </mat-option>
+              }
+            }
+          </mat-select>
+          <mat-icon matPrefix>assignment</mat-icon>
+          @if (loadingWorkItems()) {
+            <mat-spinner matSuffix diameter="20"></mat-spinner>
+          }
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="loadWorkItems()"
+          [disabled]="loadingWorkItems()">
+          <mat-icon>refresh</mat-icon>
+          Refresh List
+        </button>
+      </div>
+
+      @if (workItemsError()) {
+        <div class="work-items-error">
+          <mat-icon>warning</mat-icon>
+          <span>{{ workItemsError() }}</span>
+          <button mat-button color="primary" (click)="loadWorkItems()">
+            Try Again
+          </button>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Audit Trail Card -->
+  <mat-card class="audit-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>timeline</mat-icon>
+        Audit Trail
+      </mat-card-title>
+      <mat-card-subtitle>
+        @if (entries().length > 0) {
+          {{ entries().length }} events recorded for work item {{ workItemId() }}
+        } @else {
+          Events from CosmosDB audit log
+        }
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <span>Loading audit log...</span>
+        </div>
+      } @else if (error()) {
+        <div class="error-container">
+          <mat-icon>error</mat-icon>
+          <span>{{ error() }}</span>
+          <span class="hint">CosmosDB must be configured and running to view audit logs.</span>
+        </div>
+      } @else if (!workItemId()) {
+        <div class="empty-container">
+          <mat-icon>search</mat-icon>
+          <h3>Select a Work Item</h3>
+          <p>Choose a work item from the dropdown above to view its audit log.</p>
+          <p class="hint">The audit log shows every event that affected the work item.</p>
+        </div>
+      } @else if (entries().length === 0) {
+        <div class="empty-container">
+          <mat-icon>inbox</mat-icon>
+          <h3>No Audit Entries</h3>
+          <p>No audit log entries found for work item {{ workItemId() }}.</p>
+          @if (message()) {
+            <p class="hint">{{ message() }}</p>
+          }
+          <p class="hint">
+            Make sure CosmosDB is configured and the projection is enabled.
+            Check the <a routerLink="/projections">Projections</a> page for status.
+          </p>
+        </div>
+      } @else {
+        <div class="timeline">
+          @for (entry of entries(); track entry.id; let i = $index; let last = $last) {
+            <div class="timeline-item" [class]="getEventColor(entry.eventType)">
+              <div class="timeline-marker">
+                <mat-icon>{{ getEventIcon(entry.eventType) }}</mat-icon>
+              </div>
+              <div class="timeline-content">
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <span class="event-type">{{ getShortEventType(entry.eventType) }}</span>
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      <span class="event-time">{{ formatDate(entry.occurredAt) }}</span>
+                      @if (entry.userId) {
+                        <span class="event-user">
+                          <mat-icon>person</mat-icon>
+                          {{ entry.userId }}
+                        </span>
+                      }
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <div class="event-details">
+                    @if (entry.description) {
+                      <div class="detail-row">
+                        <strong>Description:</strong>
+                        <span>{{ entry.description }}</span>
+                      </div>
+                    }
+
+                    <div class="detail-row">
+                      <strong>Event Type:</strong>
+                      <code>{{ entry.eventType }}</code>
+                    </div>
+
+                    <div class="detail-row">
+                      <strong>Document ID:</strong>
+                      <code>{{ entry.id }}</code>
+                    </div>
+
+                    @if (entry.details) {
+                      <div class="detail-row full-width">
+                        <strong>Event Details:</strong>
+                        <pre class="json-block">{{ formatJson(entry.details) }}</pre>
+                      </div>
+                    }
+                  </div>
+                </mat-expansion-panel>
+              </div>
+              @if (!last) {
+                <div class="timeline-connector"></div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

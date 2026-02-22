@@ -18,9 +18,13 @@ New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 $projects = @(
     "src/ErikLieben.FA.ES/ErikLieben.FA.ES.csproj",
     "src/ErikLieben.FA.ES.Analyzers/ErikLieben.FA.ES.Analyzers.csproj",
+    "src/ErikLieben.FA.ES.AspNetCore.MinimalApis/ErikLieben.FA.ES.AspNetCore.MinimalApis.csproj",
     "src/ErikLieben.FA.ES.Azure.Functions.Worker.Extensions/ErikLieben.FA.ES.Azure.Functions.Worker.Extensions.csproj",
     "src/ErikLieben.FA.ES.AzureStorage/ErikLieben.FA.ES.AzureStorage.csproj",
     "src/ErikLieben.FA.ES.CLI/ErikLieben.FA.ES.CLI.csproj",
+    "src/ErikLieben.FA.ES.CodeAnalysis/ErikLieben.FA.ES.CodeAnalysis.csproj",
+    "src/ErikLieben.FA.ES.CosmosDb/ErikLieben.FA.ES.CosmosDb.csproj",
+    "src/ErikLieben.FA.ES.EventStreamManagement/ErikLieben.FA.ES.EventStreamManagement.csproj",
     "src/ErikLieben.FA.ES.Testing/ErikLieben.FA.ES.Testing.csproj",
     "src/ErikLieben.FA.ES.WebJobs.Isolated.Extensions/ErikLieben.FA.ES.WebJobs.Isolated.Extensions.csproj"
 )

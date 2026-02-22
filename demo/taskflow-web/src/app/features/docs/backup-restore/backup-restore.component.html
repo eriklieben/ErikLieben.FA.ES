@@ -1,0 +1,385 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Backup and Restore</h1>
+      <p class="subtitle">Comprehensive backup and restore capabilities for event streams</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The <code>ErikLieben.FA.ES.EventStreamManagement</code> package provides comprehensive backup
+        and restore capabilities for event streams, independent of migration operations.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>backup</mat-icon>
+          <h3>Single Stream Backup</h3>
+          <p>Backup individual aggregates with full event history.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>dynamic_feed</mat-icon>
+          <h3>Bulk Backup</h3>
+          <p>Backup multiple streams concurrently with progress tracking.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>restore</mat-icon>
+          <h3>Flexible Restore</h3>
+          <p>Restore to original or new location (clone).</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>folder_managed</mat-icon>
+          <h3>Backup Management</h3>
+          <p>List, validate, and cleanup backups with retention policies.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Setup Section -->
+    <section id="setup" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Setup</h2>
+      <p class="section-description">
+        Register the backup services in your DI container:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>settings</mat-icon>
+          <span>Service Registration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="setupCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Single Backup Section -->
+    <section id="single-backup" class="doc-section">
+      <h2><mat-icon>backup</mat-icon> Single Stream Backup</h2>
+      <p class="section-description">
+        Backup individual aggregates with configurable options:
+      </p>
+
+      <h3>Basic Backup</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>save</mat-icon>
+          <span>Simple Backup</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="singleBackupCodeHtml()"></div>
+      </div>
+
+      <h3>Backup with Options</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>tune</mat-icon>
+          <span>Custom Options</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="backupWithOptionsCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Restore Section -->
+    <section id="restore" class="doc-section">
+      <h2><mat-icon>restore</mat-icon> Restore from Backup</h2>
+      <p class="section-description">
+        Restore streams from backup to original or new locations:
+      </p>
+
+      <h3>Restore to Original Location</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>restore</mat-icon>
+          <span>Basic Restore</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="restoreCodeHtml()"></div>
+      </div>
+
+      <h3>Clone to New Location</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>content_copy</mat-icon>
+          <span>Clone Stream</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="cloneCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Cloning Use Cases</strong>
+          <p>Use <code>RestoreToNewStreamAsync</code> to create test copies of production data,
+          fork aggregates for A/B testing, or create templates from existing streams.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Bulk Operations Section -->
+    <section id="bulk-operations" class="doc-section">
+      <h2><mat-icon>batch_prediction</mat-icon> Bulk Operations</h2>
+      <p class="section-description">
+        Process multiple streams concurrently with progress tracking:
+      </p>
+
+      <h3>Backup Multiple Streams</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cloud_upload</mat-icon>
+          <span>Bulk Backup</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="bulkBackupCodeHtml()"></div>
+      </div>
+
+      <h3>Restore Multiple Backups</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cloud_download</mat-icon>
+          <span>Bulk Restore</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="bulkRestoreCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Management Section -->
+    <section id="management" class="doc-section">
+      <h2><mat-icon>folder_managed</mat-icon> Backup Management</h2>
+      <p class="section-description">
+        List, query, validate, and manage your backups:
+      </p>
+
+      <h3>List and Query Backups</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>list</mat-icon>
+          <span>Query Backups</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="listBackupsCodeHtml()"></div>
+      </div>
+
+      <h3>Validate, Delete, and Cleanup</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>cleaning_services</mat-icon>
+          <span>Management Operations</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="managementCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Options Section -->
+    <section id="options" class="doc-section">
+      <h2><mat-icon>tune</mat-icon> Options Reference</h2>
+      <p class="section-description">
+        Configuration options for backup and restore operations:
+      </p>
+
+      <h3>BackupOptions</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Default</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>IncludeSnapshots</code></span>
+          <span class="assertion-desc">false</span>
+          <span class="assertion-desc">Include snapshots in backup</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>IncludeObjectDocument</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Include object document metadata</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>IncludeTerminatedStreams</code></span>
+          <span class="assertion-desc">false</span>
+          <span class="assertion-desc">Include terminated/closed streams</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>EnableCompression</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Compress the backup data</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Retention</code></span>
+          <span class="assertion-desc">null</span>
+          <span class="assertion-desc">Retention period before cleanup</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Tags</code></span>
+          <span class="assertion-desc">&#123;&#125;</span>
+          <span class="assertion-desc">Custom tags for categorization</span>
+        </div>
+      </div>
+
+      <h3>RestoreOptions</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Default</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Overwrite</code></span>
+          <span class="assertion-desc">false</span>
+          <span class="assertion-desc">Overwrite existing stream</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ValidateBeforeRestore</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Validate backup integrity first</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>RestoreObjectDocument</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Restore object document metadata</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>RestoreSnapshots</code></span>
+          <span class="assertion-desc">true</span>
+          <span class="assertion-desc">Restore snapshots if in backup</span>
+        </div>
+      </div>
+
+      <h3>IBackupHandle Interface</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>description</mat-icon>
+          <span>Backup Handle</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="handleInterfaceCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Progress Section -->
+    <section id="progress" class="doc-section">
+      <h2><mat-icon>trending_up</mat-icon> Progress Reporting</h2>
+      <p class="section-description">
+        Track backup and restore progress for large operations:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>analytics</mat-icon>
+          <span>Progress Callbacks</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="progressCodeHtml()"></div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <mat-icon>timer</mat-icon>
+          <div>
+            <strong>BackupProgress</strong>
+            <span>Reports <code>EventsBackedUp</code>, <code>TotalEvents</code>, <code>PercentageComplete</code></span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>update</mat-icon>
+          <div>
+            <strong>RestoreProgress</strong>
+            <span>Reports <code>EventsRestored</code>, <code>TotalEvents</code>, <code>PercentageComplete</code></span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <mat-icon>stacked_bar_chart</mat-icon>
+          <div>
+            <strong>BulkProgress</strong>
+            <span>Reports <code>ProcessedStreams</code>, <code>TotalStreams</code>, <code>SuccessfulBackups</code>, <code>FailedBackups</code></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective backup management:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Set appropriate retention periods for automated cleanup</li>
+            <li>Use tags to categorize backups (environment, reason, operator)</li>
+            <li>Validate backups before critical restores</li>
+            <li>Use bulk operations for multiple streams</li>
+            <li>Monitor progress for large operations</li>
+            <li>Keep backups in a separate storage account for DR</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Store backups indefinitely without retention policies</li>
+            <li>Restore without validating backup integrity</li>
+            <li>Set MaxConcurrency too high (can overwhelm storage)</li>
+            <li>Ignore failed backups in bulk operations</li>
+            <li>Skip backup validation for production restores</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>storage</mat-icon>
+        <div>
+          <strong>Storage Layout</strong>
+          <p>Azure Blob backups are stored as:<br>
+          <code>backups/&#123;objectName&#125;/&#123;objectId&#125;/&#123;backupId&#125;.json</code> - Backup data<br>
+          <code>backups/&#123;objectName&#125;/&#123;objectId&#125;/&#123;backupId&#125;.meta</code> - Backup metadata</p>
+        </div>
+      </div>
+
+      <div class="info-callout warning">
+        <mat-icon>warning</mat-icon>
+        <div>
+          <strong>Bulk Operation Error Handling</strong>
+          <p>When using <code>ContinueOnError = true</code>, always check <code>result.FailedBackups</code>
+          and log or retry failed operations. Use <code>result.IsPartialSuccess</code> to detect mixed outcomes.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

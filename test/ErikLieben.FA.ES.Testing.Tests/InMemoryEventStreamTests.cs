@@ -1,5 +1,10 @@
-﻿using System.Text.Json;
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Linq;
+using System.Threading.Tasks;
 using ErikLieben.FA.ES;
 using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;

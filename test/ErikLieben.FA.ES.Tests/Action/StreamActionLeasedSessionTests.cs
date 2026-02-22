@@ -1,5 +1,8 @@
-﻿using ErikLieben.FA.ES.Actions;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Actions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Action
 {
@@ -90,7 +93,7 @@ namespace ErikLieben.FA.ES.Tests.Action
             }
         }
 
-        public class IsTerminatedASync
+        public class IsTerminatedAsync
         {
             [Fact]
             public async Task Should_delegate_to_underlying_session()
@@ -98,15 +101,15 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var streamIdentifier = "streamId";
-                mockSession.IsTerminatedASync(streamIdentifier).Returns(Task.FromResult(true));
+                mockSession.IsTerminatedAsync(streamIdentifier).Returns(Task.FromResult(true));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act
-                var result = await sut.IsTerminatedASync(streamIdentifier);
+                var result = await sut.IsTerminatedAsync(streamIdentifier);
 
                 // Assert
                 Assert.True(result);
-                await mockSession.Received(1).IsTerminatedASync(streamIdentifier);
+                await mockSession.Received(1).IsTerminatedAsync(streamIdentifier);
             }
         }
 
@@ -118,7 +121,7 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var expectedEvents = Substitute.For<IEnumerable<IEvent>>();
-                mockSession.ReadAsync(0, null).Returns(Task.FromResult(expectedEvents));
+                mockSession.ReadAsync(0, null)!.Returns(Task.FromResult(expectedEvents));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act
@@ -135,7 +138,7 @@ namespace ErikLieben.FA.ES.Tests.Action
                 // Arrange
                 var mockSession = Substitute.For<ILeasedSession>();
                 var expectedEvents = Substitute.For<IEnumerable<IEvent>>();
-                mockSession.ReadAsync(5, 10).Returns(Task.FromResult(expectedEvents));
+                mockSession.ReadAsync(5, 10)!.Returns(Task.FromResult(expectedEvents));
                 var sut = new StreamActionLeasedSession(mockSession);
 
                 // Act

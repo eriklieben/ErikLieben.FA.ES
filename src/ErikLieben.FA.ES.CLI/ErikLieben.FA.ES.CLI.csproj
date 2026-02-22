@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DebugType>portable</DebugType>
@@ -15,7 +15,7 @@
         <Title>ErikLieben.FA.ES.CLI</Title>
         <Authors>Erik Lieben</Authors>
         <Company>Erik Lieben</Company>
-        <Description>A lightweight, AOT-friendly Event Sourcing toolkit for .NET</Description>
+        <Description>Code generation CLI tool for ErikLieben.FA.ES event sourcing framework. Generates Fold methods, JSON contexts, and DI registrations.</Description>
         <PackageTags>eventsourcing;aot;dotnet;csharp</PackageTags>
         <RepositoryUrl>https://github.com/eriklieben/ErikLieben.FA.ES</RepositoryUrl>
 
@@ -35,17 +35,18 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.14.28" />
-      <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
-      <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.14.0" />
-      <PackageReference Include="Pastel" Version="7.0.1" />
+      <PackageReference Include="Microsoft.Build.Tasks.Core" Version="$(MicrosoftBuildTasksCoreVersion)" />
+      <PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisVersion)" />
+      <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(MicrosoftCodeAnalysisVersion)" />
+      <PackageReference Include="Pastel" Version="$(PastelVersion)" />
       <PackageReference Include="Spectre.Console" Version="0.54.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.53.1" />
-      <PackageReference Include="System.Formats.Asn1" Version="9.0.11" />
-      <PackageReference Include="System.Text.Json" Version="9.0.11" />
+      <PackageReference Include="System.Formats.Asn1" Version="$(SystemFormatsAsn1Version)" />
+      <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+      <ProjectReference Include="..\ErikLieben.FA.ES.CodeAnalysis\ErikLieben.FA.ES.CodeAnalysis.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Include="..\\..\\README.md" Pack="true" PackagePath="" />

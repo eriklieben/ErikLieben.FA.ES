@@ -1,0 +1,174 @@
+<div class="projections-container">
+  <div class="header">
+    <div>
+      <h1>Projection Status</h1>
+      <p class="subtitle">Eventually consistent read models powered by event sourcing</p>
+    </div>
+  </div>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>lightbulb</mat-icon>
+      <mat-card-title>What are Projections?</mat-card-title>
+      <mat-card-subtitle>Building read models from the event stream</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Projections are eventually consistent read models that are built by replaying events from the event store. They enable efficient querying without affecting the write model.</p>
+
+      <h3>Key Event Sourcing Concepts:</h3>
+      <ul>
+        <li><strong>CQRS Pattern</strong> - Separate read models (projections) from write models (aggregates)</li>
+        <li><strong>Event Replay</strong> - Build projections by processing events in sequence</li>
+        <li><strong>Eventually Consistent</strong> - Projections update asynchronously after events are written</li>
+        <li><strong>Checkpointing</strong> - Track the last processed event to resume from failures</li>
+        <li><strong>Rebuild Capability</strong> - Recreate any projection from the event stream</li>
+      </ul>
+
+      <h3>Active Projections:</h3>
+      <ul>
+        <li><strong>ProjectDashboard</strong> (Blob) - Overview of all projects with statistics</li>
+        <li><strong>ActiveWorkItems</strong> (Blob) - Quick access to in-progress work items</li>
+        <li><strong>UserProfiles</strong> (Blob) - User information and roles for enriching displays</li>
+        <li><strong>ProjectKanbanBoard</strong> (Blob) - Routed partitioned projection with one Kanban board per project</li>
+        <li><strong>EventUpcastingDemonstration</strong> (Blob) - Filtered view of demo projects for event upcasting showcase</li>
+        <li><strong>EpicSummary</strong> (Blob) - Summary view of all epics from Table Storage aggregates</li>
+        <li><strong>SprintDashboard</strong> (CosmosDB) - Sprint overview stored in Azure CosmosDB</li>
+      </ul>
+
+      <div class="feature-note">
+        <mat-icon>info</mat-icon>
+        <span>Projections can be rebuilt at any time from the event store, making them disposable and easy to evolve. Changes to projection logic can be deployed by simply rebuilding from scratch.</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-icon mat-card-avatar>view_quilt</mat-icon>
+      <mat-card-title>Real-time Status</mat-card-title>
+      <mat-card-subtitle>Live projection processing status and checkpoints</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (isLoading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading projections...</p>
+        </div>
+      } @else if (loadError()) {
+        <div class="error-container">
+          <mat-icon>error</mat-icon>
+          <p>{{ loadError() }}</p>
+          <button mat-raised-button color="primary" (click)="loadProjections()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+      } @else if (projections().length === 0) {
+        <div class="empty-container">
+          <mat-icon>inbox</mat-icon>
+          <p>No projections found. Generate demo data first to create projections.</p>
+        </div>
+      } @else {
+      <table mat-table [dataSource]="projections()" class="projections-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Projection Name</th>
+          <td mat-cell *matCellDef="let projection">{{ projection.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="storageType">
+          <th mat-header-cell *matHeaderCellDef>Storage</th>
+          <td mat-cell *matCellDef="let projection">
+            <span class="storage-badge" [class]="'storage-' + (projection.storageType || 'blob').toLowerCase()">
+              <mat-icon>
+                @switch ((projection.storageType || 'blob').toLowerCase()) {
+                  @case ('blob') { cloud_queue }
+                  @case ('cosmosdb') { cloud }
+                  @case ('table') { table_chart }
+                  @default { storage }
+                }
+              </mat-icon>
+              <span class="storage-label">{{ projection.storageType || 'Blob' }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="projectionStatus">
+          <th mat-header-cell *matHeaderCellDef>Projection Status</th>
+          <td mat-cell *matCellDef="let projection">
+            <mat-chip [class]="'projection-status-' + projection.projectionStatus.toLowerCase()"
+                      [matTooltip]="getProjectionStatusTooltip(projection.projectionStatus)">
+              <mat-icon class="status-icon">
+                @switch (projection.projectionStatus.toLowerCase()) {
+                  @case ('active') { check_circle }
+                  @case ('rebuilding') { sync }
+                  @case ('disabled') { block }
+                  @default { help }
+                }
+              </mat-icon>
+              {{ projection.projectionStatus }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Persistence</th>
+          <td mat-cell *matCellDef="let projection">
+            <mat-chip [class]="'status-' + projection.status">
+              {{ projection.status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="schemaVersion">
+          <th mat-header-cell *matHeaderCellDef>Schema Version</th>
+          <td mat-cell *matCellDef="let projection">
+            <span class="schema-version" [class.needs-upgrade]="projection.needsSchemaUpgrade">
+              v{{ projection.schemaVersion }}
+              @if (projection.needsSchemaUpgrade) {
+                <mat-icon class="warning-icon" matTooltip="Schema upgrade needed! Code version: v{{ projection.codeSchemaVersion }}">warning</mat-icon>
+              }
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastUpdate">
+          <th mat-header-cell *matHeaderCellDef>Last Update</th>
+          <td mat-cell *matCellDef="let projection">{{ projection.lastUpdate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="lastGenerationDuration">
+          <th mat-header-cell *matHeaderCellDef>Generation Time</th>
+          <td mat-cell *matCellDef="let projection">{{ projection.lastGenerationDuration }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="checkpoint">
+          <th mat-header-cell *matHeaderCellDef>Checkpoint</th>
+          <td mat-cell *matCellDef="let projection">{{ projection.checkpoint }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let projection">
+            <button
+              mat-icon-button
+              (click)="viewProjection(projection.name)"
+              [disabled]="!projection.isPersisted"
+              [matTooltip]="projection.isPersisted ? 'View projection JSON' : 'Projection not yet persisted'">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="rebuildProjection(projection.name)"
+              matTooltip="Rebuild projection from event store">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="projectionColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: projectionColumns;"></tr>
+      </table>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

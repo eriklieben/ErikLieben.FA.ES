@@ -1,0 +1,241 @@
+<mat-sidenav-container class="app-container">
+  <mat-sidenav
+    #sidenav
+    [opened]="sidenavOpened()"
+    [mode]="sidenavMode()"
+    (closedStart)="onSidenavClosed()"
+    class="app-sidenav">
+    <div class="sidenav-content">
+      <!-- Sidebar Header - aligns with main header -->
+      <a routerLink="/welcome" class="sidenav-header">
+        <span class="brand-icon">
+          <mat-icon>bolt</mat-icon>
+        </span>
+        <span class="brand-name">{{ title }}</span>
+      </a>
+
+      <mat-nav-list class="sidenav-nav">
+        <!-- Welcome Link -->
+        <a mat-list-item routerLink="/welcome" routerLinkActive="active-link" class="welcome-link">
+          <mat-icon matListItemIcon>home</mat-icon>
+          <span matListItemTitle>Welcome</span>
+        </a>
+
+        <!-- Our App Section -->
+        <div class="nav-section" [class.collapsed]="!appSectionExpanded()">
+          <button class="section-header" (click)="toggleSection(0)">
+            <div class="section-header-left">
+              <mat-icon class="section-icon app">apps</mat-icon>
+              <div class="section-text">
+                <span class="section-title">Our App</span>
+                <span class="section-subtitle">sample application</span>
+              </div>
+            </div>
+            <mat-icon class="expand-icon">{{ appSectionExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+          <div class="section-items" [@expandCollapse]="appSectionExpanded() ? 'expanded' : 'collapsed'">
+            <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>dashboard</mat-icon>
+              <span matListItemTitle>Dashboard</span>
+            </a>
+            <a mat-list-item routerLink="/projects" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>folder</mat-icon>
+              <span matListItemTitle>Projects</span>
+            </a>
+            <a mat-list-item routerLink="/workitems" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>assignment</mat-icon>
+              <span matListItemTitle>Work Items</span>
+            </a>
+            <a mat-list-item routerLink="/kanban" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>view_kanban</mat-icon>
+              <span matListItemTitle>Kanban Board</span>
+            </a>
+            <a mat-list-item routerLink="/users" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>people</mat-icon>
+              <span matListItemTitle>Users</span>
+            </a>
+            <a mat-list-item routerLink="/epics" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>flag</mat-icon>
+              <span matListItemTitle>Epics</span>
+            </a>
+            <a mat-list-item routerLink="/sprints" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>sprint</mat-icon>
+              <span matListItemTitle>Sprints</span>
+            </a>
+            <a mat-list-item routerLink="/releases" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>new_releases</mat-icon>
+              <span matListItemTitle>Releases</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Testing Section -->
+        <div class="nav-section" [class.collapsed]="!testingSectionExpanded()">
+          <button class="section-header" (click)="toggleSection(1)">
+            <div class="section-header-left">
+              <mat-icon class="section-icon testing">science</mat-icon>
+              <div class="section-text">
+                <span class="section-title">Testing</span>
+                <span class="section-subtitle">demo data & connections</span>
+              </div>
+            </div>
+            <mat-icon class="expand-icon">{{ testingSectionExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+          <div class="section-items" [@expandCollapse]="testingSectionExpanded() ? 'expanded' : 'collapsed'">
+            <a mat-list-item routerLink="/demo-data" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>data_object</mat-icon>
+              <span matListItemTitle>Generate Demo Data</span>
+            </a>
+            <a mat-list-item routerLink="/connections" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>settings_ethernet</mat-icon>
+              <span matListItemTitle>Connections</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Eventsourcing Section -->
+        <div class="nav-section" [class.collapsed]="!esSectionExpanded()">
+          <button class="section-header" (click)="toggleSection(2)">
+            <div class="section-header-left">
+              <mat-icon class="section-icon es">bolt</mat-icon>
+              <div class="section-text">
+                <span class="section-title">Eventsourcing</span>
+                <span class="section-subtitle">features</span>
+              </div>
+            </div>
+            <mat-icon class="expand-icon">{{ esSectionExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+          <div class="section-items" [@expandCollapse]="esSectionExpanded() ? 'expanded' : 'collapsed'">
+            <a mat-list-item routerLink="/time-travel" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>history</mat-icon>
+              <span matListItemTitle>Time Travel</span>
+            </a>
+            <a mat-list-item routerLink="/projections" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>view_quilt</mat-icon>
+              <span matListItemTitle>Projections</span>
+            </a>
+            <a mat-list-item routerLink="/event-versioning" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>schema</mat-icon>
+              <span matListItemTitle>Event Versioning</span>
+            </a>
+            <a mat-list-item routerLink="/event-upcasting" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>upgrade</mat-icon>
+              <span matListItemTitle>Event Upcasting</span>
+            </a>
+            <a mat-list-item routerLink="/stream-migration" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>sync_alt</mat-icon>
+              <span matListItemTitle>Stream Migration</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Documentation Section -->
+        <div class="nav-section" [class.collapsed]="!docsSectionExpanded()">
+          <button class="section-header" (click)="toggleSection(3)">
+            <div class="section-header-left">
+              <mat-icon class="section-icon docs">menu_book</mat-icon>
+              <div class="section-text">
+                <span class="section-title">Documentation</span>
+                <span class="section-subtitle">guides & examples</span>
+              </div>
+            </div>
+            <mat-icon class="expand-icon">{{ docsSectionExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+          <div class="section-items" [@expandCollapse]="docsSectionExpanded() ? 'expanded' : 'collapsed'">
+            <a mat-list-item routerLink="/docs/getting-started" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>rocket_launch</mat-icon>
+              <span matListItemTitle>Getting Started</span>
+            </a>
+            <a mat-list-item routerLink="/docs/aggregates" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>account_tree</mat-icon>
+              <span matListItemTitle>Aggregates</span>
+            </a>
+            <a mat-list-item routerLink="/docs/events" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>bolt</mat-icon>
+              <span matListItemTitle>Events</span>
+            </a>
+            <a mat-list-item routerLink="/docs/projections" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>filter_none</mat-icon>
+              <span matListItemTitle>Projections</span>
+            </a>
+            <a mat-list-item routerLink="/docs/cli" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>terminal</mat-icon>
+              <span matListItemTitle>CLI Tool</span>
+            </a>
+            <a mat-list-item routerLink="/docs/testing" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>science</mat-icon>
+              <span matListItemTitle>Testing</span>
+            </a>
+            <a mat-list-item routerLink="/docs/event-stream-management" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>sync_alt</mat-icon>
+              <span matListItemTitle>Stream Management</span>
+            </a>
+            <a mat-list-item routerLink="/docs/stream-actions" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>play_circle</mat-icon>
+              <span matListItemTitle>Stream Actions</span>
+            </a>
+            <a mat-list-item routerLink="/docs/notifications" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>notifications</mat-icon>
+              <span matListItemTitle>Notifications</span>
+            </a>
+            <a mat-list-item routerLink="/docs/concurrency" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>sync_alt</mat-icon>
+              <span matListItemTitle>Concurrency</span>
+            </a>
+            <a mat-list-item routerLink="/docs/storage-providers" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>cloud</mat-icon>
+              <span matListItemTitle>Storage Providers</span>
+            </a>
+            <a mat-list-item routerLink="/docs/analyzers" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>bug_report</mat-icon>
+              <span matListItemTitle>Analyzer Rules</span>
+            </a>
+            <a mat-list-item routerLink="/usage/minimal-apis" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>api</mat-icon>
+              <span matListItemTitle>Minimal APIs</span>
+            </a>
+            <a mat-list-item routerLink="/usage/azure-functions" routerLinkActive="active-link">
+              <mat-icon matListItemIcon>cloud_sync</mat-icon>
+              <span matListItemTitle>Azure Functions</span>
+            </a>
+          </div>
+        </div>
+      </mat-nav-list>
+
+      <app-user-selector class="sidenav-user-selector"></app-user-selector>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <header class="app-header">
+      <div class="header-left">
+        <button
+          class="menu-button"
+          (click)="toggleSidenav()"
+          matTooltip="Toggle navigation">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <div class="connection-indicator" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+          <span class="status-dot"></span>
+          <span class="status-label">{{ isConnected ? 'Connected' : 'Offline' }}</span>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <button
+          class="theme-toggle"
+          (click)="toggleTheme()"
+          [matTooltip]="themeTooltip()">
+          <mat-icon>{{ themeIcon() }}</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,160 @@
+<div class="epic-detail-container">
+  <!-- Back Button -->
+  <a mat-button routerLink="/epics" class="back-button">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Epics
+  </a>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading epic details...</span>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+      <a mat-button routerLink="/epics">Go Back</a>
+    </mat-card>
+  }
+
+  <!-- Epic Details -->
+  @if (!isLoading() && !error() && epic()) {
+    <div class="epic-content">
+      <!-- Main Info Card -->
+      <mat-card class="epic-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flag</mat-icon>
+            {{ epic()!.name }}
+          </mat-card-title>
+          <mat-card-subtitle>
+            Epic ID: {{ epic()!.epicId }}
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="epic-meta">
+            <div class="meta-item">
+              <span class="label">Status</span>
+              @if (epic()!.isCompleted) {
+                <mat-chip color="primary" selected>
+                  <mat-icon>check_circle</mat-icon>
+                  Completed
+                </mat-chip>
+              } @else {
+                <mat-chip>
+                  <mat-icon>schedule</mat-icon>
+                  In Progress
+                </mat-chip>
+              }
+            </div>
+
+            <div class="meta-item">
+              <span class="label">Priority</span>
+              <mat-chip [color]="getPriorityColor(epic()!.priority)" selected>
+                <mat-icon>{{ getPriorityIcon(epic()!.priority) }}</mat-icon>
+                {{ epic()!.priority }}
+              </mat-chip>
+            </div>
+
+            <div class="meta-item">
+              <span class="label">Target Date</span>
+              <span class="value">{{ formatDate(epic()!.targetCompletionDate) }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="label">Created</span>
+              <span class="value">{{ formatDate(epic()!.createdAt) }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="label">Version</span>
+              <span class="value version">{{ epic()!.version }}</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="description-section">
+            <h3>Description</h3>
+            <p>{{ epic()!.description || 'No description provided.' }}</p>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="projects-section">
+            <h3>
+              <mat-icon>folder</mat-icon>
+              Linked Projects ({{ epic()!.projectIds.length }})
+            </h3>
+            @if (epic()!.projectIds.length > 0) {
+              <mat-list>
+                @for (projectId of epic()!.projectIds; track projectId) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>folder_open</mat-icon>
+                    <span matListItemTitle>
+                      <a [routerLink]="['/projects', projectId]">{{ projectId }}</a>
+                    </span>
+                  </mat-list-item>
+                }
+              </mat-list>
+            } @else {
+              <p class="no-items">No projects linked to this epic.</p>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Event Stream Card -->
+      <mat-card class="events-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>history</mat-icon>
+            Event Stream
+          </mat-card-title>
+          <mat-card-subtitle>
+            Raw events stored in Azure Table Storage
+          </mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="storage-info">
+            <mat-icon>table_chart</mat-icon>
+            <span>Events stored in <code>epicevents</code> table</span>
+          </div>
+
+          @if (isLoadingEvents()) {
+            <div class="loading-events">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span>Loading events...</span>
+            </div>
+          } @else if (events().length > 0) {
+            <mat-accordion>
+              @for (event of events(); track $index) {
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon class="event-icon">event</mat-icon>
+                      {{ event.eventType }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      v{{ event.version }} (schema v{{ event.schemaVersion }})
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+                  <pre class="event-data">{{ formatJson(event.data) }}</pre>
+                </mat-expansion-panel>
+              }
+            </mat-accordion>
+          } @else {
+            <p class="no-items">No events found.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

@@ -1,3 +1,6 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
+#pragma warning disable S1192 // String literals should not be duplicated - code generation templates
+
 using System.Text;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Configuration;
@@ -5,6 +8,7 @@ using ErikLieben.FA.ES.CLI.Model;
 using ErikLieben.FA.ES.Projections;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -21,11 +25,15 @@ internal record ProjectionCodeComponents(
     string CheckpointJsonAnnotation,
     string JsonBlobFactoryCode,
     StringBuilder PropertyCode,
-    StringBuilder SerializableCode);
+    StringBuilder SerializableCode,
+    string DeserializationCode,
+    string CreateDestinationInstanceCode,
+    string RoutedProjectionSerializationCode);
 
 public class GenerateProjectionCode
 {
     private const string IEventTypeName = "IEvent";
+    private static readonly string[] SpecialDependencies = ["IObjectDocumentFactory", "IEventStreamFactory"];
 
     private readonly SolutionDefinition solution;
     private readonly Config config;
@@ -67,30 +75,44 @@ public class GenerateProjectionCode
     private async Task GenerateProjection(ProjectionDefinition projection, string? path)
     {
         var usings = InitializeUsings(projection);
-        var version = solution.Generator?.Version ?? "1.0.0";
-        var (foldCode, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
+        var generatorVersion = solution.Generator?.Version ?? "1.0.0";
+        var (_, whenParameterDeclarations) = GenerateWhenMethodsForProjection(projection, usings);
         var (serializableCode, _) = GenerateJsonSerializationCode(projection);
         var (propertyCode, _) = GeneratePropertyCode(projection);
-        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, version);
-        var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
-        var postWhenCode = GeneratePostWhenCode(projection);
-        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, usings, version);
-        var foldMethod = GenerateFoldMethod(projection, foldCode, postWhenCode, postWhenAllDummyCode, version);
+        var (get, ctorInput) = GenerateConstructorParametersForFactory(projection);
         var (ctorCode, extraCtorParams) = SelectBestConstructorAndGenerateCode(projection);
+        var (getExtra, ctorInputExtra) = GenerateExtraCtorParamsForFactory(extraCtorParams);
+        var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra, generatorVersion);
+        var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra);
+        // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
+        var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
+            ? jsonBlobFactoryCode
+            : cosmosDbFactoryCode;
+        var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
+        var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, generatorVersion);
+        var foldMethod = GenerateFoldMethod(projection, postWhenAllDummyCode);
         var checkpointJsonAnnotation = projection.ExternalCheckpoint ? "[JsonIgnore]" : "[JsonPropertyName(\"$checkpoint\")]";
+
+        var deserializationCode = GenerateDeserializationCode(projection, ctorCode.ToString(), extraCtorParams);
+        var createDestinationInstanceCode = GenerateCreateDestinationInstanceMethod(projection);
+        var routedProjectionSerializationCode = GenerateRoutedProjectionSerializationMethods();
 
         var codeComponents = new ProjectionCodeComponents(
             foldMethod, whenParameterValueBindingCode, ctorCode, extraCtorParams, checkpointJsonAnnotation,
-            jsonBlobFactoryCode, propertyCode, serializableCode);
+            combinedFactoryCode, propertyCode, serializableCode, deserializationCode, createDestinationInstanceCode,
+            routedProjectionSerializationCode);
 
-        await AssembleAndWriteCode(projection, usings, codeComponents, path, solution.Generator?.Version ?? "1.0.0");
+        await AssembleAndWriteCode(projection, usings, codeComponents, path, generatorVersion);
     }
 
     private static List<string> InitializeUsings(ProjectionDefinition projection)
     {
         var usings = new List<string>
         {
+            "System.Collections.Generic",
             "System.Text.Json.Serialization",
+            "System.Threading",
+            "System.Threading.Tasks",
             "ErikLieben.FA.ES",
             "ErikLieben.FA.ES.Projections",
             "ErikLieben.FA.ES.Documents",
@@ -153,8 +175,133 @@ public class GenerateProjectionCode
             newJsonSerializableCode.AppendLine("");
         }
 
+        // Add serialization for projection's own properties
+        foreach (var property in projection.Properties)
+        {
+            AddPropertySerializationAttributes(property, serializableCode, propertyTypes);
+        }
+
         serializableCode.AppendLine($"[JsonSerializable(typeof({projection.Name}))]");
+
+        // Remove trailing newline from serializableCode to avoid blank line before JsonSourceGenerationOptions
+        if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\n')
+        {
+            serializableCode.Length--;
+            if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\r')
+            {
+                serializableCode.Length--;
+            }
+        }
+
         return (serializableCode, newJsonSerializableCode);
+    }
+
+    private static void AddPropertySerializationAttributes(
+        PropertyDefinition property,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var fullTypeDef = BuildFullTypeDefinition(property);
+
+        // Add the main type
+        if (!processedTypes.Contains(fullTypeDef))
+        {
+            processedTypes.Add(fullTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({fullTypeDef}))]");
+        }
+
+        // If it's a generic collection type, also add the inner type
+        if (property.IsGeneric && property.GenericTypes.Count > 0)
+        {
+            foreach (var genericType in property.GenericTypes)
+            {
+                var genericTypeDef = $"{genericType.Namespace}.{genericType.Name}";
+                if (!processedTypes.Contains(genericTypeDef))
+                {
+                    processedTypes.Add(genericTypeDef);
+                    serializableCode.AppendLine($"[JsonSerializable(typeof({genericTypeDef}))]");
+                }
+
+                // Process nested generic types recursively
+                if (genericType.GenericTypes.Count > 0)
+                {
+                    ProcessNestedGenericType(genericType, serializableCode, processedTypes);
+                }
+
+                // Process SubTypes of the generic type (e.g., TextItem within QuestionItem)
+                foreach (var subType in genericType.SubTypes)
+                {
+                    ProcessSubType(subType, serializableCode, processedTypes);
+                }
+            }
+        }
+
+        // Process SubTypes (nested complex types within the property)
+        foreach (var subType in property.SubTypes)
+        {
+            ProcessSubType(subType, serializableCode, processedTypes);
+        }
+    }
+
+    private static void ProcessNestedGenericType(
+        PropertyGenericTypeDefinition genericType,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var genericTypeDef = BuildGenericTypeDefinition(genericType);
+        if (!processedTypes.Contains(genericTypeDef))
+        {
+            processedTypes.Add(genericTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({genericTypeDef}))]");
+        }
+
+        // Recursively process subtypes
+        foreach (var subType in genericType.SubTypes)
+        {
+            ProcessSubType(subType, serializableCode, processedTypes);
+        }
+    }
+
+    private static void ProcessSubType(
+        PropertyGenericTypeDefinition subType,
+        StringBuilder serializableCode,
+        List<string> processedTypes)
+    {
+        var subTypeDef = BuildGenericTypeDefinition(subType);
+        if (!processedTypes.Contains(subTypeDef))
+        {
+            processedTypes.Add(subTypeDef);
+            serializableCode.AppendLine($"[JsonSerializable(typeof({subTypeDef}))]");
+        }
+
+        // Recursively process nested subtypes
+        foreach (var nestedSubType in subType.SubTypes)
+        {
+            ProcessSubType(nestedSubType, serializableCode, processedTypes);
+        }
+    }
+
+    private static string BuildGenericTypeDefinition(PropertyGenericTypeDefinition type)
+    {
+        var builder = new StringBuilder();
+        builder.Append(type.Namespace).Append('.').Append(type.Name);
+
+        // Check if type.Name already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = type.Name.Contains('<') && type.Name.Contains('>');
+
+        if (type.GenericTypes.Count > 0 && !alreadyHasGenerics)
+        {
+            builder.Append('<');
+            for (int i = 0; i < type.GenericTypes.Count; i++)
+            {
+                if (i > 0) builder.Append(", ");
+                builder.Append(BuildGenericTypeDefinition(type.GenericTypes[i]));
+            }
+            builder.Append('>');
+        }
+
+        return builder.ToString();
     }
 
     private static string BuildFullTypeDefinition(PropertyDefinition property)
@@ -162,7 +309,11 @@ public class GenerateProjectionCode
         var fullTypeDefBuilder = new StringBuilder();
         fullTypeDefBuilder.Append(property.Namespace).Append('.').Append(property.Type);
 
-        if (property.IsGeneric)
+        // Check if property.Type already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (property.IsGeneric && !alreadyHasGenerics)
         {
             fullTypeDefBuilder.Append('<');
             foreach (var generic in property.GenericTypes)
@@ -189,14 +340,19 @@ public class GenerateProjectionCode
         {
             var type = BuildPropertyTypeString(property);
 
+            // Don't add ? if type is already nullable (e.g., System.Nullable<T>)
+            var isTypeAlreadyNullable = type.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
+                                        type.EndsWith('?');
+            var nullableSuffix = property.IsNullable && !isTypeAlreadyNullable ? "?" : string.Empty;
+
             if (property.Name != "WhenParameterValueFactories")
             {
-                propertySnapshotCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
+                propertySnapshotCode.AppendLine($"public {type}{nullableSuffix} {property.Name} {{get; init; }}");
             }
 
-            if (property.Name != "Checkpoint" && projection.Name != "CheckpointFingerprint" && property.Name != "WhenParameterValueFactories")
+            if (property.Name != "Checkpoint" && projection.Name != "CheckpointFingerprint" && property.Name != "WhenParameterValueFactories" && property.Name != "CurrentContext")
             {
-                propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
+                propertyCode.AppendLine($"public {type}{nullableSuffix} {property.Name} {{get;}}");
             }
         }
 
@@ -206,7 +362,12 @@ public class GenerateProjectionCode
     private static string BuildPropertyTypeString(PropertyDefinition property)
     {
         var typeBuilder = new StringBuilder(property.Type);
-        if (property.IsGeneric)
+
+        // Check if property.Type already includes generic parameters (e.g., "HashSet<String>")
+        // If so, don't append them again to avoid duplication
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (property.IsGeneric && !alreadyHasGenerics)
         {
             typeBuilder.Append('<');
             foreach (var generic in property.GenericTypes)
@@ -228,7 +389,11 @@ public class GenerateProjectionCode
         var typeBuilder = new StringBuilder();
         typeBuilder.Append(prop.Namespace).Append('.').Append(prop.Name);
 
-        if (prop.GenericTypes.Count != 0)
+        // Check if prop.Name already includes generic parameters (e.g., "HashSet<String>")
+        // If so, don't append them again to avoid duplication
+        var alreadyHasGenerics = prop.Name.Contains('<') && prop.Name.Contains('>');
+
+        if (prop.GenericTypes.Count != 0 && !alreadyHasGenerics)
         {
             typeBuilder.Append('<');
             foreach (var generic in prop.GenericTypes)
@@ -253,7 +418,62 @@ public class GenerateProjectionCode
         return typeBuilder.ToString();
     }
 
-    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string version)
+    private static (string get, string ctorInput) GenerateConstructorParametersForFactory(ProjectionDefinition projection)
+    {
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+
+        // Find the best constructor (prefer one with most parameters that includes IObjectDocumentFactory and IEventStreamFactory)
+        var bestMatch = projection.Constructors
+            .Where(ctor => SpecialDependencies.All(dep => ctor.Parameters.Any(p => p.Type == dep)))
+            .OrderByDescending(ctor => ctor.Parameters.Count)
+            .FirstOrDefault();
+
+        if (bestMatch == null)
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        // Generate DI resolution for parameters that are not IObjectDocumentFactory or IEventStreamFactory
+        foreach (var param in bestMatch.Parameters.Where(p => p.Type != "IObjectDocumentFactory" && p.Type != "IEventStreamFactory"))
+        {
+            getBuilder.AppendLine($"            var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};");
+            ctorInputBuilder.Append($", {param.Name}!");
+        }
+
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
+
+    private static (string get, string ctorInput) GenerateExtraCtorParamsForFactory(List<ConstructorParameter> extraParams)
+    {
+        var getBuilder = new StringBuilder();
+        var ctorInputBuilder = new StringBuilder();
+        foreach (var param in extraParams)
+        {
+            getBuilder.AppendLine($"            var {param.Name} = serviceProvider.GetService(typeof({param.Type})) as {param.Type};");
+            ctorInputBuilder.Append($", {param.Name}!");
+        }
+        return (getBuilder.ToString(), ctorInputBuilder.ToString());
+    }
+
+    private static (string serviceProviderParam, string newMethodBody, string loadFromJsonBody) BuildFactoryMethodBodies(
+        string projectionName, string get, string ctorInput, string getExtra, string ctorInputExtra)
+    {
+        var needsServiceProvider = !string.IsNullOrEmpty(get);
+        var serviceProviderParam = needsServiceProvider ? ",\n    IServiceProvider serviceProvider" : "";
+
+        var newMethodBody = needsServiceProvider
+            ? $"{get}            return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});"
+            : $"return new {projectionName}(objectDocumentFactory, eventStreamFactory{ctorInput});";
+
+        var loadFromJsonBody = !string.IsNullOrEmpty(getExtra)
+            ? $"{getExtra}            return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory{ctorInputExtra});"
+            : $"return {projectionName}.LoadFromJson(json, documentFactory, eventStreamFactory);";
+
+        return (serviceProviderParam, newMethodBody, loadFromJsonBody);
+    }
+
+    private static string GenerateBlobFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra, string version)
     {
         if (projection.BlobProjection == null)
         {
@@ -264,13 +484,23 @@ public class GenerateProjectionCode
         usings.Add("Microsoft.Extensions.Azure");
         usings.Add("Azure.Storage.Blobs");
 
+        // Check if this is a routed projection
+        if (projection is RoutedProjectionDefinition routedProjection && routedProjection.IsRoutedProjection)
+        {
+            return GenerateRoutedBlobFactoryCode(routedProjection, usings, get, getExtra, ctorInputExtra);
+        }
+
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
+
         return $$"""
-                 [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
-                 [ExcludeFromCodeCoverage]
-                 public class {{projection.Name}}Factory(
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} blob-based projections.
+                 /// </summary>
+                 public partial class {{projection.Name}}Factory(
                      IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
                      IObjectDocumentFactory objectDocumentFactory,
-                     IEventStreamFactory eventStreamFactory)
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
                      : BlobProjectionFactory<{{projection.Name}}>(
                          blobServiceClientFactory,
                          "{{projection.BlobProjection.Connection}}",
@@ -284,10 +514,320 @@ public class GenerateProjectionCode
                      [ExcludeFromCodeCoverage]
                      protected override {{projection.Name}} New()
                      {
-                         return new {{projection.Name}}(objectDocumentFactory, eventStreamFactory);
+                         {{newMethodBody}}
+                     }
+
+                     /// <summary>
+                     /// Loads a {{projection.Name}} instance from JSON with complete state restoration.
+                     /// </summary>
+                     /// <param name="json">The JSON string containing the serialized projection state.</param>
+                     /// <param name="documentFactory">Factory for managing object documents.</param>
+                     /// <param name="eventStreamFactory">Factory for creating event streams.</param>
+                     /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
+                     protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                     {
+                         {{loadFromJsonBody}}
                      }
                  }
                 """;
+    }
+
+    private static string GenerateCosmosDbFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra)
+    {
+        if (projection.CosmosDbProjection == null)
+        {
+            return string.Empty;
+        }
+
+        usings.Add("ErikLieben.FA.ES.CosmosDb");
+        usings.Add("ErikLieben.FA.ES.CosmosDb.Configuration");
+        usings.Add("Microsoft.Azure.Cosmos");
+
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
+
+        return $$"""
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} CosmosDB-based projections.
+                 /// </summary>
+                 public partial class {{projection.Name}}Factory(
+                     CosmosClient cosmosClient,
+                     EventStreamCosmosDbSettings settings,
+                     IObjectDocumentFactory objectDocumentFactory,
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
+                     : CosmosDbProjectionFactory<{{projection.Name}}>(
+                         cosmosClient,
+                         settings,
+                         "{{projection.CosmosDbProjection.Container}}",
+                         "{{projection.CosmosDbProjection.PartitionKeyPath}}")
+                 {
+                     /// <summary>
+                     /// Gets a value indicating whether this projection uses an external checkpoint mechanism.
+                     /// </summary>
+                     protected override bool HasExternalCheckpoint => {{projection.ExternalCheckpoint.ToString().ToLowerInvariant()}};
+
+                     /// <summary>
+                     /// Creates a new instance of {{projection.Name}} projection.
+                     /// </summary>
+                     /// <returns>A new {{projection.Name}} instance.</returns>
+                     protected override {{projection.Name}} New()
+                     {
+                         {{newMethodBody}}
+                     }
+
+                     /// <summary>
+                     /// Loads a {{projection.Name}} instance from JSON with complete state restoration.
+                     /// </summary>
+                     /// <param name="json">The JSON string containing the serialized projection state.</param>
+                     /// <param name="documentFactory">Factory for managing object documents.</param>
+                     /// <param name="eventStreamFactory">Factory for creating event streams.</param>
+                     /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
+                     protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                     {
+                         {{loadFromJsonBody}}
+                     }
+                 }
+                """;
+    }
+
+    private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string getExtra, string ctorInputExtra)
+    {
+        usings.Add("ErikLieben.FA.ES.Projections");
+        usings.Add("System.Text");
+        usings.Add("System.Text.Json");
+        usings.Add("System.IO");
+
+        var (serviceProviderParam, _, loadMainBody) = BuildFactoryMethodBodies(
+            projection.Name, get, string.Empty, getExtra, ctorInputExtra);
+
+        var destinationType = projection.DestinationType ?? "Projection";
+
+        return $$"""
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} routed blob-based projections.
+                 /// Main file at [BlobJsonProjection] path contains $checkpoint and $metadata.
+                 /// Each destination is stored in a separate file.
+                 /// </summary>
+                 public partial class {{projection.Name}}Factory(
+                     IAzureClientFactory<BlobServiceClient> blobServiceClientFactory,
+                     IObjectDocumentFactory objectDocumentFactory,
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
+                     : RoutedBlobProjectionFactory<{{projection.Name}}>(
+                         blobServiceClientFactory,
+                         "{{projection.BlobProjection!.Connection}}",
+                         "{{projection.BlobProjection.Container}}")
+                 {
+                     /// <summary>
+                     /// Gets the JSON serializer context for the projection.
+                     /// </summary>
+                     protected override JsonSerializerContext GetProjectionJsonContext()
+                     {
+                         return {{projection.Name}}JsonSerializerContext.Default;
+                     }
+
+                     /// <summary>
+                     /// Loads the main projection (checkpoint and metadata) from JSON.
+                     /// </summary>
+                     protected override {{projection.Name}}? LoadMainProjectionFromJson(
+                         string json,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory)
+                     {
+                         {{loadMainBody}}
+                     }
+
+                     /// <summary>
+                     /// Loads a destination projection from JSON.
+                     /// </summary>
+                     protected override Projection LoadDestinationFromJson(
+                         string json,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory,
+                         string destinationKey)
+                     {
+                         {{GenerateLoadDestinationFromJsonBody(projection)}}
+                     }
+
+                     /// <summary>
+                     /// Checks if a destination type has external checkpoint enabled.
+                     /// </summary>
+                     protected override bool DestinationHasExternalCheckpoint(string destinationTypeName)
+                     {
+                         {{GenerateDestinationHasExternalCheckpointBody(projection)}}
+                     }
+
+                     /// <summary>
+                     /// Serializes the main projection (checkpoint and metadata) to JSON.
+                     /// </summary>
+                     protected override string SerializeMainProjection({{projection.Name}} projection)
+                     {
+                         return projection.ToJson();
+                     }
+
+                     /// <summary>
+                     /// Gets save tasks for all destinations.
+                     /// </summary>
+                     protected override IEnumerable<Task> GetDestinationSaveTasks(
+                         {{projection.Name}} projection,
+                         BlobContainerClient containerClient,
+                         CancellationToken cancellationToken)
+                     {
+                         if (projection.Destinations == null)
+                         {
+                             yield break;
+                         }
+
+                         foreach (var kvp in projection.Destinations)
+                         {
+                             var destinationKey = kvp.Key;
+                             var destination = kvp.Value;
+
+                             // Get the blob path from registry
+                             if (projection.Registry.Destinations.TryGetValue(destinationKey, out var metadata) &&
+                                 metadata.Metadata.TryGetValue("blobPath", out var blobPath))
+                             {
+                                 var json = destination.ToJson();
+                                 yield return UploadBlobAsync(containerClient, blobPath, json, cancellationToken);
+
+                                 // Save external checkpoint if the destination type has it enabled
+                                 if (DestinationHasExternalCheckpoint(metadata.DestinationTypeName))
+                                 {
+                                     yield return SaveDestinationCheckpointAsync(blobPath, destination, cancellationToken);
+                                 }
+                             }
+                         }
+                     }
+
+                     /// <summary>
+                     /// Adds a loaded destination to the projection.
+                     /// </summary>
+                     protected override void AddDestinationToProjection(
+                         {{projection.Name}} projection,
+                         string destinationKey,
+                         Projection destination)
+                     {
+                         // Use reflection to access the private _destinations field in RoutedProjection
+                         var destinationsField = typeof(RoutedProjection).GetField("_destinations", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                         var destinations = destinationsField?.GetValue(projection) as System.Collections.Concurrent.ConcurrentDictionary<string, Projection>;
+
+                         if (destinations != null)
+                         {
+                             destinations[destinationKey] = destination;
+                         }
+                     }
+
+                     /// <summary>
+                     /// Sets the factories on the projection.
+                     /// </summary>
+                     protected override void SetFactories(
+                         {{projection.Name}} projection,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory)
+                     {
+                         // Use reflection to set the private readonly fields
+                         var docField = typeof(Projection).GetField("DocumentFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                         var streamField = typeof(Projection).GetField("EventStreamFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                         docField?.SetValue(projection, documentFactory);
+                         streamField?.SetValue(projection, eventStreamFactory);
+                     }
+
+                     /// <summary>
+                     /// Gets the path template for a destination type from its [BlobJsonProjection] attribute.
+                     /// </summary>
+                     protected override string? GetDestinationPathTemplate(string destinationTypeName)
+                     {
+                         {{GenerateDestinationPathTemplateLookup(projection)}}
+                     }
+                 }
+
+                 /// <summary>
+                 /// JSON serializer context for DestinationRegistry and related types.
+                 /// </summary>
+                 [JsonSerializable(typeof(DestinationRegistry))]
+                 [JsonSerializable(typeof(DestinationMetadata))]
+                 [JsonSerializable(typeof(RoutedProjectionMetadata))]
+                 [JsonSerializable(typeof({{destinationType}}))]
+                 [JsonSourceGenerationOptions(WriteIndented = true)]
+                 internal partial class {{projection.Name}}DestinationRegistryJsonContext : JsonSerializerContext
+                 {
+                 }
+                """;
+    }
+
+    private static string GenerateDestinationPathTemplateLookup(RoutedProjectionDefinition projection)
+    {
+        if (projection.DestinationPathTemplates.Count == 0)
+        {
+            return "return null;";
+        }
+
+        var code = new StringBuilder();
+        code.AppendLine("return destinationTypeName switch");
+        code.AppendLine("                        {");
+
+        foreach (var kvp in projection.DestinationPathTemplates)
+        {
+            code.AppendLine($"                            \"{kvp.Key}\" => \"{kvp.Value}\",");
+        }
+
+        code.AppendLine("                            _ => null");
+        code.Append("                        };");
+
+        return code.ToString();
+    }
+
+    private static string GenerateLoadDestinationFromJsonBody(RoutedProjectionDefinition projection)
+    {
+        var destinationTypes = projection.DestinationPathTemplates.Keys.ToList();
+
+        if (destinationTypes.Count == 0)
+        {
+            return "throw new ArgumentException($\"No destination types configured\", nameof(destinationKey));";
+        }
+
+        if (destinationTypes.Count == 1)
+        {
+            return $"return {destinationTypes[0]}.LoadFromJson(json, documentFactory, eventStreamFactory)!;";
+        }
+
+        // Multiple destination types - we need to look up the type from registry
+        // For now, we'll try each type until one works (the registry has the type name)
+        var code = new StringBuilder();
+        code.AppendLine("// Multiple destination types - try to deserialize based on registry");
+        code.AppendLine("Projection? result;");
+
+        foreach (var destType in destinationTypes)
+        {
+            code.AppendLine($"                        result = {destType}.LoadFromJson(json, documentFactory, eventStreamFactory);");
+            code.AppendLine("                        if (result != null) return result;");
+        }
+
+        code.Append($"                        throw new ArgumentException($\"Failed to deserialize destination {{destinationKey}}\", nameof(destinationKey));");
+
+        return code.ToString();
+    }
+
+    private static string GenerateDestinationHasExternalCheckpointBody(RoutedProjectionDefinition projection)
+    {
+        if (projection.DestinationsWithExternalCheckpoint.Count == 0)
+        {
+            return "return false;";
+        }
+
+        var code = new StringBuilder();
+        code.AppendLine("return destinationTypeName switch");
+        code.AppendLine("                        {");
+
+        foreach (var destType in projection.DestinationsWithExternalCheckpoint)
+        {
+            code.AppendLine($"                            \"{destType}\" => true,");
+        }
+
+        code.AppendLine("                            _ => false");
+        code.Append("                        };");
+
+        return code.ToString();
     }
 
     private static string GenerateWhenParameterBindingCode(List<string> whenParameterDeclarations)
@@ -300,7 +840,7 @@ public class GenerateProjectionCode
         return whenParameterDeclarations.Aggregate((x, y) => x + "," + y + Environment.NewLine);
     }
 
-    private static string GeneratePostWhenCode(ProjectionDefinition projection)
+    private static string GeneratePostWhenCodeWithVersionToken(ProjectionDefinition projection)
     {
         if (projection.PostWhen == null)
         {
@@ -315,7 +855,11 @@ public class GenerateProjectionCode
             switch (parameter.Type)
             {
                 case "IObjectDocument":
-                    postWhenStringBuilder.Append("document");
+                    // In version token fold, we don't have document - use null or skip
+                    postWhenStringBuilder.Append("null! /* Document not available in version token fold */");
+                    break;
+                case "VersionToken":
+                    postWhenStringBuilder.Append("versionToken");
                     break;
                 case IEventTypeName:
                     postWhenStringBuilder.Append("JsonEvent.ToEvent(@event, @event.EventType)");
@@ -332,7 +876,7 @@ public class GenerateProjectionCode
         return postWhenStringBuilder.ToString();
     }
 
-    private string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, List<string> usings, string version)
+    private static string GeneratePostWhenAllDummyCode(ProjectionDefinition projection, string version)
     {
         if (projection.HasPostWhenAllMethod)
         {
@@ -347,27 +891,60 @@ public class GenerateProjectionCode
         return postWhenAllDummyCode.ToString();
     }
 
-    private static string GenerateFoldMethod(ProjectionDefinition projection, StringBuilder foldCode,
-        string postWhenCode, string postWhenAllDummyCode, string version)
+    private static string GenerateFoldMethod(ProjectionDefinition projection, string postWhenAllDummyCode)
     {
         var isAsync = projection.Events.Any(e => e.ActivationAwaitRequired);
         var asyncKeyword = isAsync ? "async " : string.Empty;
         var returnValue = isAsync ? "" : "Task.CompletedTask";
 
+        // Generate version token-based fold code (using versionToken instead of document for parameter lookup)
+        var foldWithVersionTokenCode = GenerateFoldCodeWithVersionToken(projection);
+        var postWhenCodeWithVersionToken = GeneratePostWhenCodeWithVersionToken(projection);
+
+        // Check if this is a routed projection
+        var isRoutedProjection = projection is RoutedProjectionDefinition routedProj && routedProj.IsRoutedProjection;
+
+        if (isRoutedProjection)
+        {
+            // For routed projections, we call the When methods directly (the base class Fold sets up routing context)
+            return $$$"""
+                      #nullable enable
+                      /// <summary>
+                      /// Dispatches events to When methods. Called by base RoutedProjection.Fold after routing context setup.
+                      /// </summary>
+                      protected override void DispatchToWhen(IEvent @event, VersionToken versionToken)
+                      {
+                         switch (@event.EventType)
+                         {
+                             {{{foldWithVersionTokenCode}}}
+                         }
+                      }
+
+                      {{{postWhenAllDummyCode}}}
+                      #nullable restore
+                      """;
+        }
+
         return $$$"""
                   #nullable enable
-                  [GeneratedCode("ErikLieben.FA.ES", "{{{version}}}")]
-                  [ExcludeFromCodeCoverage]
-                  public override {{{asyncKeyword}}}Task Fold<T>(IEvent @event, IObjectDocument document, T? data = default(T?), IExecutionContext? parentContext = null) where T : class {
-
-
+                  /// <summary>
+                  /// Applies an event to the projection by dispatching to the appropriate When method using version token.
+                  /// This is the primary implementation that avoids redundant document lookups.
+                  /// </summary>
+                  /// <typeparam name="T">The type of additional data passed through the execution context.</typeparam>
+                  /// <param name="event">The event to apply to the projection.</param>
+                  /// <param name="versionToken">The version token associated with the event.</param>
+                  /// <param name="data">Optional data to pass through the execution context.</param>
+                  /// <param name="parentContext">Optional parent execution context for nested projections.</param>
+                  /// <returns>A task representing the asynchronous fold operation.</returns>
+                  public override {{{asyncKeyword}}}Task Fold<T>(IEvent @event, VersionToken versionToken, T? data = default(T?), IExecutionContext? parentContext = null) where T : class {
 
                      switch (@event.EventType)
                      {
-                         {{{foldCode}}}
+                         {{{foldWithVersionTokenCode}}}
                      }
 
-                     {{{postWhenCode}}}
+                     {{{postWhenCodeWithVersionToken}}}
 
                      return {{{returnValue}}};
                   }
@@ -377,13 +954,131 @@ public class GenerateProjectionCode
                   """;
     }
 
+    private static string GenerateFoldCodeWithVersionToken(ProjectionDefinition projection)
+    {
+        var foldCode = new StringBuilder();
+        var usings = new List<string>();
+
+        foreach (var @event in projection.Events)
+        {
+            if (!usings.Contains(@event.Namespace))
+            {
+                usings.Add(@event.Namespace);
+            }
+
+            AppendVersionTokenCaseStatement(foldCode, @event);
+            AppendVersionTokenFirstParameter(foldCode, @event);
+
+            foldCode.Append("""
+                            );
+                            break;
+                            """);
+        }
+
+        return foldCode.ToString();
+    }
+
+    private static void AppendVersionTokenCaseStatement(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        string awaitCode = @event.ActivationAwaitRequired ? "await " : string.Empty;
+        foldCode.Append($$"""
+                          case "{{@event.EventName}}":
+                            {{awaitCode}} {{@event.ActivationType}}(
+                          """);
+    }
+
+    private static void AppendVersionTokenFirstParameter(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        var firstParameter = @event.Parameters.FirstOrDefault();
+        if (firstParameter == null)
+        {
+            return;
+        }
+
+        AppendEventArgument(foldCode, firstParameter, @event);
+
+        if (@event.Parameters.Count > 1)
+        {
+            foldCode.Append(", ");
+        }
+
+        AppendVersionTokenParameterDeclarations(foldCode, @event);
+    }
+
+    private static void AppendEventArgument(StringBuilder foldCode, ParameterDefinition firstParameter, EventDefinition @event)
+    {
+        if (firstParameter.Type == @event.TypeName && firstParameter.Type != "IEvent")
+        {
+            foldCode.Append(
+                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
+        }
+        else if (firstParameter.Type == "IEvent")
+        {
+            foldCode.Append(
+                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
+        }
+    }
+
+    private static void AppendVersionTokenParameterDeclarations(StringBuilder foldCode, ProjectionEventDefinition @event)
+    {
+        var parametersToGenerate = @event.WhenParameterDeclarations;
+        for (int i = 0; i < parametersToGenerate.Count; i++)
+        {
+            var paramDecl = parametersToGenerate[i];
+            AppendVersionTokenParameterValue(foldCode, paramDecl, @event);
+
+            if (i < parametersToGenerate.Count - 1)
+            {
+                foldCode.Append(", ");
+            }
+        }
+    }
+
+    private static void AppendVersionTokenParameterValue(StringBuilder foldCode, WhenParameterDeclaration paramDecl, ProjectionEventDefinition @event)
+    {
+        if (paramDecl.Type != "IEvent" && paramDecl.Type != "IObjectDocument" && !paramDecl.IsExecutionContext)
+        {
+            foldCode.Append($"GetWhenParameterValue<{paramDecl.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{paramDecl.Type}\",{Environment.NewLine}\t\t\tversionToken, @event)!");
+            return;
+        }
+
+        if (paramDecl.Type == "IObjectDocument")
+        {
+            foldCode.Append($"null! /* Document not available in version token fold */");
+            return;
+        }
+
+        if (paramDecl.Type == "IEvent")
+        {
+            foldCode.Append($"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
+            return;
+        }
+
+        if (paramDecl.IsExecutionContext)
+        {
+            AppendExecutionContextParameter(foldCode, paramDecl);
+        }
+    }
+
+    private static void AppendExecutionContextParameter(StringBuilder foldCode, WhenParameterDeclaration paramDecl)
+    {
+        if (paramDecl.Type == "IExecutionContext" || paramDecl.Type.StartsWith("IExecutionContext"))
+        {
+            foldCode.Append($"parentContext");
+        }
+        else
+        {
+            foldCode.Append($"parentContext as {paramDecl.Type}");
+        }
+    }
+
+
     private static (StringBuilder CtorCode, List<ConstructorParameter> ExtraParams) SelectBestConstructorAndGenerateCode(ProjectionDefinition projection)
     {
         var ctorCode = new StringBuilder();
         var extraParams = new List<ConstructorParameter>();
-        var specialDependencies = new[] { "IObjectDocumentFactory", "IEventStreamFactory" };
 
-        var bestMatch = RankConstructorsByPropertyMatch(projection, specialDependencies).FirstOrDefault();
+        var bestMatch = RankConstructorsByPropertyMatch(projection, SpecialDependencies).FirstOrDefault();
 
         if (bestMatch != null)
         {
@@ -433,7 +1128,6 @@ public class GenerateProjectionCode
         StringBuilder ctorCode, List<ConstructorParameter> extraParams)
     {
         var args = new List<string>();
-
         foreach (var parameter in constructor.Parameters)
         {
             if (parameter.Type is "IObjectDocumentFactory" or "IEventStreamFactory")
@@ -463,8 +1157,224 @@ public class GenerateProjectionCode
                 }
             }
         }
-
         ctorCode.Append(string.Join(", ", args));
+    }
+
+    private static string GenerateDeserializationCode(ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
+    {
+        var code = new StringBuilder();
+
+        AppendVariableDeclarations(code, projection);
+        AppendJsonReaderBoilerplate(code);
+        AppendPropertySwitchCases(code, projection);
+        AppendInstanceConstruction(code, projection, ctorParams, extraCtorParams);
+        AppendPropertyPopulation(code, projection, ctorParams);
+
+        code.AppendLine("                                instance.Checkpoint = checkpoint;");
+        code.AppendLine("                                instance.CheckpointFingerprint = checkpointFingerprint;");
+        code.AppendLine();
+        code.AppendLine("                                return instance;");
+
+        return code.ToString();
+    }
+
+    private static void AppendVariableDeclarations(StringBuilder code, ProjectionDefinition projection)
+    {
+        code.AppendLine("// Deserialize each property manually to preserve data");
+
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
+        {
+            var fullTypeDef = BuildFullTypeDefinition(property);
+            var isTypeAlreadyNullable = fullTypeDef.StartsWith("System.Nullable<", StringComparison.Ordinal) ||
+                                        fullTypeDef.EndsWith('?');
+            var nullableSuffix = isTypeAlreadyNullable ? string.Empty : "?";
+            code.AppendLine($"                                {fullTypeDef}{nullableSuffix} {ToCamelCase(property.Name)} = null;");
+        }
+
+        code.AppendLine("                                Checkpoint checkpoint = [];");
+    }
+
+    private static void AppendJsonReaderBoilerplate(StringBuilder code)
+    {
+        code.AppendLine();
+        code.AppendLine("                                var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(json));");
+        code.AppendLine("                                ");
+        code.AppendLine("                                if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)");
+        code.AppendLine("                                    return null;");
+        code.AppendLine();
+        code.AppendLine("                                while (reader.Read())");
+        code.AppendLine("                                {");
+        code.AppendLine("                                    if (reader.TokenType == JsonTokenType.EndObject)");
+        code.AppendLine("                                        break;");
+        code.AppendLine();
+        code.AppendLine("                                    if (reader.TokenType != JsonTokenType.PropertyName)");
+        code.AppendLine("                                        continue;");
+        code.AppendLine();
+        code.AppendLine("                                    string? propertyName = reader.GetString();");
+        code.AppendLine("                                    reader.Read();");
+        code.AppendLine();
+        code.AppendLine("                                    switch (propertyName)");
+        code.AppendLine("                                    {");
+    }
+
+    private static void AppendPropertySwitchCases(StringBuilder code, ProjectionDefinition projection)
+    {
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories"))
+        {
+            var jsonPropertyName = property.Name switch
+            {
+                "Checkpoint" => "$checkpoint",
+                "CheckpointFingerprint" => "$checkpointFingerprint",
+                _ => property.Name
+            };
+            var varName = property.Name == "Checkpoint" ? "checkpoint" : ToCamelCase(property.Name);
+            var fullTypeDef = BuildFullTypeDefinition(property);
+            var nullCoalesce = property.Name == "Checkpoint" ? " ?? []" : string.Empty;
+
+            code.AppendLine($"                                        case \"{jsonPropertyName}\":");
+            code.AppendLine($"                                            {varName} = JsonSerializer.Deserialize<{fullTypeDef}>(ref reader, {projection.Name}JsonSerializerContext.Default.Options){nullCoalesce};");
+            code.AppendLine("                                            break;");
+        }
+
+        code.AppendLine("                                    }");
+        code.AppendLine("                                }");
+        code.AppendLine();
+    }
+
+    private static void AppendInstanceConstruction(StringBuilder code, ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
+    {
+        code.AppendLine($"                                // Create instance with factories and deserialized properties");
+
+        var ctorParamsWithValues = BuildConstructorParamsWithValues(projection, ctorParams, extraCtorParams);
+
+        code.AppendLine($"                                var instance = new {projection.Name}({ctorParamsWithValues});");
+        code.AppendLine();
+    }
+
+    private static string BuildConstructorParamsWithValues(ProjectionDefinition projection, string ctorParams, List<ConstructorParameter> extraCtorParams)
+    {
+        if (!ctorParams.Contains("documentFactory, eventStreamFactory"))
+        {
+            return ctorParams;
+        }
+
+        var args = new List<string> { "documentFactory", "eventStreamFactory" };
+
+        args.AddRange(projection.Properties
+            .Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint" && p.Name != "CheckpointFingerprint")
+            .Where(property => ctorParams.Contains($"obj.{property.Name}"))
+            .Select(property => $"{ToCamelCase(property.Name)}!"));
+
+        args.AddRange(extraCtorParams.Select(p => p.Name));
+
+        return string.Join(", ", args);
+    }
+
+    private static void AppendPropertyPopulation(StringBuilder code, ProjectionDefinition projection, string ctorParams)
+    {
+        foreach (var property in projection.Properties.Where(p => p.Name != "WhenParameterValueFactories" && p.Name != "Checkpoint"))
+        {
+            var varName = ToCamelCase(property.Name);
+
+            if (ctorParams.Contains($", {varName}"))
+                continue;
+
+            if (property.Type == "Dictionary")
+            {
+                code.AppendLine($"                                if ({varName} != null)");
+                code.AppendLine("                                {");
+                code.AppendLine($"                                    foreach (var kvp in {varName})");
+                code.AppendLine("                                    {");
+                code.AppendLine($"                                        instance.{property.Name}[kvp.Key] = kvp.Value;");
+                code.AppendLine("                                    }");
+                code.AppendLine("                                }");
+            }
+            else if (property.Type == "List")
+            {
+                code.AppendLine($"                                if ({varName} != null)");
+                code.AppendLine("                                {");
+                code.AppendLine($"                                    instance.{property.Name}.Clear();");
+                code.AppendLine($"                                    instance.{property.Name}.AddRange({varName});");
+                code.AppendLine("                                }");
+            }
+        }
+    }
+
+    private static string ToCamelCase(string name)
+    {
+        if (string.IsNullOrEmpty(name) || char.IsLower(name[0]))
+            return name;
+        return char.ToLowerInvariant(name[0]) + name.Substring(1);
+    }
+
+    private static string GenerateCreateDestinationInstanceMethod(ProjectionDefinition projection)
+    {
+        // Check if this projection inherits from RoutedProjection
+        // We'll look at the properties to see if it has Destinations and Registry properties
+        var hasDestinations = projection.Properties.Any(p => p.Name == "Destinations");
+        var hasRegistry = projection.Properties.Any(p => p.Name == "Registry");
+
+        if (!hasDestinations || !hasRegistry)
+        {
+            // Not a routed projection, don't generate the method
+            return string.Empty;
+        }
+
+        // Extract destination types from the When method event definitions
+        // Look for patterns like AddDestination<ProjectKanbanDestination> in the source
+        var destinationTypes = new HashSet<string>();
+
+        // Get all destination types from the DestinationPathTemplates dictionary
+        if (projection is RoutedProjectionDefinition routedProjection)
+        {
+            foreach (var destType in routedProjection.DestinationPathTemplates.Keys)
+            {
+                destinationTypes.Add(destType);
+            }
+        }
+
+        if (destinationTypes.Count == 0)
+        {
+            // No destination types found, generate a simple implementation
+            return string.Empty;
+        }
+
+        var code = new StringBuilder();
+        code.AppendLine();
+        code.AppendLine("/// <summary>");
+        code.AppendLine("/// Creates a destination instance with proper initialization.");
+        code.AppendLine("/// AOT-compatible implementation without reflection.");
+        code.AppendLine("/// </summary>");
+        code.AppendLine("protected override TDestination CreateDestinationInstance<TDestination>(string destinationKey)");
+        code.AppendLine("{");
+
+        // Generate type checks for each destination type
+        bool first = true;
+        foreach (var destinationType in destinationTypes)
+        {
+            var keyword = first ? "if" : "else if";
+            code.AppendLine($"    {keyword} (typeof(TDestination) == typeof({destinationType}))");
+            code.AppendLine("    {");
+            code.AppendLine($"        var destination = new {destinationType}(DocumentFactory!, EventStreamFactory!);");
+            code.AppendLine("        return (TDestination)(Projection)destination;");
+            code.AppendLine("    }");
+            first = false;
+        }
+
+        code.AppendLine();
+        code.AppendLine("    throw new ArgumentException($\"Unknown destination type: {typeof(TDestination).Name}\", nameof(TDestination));");
+        code.AppendLine("}");
+
+
+        return code.ToString();
+    }
+
+    private static string GenerateRoutedProjectionSerializationMethods()
+    {
+        // Routed projections use standard ToJson() and LoadFromJson() methods
+        // since the RoutedProjection base class already has proper [JsonPropertyName] and [JsonIgnore] attributes
+        // No additional serialization methods needed
+        return string.Empty;
     }
 
     private static async Task AssembleAndWriteCode(
@@ -474,16 +1384,11 @@ public class GenerateProjectionCode
         string? path,
         string version)
     {
-        var extraParamDeclarations = string.Join("", components.ExtraCtorParams
-            .Select(p => $", {p.Type} {p.Name}"));
-
-        foreach (var p in components.ExtraCtorParams.Where(p => !string.IsNullOrWhiteSpace(p.Namespace)))
-        {
-            if (!usings.Contains(p.Namespace))
-            {
-                usings.Add(p.Namespace);
-            }
-        }
+        // Add namespaces for extra constructor params
+        usings.AddRange(components.ExtraCtorParams
+            .Where(p => !string.IsNullOrWhiteSpace(p.Namespace))
+            .Select(p => p.Namespace)
+            .Where(ns => !usings.Contains(ns)));
 
         var code = new StringBuilder();
 
@@ -491,6 +1396,9 @@ public class GenerateProjectionCode
         {
             code.AppendLine($"using {namespaceName};");
         }
+
+        var extraParamDeclarations = string.Join("", components.ExtraCtorParams
+            .Select(p => $", {p.Type} {p.Name}"));
 
         code.AppendLine("");
         code.AppendLine($$"""
@@ -526,11 +1434,7 @@ public class GenerateProjectionCode
                               [ExcludeFromCodeCoverage]
                               public static {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory{{extraParamDeclarations}})
                               {
-                                var obj = JsonSerializer.Deserialize(json, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
-                                if (obj is null) {
-                                    return null;
-                                }
-                                return new {{projection.Name}}({{components.CtorCode}});
+                                {{components.DeserializationCode}}
                               }
 
                               [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
@@ -540,14 +1444,28 @@ public class GenerateProjectionCode
                                 return JsonSerializer.Serialize(this, {{projection.Name}}JsonSerializerContext.Default.{{projection.Name}});
                               }
 
+                              /// <summary>
+                              /// Gets or sets the checkpoint tracking the last processed event position.
+                              /// </summary>
                               {{components.CheckpointJsonAnnotation}}
                               public override Checkpoint Checkpoint { get; set; } = [];
+
+                              /// <summary>
+                              /// Gets the schema version defined in code via [ProjectionVersion] attribute.
+                              /// </summary>
+                              [JsonIgnore]
+                              public override int CodeSchemaVersion => {{projection.SchemaVersion}};
+                              {{components.CreateDestinationInstanceCode}}
+                              {{components.RoutedProjectionSerializationCode}}
                           }
 
                           {{components.JsonBlobFactoryCode}}
 
                           #nullable enable
                           // <auto-generated />
+                          /// <summary>
+                          /// Interface defining the public state properties of {{projection.Name}}.
+                          /// </summary>
                           public interface I{{projection.Name}} {
                                 {{components.PropertyCode}}
                           }
@@ -555,6 +1473,9 @@ public class GenerateProjectionCode
 
                           {{components.SerializableCode}}
                           // <auto-generated />
+                          /// <summary>
+                          /// JSON serializer context for {{projection.Name}} types.
+                          /// </summary>
                           internal partial class {{projection.Name}}JsonSerializerContext : JsonSerializerContext
                           {
                           }
@@ -566,7 +1487,8 @@ public class GenerateProjectionCode
         {
             Directory.CreateDirectory(directory);
         }
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
     private static void GenerateWhenMethods(
@@ -575,10 +1497,8 @@ public class GenerateProjectionCode
         List<string> whenParameterDeclarations,
         StringBuilder foldCode)
     {
-        if (@event.ActivationType != "When")
-        {
-            return;
-        }
+        // Note: ActivationType is the method name (e.g., "When" or "MarkAsDeleted")
+        // We process all methods that were detected as When handlers
 
         if (!usings.Contains(@event.Namespace))
         {
@@ -586,11 +1506,8 @@ public class GenerateProjectionCode
         }
 
         var firstParameter = @event.Parameters.FirstOrDefault();
-        if (firstParameter is null)
-        {
-            return;
-        }
 
+        // Support methods with [When<TEvent>] attribute that have no parameters
         AppendWhenMethodHeader(@event, firstParameter, foldCode);
         RegisterParameterFactories(@event, usings, whenParameterDeclarations);
         var whenLookups = BuildExecutionContextLookups(@event, usings);
@@ -604,29 +1521,33 @@ public class GenerateProjectionCode
 
     private static void AppendWhenMethodHeader(
         ProjectionEventDefinition @event,
-        ParameterDefinition firstParameter,
+        ParameterDefinition? firstParameter,
         StringBuilder foldCode)
     {
         string awaitCode = @event.ActivationAwaitRequired ? "await " : string.Empty;
         foldCode.Append($$"""
                           case "{{@event.EventName}}":
-                            {{awaitCode}} When(
+                            {{awaitCode}} {{@event.ActivationType}}(
                           """);
 
-        if (firstParameter.Type == @event.TypeName && firstParameter.Type != IEventTypeName)
+        // If there's a first parameter, generate the event argument
+        if (firstParameter != null)
         {
-            foldCode.Append(
-                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
-        }
-        else if (firstParameter.Type == IEventTypeName)
-        {
-            foldCode.Append(
-                $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
-        }
+            if (firstParameter.Type == @event.TypeName && firstParameter.Type != IEventTypeName)
+            {
+                foldCode.Append(
+                    $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName}).Data()");
+            }
+            else if (firstParameter.Type == IEventTypeName)
+            {
+                foldCode.Append(
+                    $"JsonEvent.ToEvent(@event, {@event.TypeName}JsonSerializerContext.Default.{@event.TypeName})");
+            }
 
-        if (@event.Parameters.Count > 1)
-        {
-            foldCode.Append(", ");
+            if (@event.Parameters.Count > 1)
+            {
+                foldCode.Append(", ");
+            }
         }
     }
 
@@ -637,7 +1558,11 @@ public class GenerateProjectionCode
     {
         foreach (var parameterFactory in @event.WhenParameterValueFactories)
         {
-            var toAdd = $"{{\"{parameterFactory.ForType.Type}\", new {parameterFactory.Type.Type}()}}";
+            // Normalize type name to match what's used in WhenParameterDeclarations
+            // "string" -> "String", "int" -> "Int32", etc.
+            var normalizedTypeName = NormalizeTypeName(parameterFactory.ForType.Type, parameterFactory.ForType.Namespace);
+
+            var toAdd = $"{{\"{normalizedTypeName}\", new {parameterFactory.Type.Type}()}}";
             if (!whenParameterDeclarations.Contains(toAdd))
             {
                 whenParameterDeclarations.Add(toAdd);
@@ -648,6 +1573,36 @@ public class GenerateProjectionCode
                 usings.Add(parameterFactory.ForType.Namespace);
             }
         }
+    }
+
+    private static string NormalizeTypeName(string typeName, string typeNamespace)
+    {
+        // Map C# keyword aliases to their CLR type names
+        // This ensures consistent dictionary keys for lookups
+        if (typeNamespace == "System")
+        {
+            return typeName switch
+            {
+                "string" => "String",
+                "int" => "Int32",
+                "long" => "Int64",
+                "short" => "Int16",
+                "byte" => "Byte",
+                "sbyte" => "SByte",
+                "uint" => "UInt32",
+                "ulong" => "UInt64",
+                "ushort" => "UInt16",
+                "bool" => "Boolean",
+                "decimal" => "Decimal",
+                "double" => "Double",
+                "float" => "Single",
+                "char" => "Char",
+                "object" => "Object",
+                _ => typeName
+            };
+        }
+
+        return typeName;
     }
 
     private static Dictionary<string, string> BuildExecutionContextLookups(
@@ -670,12 +1625,24 @@ public class GenerateProjectionCode
         ProjectionEventDefinition @event,
         List<string> usings)
     {
-        return parameterDeclaration.Type switch
+        // Check if it's an IExecutionContext implementation type (like LanguageContext)
+        if (parameterDeclaration.IsExecutionContext)
         {
-            "IExecutionContextWithData" => BuildExecutionContextWithDataCode(parameterDeclaration, @event),
-            "IExecutionContext" or "IExecutionContextWithEvent" => BuildExecutionContextCode(@event),
-            _ => BuildCustomParameterLookupCode(parameterDeclaration, @event, usings)
-        };
+            // For IExecutionContext interface types, build the full context wrapper
+            if (parameterDeclaration.Type == "IExecutionContextWithData")
+            {
+                return BuildExecutionContextWithDataCode(parameterDeclaration, @event);
+            }
+            if (parameterDeclaration.Type == "IExecutionContext" || parameterDeclaration.Type == "IExecutionContextWithEvent")
+            {
+                return BuildExecutionContextCode(@event);
+            }
+            // For concrete implementation types (like LanguageContext), just cast parentContext
+            usings.Add(parameterDeclaration.Namespace);
+            return $"parentContext as {parameterDeclaration.Type}";
+        }
+
+        return BuildCustomParameterLookupCode(parameterDeclaration, @event, usings);
     }
 
     private static string BuildExecutionContextWithDataCode(
@@ -715,7 +1682,8 @@ public class GenerateProjectionCode
         List<string> usings)
     {
         usings.Add(parameterDeclaration.Namespace);
-        return $"GetWhenParameterValue<{parameterDeclaration.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{parameterDeclaration.Namespace}.{parameterDeclaration.Type}\",{Environment.NewLine}\t\t\tdocument, @event)!";
+        // The parameterDeclaration.Type already contains the full type name (e.g., "Demo.App.Events.SomeType" or "String")
+        return $"GetWhenParameterValue<{parameterDeclaration.Type}, {@event.TypeName}>({Environment.NewLine}\t\t\t\"{parameterDeclaration.Type}\",{Environment.NewLine}\t\t\tdocument, @event)!";
     }
 
     private static void AppendParameterArguments(
@@ -723,18 +1691,29 @@ public class GenerateProjectionCode
         Dictionary<string, string> whenLookups,
         StringBuilder foldCode)
     {
-        foreach (var parameter in @event.Parameters.Skip(1))
+        // Use WhenParameterDeclarations which already has the correct parameters
+        // (skipped appropriately based on whether there's an event parameter)
+        var parametersToGenerate = @event.WhenParameterDeclarations;
+
+        for (int i = 0; i < parametersToGenerate.Count; i++)
         {
-            if (whenLookups.TryGetValue(parameter.Type, out var lookupCode))
+            var paramDecl = parametersToGenerate[i];
+
+            if (whenLookups.TryGetValue(paramDecl.Type, out var lookupCode))
             {
                 foldCode.Append(lookupCode);
             }
             else
             {
-                AppendParameterByType(parameter, @event, foldCode);
+                // Find the matching parameter from @event.Parameters for AppendParameterByType
+                var matchingParam = @event.Parameters.FirstOrDefault(p => p.Type == paramDecl.Type);
+                if (matchingParam != null)
+                {
+                    AppendParameterByType(matchingParam, @event, foldCode);
+                }
             }
 
-            if (@event.Parameters[^1] != parameter)
+            if (i < parametersToGenerate.Count - 1)
             {
                 foldCode.Append(", ");
             }
@@ -764,18 +1743,5 @@ public class GenerateProjectionCode
         }
     }
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
-    {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
-
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
-
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
-    }
 
 }

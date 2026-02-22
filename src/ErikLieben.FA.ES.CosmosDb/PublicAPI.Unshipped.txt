@@ -1,0 +1,335 @@
+#nullable enable
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbDocumentEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbSnapshotEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTagEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity>>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo>>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.NullableInt32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int?>
+~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+abstract ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.LoadFromJson(string! json, ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> T?
+abstract ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.New() -> T!
+abstract ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.HasExternalCheckpoint.get -> bool
+abstract ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.LoadFromJson(string! json, ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> T?
+abstract ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.New() -> T!
+const ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DefaultStoreType = "cosmosdb" -> string!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, bool preserveTimestamp, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.CosmosDbDataStore(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.ReadAsStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.ReadAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.RemoveEventsForFailedCommitAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.CosmosDbDocumentStore(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagStoreFactory, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.CreateAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.GetAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.GetByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.GetFirstByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentTagStore
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentTagStore.CosmosDbDocumentTagStore(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbDocumentTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbEventStream
+ErikLieben.FA.ES.CosmosDb.CosmosDbEventStream.CosmosDbEventStream(ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods! document, ErikLieben.FA.ES.EventStream.IStreamDependencies! streamDependencies) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbEventStreamFactory
+ErikLieben.FA.ES.CosmosDb.CosmosDbEventStreamFactory.CosmosDbEventStreamFactory(ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings, Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagFactory, ErikLieben.FA.ES.IObjectDocumentFactory! objectDocumentFactory, ErikLieben.FA.ES.Aggregates.IAggregateFactory! aggregateFactory) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbEventStreamFactory.Create(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IEventStream!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.CosmosDbMultiDocumentProjectionFactory(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings, string! containerName, string! partitionKeyPath = "/partitionKey") -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetCheckpointContainerAsync() -> System.Threading.Tasks.Task<Microsoft.Azure.Cosmos.Container!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetDocumentsContainerAsync() -> System.Threading.Tasks.Task<Microsoft.Azure.Cosmos.Container!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetOrCreateProjectionAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.Projection!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.ProjectionType.get -> System.Type!
+ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.SaveProjectionAsync(ErikLieben.FA.ES.Projections.Projection! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.CosmosDbObjectDocumentFactory(ErikLieben.FA.ES.CosmosDb.ICosmosDbDocumentStore! cosmosDbDocumentStore) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.CosmosDbObjectDocumentFactory(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagStore, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! cosmosDbSettings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.GetAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.GetByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.GetFirstByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.GetOrCreateAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectDocumentFactory.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectIdProvider
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectIdProvider.CosmosDbObjectIdProvider(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectIdProvider.CountAsync(string! objectName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<long>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectIdProvider.ExistsAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbObjectIdProvider.GetObjectIdsAsync(string! objectName, string? continuationToken, int pageSize, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.PagedResult<string!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.CosmosDbProjectionFactory(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings, string? containerName = null, string! partitionKeyPath = "/projectionName") -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.GetOrCreateProjectionAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.Projection!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.GetProjectionsContainerAsync() -> System.Threading.Tasks.Task<Microsoft.Azure.Cosmos.Container!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.ProjectionType.get -> System.Type!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.SaveProjectionAsync(ErikLieben.FA.ES.Projections.Projection! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.CancelRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, string? error = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.CompleteRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.CosmosDbProjectionStatusCoordinator(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, string! databaseName, string? containerName = null, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator!>? logger = null) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.DisableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.EnableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.GetByStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Projections.ProjectionStatusInfo!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.GetStatusAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatusInfo?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.MarkReadyAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.RecoverStuckRebuildsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.StartCatchUpAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionStatusCoordinator.StartRebuildAsync(string! projectionName, string! objectId, ErikLieben.FA.ES.Projections.RebuildStrategy strategy, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.RebuildToken!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.CosmosDbSnapShotStore(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.DeleteAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.DeleteManyAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Collections.Generic.IEnumerable<int>! versions, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.GetAsync(System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.GetAsync<T>(System.Text.Json.Serialization.Metadata.JsonTypeInfo<T!>! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.ListSnapshotsAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.Snapshots.SnapshotMetadata!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbSnapShotStore.SetAsync(ErikLieben.FA.ES.Processors.IBase! object, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamMetadataProvider
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamMetadataProvider.CosmosDbStreamMetadataProvider(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.CosmosDb.CosmosDbStreamMetadataProvider!>? logger = null) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamMetadataProvider.GetStreamMetadataAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Retention.StreamMetadata?>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamTagStore
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamTagStore.CosmosDbStreamTagStore(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! settings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbStreamTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CosmosDbTagFactory(Microsoft.Azure.Cosmos.CosmosClient! cosmosClient, ErikLieben.FA.ES.CosmosDb.Configuration.EventStreamCosmosDbSettings! cosmosDbSettings) -> void
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CreateDocumentTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CreateDocumentTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CreateDocumentTagStore(string! type) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CreateStreamTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.CosmosDb.CosmosDbTagFactory.CreateStreamTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.CosmosDb.ICosmosDbDocumentStore
+ErikLieben.FA.ES.CosmosDb.ICosmosDbDocumentStore.GetByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.CosmosDb.ICosmosDbDocumentStore.GetFirstByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Active.get -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Active.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.CosmosDbDocumentEntity() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ETag.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ETag.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Hash.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Hash.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ObjectId.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ObjectId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ObjectName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.ObjectName.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.PrevHash.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.PrevHash.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.SchemaVersion.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.SchemaVersion.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.TerminatedStreams.get -> System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.TerminatedStreams.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Type.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.Type.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CausationId.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CausationId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CorrelationId.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CorrelationId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CosmosDbEventEntity() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Data.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Data.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.EventType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.EventType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.ExternalSequencer.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.ExternalSequencer.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.SchemaVersion.get -> int
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.SchemaVersion.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.StreamId.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.StreamId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Timestamp.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Timestamp.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Ttl.get -> int?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Ttl.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Type.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Type.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Version.get -> int
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.Version.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventStreamDocument
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventStreamDocument.CosmosDbEventStreamDocument(string! objectId, string! objectName, ErikLieben.FA.ES.Documents.StreamInformation! active, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.TerminatedStream!>! terminatedStreams, string? schemaVersion = null, string? hash = null, string? prevHash = null) -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbJsonContext() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbJsonContext(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.CosmosDbJsonEvent() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.CosmosDbJsonEvent(ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent! original) -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.OriginalTimestamp.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.OriginalTimestamp.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.Payload.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.Payload.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.ToEntity(string! streamId, bool preserveTimestamp = false) -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbPayloadConverter
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbPayloadConverter.CosmosDbPayloadConverter() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.CosmosDbSnapshotEntity() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.CreatedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Data.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Data.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.DataType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.DataType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Name.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Name.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.StreamId.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.StreamId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Type.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Type.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Version.get -> int
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.Version.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.CosmosDbStreamInfo() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.CreatedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.CurrentStreamVersion.get -> int
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.CurrentStreamVersion.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DataStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DataStore.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentStore.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentTagStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentTagStore.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentTagType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentTagType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.DocumentType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.EventStreamTagType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.EventStreamTagType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.LastModifiedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.LastModifiedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.SnapShotStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.SnapShotStore.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamIdentifier.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamIdentifier.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamTagStore.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamTagStore.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo.StreamType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.CosmosDbTagEntity() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.CreatedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.ObjectId.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.ObjectId.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.ObjectName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.ObjectName.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Tag.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Tag.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.TagKey.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.TagKey.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.TagType.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.TagType.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Type.get -> string!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.Type.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.CosmosDbTerminatedStreamInfo() -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.FinalVersion.get -> int?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.FinalVersion.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.Reason.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.Reason.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.StreamIdentifier.get -> string?
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.StreamIdentifier.set -> void
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.TerminatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo.TerminatedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.AppendDocument<TDocument>(TDocument! document) -> void
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.MultiDocumentProjection() -> void
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.MultiDocumentProjection(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> void
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.MultiDocumentProjection(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, ErikLieben.FA.ES.Checkpoint! checkpoint, string? checkpointFingerprint) -> void
+ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.PendingDocumentCount.get -> int
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.CheckpointDocument() -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.CreatedAt.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.CreatedAt.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Data.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Data.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Fingerprint.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Fingerprint.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.ProjectionName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.CheckpointDocument.ProjectionName.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer
+ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.CosmosDbSystemTextJsonSerializer() -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.CosmosDbSystemTextJsonSerializer(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Data.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Data.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Id.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Id.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.LastModified.get -> System.DateTimeOffset
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.LastModified.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.ProjectionDocument() -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.ProjectionName.get -> string!
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.ProjectionName.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Status.get -> int?
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.Status.set -> void
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.StatusUpdatedAt.get -> System.DateTimeOffset?
+ErikLieben.FA.ES.CosmosDb.Serialization.ProjectionDocument.StatusUpdatedAt.set -> void
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.<Clone>$() -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent!
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.EqualityContract.get -> System.Type!
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.GetHashCode() -> int
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.ToString() -> string!
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbPayloadConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> string?
+override ErikLieben.FA.ES.CosmosDb.Model.CosmosDbPayloadConverter.Write(System.Text.Json.Utf8JsonWriter! writer, string! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.Checkpoint.get -> ErikLieben.FA.ES.Checkpoint!
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.Checkpoint.set -> void
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.Fold<T>(ErikLieben.FA.ES.IEvent! event, ErikLieben.FA.ES.VersionToken! versionToken, T? data = null, ErikLieben.FA.ES.Projections.IExecutionContext? context = null) -> System.Threading.Tasks.Task!
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.PostWhenAll(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> System.Threading.Tasks.Task!
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.ToJson() -> string!
+override ErikLieben.FA.ES.CosmosDb.MultiDocumentProjection.WhenParameterValueFactories.get -> System.Collections.Generic.Dictionary<string!, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory!>!
+override ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.FromStream<T>(System.IO.Stream! stream) -> T
+override ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.SerializeMemberName(System.Reflection.MemberInfo! memberInfo) -> string!
+override ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.ToStream<T>(T input) -> System.IO.Stream!
+override sealed ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.Equals(ErikLieben.FA.ES.JsonEvent? other) -> bool
+static ErikLieben.FA.ES.CosmosDb.Builder.FaesBuilderExtensions.WithCosmosDbStreamMetadataProvider(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.CosmosDb.CosmosDbDataStore.ClearClosedStreamCache() -> void
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity.CreateId(string! objectName, string! objectId) -> string!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity.CreateId(string! streamId, int version) -> string!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventStreamDocument.From(ErikLieben.FA.ES.Documents.IObjectDocument! objectDocument) -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventStreamDocument!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.Default.get -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.From(ErikLieben.FA.ES.IEvent! event, bool preserveTimestamp = false) -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent?
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.FromEntity(ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity! entity) -> ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.operator !=(ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent? left, ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.operator ==(ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent? left, ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent? right) -> bool
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity.CreateId(string! streamId, int version, string? name = null) -> string!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.CreateId(string! tagType, string! objectName, string! tag, string! objectId) -> string!
+static ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity.CreateTagKey(string! objectName, string! tag) -> string!
+static ErikLieben.FA.ES.CosmosDb.Serialization.CosmosDbSystemTextJsonSerializer.CreateDefaultOptions() -> System.Text.Json.JsonSerializerOptions!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.CreateDocumentWrapper(object! document, string! serializedJson) -> System.Collections.Generic.Dictionary<string!, object!>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.DeleteAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.ExistsAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.ExtractPartitionKey(object! document) -> string!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetLastModifiedAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.DateTimeOffset?>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetOrCreateAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T!>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.GetStatusAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatus>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.SaveAsync(T! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.SaveCheckpointAsync(T! projection, string? projectionId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.SerializeDocument(object! document) -> string!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.SetStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.DeleteAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.ExistsAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.GetLastModifiedAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.DateTimeOffset?>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.GetOrCreateAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T!>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.GetStatusAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatus>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.LoadCheckpointAsync(string! checkpointFingerprint, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Checkpoint?>!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.SaveAsync(T! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.SaveCheckpointAsync(T! projection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.SetStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent.Equals(ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonEvent? other) -> bool
+

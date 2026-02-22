@@ -30,8 +30,11 @@ public static class BlobExtensions
         {
             using MemoryStream s = new();
             await blobClient.DownloadToAsync(s, requestOptions);
-            var json = Encoding.UTF8.GetString(s.ToArray());
-            return (JsonSerializer.Deserialize(json, jsonTypeInfo), ComputeSha256Hash(json));
+            var length = (int)s.Length;
+            var buffer = s.GetBuffer();
+            var hash = ComputeSha256Hash(buffer, 0, length);
+            var document = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(buffer, 0, length), jsonTypeInfo);
+            return (document, hash);
         }
         catch (RequestFailedException ex)
             when (ex.ErrorCode == BlobErrorCode.BlobNotFound || ex.ErrorCode == BlobErrorCode.ContainerNotFound)
@@ -79,7 +82,7 @@ public static class BlobExtensions
         {
             using MemoryStream s = new();
             await blobJson.DownloadToAsync(s, requestOptions);
-            return Encoding.UTF8.GetString(s.ToArray());
+            return Encoding.UTF8.GetString(s.GetBuffer(), 0, (int)s.Length);
 
         }
         catch (RequestFailedException ex)
@@ -107,20 +110,43 @@ public static class BlobExtensions
         Dictionary<string, string> metadata = null!,
         Dictionary<string, string> tags = null!)
     {
-        var info = await blobJson.UploadAsync(
-            new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(@object, jsonTypeInfo))),
-            new BlobUploadOptions
-            {
-                HttpHeaders = new BlobHttpHeaders
-                {
-                    ContentType = "application/json",
-                },
-                Conditions = requestOptions,
-                Tags = tags,
-                Metadata = metadata
-            });
+        var serialized = JsonSerializer.Serialize(@object, jsonTypeInfo);
+        var bytes = Encoding.UTF8.GetBytes(serialized);
 
-        return info.Value.ETag.ToString();
+        try
+        {
+            var info = await blobJson.UploadAsync(
+                new MemoryStream(bytes),
+                new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "application/json",
+                    },
+                    Conditions = requestOptions,
+                    Tags = tags,
+                    Metadata = metadata
+                });
+
+            return info.Value.ETag.ToString();
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.ContainerNotFound)
+        {
+            // Extract container and blob information for better error messaging
+            var containerName = blobJson.BlobContainerName;
+            var blobName = blobJson.Name;
+            var accountName = blobJson.AccountName;
+            var uri = blobJson.Uri;
+
+            throw new RequestFailedException(
+                ex.Status,
+                $"Container '{containerName}' not found when trying to save blob '{blobName}'. " +
+                $"Storage Account: {accountName}, URI: {uri}. " +
+                $"Ensure the container exists or enable autoCreateContainer in your storage configuration. " +
+                $"Original error: {ex.Message}",
+                ex.ErrorCode,
+                ex);
+        }
     }
 
     /// <summary>
@@ -143,38 +169,61 @@ public static class BlobExtensions
         Dictionary<string, string> tags = null!) where Document : class
     {
         var serialized = JsonSerializer.Serialize(entity, jsonTypeInfo);
-        var hash = ComputeSha256Hash(serialized);
+        var bytes = Encoding.UTF8.GetBytes(serialized);
+        var hash = ComputeSha256Hash(bytes, 0, bytes.Length);
 
-        var info = await blobClient.UploadAsync(
-            new MemoryStream(Encoding.UTF8.GetBytes(serialized)),
-            new BlobUploadOptions
-            {
-                HttpHeaders = new BlobHttpHeaders
+        try
+        {
+            var info = await blobClient.UploadAsync(
+                new MemoryStream(bytes),
+                new BlobUploadOptions
                 {
-                    ContentType = "application/json",
-                },
-                Conditions = requestOptions,
-                Tags = tags,
-                Metadata = metadata
-            });
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "application/json",
+                    },
+                    Conditions = requestOptions,
+                    Tags = tags,
+                    Metadata = metadata
+                });
 
-        return (info.Value.ETag.ToString(), hash);
+            return (info.Value.ETag.ToString(), hash);
+        }
+        catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.ContainerNotFound)
+        {
+            // Extract container and blob information for better error messaging
+            var containerName = blobClient.BlobContainerName;
+            var blobName = blobClient.Name;
+            var accountName = blobClient.AccountName;
+            var uri = blobClient.Uri;
+
+            throw new RequestFailedException(
+                ex.Status,
+                $"Container '{containerName}' not found when trying to save blob '{blobName}'. " +
+                $"Storage Account: {accountName}, URI: {uri}. " +
+                $"Ensure the container exists or enable autoCreateContainer in your storage configuration. " +
+                $"Original error: {ex.Message}",
+                ex.ErrorCode,
+                ex);
+        }
     }
 
     /// <summary>
-    /// Computes the hexadecimal SHA-256 hash for the specified text using UTF-8 encoding.
+    /// Computes the hexadecimal SHA-256 hash for the specified byte array.
     /// </summary>
-    /// <param name="rawData">The input text to hash.</param>
+    /// <param name="data">The input byte array.</param>
+    /// <param name="offset">The offset in the array.</param>
+    /// <param name="count">The number of bytes to hash.</param>
     /// <returns>The lowercase hexadecimal SHA-256 string.</returns>
-    private static string ComputeSha256Hash(string rawData)
+    private static string ComputeSha256Hash(byte[] data, int offset, int count)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        StringBuilder builder = new();
-        foreach (var b in bytes)
+        ReadOnlySpan<byte> dataSpan = data.AsSpan(offset, count);
+        var bytes = SHA256.HashData(dataSpan);
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
         {
-            builder.Append(b.ToString("x2"));
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
         }
-
-        return builder.ToString();
+        return new string(chars);
     }
 }

@@ -1,0 +1,110 @@
+<div class="admin-container">
+  <div class="header">
+    <div>
+      <h1>Connections</h1>
+      <p class="subtitle">Service health and storage connection details</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Health Check Card -->
+    <mat-card class="health-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>monitor_heart</mat-icon>
+        <mat-card-title>Service Health</mat-card-title>
+        <mat-card-subtitle>Monitor backend services status</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="health-grid">
+          @for (service of serviceHealth(); track service.name) {
+            <div class="health-item" [class.healthy]="service.status === 'healthy'" [class.unhealthy]="service.status === 'unhealthy'" [class.checking]="service.status === 'checking'">
+              <div class="health-status">
+                @if (service.status === 'checking') {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else if (service.status === 'healthy') {
+                  <mat-icon class="status-icon healthy">check_circle</mat-icon>
+                } @else {
+                  <mat-icon class="status-icon unhealthy">error</mat-icon>
+                }
+              </div>
+              <div class="health-info">
+                <span class="service-name">{{ service.name }}</span>
+                <span class="service-status">{{ service.status | titlecase }}</span>
+                @if (service.details) {
+                  <span class="service-details">{{ service.details }}</span>
+                }
+                @if (service.lastChecked) {
+                  <span class="last-checked">Last checked: {{ service.lastChecked | date:'HH:mm:ss' }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <div class="health-actions">
+          <button mat-stroked-button (click)="refreshHealthChecks()" [disabled]="isCheckingHealth()">
+            <mat-icon>refresh</mat-icon>
+            Refresh Health Checks
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="storage-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>storage</mat-icon>
+        <mat-card-title>Azure Storage Explorer</mat-card-title>
+        <mat-card-subtitle>Connect to browse event store data</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (storageConnection()) {
+          <div class="storage-info">
+            <p class="instructions">{{ storageConnection()!.instructions }}</p>
+
+            @for (account of storageConnection()!.storageAccounts; track account.connectionName) {
+              <div class="storage-account-section">
+                <h3>{{ account.connectionName }}</h3>
+                <p class="containers-info">Containers: {{ account.containers }}</p>
+
+                @if (account.isAzurite) {
+                  <div class="azurite-notice">
+                    <mat-icon>info</mat-icon>
+                    <span>Using local Azurite emulator (development storage)</span>
+                  </div>
+                }
+
+                <div class="connection-string-container">
+                  <div class="connection-string-header">
+                    <strong>Connection String:</strong>
+                    <button
+                      mat-icon-button
+                      (click)="copyConnectionString(account.connectionString)"
+                      matTooltip="Copy to clipboard">
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                  </div>
+                  <code class="connection-string">{{ account.connectionString }}</code>
+                </div>
+              </div>
+            }
+
+            <div class="storage-help">
+              <h4>How to use:</h4>
+              <ol>
+                <li>Download and install <a href="https://azure.microsoft.com/en-us/products/storage/storage-explorer/" target="_blank">Microsoft Azure Storage Explorer</a></li>
+                <li>Click the copy button above to copy the connection string</li>
+                <li>In Storage Explorer, click "Connect" → "Storage account or service"</li>
+                <li>Select "Connection string" and paste the copied value</li>
+                <li>Browse containers to see event streams, snapshots, and documents</li>
+              </ol>
+            </div>
+          </div>
+        } @else {
+          <div class="loading-storage">
+            <mat-spinner diameter="30"></mat-spinner>
+            <p>Loading storage connection...</p>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

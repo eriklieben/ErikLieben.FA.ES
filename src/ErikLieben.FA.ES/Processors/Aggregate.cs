@@ -1,18 +1,29 @@
-﻿using System.Diagnostics;
+using ErikLieben.FA.ES.Observability;
+using ErikLieben.FA.ES.Snapshots;
 
 namespace ErikLieben.FA.ES.Processors;
 
 /// <summary>
 /// Provides a base class for aggregates that fold events from an event stream to build up state through event sourcing.
 /// </summary>
-public abstract class Aggregate : IBase
+public abstract class Aggregate : IBase, ISnapshotTracker
 {
-     private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
+
+    // Snapshot tracking fields
+    private int _eventsSinceLastSnapshot;
+    private int _totalEventsProcessed;
+    private int? _lastSnapshotVersion;
 
     /// <summary>
     /// Gets the event stream associated with this aggregate.
     /// </summary>
     protected IEventStream Stream { get; private set; }
+
+    /// <summary>
+    /// Gets the event stream for external validation purposes.
+    /// Use this for checkpoint validation in idempotency patterns.
+    /// </summary>
+    public IEventStream EventStream => Stream;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Aggregate"/> class with the specified event stream.
@@ -41,8 +52,13 @@ public abstract class Aggregate : IBase
     /// <returns>A task representing the asynchronous fold operation.</returns>
     public async Task Fold()
     {
-
-        using var activity = ActivitySource.StartActivity($"Aggregate.{nameof(Fold)}");
+        using var activity = FaesInstrumentation.Core.StartActivity("Aggregate.Fold");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, Stream.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, Stream.Document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, Stream.Document.ObjectId);
+        }
 
         if (Stream.Settings.ManualFolding)
         {
@@ -68,10 +84,12 @@ public abstract class Aggregate : IBase
             events = await Stream.ReadAsync();
         }
 
-        var eventsToFold = events.ToList();
-        activity?.AddTag("EventsToFold", eventsToFold.Count.ToString());
+        activity?.SetTag(FaesSemanticConventions.EventsFolded, events.Count);
 
-        eventsToFold.ForEach(Fold);
+        foreach (var e in events)
+        {
+            Fold(e);
+        }
     }
 
     /// <summary>
@@ -85,4 +103,45 @@ public abstract class Aggregate : IBase
     /// <param name="snapshot">The snapshot object containing the saved aggregate state.</param>
     public virtual void ProcessSnapshot(object snapshot) { }
 
+    #region ISnapshotTracker Implementation
+
+    /// <inheritdoc />
+    public int EventsSinceLastSnapshot => _eventsSinceLastSnapshot;
+
+    /// <inheritdoc />
+    public int TotalEventsProcessed => _totalEventsProcessed;
+
+    /// <inheritdoc />
+    public int? LastSnapshotVersion => _lastSnapshotVersion;
+
+    /// <inheritdoc />
+    public void RecordEventsAppended(int count)
+    {
+        _eventsSinceLastSnapshot += count;
+        _totalEventsProcessed += count;
+    }
+
+    /// <inheritdoc />
+    public void RecordEventsFolded(int count)
+    {
+        _totalEventsProcessed += count;
+        _eventsSinceLastSnapshot += count;
+    }
+
+    /// <inheritdoc />
+    public void RecordSnapshotCreated(int version)
+    {
+        _lastSnapshotVersion = version;
+        _eventsSinceLastSnapshot = 0;
+    }
+
+    /// <inheritdoc />
+    public void ResetFromSnapshot(int snapshotVersion)
+    {
+        _lastSnapshotVersion = snapshotVersion;
+        _eventsSinceLastSnapshot = 0;
+        _totalEventsProcessed = snapshotVersion; // Approximate - actual events up to snapshot
+    }
+
+    #endregion
 }

@@ -88,4 +88,17 @@ public class ObjectMetadata<T> : ObjectMetadata
         return new VersionToken(objectName, Id!.ToString()!, StreamId, VersionInStream);
     }
 
+    /// <summary>
+    /// Converts this metadata to a causation ID string for traceability.
+    /// The causation ID is the string representation of the version token.
+    /// </summary>
+    /// <param name="objectName">The name of the object type.</param>
+    /// <returns>A string that can be used as CausationId in ActionMetadata.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="objectName"/> is null or whitespace.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when StreamId is null or whitespace, or when Id is null.</exception>
+    public string ToCausationId(string objectName)
+    {
+        return ToVersionToken(objectName).Value;
+    }
+
 }

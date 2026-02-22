@@ -6,12 +6,8 @@
         <Configuration>
           <Format>json,cobertura,lcov,opencover,xml</Format>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
-          <Include>
-            <ModulePath>ErikLieben.FA.ES.*.dll</ModulePath>
-          </Include>
-          <Exclude>
-            <ModulePath>*.Tests.dll</ModulePath>
-          </Exclude>
+          <Include>[ErikLieben.FA.ES*]*</Include>
+          <Exclude>[*.Tests]*</Exclude>
         </Configuration>
       </DataCollector>
     </DataCollectors>

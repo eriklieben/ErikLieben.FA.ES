@@ -1,4 +1,5 @@
 using ErikLieben.FA.ES.Testing.InMemory;
+using ErikLieben.FA.ES.Testing.Time;
 
 namespace ErikLieben.FA.ES.Testing;
 
@@ -6,6 +7,14 @@ public static class TestSetup
 {
     public static TestContext GetContext(
         IServiceProvider serviceProvider,
+        params Func<Type?, Type>[] aggregateFactorGets)
+    {
+        return GetContext(serviceProvider, null, aggregateFactorGets);
+    }
+
+    public static TestContext GetContext(
+        IServiceProvider serviceProvider,
+        ITestClock? testClock,
         params Func<Type?, Type>[] aggregateFactorGets)
     {
         IObjectDocumentFactory documentFactory = new InMemoryObjectDocumentFactory(
@@ -21,7 +30,8 @@ public static class TestSetup
         return new TestContext(
             documentFactory,
             eventStreamFactory,
-            dataStore);
+            dataStore,
+            testClock);
     }
 
 

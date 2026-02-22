@@ -1,0 +1,109 @@
+.project-list-container {
+  padding: 24px;
+  background-color: var(--ctp-base);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-weight: 500;
+    color: var(--ctp-text);
+  }
+
+  button mat-icon {
+    margin-right: 8px;
+  }
+}
+
+mat-card {
+  background-color: var(--ctp-crust);
+  border-radius: 12px;
+  box-shadow: var(--ctp-shadow-md);
+  border: 1px solid var(--ctp-surface0);
+}
+
+.project-table {
+  width: 100%;
+  background-color: transparent;
+
+  th {
+    background-color: var(--ctp-mantle);
+    color: var(--ctp-text);
+    font-weight: 600;
+    border-bottom: 2px solid var(--ctp-surface0);
+  }
+
+  td {
+    color: var(--ctp-text);
+    border-bottom: 1px solid var(--ctp-surface0);
+  }
+}
+
+.project-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--ctp-surface0);
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--ctp-overlay0);
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+mat-chip {
+  font-weight: 600;
+
+  &.completed {
+    --mdc-chip-elevated-container-color: var(--ctp-green);
+    --mdc-chip-label-text-color: var(--ctp-crust);
+    background-color: var(--ctp-green) !important;
+    color: var(--ctp-crust) !important;
+
+    .mdc-evolution-chip__text-label {
+      color: var(--ctp-crust) !important;
+    }
+  }
+
+  &:not(.completed) {
+    --mdc-chip-elevated-container-color: var(--ctp-blue);
+    --mdc-chip-label-text-color: var(--ctp-crust);
+    background-color: var(--ctp-blue) !important;
+    color: var(--ctp-crust) !important;
+
+    .mdc-evolution-chip__text-label {
+      color: var(--ctp-crust) !important;
+    }
+  }
+}
+
+button mat-icon {
+  color: var(--ctp-blue);
+}

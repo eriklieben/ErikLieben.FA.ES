@@ -53,7 +53,7 @@ jobs:
           dotnet test --configuration Release --no-build \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+            --settings coverage.runsettings
 
       - name: Upload coverage artifact
         id: upload
@@ -148,7 +148,8 @@ jobs:
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
             /d:sonar.pullrequest.key="$PR_NUMBER" \
             /d:sonar.pullrequest.branch="$HEAD_REF" \
-            /d:sonar.pullrequest.base="$BASE_REF"
+            /d:sonar.pullrequest.base="$BASE_REF" \
+            /d:sonar.exclusions="demo/**,benchmarks/**"
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
@@ -218,5 +219,5 @@ jobs:
           echo "- **Status:** $JOB_STATUS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Reports" >> $GITHUB_STEP_SUMMARY
-          echo "- [SonarCloud](https://sonarcloud.io/project/overview?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
+          echo "- [SonarCloud](https://sonarcloud.io/summary/new_code?id=eriklieben_ErikLieben.FA.ES&pullRequest=$PR_NUMBER)" >> $GITHUB_STEP_SUMMARY
           echo "- [Snyk Dashboard](https://app.snyk.io)" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,66 @@
+.users-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 8px 0;
+    color: var(--ctp-text);
+    font-size: 2rem;
+  }
+
+  .header-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--ctp-blue);
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--ctp-subtext-0);
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+
+  p {
+    color: var(--ctp-subtext-0);
+  }
+}
+
+.users-card {
+  background-color: var(--ctp-mantle);
+  color: var(--ctp-text);
+}
+
+.users-table {
+  width: 100%;
+  background-color: transparent;
+}
+
+.user-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .user-avatar {
+    color: var(--ctp-subtext-0);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}

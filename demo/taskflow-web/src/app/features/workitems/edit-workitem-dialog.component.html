@@ -1,0 +1,152 @@
+<h2 mat-dialog-title>Edit Work Item</h2>
+<mat-dialog-content>
+  <mat-tab-group>
+    <!-- Priority Tab -->
+    <mat-tab label="Priority">
+      <div class="tab-content">
+        <form [formGroup]="priorityForm">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="newPriority" required>
+              <mat-option value="Low">Low</mat-option>
+              <mat-option value="Medium">Medium</mat-option>
+              <mat-option value="High">High</mat-option>
+              <mat-option value="Critical">Critical</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Rationale</mat-label>
+            <textarea
+              matInput
+              formControlName="rationale"
+              placeholder="Why is the priority changing?"
+              rows="3"
+              required>
+            </textarea>
+          </mat-form-field>
+
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="updatePriority()"
+            [disabled]="priorityForm.invalid || isSubmitting">
+            Update Priority
+          </button>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- Description Tab -->
+    <mat-tab label="Description">
+      <div class="tab-content">
+        <form [formGroup]="descriptionForm">
+          <mat-form-field appearance="outline">
+            <mat-label>New Description</mat-label>
+            <textarea
+              matInput
+              formControlName="newDescription"
+              placeholder="Enter updated description"
+              rows="6"
+              required>
+            </textarea>
+          </mat-form-field>
+
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="updateDescription()"
+            [disabled]="descriptionForm.invalid || isSubmitting">
+            Update Description
+          </button>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- Deadline Tab -->
+    <mat-tab label="Deadline">
+      <div class="tab-content">
+        <form [formGroup]="deadlineForm">
+          <mat-form-field appearance="outline">
+            <mat-label>Deadline</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="deadline">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <div class="button-group">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="updateDeadline()"
+              [disabled]="deadlineForm.invalid || isSubmitting">
+              Set Deadline
+            </button>
+
+            @if (workItem.deadline) {
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="removeDeadline()"
+                [disabled]="isSubmitting">
+                Remove Deadline
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+
+    <!-- Assignment Tab -->
+    <mat-tab label="Assignment">
+      <div class="tab-content">
+        <form [formGroup]="assignmentForm">
+          <mat-form-field appearance="outline">
+            <mat-label>Assign To</mat-label>
+            <input matInput formControlName="memberId" placeholder="Enter member ID" required>
+          </mat-form-field>
+
+          <div class="button-group">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="assignResponsibility()"
+              [disabled]="assignmentForm.invalid || isSubmitting">
+              Assign
+            </button>
+
+            @if (workItem.assignedTo) {
+              <button
+                mat-stroked-button
+                (click)="unassignResponsibility()"
+                [disabled]="isSubmitting">
+                Unassign
+              </button>
+            }
+
+            @if (workItem.status === 'Planned' && workItem.assignedTo) {
+              <button
+                mat-raised-button
+                color="accent"
+                (click)="commenceWork()"
+                [disabled]="isSubmitting">
+                Start Work
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  @if (errorMessage) {
+    <div class="error-message">
+      {{ errorMessage }}
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()" [disabled]="isSubmitting">
+    Close
+  </button>
+</mat-dialog-actions>

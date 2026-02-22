@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Processors;
+﻿using System.Threading.Tasks;
+using ErikLieben.FA.ES.Processors;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob;
 

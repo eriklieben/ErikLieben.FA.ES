@@ -3,6 +3,7 @@ using ErikLieben.FA.ES.Aggregates;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.Notifications;
+using ErikLieben.FA.ES.Observability;
 using ErikLieben.FA.ES.Processors;
 using ErikLieben.FA.ES.Upcasting;
 using System.Diagnostics;
@@ -15,7 +16,18 @@ namespace ErikLieben.FA.ES.EventStream;
 /// </summary>
 public abstract class BaseEventStream : IEventStream
 {
-    private static readonly ActivitySource ActivitySource = new("ErikLieben.FA.ES");
+
+    /// <summary>
+    /// Gets the current version of the event stream.
+    /// Returns -1 if the stream has no events (new stream).
+    /// </summary>
+    public int CurrentVersion => Document.Active.CurrentStreamVersion;
+
+    /// <summary>
+    /// Gets the unique identifier for this event stream.
+    /// Used for checkpoint tracking and decision validation.
+    /// </summary>
+    public string StreamIdentifier => Document.Active.StreamIdentifier;
 
     /// <summary>
     /// Gets the object document with methods for this event stream.
@@ -38,6 +50,11 @@ public abstract class BaseEventStream : IEventStream
     public EventTypeRegistry EventTypeRegistry { get; } = new();
 
     /// <summary>
+    /// Gets the event upcaster registry for AOT-friendly schema version migration.
+    /// </summary>
+    public EventUpcasterRegistry EventUpcasterRegistry { get; } = new();
+
+    /// <summary>
     /// Gets the registered actions for the event stream.
     /// </summary>
     protected readonly List<IAction> Actions = [];
@@ -48,9 +65,9 @@ public abstract class BaseEventStream : IEventStream
     protected readonly List<INotification> Notifications = [];
 
     /// <summary>
-    /// Gets the registered upcasters for event migration.
+    /// Gets the registered upcasters for event migration (interface-based approach).
     /// </summary>
-    protected readonly List<IEventUpcaster> UpCasters = [];
+    protected readonly List<IUpcastEvent> UpCasters = [];
 
     /// <summary>
     /// Gets or sets the JSON type information for snapshot serialization.
@@ -61,6 +78,13 @@ public abstract class BaseEventStream : IEventStream
     /// Gets or sets the JSON type information for aggregate serialization.
     /// </summary>
     protected JsonTypeInfo? JsonTypeInfoAgg;
+
+    // Cached filtered action/notification lists for GetSession, rebuilt when registrations change
+    private bool _sessionCacheDirty = true;
+    private List<IStreamDocumentChunkClosedNotification> _cachedChunkClosedNotifications = [];
+    private List<IAsyncPostCommitAction> _cachedPostCommitActions = [];
+    private List<IPreAppendAction> _cachedPreAppendActions = [];
+    private List<IPostReadAction> _cachedPostReadActions = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseEventStream"/> class.
@@ -85,20 +109,35 @@ public abstract class BaseEventStream : IEventStream
     /// <param name="startVersion">The starting version (inclusive). Defaults to 0.</param>
     /// <param name="untilVersion">The ending version (inclusive). If null, reads to the latest version.</param>
     /// <param name="useExternalSequencer">Whether to order events by external sequencer.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A read-only collection of events.</returns>
     public async Task<IReadOnlyCollection<IEvent>> ReadAsync(
         int startVersion = 0,
         int? untilVersion = null,
-        bool useExternalSequencer = false)
+        bool useExternalSequencer = false,
+        CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("EventStream.ReadAsync");
+        using var activity = FaesInstrumentation.Core.StartActivity("EventStream.Read");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, Document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, Document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, Document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.StartVersion, startVersion);
+            if (untilVersion.HasValue)
+            {
+                activity.SetTag(FaesSemanticConventions.TargetVersion, untilVersion.Value);
+            }
+        }
+
         var events = new List<IEvent>();
 
         if (Document.Active.ChunkingEnabled())
         {
             foreach (var chunk in Document.Active.StreamChunks)
             {
-                var data = await StreamDependencies.DataStore.ReadAsync(Document, startVersion, untilVersion, chunk: chunk.ChunkIdentifier);
+                cancellationToken.ThrowIfCancellationRequested();
+                var data = await StreamDependencies.DataStore.ReadAsync(Document, startVersion, untilVersion, chunk: chunk.ChunkIdentifier, cancellationToken: cancellationToken);
                 if (data != null)
                 {
                     events.AddRange(data);
@@ -107,7 +146,7 @@ public abstract class BaseEventStream : IEventStream
         }
         else
         {
-            var data = await StreamDependencies.DataStore.ReadAsync(Document, startVersion, untilVersion);
+            var data = await StreamDependencies.DataStore.ReadAsync(Document, startVersion, untilVersion, cancellationToken: cancellationToken);
             if (data != null)
             {
                 events.AddRange(data);
@@ -122,9 +161,14 @@ public abstract class BaseEventStream : IEventStream
         if (UpCasters.Count != 0)
         {
             events = TryUpcasting(events);
+            // Upcasting may introduce nulls; remove them
+            events.RemoveAll(e => e == null);
         }
 
-        return events.Where(e => e != null).ToList();
+        activity?.SetTag(FaesSemanticConventions.EventCount, events.Count);
+        FaesMetrics.RecordEventsRead(events.Count, Document.ObjectName, "blob");
+
+        return events;
     }
 
     private List<IEvent> TryUpcasting(List<IEvent> events)
@@ -146,27 +190,24 @@ public abstract class BaseEventStream : IEventStream
         return events;
     }
 
-    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IEventUpcaster upcast)
+    private static void Upcast(ref List<IEvent> events, int i, ref IEvent? @event, IUpcastEvent upcast)
     {
         if (@event == null) {
             return;
         }
 
-        var upcastedTo = upcast.UpCast(@event).ToArray();
-        switch (upcastedTo.Length)
+        var upcastedTo = upcast.UpCast(@event).ToList();
+        switch (upcastedTo.Count)
         {
             case 1:
                 @event = upcastedTo[0];
                 events[i] = @event;
                 break;
             case > 1:
-                {
-                    @event = upcastedTo[0];
-                    var nextItem = i < events.Count ? (Index)(i + 1) : (Index)(events.Count - 1);
-                    var prevItem = i > 0 ? (Index)(i - 1) : (Index)0;
-                    events = [.. events[0..prevItem], .. upcastedTo, .. events[nextItem..]];
-                    break;
-                }
+                @event = upcastedTo[0];
+                events.RemoveAt(i);
+                events.InsertRange(i, upcastedTo);
+                break;
             default:
                 events[i] = @event;
                 break;
@@ -174,19 +215,32 @@ public abstract class BaseEventStream : IEventStream
     }
 
     /// <summary>
-    /// Registers an event type with its associated metadata.
+    /// Registers an event type with its associated metadata and schema version 1.
     /// </summary>
     /// <typeparam name="T">The CLR type of the event.</typeparam>
     /// <param name="eventName">The name used to identify the event in storage.</param>
     /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
     public void RegisterEvent<T>(string eventName, JsonTypeInfo<T> jsonTypeInfo)
-    {
-        using var activity = ActivitySource.StartActivity("EventStream.RegisterEvent");
-        var type = typeof(T);
-        activity?.AddTag("EventType", type.FullName);
-        activity?.AddTag("EventName", eventName);
+        => RegisterEvent(eventName, 1, jsonTypeInfo);
 
-        EventTypeRegistry.Add(type, eventName, jsonTypeInfo);
+    /// <summary>
+    /// Registers an event type with its associated metadata and specified schema version.
+    /// </summary>
+    /// <typeparam name="T">The CLR type of the event.</typeparam>
+    /// <param name="eventName">The name used to identify the event in storage.</param>
+    /// <param name="schemaVersion">The schema version of the event.</param>
+    /// <param name="jsonTypeInfo">The JSON type information for serialization/deserialization.</param>
+    public void RegisterEvent<T>(string eventName, int schemaVersion, JsonTypeInfo<T> jsonTypeInfo)
+    {
+        using var activity = FaesInstrumentation.Core.StartActivity("EventStream.RegisterEvent");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.EventType, typeof(T).FullName);
+            activity.SetTag(FaesSemanticConventions.EventName, eventName);
+            activity.SetTag(FaesSemanticConventions.SchemaVersion, schemaVersion);
+        }
+
+        EventTypeRegistry.Add(type: typeof(T), eventName, schemaVersion, jsonTypeInfo);
     }
 
     /// <summary>
@@ -196,10 +250,11 @@ public abstract class BaseEventStream : IEventStream
     /// <exception cref="ArgumentNullException">Thrown when action is null.</exception>
     public void RegisterAction(IAction action)
     {
-        using var activity = ActivitySource.StartActivity("EventStream.RegisterAction");
-        activity?.AddTag("ActionType", action.GetType().FullName);
+        using var activity = FaesInstrumentation.Core.StartActivity("EventStream.RegisterAction");
+        activity?.SetTag(FaesSemanticConventions.ActionType, action?.GetType().FullName);
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -211,6 +266,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -222,6 +278,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -233,6 +290,7 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(action);
         Actions.Add(action);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
@@ -244,17 +302,37 @@ public abstract class BaseEventStream : IEventStream
     {
         ArgumentNullException.ThrowIfNull(notification);
         Notifications.Add(notification);
+        _sessionCacheDirty = true;
     }
 
     /// <summary>
-    /// Registers an upcaster for migrating events from old versions to new versions.
+    /// Registers an event upcast for migrating legacy event schemas to current versions.
+    /// Upcasts transform old event formats into new ones during event stream replay,
+    /// enabling backward compatibility and schema evolution.
     /// </summary>
-    /// <param name="upcaster">The upcaster to register.</param>
-    /// <exception cref="ArgumentNullException">Thrown when upcaster is null.</exception>
-    public void RegisterUpcaster(IEventUpcaster upcaster)
+    /// <param name="upcast">The event upcast to register.</param>
+    /// <exception cref="ArgumentNullException">Thrown when upcast is null.</exception>
+    public void RegisterUpcast(IUpcastEvent upcast)
     {
-        ArgumentNullException.ThrowIfNull(upcaster);
-        UpCasters.Add(upcaster);
+        ArgumentNullException.ThrowIfNull(upcast);
+        UpCasters.Add(upcast);
+    }
+
+    /// <summary>
+    /// Registers an upcaster function for transforming events from one schema version to another.
+    /// This is an AOT-friendly alternative to <see cref="RegisterUpcast(IUpcastEvent)"/>.
+    /// </summary>
+    /// <typeparam name="TFrom">The source event type.</typeparam>
+    /// <typeparam name="TTo">The target event type.</typeparam>
+    /// <param name="eventName">The event name (must match the stored event type).</param>
+    /// <param name="fromVersion">The source schema version to upcast from.</param>
+    /// <param name="toVersion">The target schema version to upcast to.</param>
+    /// <param name="upcast">The function that transforms the event.</param>
+    public void RegisterUpcaster<TFrom, TTo>(string eventName, int fromVersion, int toVersion, Func<TFrom, TTo> upcast)
+        where TFrom : class
+        where TTo : class
+    {
+        EventUpcasterRegistry.Add(eventName, fromVersion, toVersion, upcast);
     }
 
     /// <summary>
@@ -262,11 +340,19 @@ public abstract class BaseEventStream : IEventStream
     /// </summary>
     /// <param name="context">The action to execute within the session context.</param>
     /// <param name="constraint">The concurrency constraint for the session. Defaults to <see cref="Constraint.Loose"/>.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous session operation.</returns>
     /// <exception cref="ConstraintException">Thrown when the constraint is violated.</exception>
-    public async Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose)
+    public async Task Session(Action<ILeasedSession> context, Constraint constraint = Constraint.Loose, CancellationToken cancellationToken = default)
     {
-        using var activity = ActivitySource.StartActivity("EventStream.Session");
+        using var activity = FaesInstrumentation.Core.StartActivity("EventStream.Session");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, Document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, Document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, Document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.SessionConstraint, constraint.ToString());
+        }
 
         switch (constraint)
         {
@@ -279,7 +365,7 @@ public abstract class BaseEventStream : IEventStream
         var session = GetSession(Actions);
 
         context(session);
-        await session.CommitAsync();
+        await session.CommitAsync(cancellationToken);
     }
 
     /// <summary>
@@ -288,11 +374,20 @@ public abstract class BaseEventStream : IEventStream
     /// <typeparam name="T">The type of the aggregate.</typeparam>
     /// <param name="untilVersion">The version up to which to create the snapshot.</param>
     /// <param name="name">Optional name for the snapshot.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous snapshot operation.</returns>
     /// <exception cref="SnapshotJsonTypeInfoNotSetException">Thrown when JSON type info is not set.</exception>
-    public async Task Snapshot<T>(int untilVersion, string? name = null) where T : class, IBase
+    public async Task Snapshot<T>(int untilVersion, string? name = null, CancellationToken cancellationToken = default) where T : class, IBase
     {
-        using var activity = ActivitySource.StartActivity("EventStream.Snapshot");
+        using var activity = FaesInstrumentation.Core.StartActivity("EventStream.Snapshot");
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(FaesSemanticConventions.StreamId, Document.Active.StreamIdentifier);
+            activity.SetTag(FaesSemanticConventions.ObjectName, Document.ObjectName);
+            activity.SetTag(FaesSemanticConventions.ObjectId, Document.ObjectId);
+            activity.SetTag(FaesSemanticConventions.TargetVersion, untilVersion);
+            activity.SetTag(FaesSemanticConventions.SnapshotName, name);
+        }
 
         if (JsonTypeInfoAgg == null)
         {
@@ -302,16 +397,16 @@ public abstract class BaseEventStream : IEventStream
         var factory = StreamDependencies.AggregateFactory.GetFactory<T>();
         var obj = factory!.Create(this);
 
-        var events = await ReadAsync(0, untilVersion);
+        var events = await ReadAsync(0, untilVersion, cancellationToken: cancellationToken);
 
         foreach(var @event in events)
         {
             obj.Fold(@event);
         }
 
-        await StreamDependencies.SnapshotStore.SetAsync(obj, JsonTypeInfoAgg, Document, untilVersion, name);
+        await StreamDependencies.SnapshotStore.SetAsync(obj, JsonTypeInfoAgg, Document, untilVersion, name, cancellationToken);
         Document.Active.SnapShots.Add(new StreamSnapShot { UntilVersion = untilVersion, Name = name });
-        await StreamDependencies.ObjectDocumentFactory.SetAsync(Document);
+        await StreamDependencies.ObjectDocumentFactory.SetAsync(Document, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -319,16 +414,17 @@ public abstract class BaseEventStream : IEventStream
     /// </summary>
     /// <param name="version">The version of the snapshot to retrieve.</param>
     /// <param name="name">Optional name of the snapshot.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>The snapshot object, or null if not found.</returns>
     /// <exception cref="SnapshotJsonTypeInfoNotSetException">Thrown when JSON type info is not set.</exception>
-    public Task<object?> GetSnapShot(int version, string? name = null)
+    public Task<object?> GetSnapShot(int version, string? name = null, CancellationToken cancellationToken = default)
     {
         if (JsonTypeInfoSnapshot == null)
         {
             throw new SnapshotJsonTypeInfoNotSetException();
         }
 
-        return StreamDependencies.SnapshotStore.GetAsync(JsonTypeInfoSnapshot, Document, version, name);
+        return StreamDependencies.SnapshotStore.GetAsync(JsonTypeInfoSnapshot, Document, version, name, cancellationToken);
     }
 
     /// <summary>
@@ -361,14 +457,23 @@ public abstract class BaseEventStream : IEventStream
     /// <returns>A new leased session instance.</returns>
     protected ILeasedSession GetSession(List<IAction> actions)
     {
+        if (_sessionCacheDirty)
+        {
+            _cachedChunkClosedNotifications = Notifications.OfType<IStreamDocumentChunkClosedNotification>().ToList();
+            _cachedPostCommitActions = actions.OfType<IAsyncPostCommitAction>().ToList();
+            _cachedPreAppendActions = actions.OfType<IPreAppendAction>().ToList();
+            _cachedPostReadActions = actions.OfType<IPostReadAction>().ToList();
+            _sessionCacheDirty = false;
+        }
+
         return new LeasedSession(
             this,
             Document,
             StreamDependencies.DataStore,
             StreamDependencies.ObjectDocumentFactory,
-            Notifications.OfType<IStreamDocumentChunkClosedNotification>(),
-            actions.OfType<IAsyncPostCommitAction>(),
-            actions.OfType<IPreAppendAction>(),
-            actions.OfType<IPostReadAction>());
+            _cachedChunkClosedNotifications,
+            _cachedPostCommitActions,
+            _cachedPreAppendActions,
+            _cachedPostReadActions);
     }
 }

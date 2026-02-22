@@ -1,0 +1,254 @@
+#nullable enable
+ErikLieben.FA.ES.AzureStorage.Blob.BlobJsonProjectionAttribute
+ErikLieben.FA.ES.AzureStorage.Blob.BlobJsonProjectionAttribute.BlobJsonProjectionAttribute(string! path) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.BlobJsonProjectionAttribute.Connection.get -> string?
+ErikLieben.FA.ES.AzureStorage.Blob.BlobJsonProjectionAttribute.Connection.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.BlobJsonProjectionAttribute.Path.get -> string!
+ErikLieben.FA.ES.AzureStorage.Blob.IBlobStreamTieringService
+ErikLieben.FA.ES.AzureStorage.Blob.IBlobStreamTieringService.GetStreamTierAsync(string! objectName, string! streamId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Azure.Storage.Blobs.Models.AccessTier?>!
+ErikLieben.FA.ES.AzureStorage.Blob.IBlobStreamTieringService.RehydrateStreamAsync(string! objectName, string! streamId, ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority priority = ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority.Standard, Azure.Storage.Blobs.Models.AccessTier? targetTier = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult!>!
+ErikLieben.FA.ES.AzureStorage.Blob.IBlobStreamTieringService.SetStreamTierAsync(string! objectName, string! streamId, Azure.Storage.Blobs.Models.AccessTier tier, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.AzureStorage.Blob.TieringResult!>!
+ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority
+ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority.High = 1 -> ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority
+ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority.Standard = 0 -> ErikLieben.FA.ES.AzureStorage.Blob.RehydratePriority
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Deconstruct(out string! StreamId, out bool Initiated, out System.TimeSpan? EstimatedDuration, out string? Error) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Error.get -> string?
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Error.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.EstimatedDuration.get -> System.TimeSpan?
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.EstimatedDuration.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Initiated.get -> bool
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Initiated.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.RehydrationResult(ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult! original) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.RehydrationResult(string! StreamId, bool Initiated, System.TimeSpan? EstimatedDuration, string? Error) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.StreamId.get -> string!
+ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.StreamId.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.BlobsProcessed.get -> int
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.BlobsProcessed.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Deconstruct(out string! StreamId, out Azure.Storage.Blobs.Models.AccessTier? PreviousTier, out Azure.Storage.Blobs.Models.AccessTier NewTier, out int BlobsProcessed, out bool Success, out string? Error) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Error.get -> string?
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Error.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.NewTier.get -> Azure.Storage.Blobs.Models.AccessTier
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.NewTier.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.PreviousTier.get -> Azure.Storage.Blobs.Models.AccessTier?
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.PreviousTier.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.StreamId.get -> string!
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.StreamId.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Success.get -> bool
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Success.init -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.TieringResult(ErikLieben.FA.ES.AzureStorage.Blob.TieringResult! original) -> void
+ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.TieringResult(string! StreamId, Azure.Storage.Blobs.Models.AccessTier? PreviousTier, Azure.Storage.Blobs.Models.AccessTier NewTier, int BlobsProcessed, bool Success, string? Error) -> void
+ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.AutoCreateContainer.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.AutoCreateContainer.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultChunkSize.get -> int
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultChunkSize.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDataStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDataStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentContainerName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentContainerName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentTagStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultDocumentTagStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultSnapShotStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.DefaultSnapShotStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.EnableStreamChunks.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.EnableStreamChunks.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.EventStreamAppendBlobSettings(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings! original) -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.EventStreamAppendBlobSettings(string! defaultDataStore, string! defaultDocumentStore = null, string! defaultSnapShotStore = null, string! defaultDocumentTagStore = null, bool autoCreateContainer = true, bool enableStreamChunks = false, int defaultChunkSize = 1000, string! defaultDocumentContainerName = "object-document-store") -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.AutoCreateContainer.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.AutoCreateContainer.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultChunkSize.get -> int
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultChunkSize.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDataStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDataStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentContainerName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentContainerName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentTagStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultDocumentTagStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultSnapShotStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.DefaultSnapShotStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.EnableStreamChunks.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.EnableStreamChunks.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.EventStreamBlobSettings(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings! original) -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.EventStreamBlobSettings(string! defaultDataStore, string! defaultDocumentStore = null, string! defaultSnapShotStore = null, string! defaultDocumentTagStore = null, bool autoCreateContainer = true, bool enableStreamChunks = false, int defaultChunkSize = 1000, string! defaultDocumentContainerName = "object-document-store") -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettingsValidator
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettingsValidator.EventStreamBlobSettingsValidator() -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettingsValidatorExtensions
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.AutoCreateTable.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.AutoCreateTable.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.CompressLargePayloads.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.CompressLargePayloads.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultChunkSize.get -> int
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultChunkSize.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDataStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDataStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentSnapShotTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentSnapShotTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTagStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTagStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTagTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultDocumentTagTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultEventTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultEventTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultSnapShotStore.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultSnapShotStore.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultSnapshotTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultSnapshotTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultStreamChunkTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultStreamChunkTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultStreamTagTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultStreamTagTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultTerminatedStreamTableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.DefaultTerminatedStreamTableName.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EnableLargePayloadChunking.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EnableLargePayloadChunking.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EnableStreamChunks.get -> bool
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EnableStreamChunks.init -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EventStreamTableSettings(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings! original) -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EventStreamTableSettings(string! defaultDataStore, string? defaultDocumentStore = null, string? defaultSnapShotStore = null, string? defaultDocumentTagStore = null, bool autoCreateTable = true, bool enableStreamChunks = false, int defaultChunkSize = 1000, string! defaultDocumentTableName = "objectdocumentstore", string! defaultEventTableName = "eventstream", string! defaultSnapshotTableName = "snapshots", string! defaultDocumentTagTableName = "documenttags", string! defaultStreamTagTableName = "streamtags", string! defaultStreamChunkTableName = "streamchunks", string! defaultDocumentSnapShotTableName = "documentsnapshots", string! defaultTerminatedStreamTableName = "terminatedstreams", bool enableLargePayloadChunking = false, int payloadChunkThresholdBytes = 61440, bool compressLargePayloads = true) -> void
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.PayloadChunkThresholdBytes.get -> int
+ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.PayloadChunkThresholdBytes.init -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDataStoreProcessingException
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDataStoreProcessingException.BlobDataStoreProcessingException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDataStoreProcessingException.BlobDataStoreProcessingException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentNotFoundException
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentNotFoundException.BlobDocumentNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentNotFoundException.BlobDocumentNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentStoreContainerNotFoundException
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentStoreContainerNotFoundException.BlobDocumentStoreContainerNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.BlobDocumentStoreContainerNotFoundException.BlobDocumentStoreContainerNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.DocumentConfigurationException
+ErikLieben.FA.ES.AzureStorage.Exceptions.DocumentConfigurationException.DocumentConfigurationException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.DocumentConfigurationException.DocumentConfigurationException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDataStoreProcessingException
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDataStoreProcessingException.TableDataStoreProcessingException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDataStoreProcessingException.TableDataStoreProcessingException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentNotFoundException
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentNotFoundException.TableDocumentNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentNotFoundException.TableDocumentNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentStoreTableNotFoundException
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentStoreTableNotFoundException.TableDocumentStoreTableNotFoundException(string! message) -> void
+ErikLieben.FA.ES.AzureStorage.Exceptions.TableDocumentStoreTableNotFoundException.TableDocumentStoreTableNotFoundException(string! message, System.Exception! innerException) -> void
+ErikLieben.FA.ES.AzureStorage.HealthChecks.BlobStorageHealthCheck
+ErikLieben.FA.ES.AzureStorage.HealthChecks.BlobStorageHealthCheck.BlobStorageHealthCheck(Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient!>! clientFactory, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings! settings, string! clientName = "Store") -> void
+ErikLieben.FA.ES.AzureStorage.HealthChecks.BlobStorageHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+ErikLieben.FA.ES.AzureStorage.HealthChecks.HealthCheckBuilderExtensions
+ErikLieben.FA.ES.AzureStorage.HealthChecks.TableStorageHealthCheck
+ErikLieben.FA.ES.AzureStorage.HealthChecks.TableStorageHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+ErikLieben.FA.ES.AzureStorage.HealthChecks.TableStorageHealthCheck.TableStorageHealthCheck(Microsoft.Extensions.Azure.IAzureClientFactory<Azure.Data.Tables.TableServiceClient!>! clientFactory, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings! settings, string! clientName = "Store") -> void
+ErikLieben.FA.ES.AzureStorage.ServiceCollectionExtensions
+ErikLieben.FA.ES.AzureStorage.Table.TableOperation
+ErikLieben.FA.ES.AzureStorage.Table.TableOperation.Entity.get -> Azure.Data.Tables.ITableEntity?
+ErikLieben.FA.ES.AzureStorage.Table.TableOperation.PartitionKey.get -> string!
+ErikLieben.FA.ES.AzureStorage.Table.TableOperation.RowKey.get -> string!
+ErikLieben.FA.ES.AzureStorage.Table.TableOperation.Type.get -> ErikLieben.FA.ES.AzureStorage.Table.TableOperationType
+ErikLieben.FA.ES.AzureStorage.Table.TableOperationType
+ErikLieben.FA.ES.AzureStorage.Table.TableOperationType.Delete = 1 -> ErikLieben.FA.ES.AzureStorage.Table.TableOperationType
+ErikLieben.FA.ES.AzureStorage.Table.TableOperationType.Upsert = 0 -> ErikLieben.FA.ES.AzureStorage.Table.TableOperationType
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.DeleteEntity(string! partitionKey, string! rowKey) -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.PendingOperationCount.get -> int
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.TableProjection() -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.TableProjection(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.TableProjection(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, ErikLieben.FA.ES.Checkpoint! checkpoint, string? checkpointFingerprint) -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjection.UpsertEntity<TEntity>(TEntity entity) -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.AutoCreateTable.get -> bool
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.AutoCreateTable.set -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.ConnectionName.get -> string?
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.ConnectionName.set -> void
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.TableName.get -> string!
+ErikLieben.FA.ES.AzureStorage.Table.TableProjectionAttribute.TableProjectionAttribute(string! tableName) -> void
+override ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.GetHashCode() -> int
+override ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.ToString() -> string!
+override ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.GetHashCode() -> int
+override ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.ToString() -> string!
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.ToString() -> string!
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.ToString() -> string!
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.GetHashCode() -> int
+override ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.ToString() -> string!
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.Checkpoint.get -> ErikLieben.FA.ES.Checkpoint!
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.Checkpoint.set -> void
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.Fold<T>(ErikLieben.FA.ES.IEvent! event, ErikLieben.FA.ES.VersionToken! versionToken, T? data = null, ErikLieben.FA.ES.Projections.IExecutionContext? context = null) -> System.Threading.Tasks.Task!
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.PostWhenAll(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> System.Threading.Tasks.Task!
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.ToJson() -> string!
+override ErikLieben.FA.ES.AzureStorage.Table.TableProjection.WhenParameterValueFactories.get -> System.Collections.Generic.Dictionary<string!, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory!>!
+static ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Failed(string! streamId, string! error) -> ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult!
+static ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.NotNeeded(string! streamId) -> ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult!
+static ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.operator !=(ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult? left, ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.operator ==(ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult? left, ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Succeeded(string! streamId, System.TimeSpan estimatedDuration) -> ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult!
+static ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Failed(string! streamId, string! error) -> ErikLieben.FA.ES.AzureStorage.Blob.TieringResult!
+static ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.operator !=(ErikLieben.FA.ES.AzureStorage.Blob.TieringResult? left, ErikLieben.FA.ES.AzureStorage.Blob.TieringResult? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.operator ==(ErikLieben.FA.ES.AzureStorage.Blob.TieringResult? left, ErikLieben.FA.ES.AzureStorage.Blob.TieringResult? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Succeeded(string! streamId, Azure.Storage.Blobs.Models.AccessTier? previousTier, Azure.Storage.Blobs.Models.AccessTier newTier, int blobsProcessed) -> ErikLieben.FA.ES.AzureStorage.Blob.TieringResult!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseAppendBlobStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings! settings) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseAppendBlobStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, System.Action<ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings!>! configure) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseBlobStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings! settings) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseBlobStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, System.Action<ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings!>! configure) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseTableStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings! settings) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.UseTableStorage(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, System.Action<ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings!>! configure) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithAzureStorageHealthChecks(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! clientName = "Store") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithBlobProjectionStatusCoordinator(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! containerName = "projection-status") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithBlobStorageHealthCheck(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! clientName = "Store") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithTableProjectionStatusCoordinator(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! tableName = "ProjectionStatus") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithTableStorageHealthCheck(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! clientName = "Store") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Builder.FaesBuilderExtensions.WithTableStreamMetadataProvider(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder) -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.operator !=(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.operator ==(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.operator !=(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.operator ==(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettingsValidatorExtensions.ValidateWithValidator(this Microsoft.Extensions.Options.OptionsBuilder<ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings!>! builder) -> Microsoft.Extensions.Options.OptionsBuilder<ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings!>!
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.operator !=(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.operator ==(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings? left, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings? right) -> bool
+static ErikLieben.FA.ES.AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfIsNullOrWhiteSpace(string? argument, string? paramName = null) -> void
+static ErikLieben.FA.ES.AzureStorage.Exceptions.DocumentConfigurationException.ThrowIfNull(object? argument, string? paramName = null) -> void
+static ErikLieben.FA.ES.AzureStorage.HealthChecks.HealthCheckBuilderExtensions.AddAzureStorageHealthChecks(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! clientName = "Store", System.Collections.Generic.IEnumerable<string!>? tags = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static ErikLieben.FA.ES.AzureStorage.HealthChecks.HealthCheckBuilderExtensions.AddBlobStorageHealthCheck(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name = "azure-blob-storage", string! clientName = "Store", Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = null, System.Collections.Generic.IEnumerable<string!>? tags = null, System.TimeSpan? timeout = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static ErikLieben.FA.ES.AzureStorage.HealthChecks.HealthCheckBuilderExtensions.AddTableStorageHealthCheck(this Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder! builder, string! name = "azure-table-storage", string! clientName = "Store", Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus? failureStatus = null, System.Collections.Generic.IEnumerable<string!>? tags = null, System.TimeSpan? timeout = null) -> Microsoft.Extensions.DependencyInjection.IHealthChecksBuilder!
+static ErikLieben.FA.ES.AzureStorage.ServiceCollectionExtensions.ConfigureAppendBlobEventStore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.AzureStorage.ServiceCollectionExtensions.ConfigureBlobEventStore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.AzureStorage.ServiceCollectionExtensions.ConfigureTableEventStore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static ErikLieben.FA.ES.AzureStorage.ServiceCollectionExtensions.RegisterAzureExceptionExtractor() -> void
+static ErikLieben.FA.ES.AzureStorage.Table.TableOperation.Delete(string! partitionKey, string! rowKey) -> ErikLieben.FA.ES.AzureStorage.Table.TableOperation!
+static ErikLieben.FA.ES.AzureStorage.Table.TableOperation.Upsert<TEntity>(TEntity entity) -> ErikLieben.FA.ES.AzureStorage.Table.TableOperation!
+virtual ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.<Clone>$() -> ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult!
+virtual ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.Equals(ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult? other) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Blob.RehydrationResult.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.<Clone>$() -> ErikLieben.FA.ES.AzureStorage.Blob.TieringResult!
+virtual ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.Equals(ErikLieben.FA.ES.AzureStorage.Blob.TieringResult? other) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Blob.TieringResult.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.<Clone>$() -> ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.Equals(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings? other) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamAppendBlobSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.<Clone>$() -> ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.Equals(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings? other) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamBlobSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.<Clone>$() -> ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.EqualityContract.get -> System.Type!
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.Equals(ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings? other) -> bool
+virtual ErikLieben.FA.ES.AzureStorage.Configuration.EventStreamTableSettings.PrintMembers(System.Text.StringBuilder! builder) -> bool
+

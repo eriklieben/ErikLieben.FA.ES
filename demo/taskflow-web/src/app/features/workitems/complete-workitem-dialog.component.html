@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>Complete Work Item</h2>
+<mat-dialog-content>
+  <p class="workitem-title">{{ data.title }}</p>
+
+  <form [formGroup]="completeForm">
+    <mat-form-field appearance="outline">
+      <mat-label>Completion Notes</mat-label>
+      <textarea
+        matInput
+        formControlName="outcome"
+        placeholder="Describe what was accomplished..."
+        rows="4"
+        required>
+      </textarea>
+      <mat-hint>Provide details about the completed work</mat-hint>
+      <mat-error *ngIf="completeForm.get('outcome')?.hasError('required')">
+        Completion notes are required
+      </mat-error>
+    </mat-form-field>
+  </form>
+
+  @if (errorMessage) {
+    <div class="error-message">
+      {{ errorMessage }}
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="isSubmitting">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="completeForm.invalid || isSubmitting">
+    @if (isSubmitting) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Complete
+    }
+  </button>
+</mat-dialog-actions>

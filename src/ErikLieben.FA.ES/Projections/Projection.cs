@@ -1,4 +1,6 @@
 ﻿using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Observability;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -58,17 +60,45 @@ public abstract class Projection : IProjectionBase
     }
 
     /// <summary>
+    /// Folds a single event into the projection state using version token.
+    /// This is the primary fold method that derived classes should implement.
+    /// Version tokens are more efficient as they avoid redundant document lookups.
+    /// </summary>
+    /// <typeparam name="T">The type of auxiliary data provided to the fold operation.</typeparam>
+    /// <param name="event">The event to fold.</param>
+    /// <param name="versionToken">The version token identifying the event's version context.</param>
+    /// <param name="data">Optional auxiliary data passed to the fold operation; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
+    /// <returns>A task that represents the asynchronous fold operation.</returns>
+    public abstract Task Fold<T>(
+        IEvent @event,
+        VersionToken versionToken,
+        T? data = null,
+        IExecutionContext? context = null)
+        where T : class;
+
+    /// <summary>
     /// Folds a single event into the projection state using the specified document and optional data/context.
+    /// This method exists for backwards compatibility and convenience. It creates a version token
+    /// from the event and document, then delegates to the version token-based fold method.
     /// </summary>
     /// <typeparam name="T">The type of auxiliary data provided to the fold operation.</typeparam>
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The object document that represents the projection target.</param>
     /// <param name="data">Optional auxiliary data passed to the fold operation; may be null.</param>
-    /// <param name="context">Optional execution context for the operation; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous fold operation.</returns>
-    public abstract Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
+    [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
+    public virtual Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
         IExecutionContext? context = null)
-        where T : class;
+        where T : class
+    {
+        // Create version token from event and document
+        var versionToken = new VersionToken(@event, document);
+
+        // Delegate to the version token-based fold method
+        return Fold(@event, versionToken, data, context);
+    }
 
     /// <summary>
     /// Folds a single event into the projection without auxiliary data or execution context.
@@ -76,6 +106,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The projection object document.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken) instead. This overload will be removed in a future major version.")]
     public Task Fold(IEvent @event, IObjectDocument document)
     {
         return Fold<object>(@event, document, null!, null!);
@@ -86,11 +117,35 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <param name="event">The event to fold.</param>
     /// <param name="document">The projection object document.</param>
-    /// <param name="context">Optional execution context for the operation; may be null.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    [Obsolete("Use Fold(IEvent, VersionToken, IExecutionContext?) instead. This overload will be removed in a future major version.")]
     protected Task Fold(IEvent @event, IObjectDocument document, IExecutionContext? context)
     {
         return Fold<object>(@event, document, null!, context);
+    }
+
+    /// <summary>
+    /// Folds a single event into the projection using version token without auxiliary data.
+    /// </summary>
+    /// <param name="event">The event to fold.</param>
+    /// <param name="versionToken">The version token identifying the event's version context.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public Task Fold(IEvent @event, VersionToken versionToken)
+    {
+        return Fold<object>(@event, versionToken, null!, null!);
+    }
+
+    /// <summary>
+    /// Folds a single event with version token and execution context but without auxiliary data.
+    /// </summary>
+    /// <param name="event">The event to fold.</param>
+    /// <param name="versionToken">The version token identifying the event's version context.</param>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    protected Task Fold(IEvent @event, VersionToken versionToken, IExecutionContext? context)
+    {
+        return Fold<object>(@event, versionToken, null!, context);
     }
 
     /// <summary>
@@ -126,6 +181,16 @@ public abstract class Projection : IProjectionBase
     protected abstract Task PostWhenAll(IObjectDocument document);
 
     /// <summary>
+    /// Initializes the projection from metadata provided when the projection is created as a destination.
+    /// Override this method to extract values from the metadata dictionary.
+    /// </summary>
+    /// <param name="metadata">The metadata dictionary containing initialization values.</param>
+    public virtual void InitializeFromMetadata(Dictionary<string, string> metadata)
+    {
+        // Default implementation does nothing. Override to use metadata values.
+    }
+
+    /// <summary>
     /// Gets the set of parameter value factories keyed by a parameter type identifier, used to resolve values for When-method parameters.
     /// </summary>
     protected abstract Dictionary<string, IProjectionWhenParameterValueFactory> WhenParameterValueFactories { get; }
@@ -139,6 +204,7 @@ public abstract class Projection : IProjectionBase
     /// <param name="document">The current projection object document.</param>
     /// <param name="event">The current event being processed.</param>
     /// <returns>The created parameter value or null when no matching factory exists.</returns>
+    [Obsolete("Use GetWhenParameterValue<T, Te>(string, VersionToken, IEvent) instead. This overload will be removed in a future major version.")]
     protected T? GetWhenParameterValue<T, Te>(string forType, IObjectDocument document, IEvent @event)
         where Te : class where T : class
     {
@@ -160,47 +226,87 @@ public abstract class Projection : IProjectionBase
     }
 
     /// <summary>
+    /// Resolves the value for a parameter used in a When-method based on the configured factories using version token.
+    /// </summary>
+    /// <typeparam name="T">The type of the parameter to create.</typeparam>
+    /// <typeparam name="Te">The event payload type expected by the factory.</typeparam>
+    /// <param name="forType">The identifier of the parameter type to resolve.</param>
+    /// <param name="versionToken">The current version token.</param>
+    /// <param name="event">The current event being processed.</param>
+    /// <returns>The created parameter value or null when no matching factory exists.</returns>
+    protected T? GetWhenParameterValue<T, Te>(string forType, VersionToken versionToken, IEvent @event)
+        where Te : class where T : class
+    {
+        WhenParameterValueFactories.TryGetValue(forType, out var factory);
+        if (factory == null)
+        {
+            return null;
+        }
+
+        // Try event-specific factory with version token
+        if (factory is IProjectionWhenParameterValueFactoryWithVersionToken<T, Te> vtFactoryWithEvent)
+        {
+            var eventW = @event as IEvent<Te>;
+            return vtFactoryWithEvent.Create(versionToken, eventW!);
+        }
+
+        // Try non-event-specific factory with version token
+        if (factory is IProjectionWhenParameterValueFactoryWithVersionToken<T> vtFactory)
+        {
+            return vtFactory.Create(versionToken, @event);
+        }
+
+        // Fallback: no version token support
+        return null;
+    }
+
+    /// <summary>
     /// Updates the projection to the specified version by reading and folding events from the event stream.
     /// </summary>
     /// <param name="token">The version token that identifies the object and target version.</param>
-    /// <param name="context">Optional execution context for the update operation; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
-    public async Task UpdateToVersion(VersionToken token, IExecutionContext? context = null)
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
+    /// <returns>A result indicating whether the update was processed or skipped due to projection status.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when required factories are not initialized.</exception>
+    public async Task<ProjectionUpdateResult> UpdateToVersion(VersionToken token, IExecutionContext? context = null)
     {
-        if (DocumentFactory == null)
+        using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        SetUpdateToVersionActivityTags(activity, token);
+
+        if (!ShouldProcessUpdates())
         {
-            throw new InvalidOperationException("DocumentFactory is not initialized on this Projection instance.");
-        }
-        if (EventStreamFactory == null)
-        {
-            throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
+            return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
         }
 
-        // Guard clause to reduce nesting and cognitive complexity
+        EnsureFactoriesInitialized();
+
         if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
         {
-            return;
+            return ProjectionUpdateResult.Success;
         }
 
-        var startIdx = -1;
-        if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
-        {
-            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
-        }
+        var startIdx = GetStartIndex(token);
+        SetActivityTag(activity, FaesSemanticConventions.StartVersion, startIdx);
 
-        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-        var eventStream = EventStreamFactory.Create(document);
-        var events = token.TryUpdateToLatestVersion ?
-            await eventStream.ReadAsync(startIdx) :
-            await eventStream.ReadAsync(startIdx, token.Version);
+        var (document, events) = await ReadEventsForUpdate(token, startIdx);
 
         foreach (var @event in events)
         {
-            await Fold(@event, document, context);
-            UpdateVersionIndex(@event, document);
+            var eventVersionToken = new VersionToken(@event, document);
+            await Fold(@event, eventVersionToken, context);
+            UpdateCheckpointEntry(eventVersionToken);
         }
+
+        if (events.Count > 0)
+        {
+            CheckpointFingerprint = GenerateCheckpointFingerprint();
+        }
+
+        RecordUpdateMetrics(activity, timer, events.Count);
+
         await PostWhenAll(document);
+        return ProjectionUpdateResult.Success;
     }
 
     /// <summary>
@@ -208,13 +314,91 @@ public abstract class Projection : IProjectionBase
     /// </summary>
     /// <typeparam name="T">The type of the auxiliary data and execution context.</typeparam>
     /// <param name="token">The version token that identifies the object and target version.</param>
-    /// <param name="context">An optional execution context carrying the parent event and correlation; may be null.</param>
+    /// <param name="context">Optional execution context carrying the parent event and correlation; may be null.</param>
     /// <param name="data">Optional auxiliary data made available during folding; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when required factories are not initialized.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the parent event in the context equals the current event, indicating a processing loop.</exception>
-    public async Task UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
+    /// <returns>A result indicating whether the update was processed or skipped due to projection status.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when required factories are not initialized or when a processing loop is detected.</exception>
+    public async Task<ProjectionUpdateResult> UpdateToVersion<T>(VersionToken token, IExecutionContextWithData<T>? context = null, T? data = null)
         where T: class
+    {
+        using var activity = FaesInstrumentation.Projections.StartActivity("Projection.UpdateToVersion");
+        var timer = activity != null ? FaesMetrics.StartTimer() : null;
+
+        SetUpdateToVersionActivityTags(activity, token);
+
+        if (!ShouldProcessUpdates())
+        {
+            return ProjectionUpdateResult.SkippedDueToStatus(Status, token);
+        }
+
+        EnsureFactoriesInitialized();
+
+        if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
+        {
+            return ProjectionUpdateResult.Success;
+        }
+
+        var startIdx = GetStartIndex(token);
+        SetActivityTag(activity, FaesSemanticConventions.StartVersion, startIdx);
+
+        var (document, events) = await ReadEventsForUpdate(token, startIdx);
+
+        foreach (var @event in events)
+        {
+            ValidateNoProcessingLoop(@event, context);
+
+            var eventVersionToken = new VersionToken(@event, document);
+            await Fold(@event, eventVersionToken, data, context);
+            UpdateCheckpointEntry(eventVersionToken);
+        }
+
+        if (events.Count > 0)
+        {
+            CheckpointFingerprint = GenerateCheckpointFingerprint();
+            await PostWhenAll(document);
+        }
+
+        RecordUpdateMetrics(activity, timer, events.Count);
+
+        return ProjectionUpdateResult.Success;
+    }
+
+    /// <summary>
+    /// Updates the projection to the latest versions for all tracked streams in the checkpoint.
+    /// </summary>
+    /// <param name="context">Optional execution context for nested projections; may be null.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    public async Task UpdateToLatestVersion(IExecutionContext? context = null)
+    {
+        foreach (var versionToken in Checkpoint)
+        {
+            await UpdateToVersion(new VersionToken(versionToken.Key, versionToken.Value).ToLatestVersion(), context);
+        }
+    }
+
+    private void SetUpdateToVersionActivityTags(Activity? activity, VersionToken token)
+    {
+        if (activity?.IsAllDataRequested != true)
+        {
+            return;
+        }
+
+        activity.SetTag(FaesSemanticConventions.ProjectionType, GetType().Name);
+        activity.SetTag(FaesSemanticConventions.ObjectName, token.ObjectName);
+        activity.SetTag(FaesSemanticConventions.ObjectId, token.ObjectId);
+        activity.SetTag(FaesSemanticConventions.TargetVersion, token.Version);
+        activity.SetTag(FaesSemanticConventions.ProjectionStatus, Status.ToString());
+    }
+
+    private static void SetActivityTag(Activity? activity, string key, object value)
+    {
+        if (activity?.IsAllDataRequested == true)
+        {
+            activity.SetTag(key, value);
+        }
+    }
+
+    private void EnsureFactoriesInitialized()
     {
         if (DocumentFactory == null)
         {
@@ -224,81 +408,97 @@ public abstract class Projection : IProjectionBase
         {
             throw new InvalidOperationException("EventStreamFactory is not initialized on this Projection instance.");
         }
+    }
 
-        if (!IsNewer(token) && !token.TryUpdateToLatestVersion)
-        {
-            return;
-        }
-
-        var startIdx = -1;
+    private int GetStartIndex(VersionToken token)
+    {
         if (Checkpoint.TryGetValue(token.ObjectIdentifier, out var value))
         {
-            startIdx = new VersionToken(token.ObjectIdentifier, value).Version + 1;
+            return new VersionToken(token.ObjectIdentifier, value).Version + 1;
         }
 
-        var document = await DocumentFactory.GetAsync(token.ObjectName, token.ObjectId);
-        var eventStream = EventStreamFactory.Create(document);
+        return -1;
+    }
+
+    private async Task<(IObjectDocument document, IReadOnlyCollection<IEvent> events)> ReadEventsForUpdate(VersionToken token, int startIdx)
+    {
+        var document = await DocumentFactory!.GetAsync(token.ObjectName, token.ObjectId);
+        var eventStream = EventStreamFactory!.Create(document);
         var events = token.TryUpdateToLatestVersion ?
             await eventStream.ReadAsync(startIdx) :
             await eventStream.ReadAsync(startIdx, token.Version);
 
-        foreach (var @event in events)
-        {
-            if (context != null && @event == context.Event)
-            {
-                throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
-            }
+        return (document, events);
+    }
 
-            await Fold(@event, document, data, context);
-            UpdateVersionIndex(@event, document);
+    private static void ValidateNoProcessingLoop<T>(IEvent @event, IExecutionContextWithData<T>? context) where T : class
+    {
+        if (context != null && @event == context.Event)
+        {
+            throw new InvalidOperationException("Parent event is the same as the current event; a processing loop may be occurring.");
+        }
+    }
+
+    private void RecordUpdateMetrics(Activity? activity, Stopwatch? timer, int eventCount)
+    {
+        SetActivityTag(activity, FaesSemanticConventions.EventsFolded, eventCount);
+
+        if (timer == null)
+        {
+            return;
         }
 
-        if (events.Count > 0)
+        var durationMs = FaesMetrics.StopAndGetElapsedMs(timer);
+        FaesMetrics.RecordProjectionUpdateDuration(durationMs, GetType().Name);
+        if (eventCount > 0)
         {
-            await PostWhenAll(document);
+            FaesMetrics.RecordProjectionEventsFolded(eventCount, GetType().Name);
         }
     }
 
     /// <summary>
-    /// Updates the projection to the latest versions for all tracked streams in the checkpoint.
+    /// Updates the checkpoint entry without regenerating the fingerprint.
+    /// Use this when processing multiple events in a batch for better performance.
     /// </summary>
-    /// <param name="context">Optional execution context for the update operation; may be null.</param>
-    /// <returns>A task that represents the asynchronous update operation.</returns>
-    public async Task UpdateToLatestVersion(IExecutionContext? context = null)
+    /// <param name="versionToken">The version token that was processed.</param>
+    private void UpdateCheckpointEntry(VersionToken versionToken)
     {
-        foreach (var versionToken in Checkpoint)
+        if (Checkpoint!.ContainsKey(versionToken.ObjectIdentifier))
         {
-            await UpdateToVersion(new VersionToken(versionToken.Key, versionToken.Value).ToLatestVersion(), null, context);
-        }
-    }
-
-    private void UpdateVersionIndex(IEvent @event, IObjectDocument document)
-    {
-        var idString = new VersionToken(@event, document);
-        if (Checkpoint!.ContainsKey(idString.ObjectIdentifier))
-        {
-            Checkpoint[idString.ObjectIdentifier] = idString.VersionIdentifier;
+            Checkpoint[versionToken.ObjectIdentifier] = versionToken.VersionIdentifier;
         }
         else
         {
-            Checkpoint.Add(idString.ObjectIdentifier, idString.VersionIdentifier);
+            Checkpoint.Add(versionToken.ObjectIdentifier, versionToken.VersionIdentifier);
         }
+    }
 
+    /// <summary>
+    /// Updates the checkpoint to record that the given version token has been processed.
+    /// This method can be called externally (e.g., by a parent routed projection) to update
+    /// the checkpoint after folding an event. Also regenerates the fingerprint.
+    /// </summary>
+    /// <param name="versionToken">The version token that was processed.</param>
+    public virtual void UpdateCheckpoint(VersionToken versionToken)
+    {
+        UpdateCheckpointEntry(versionToken);
         CheckpointFingerprint = GenerateCheckpointFingerprint();
     }
 
     private string GenerateCheckpointFingerprint()
     {
         StringBuilder sb = new();
-        Checkpoint!.OrderBy(i => i.Key).ToList().ForEach(i => sb.AppendLine($"{i.Key}|{i.Value}"));
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
-        StringBuilder builder = new();
-        foreach (var t in bytes)
+        foreach (var item in Checkpoint!.OrderBy(i => i.Key))
         {
-            builder.Append(t.ToString("x2"));
+            sb.AppendLine($"{item.Key}|{item.Value}");
         }
-        var checkpointFingerprint = builder.ToString();
-        return checkpointFingerprint;
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
+        }
+        return new string(chars);
     }
 
     /// <summary>
@@ -313,4 +513,143 @@ public abstract class Projection : IProjectionBase
     [JsonPropertyName("$checkpointFingerprint")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? CheckpointFingerprint { get; set; }
+
+    /// <summary>
+    /// Gets or sets the operational status of this projection.
+    /// When <see cref="ProjectionStatus.Rebuilding"/>, inline updates are skipped (the rebuild process will handle them).
+    /// When <see cref="ProjectionStatus.Disabled"/>, all updates are skipped.
+    /// </summary>
+    [JsonPropertyName("$status")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public ProjectionStatus Status { get; set; } = ProjectionStatus.Active;
+
+    /// <summary>
+    /// Gets or sets when the status was last changed.
+    /// </summary>
+    [JsonPropertyName("$statusChangedAt")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? StatusChangedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets metadata about an ongoing or completed rebuild.
+    /// </summary>
+    [JsonPropertyName("$rebuildInfo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RebuildInfo? RebuildInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the schema version stored in this projection instance.
+    /// This value is compared against <see cref="CodeSchemaVersion"/> to detect when a rebuild is needed.
+    /// </summary>
+    [JsonPropertyName("$schemaVersion")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int SchemaVersion { get; set; } = 1;
+
+    /// <summary>
+    /// Gets the schema version defined in code via the <see cref="Attributes.ProjectionVersionAttribute"/>.
+    /// Generated code overrides this property with the actual attribute value.
+    /// </summary>
+    [JsonIgnore]
+    public virtual int CodeSchemaVersion => 1;
+
+    /// <summary>
+    /// Gets whether the stored schema version differs from the code schema version,
+    /// indicating that a rebuild may be needed to apply new projection logic.
+    /// </summary>
+    [JsonIgnore]
+    public bool NeedsSchemaUpgrade => SchemaVersion != CodeSchemaVersion;
+
+    /// <summary>
+    /// Determines whether this projection should process updates based on its current status.
+    /// Override this method to customize status checking behavior.
+    /// </summary>
+    /// <returns>True if updates should be processed; false if they should be skipped.</returns>
+    protected virtual bool ShouldProcessUpdates() => Status == ProjectionStatus.Active;
+
+    /// <summary>
+    /// Sets the projection status with automatic timestamp update.
+    /// </summary>
+    /// <param name="status">The new status.</param>
+    public void SetStatus(ProjectionStatus status)
+    {
+        if (Status != status)
+        {
+            Status = status;
+            StatusChangedAt = DateTimeOffset.UtcNow;
+        }
+    }
+
+    /// <summary>
+    /// Starts a rebuild, setting status to <see cref="ProjectionStatus.Rebuilding"/> and initializing rebuild info.
+    /// </summary>
+    /// <param name="strategy">The rebuild strategy to use.</param>
+    /// <param name="sourceVersion">The source schema version (for blue-green).</param>
+    public void StartRebuild(RebuildStrategy strategy, int sourceVersion = 0)
+    {
+        SetStatus(ProjectionStatus.Rebuilding);
+        RebuildInfo = RebuildInfo.Start(strategy, sourceVersion, CheckpointFingerprint);
+    }
+
+    /// <summary>
+    /// Transitions to catch-up phase after initial rebuild (blocking strategy).
+    /// </summary>
+    public void StartCatchUp()
+    {
+        if (Status != ProjectionStatus.Rebuilding)
+        {
+            throw new InvalidOperationException($"Cannot start catch-up from status {Status}. Must be Rebuilding.");
+        }
+
+        SetStatus(ProjectionStatus.CatchingUp);
+        RebuildInfo = RebuildInfo?.WithProgress();
+    }
+
+    /// <summary>
+    /// Marks the rebuild as ready (blue-green strategy).
+    /// </summary>
+    public void MarkReady()
+    {
+        if (Status is not (ProjectionStatus.Rebuilding or ProjectionStatus.CatchingUp))
+        {
+            throw new InvalidOperationException($"Cannot mark ready from status {Status}. Must be Rebuilding or CatchingUp.");
+        }
+
+        SetStatus(ProjectionStatus.Ready);
+        RebuildInfo = RebuildInfo?.WithCompletion();
+    }
+
+    /// <summary>
+    /// Activates the projection, typically after a rebuild completes.
+    /// </summary>
+    public void Activate()
+    {
+        SetStatus(ProjectionStatus.Active);
+        RebuildInfo = RebuildInfo?.WithCompletion();
+    }
+
+    /// <summary>
+    /// Archives the projection (for blue-green rollback retention).
+    /// </summary>
+    public void Archive()
+    {
+        SetStatus(ProjectionStatus.Archived);
+    }
+
+    /// <summary>
+    /// Marks the projection as failed with an error message.
+    /// </summary>
+    /// <param name="error">The error message.</param>
+    public void MarkFailed(string error)
+    {
+        SetStatus(ProjectionStatus.Failed);
+        RebuildInfo = RebuildInfo?.WithError(error);
+    }
+
+    /// <summary>
+    /// Disables the projection.
+    /// </summary>
+    public void Disable()
+    {
+        SetStatus(ProjectionStatus.Disabled);
+    }
 }

@@ -1,0 +1,205 @@
+<div class="welcome-container">
+      <!-- Hero Section -->
+      <div class="hero-section">
+        <div class="hero-content">
+          <div class="hero-icon">
+            <mat-icon>auto_awesome</mat-icon>
+          </div>
+          <h1>Welcome to TaskFlow</h1>
+          <p class="hero-subtitle">
+            A demo application showcasing the <strong>ErikLieben.FA.ES</strong> event sourcing framework.
+            Explore how event sourcing patterns work in a real-world project management application.
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Start Section -->
+      <section class="quick-start-section">
+        <h2>
+          <mat-icon>rocket_launch</mat-icon>
+          Quick Start Guide
+        </h2>
+        <p class="section-description">
+          Follow these steps to explore the full capabilities of the demo application:
+        </p>
+
+        <div class="steps-container">
+          @for (step of quickStartSteps; track step.number) {
+            <div class="step-card">
+              <div class="step-number">{{ step.number }}</div>
+              <div class="step-content">
+                <div class="step-header">
+                  <mat-icon>{{ step.icon }}</mat-icon>
+                  <h3>{{ step.title }}</h3>
+                </div>
+                <p>{{ step.description }}</p>
+                <a mat-stroked-button [routerLink]="step.link" color="primary">
+                  <mat-icon>arrow_forward</mat-icon>
+                  {{ step.linkText }}
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- Navigation Sections Overview -->
+      <section class="sections-overview">
+        <h2>
+          <mat-icon>explore</mat-icon>
+          Explore the Application
+        </h2>
+        <p class="section-description">
+          The sidebar navigation is organized into four main sections. Click on any section header to expand or collapse it.
+        </p>
+
+        <div class="section-cards">
+          <!-- Our App Section -->
+          <mat-card class="section-card app-section">
+            <mat-card-header>
+              <mat-icon mat-card-avatar class="section-icon">apps</mat-icon>
+              <mat-card-title>Our App</mat-card-title>
+              <mat-card-subtitle>The sample application</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p>
+                This is the main TaskFlow application - a project management tool built entirely with event sourcing.
+                Create projects, manage work items, and see how all changes are captured as events.
+              </p>
+              <ul>
+                <li><strong>Dashboard</strong> - Overview of projects and activity</li>
+                <li><strong>Projects</strong> - Create and manage projects</li>
+                <li><strong>Work Items</strong> - Track tasks and issues</li>
+                <li><strong>Kanban Board</strong> - Visual workflow management</li>
+                <li><strong>Users</strong> - Team member management</li>
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <a mat-button routerLink="/dashboard" color="primary">
+                <mat-icon>dashboard</mat-icon>
+                Go to Dashboard
+              </a>
+            </mat-card-actions>
+          </mat-card>
+
+          <!-- Testing Section -->
+          <mat-card class="section-card testing-section">
+            <mat-card-header>
+              <mat-icon mat-card-avatar class="section-icon">science</mat-icon>
+              <mat-card-title>Testing</mat-card-title>
+              <mat-card-subtitle>Demo data & connections</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p>
+                Tools for setting up and testing the application. Generate sample data to populate the app
+                and monitor backend connections.
+              </p>
+              <ul>
+                <li><strong>Generate Demo Data</strong> - Create sample projects, work items, and users</li>
+                <li><strong>Connections</strong> - Monitor SignalR and API connectivity</li>
+              </ul>
+              <div class="highlight-note">
+                <mat-icon>lightbulb</mat-icon>
+                <span>Start here! Generate demo data first to see the app in action.</span>
+              </div>
+            </mat-card-content>
+            <mat-card-actions>
+              <a mat-raised-button routerLink="/demo-data" color="accent">
+                <mat-icon>data_object</mat-icon>
+                Generate Demo Data
+              </a>
+            </mat-card-actions>
+          </mat-card>
+
+          <!-- Event Sourcing Section -->
+          <mat-card class="section-card es-section">
+            <mat-card-header>
+              <mat-icon mat-card-avatar class="section-icon">bolt</mat-icon>
+              <mat-card-title>Eventsourcing</mat-card-title>
+              <mat-card-subtitle>Framework features in action</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p>
+                Interactive demonstrations of event sourcing concepts. See how the framework handles
+                complex scenarios like time travel, projections, and schema evolution.
+              </p>
+              <ul>
+                <li><strong>Time Travel</strong> - Replay events to see past states</li>
+                <li><strong>Projections</strong> - Transform events into read models</li>
+                <li><strong>Event Upcasting</strong> - Transform old events on read</li>
+                <li><strong>Event Versioning</strong> - Handle breaking schema changes</li>
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <a mat-button routerLink="/time-travel" color="primary">
+                <mat-icon>history</mat-icon>
+                Explore Time Travel
+              </a>
+            </mat-card-actions>
+          </mat-card>
+
+          <!-- Documentation Section -->
+          <mat-card class="section-card docs-section">
+            <mat-card-header>
+              <mat-icon mat-card-avatar class="section-icon">menu_book</mat-icon>
+              <mat-card-title>Documentation</mat-card-title>
+              <mat-card-subtitle>Framework guides & examples</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p>
+                Comprehensive documentation for the ErikLieben.FA.ES framework. Learn how to build
+                your own event-sourced applications.
+              </p>
+              <ul>
+                <li><strong>Getting Started</strong> - Quick introduction to the framework</li>
+                <li><strong>Aggregates</strong> - Domain modeling with aggregates</li>
+                <li><strong>Events</strong> - Defining and handling events</li>
+                <li><strong>Projections</strong> - Building read models</li>
+                <li><strong>CLI Tool</strong> - Code generation utilities</li>
+                <li><strong>Testing</strong> - Unit testing event-sourced code</li>
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <a mat-button routerLink="/docs/getting-started" color="primary">
+                <mat-icon>rocket_launch</mat-icon>
+                Read Documentation
+              </a>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- Key Concepts Section -->
+      <section class="concepts-section">
+        <h2>
+          <mat-icon>school</mat-icon>
+          Key Concepts
+        </h2>
+        <p class="section-description">
+          Event sourcing is a pattern where all changes to application state are stored as a sequence of events.
+          Here are the core concepts demonstrated in this application:
+        </p>
+
+        <div class="concepts-grid">
+          @for (feature of featureCards; track feature.title) {
+            <a [routerLink]="feature.link" class="concept-card" [style.--accent-color]="feature.color">
+              <mat-icon>{{ feature.icon }}</mat-icon>
+              <h3>{{ feature.title }}</h3>
+              <p>{{ feature.description }}</p>
+            </a>
+          }
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="welcome-footer">
+        <p>
+          <mat-icon>code</mat-icon>
+          Built with <strong>ErikLieben.FA.ES</strong> - An event sourcing framework for .NET
+        </p>
+      </footer>
+    </div>

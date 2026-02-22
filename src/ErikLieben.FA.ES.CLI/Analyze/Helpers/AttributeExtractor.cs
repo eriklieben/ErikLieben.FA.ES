@@ -20,42 +20,69 @@ public static class AttributeExtractor
         if (attribute == null)
             return null;
 
-        // Handle constructor with single "all" parameter
-        // Example: [EventStreamType("blob")]
-        if (attribute.ConstructorArguments.Length == 1 &&
-            attribute.ConstructorArguments[0].Value is string allValue)
+        if (attribute.ConstructorArguments.Length == 1)
+            return ExtractSingleArgEventStreamType(attribute);
+
+        if (attribute.ConstructorArguments.Length > 1)
+            return ExtractPositionalEventStreamType(attribute);
+
+        return ExtractNamedEventStreamType(attribute);
+    }
+
+    /// <summary>
+    /// Handles constructor with single "all" parameter: [EventStreamType("blob")].
+    /// </summary>
+    private static EventStreamTypeAttributeData? ExtractSingleArgEventStreamType(AttributeData attribute)
+    {
+        if (attribute.ConstructorArguments[0].Value is not string allValue)
+            return ExtractNamedEventStreamType(attribute);
+
+        return new EventStreamTypeAttributeData
         {
-            return new EventStreamTypeAttributeData
-            {
-                StreamType = allValue,
-                DocumentType = allValue,
-                DocumentTagType = allValue,
-                EventStreamTagType = allValue,
-                DocumentRefType = allValue
-            };
-        }
+            StreamType = allValue,
+            DocumentType = allValue,
+            DocumentTagType = allValue,
+            EventStreamTagType = allValue,
+            DocumentRefType = allValue
+        };
+    }
 
-        // Handle named arguments constructor
-        // Example: [EventStreamType(streamType: "blob", documentType: "cosmos")]
-        var data = new EventStreamTypeAttributeData();
-
-        foreach (var namedArg in attribute.NamedArguments)
+    /// <summary>
+    /// Handles positional arguments: [EventStreamType("table", "table")].
+    /// </summary>
+    private static EventStreamTypeAttributeData ExtractPositionalEventStreamType(AttributeData attribute)
+    {
+        var args = attribute.ConstructorArguments;
+        return new EventStreamTypeAttributeData
         {
-            if (namedArg.Value.Value is not string value)
-                continue;
+            StreamType = args.Length > 0 ? args[0].Value as string : null,
+            DocumentType = args.Length > 1 ? args[1].Value as string : null,
+            DocumentTagType = args.Length > 2 ? args[2].Value as string : null,
+            EventStreamTagType = args.Length > 3 ? args[3].Value as string : null,
+            DocumentRefType = args.Length > 4 ? args[4].Value as string : null
+        };
+    }
 
-            data = namedArg.Key switch
+    /// <summary>
+    /// Handles named arguments: [EventStreamType(streamType: "blob", documentType: "cosmos")].
+    /// </summary>
+    private static EventStreamTypeAttributeData ExtractNamedEventStreamType(AttributeData attribute)
+    {
+        return attribute.NamedArguments
+            .Where(namedArg => namedArg.Value.Value is string)
+            .Aggregate(new EventStreamTypeAttributeData(), (data, namedArg) =>
             {
-                "StreamType" => data with { StreamType = value },
-                "DocumentType" => data with { DocumentType = value },
-                "DocumentTagType" => data with { DocumentTagType = value },
-                "EventStreamTagType" => data with { EventStreamTagType = value },
-                "DocumentRefType" => data with { DocumentRefType = value },
-                _ => data
-            };
-        }
-
-        return data;
+                var value = (string)namedArg.Value.Value!;
+                return namedArg.Key switch
+                {
+                    "StreamType" => data with { StreamType = value },
+                    "DocumentType" => data with { DocumentType = value },
+                    "DocumentTagType" => data with { DocumentTagType = value },
+                    "EventStreamTagType" => data with { EventStreamTagType = value },
+                    "DocumentRefType" => data with { DocumentRefType = value },
+                    _ => data
+                };
+            });
     }
 
     /// <summary>
@@ -85,25 +112,88 @@ public static class AttributeExtractor
             };
         }
 
-        // Handle named arguments
-        var data = new EventStreamBlobSettingsAttributeData();
-
-        foreach (var namedArg in attribute.NamedArguments)
-        {
-            if (namedArg.Value.Value is not string value)
-                continue;
-
-            data = namedArg.Key switch
+        // Handle named arguments using Aggregate
+        return attribute.NamedArguments
+            .Where(namedArg => namedArg.Value.Value is string)
+            .Aggregate(new EventStreamBlobSettingsAttributeData(), (data, namedArg) =>
             {
-                "DataStore" => data with { DataStore = value },
-                "DocumentStore" => data with { DocumentStore = value },
-                "DocumentTagStore" => data with { DocumentTagStore = value },
-                "StreamTagStore" => data with { StreamTagStore = value },
-                "SnapShotStore" => data with { SnapShotStore = value },
-                _ => data
-            };
+                var value = (string)namedArg.Value.Value!;
+                return namedArg.Key switch
+                {
+                    "DataStore" => data with { DataStore = value },
+                    "DocumentStore" => data with { DocumentStore = value },
+                    "DocumentTagStore" => data with { DocumentTagStore = value },
+                    "StreamTagStore" => data with { StreamTagStore = value },
+                    "SnapShotStore" => data with { SnapShotStore = value },
+                    _ => data
+                };
+            });
+    }
+
+    /// <summary>
+    /// Extracts the schema version from [EventVersion] attribute on an event type.
+    /// Returns 1 (default) if the attribute is not present.
+    /// </summary>
+    public static int ExtractEventVersionAttribute(INamedTypeSymbol eventSymbol)
+    {
+        var attribute = eventSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == "EventVersionAttribute");
+
+        if (attribute == null)
+            return 1; // Default schema version
+
+        // [EventVersion(2)] - single int constructor argument
+        if (attribute.ConstructorArguments.Length == 1 &&
+            attribute.ConstructorArguments[0].Value is int version)
+        {
+            return version;
         }
 
-        return data;
+        return 1; // Default if parsing fails
+    }
+
+    /// <summary>
+    /// Extracts the schema version from [ProjectionVersion] attribute on a projection type.
+    /// Returns 1 (default) if the attribute is not present.
+    /// </summary>
+    public static int ExtractProjectionVersionAttribute(INamedTypeSymbol projectionSymbol)
+    {
+        var attribute = projectionSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass?.Name == "ProjectionVersionAttribute");
+
+        if (attribute == null)
+            return 1; // Default schema version
+
+        // [ProjectionVersion(2)] - single int constructor argument
+        if (attribute.ConstructorArguments.Length == 1 &&
+            attribute.ConstructorArguments[0].Value is int version)
+        {
+            return version;
+        }
+
+        return 1; // Default if parsing fails
+    }
+
+    /// <summary>
+    /// Extracts [UseUpcaster&lt;T&gt;] attributes from an aggregate class.
+    /// Returns a list of upcaster definitions to register.
+    /// </summary>
+    public static List<UpcasterDefinition> ExtractUseUpcasterAttributes(INamedTypeSymbol aggregateSymbol)
+    {
+        // Look for generic UseUpcasterAttribute<T> - the name will be "UseUpcasterAttribute" with TypeArguments
+        return aggregateSymbol.GetAttributes()
+            .Where(a => a.AttributeClass?.Name == "UseUpcasterAttribute" &&
+                       a.AttributeClass.IsGenericType)
+            .Select(a => a.AttributeClass)
+            .Where(ac => ac?.TypeArguments.Length == 1 &&
+                        ac.TypeArguments[0] is INamedTypeSymbol)
+            .Select(ac => ac!.TypeArguments[0])
+            .Cast<INamedTypeSymbol>()
+            .Select(upcasterType => new UpcasterDefinition
+            {
+                TypeName = upcasterType.Name,
+                Namespace = upcasterType.ContainingNamespace.ToDisplayString()
+            })
+            .ToList();
     }
 }

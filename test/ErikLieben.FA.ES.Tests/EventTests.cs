@@ -1,3 +1,6 @@
+using System;
+using Xunit;
+
 namespace ErikLieben.FA.ES.Tests;
 
 public class EventTests

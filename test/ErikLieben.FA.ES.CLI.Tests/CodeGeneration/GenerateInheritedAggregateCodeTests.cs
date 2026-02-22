@@ -17,7 +17,7 @@ public class GenerateInheritedAggregateCodeTests
         {
             SolutionName = "Demo",
             Generator = new GeneratorInformation { Version = "1.0.0-test" },
-            Projects = new List<ProjectDefinition> { project }
+            Projects = [project]
         };
 
         var outDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) + Path.DirectorySeparatorChar;
@@ -40,38 +40,45 @@ public class GenerateInheritedAggregateCodeTests
             Namespace = "Demo.App.Domain",
             ParentInterface = "Demo.App.Domain.IOrder",
             ParentInterfaceNamespace = "Demo.App.Domain",
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "cache", Type = "ICacheService", Namespace = "Demo.App.Services", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "cache", Type = "ICacheService", Namespace = "Demo.App.Services", IsNullable = false
+                        }
                     ]
                 }
-            },
-            Commands = new List<CommandDefinition>
-            {
+            ],
+            Commands =
+            [
                 new()
                 {
                     ReturnType = new CommandReturnType { Namespace = "System.Threading.Tasks", Type = "Task" },
                     CommandName = "PlaceOrder",
                     RequiresAwait = true,
-                    Parameters = new List<CommandParameter>
-                    {
+                    Parameters =
+                    [
                         new()
                         {
                             Name = "orderId",
                             Type = "Guid",
                             Namespace = "System",
                             IsGeneric = false,
-                            GenericTypes = new List<PropertyGenericTypeDefinition>()
+                            GenericTypes = []
                         }
-                    }
+                    ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Order.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Order.cs"]
         };
 
         var project = new ProjectDefinition
@@ -79,9 +86,9 @@ public class GenerateInheritedAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition>(),
-            InheritedAggregates = new List<InheritedAggregateDefinition> { inherited },
-            Projections = new List<ProjectionDefinition>()
+            Aggregates = [],
+            InheritedAggregates = [inherited],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);
@@ -137,46 +144,53 @@ public class GenerateInheritedAggregateCodeTests
             Namespace = "Demo.App.Domain",
             ParentInterface = "Demo.App.Domain.ICustomer",
             ParentInterfaceNamespace = "Demo.App.Domain",
-            Constructors = new List<ConstructorDefinition>
-            {
+            Constructors =
+            [
                 new()
                 {
                     Parameters =
                     [
-                        new ConstructorParameter { Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES", IsNullable = false },
-                        new ConstructorParameter { Name = "svc", Type = "IReportingService", Namespace = "Demo.App.Services", IsNullable = false }
+                        new ConstructorParameter
+                        {
+                            Name = "eventStream", Type = "IEventStream", Namespace = "ErikLieben.FA.ES",
+                            IsNullable = false
+                        },
+                        new ConstructorParameter
+                        {
+                            Name = "svc", Type = "IReportingService", Namespace = "Demo.App.Services",
+                            IsNullable = false
+                        }
                     ]
                 }
-            },
-            Commands = new List<CommandDefinition>
-            {
-                // Generic parameter example: IList<Guid> ids
+            ],
+            Commands =
+            [
                 new()
                 {
                     ReturnType = new CommandReturnType { Namespace = "System", Type = "bool" },
                     CommandName = "Activate",
                     RequiresAwait = false,
-                    Parameters = new List<CommandParameter>
-                    {
+                    Parameters =
+                    [
                         new()
                         {
                             Name = "ids",
                             Type = "IList",
                             Namespace = "System.Collections.Generic",
                             IsGeneric = true,
-                            GenericTypes = new List<PropertyGenericTypeDefinition>
-                            {
+                            GenericTypes =
+                            [
                                 new PropertyGenericTypeDefinition(
                                     Name: "Guid",
                                     Namespace: "System",
-                                    GenericTypes: new List<PropertyGenericTypeDefinition>(),
-                                    SubTypes: new List<PropertyGenericTypeDefinition>())
-                            }
+                                    GenericTypes: [],
+                                    SubTypes: [])
+                            ]
                         }
-                    }
+                    ]
                 }
-            },
-            FileLocations = new List<string> { "Demo\\Domain\\Customer.cs" }
+            ],
+            FileLocations = ["Demo\\Domain\\Customer.cs"]
         };
 
         var project = new ProjectDefinition
@@ -184,9 +198,9 @@ public class GenerateInheritedAggregateCodeTests
             Name = "Demo.App",
             Namespace = "Demo.App",
             FileLocation = "Demo.App.csproj",
-            Aggregates = new List<AggregateDefinition>(),
-            InheritedAggregates = new List<InheritedAggregateDefinition> { inherited },
-            Projections = new List<ProjectionDefinition>()
+            Aggregates = [],
+            InheritedAggregates = [inherited],
+            Projections = []
         };
 
         var (solution, outDir) = BuildSolution(project);

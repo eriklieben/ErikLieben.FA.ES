@@ -1,4 +1,7 @@
-﻿using System.Collections.Immutable;
+#pragma warning disable RS1038 // Workspaces reference - this analyzer intentionally uses Workspaces for code analysis
+
+using System.Collections.Immutable;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,13 +34,10 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
         DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning,
         isEnabledByDefault: true, description: Description);
 
-    private const string AggregateFullName = "ErikLieben.FA.ES.Processors.Aggregate";
-    private const string IEventStreamFullName = "ErikLieben.FA.ES.IEventStream";
-
     /// <summary>
     /// Gets the diagnostics supported by this analyzer.
     /// </summary>
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     /// <summary>
     /// Registers actions that analyze invocation expressions to detect incorrect Append usage inside stream sessions.
@@ -78,11 +78,11 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
             return;
 
         // Only inside an Aggregate-derived type
-        if (!IsInsideAggregateType(context))
+        if (!SymbolHelpers.IsInsideAggregateType(context))
             return;
 
         // Only inside a Stream.Session(...)
-        if (!IsInsideStreamSession(context.SemanticModel, invocation))
+        if (!SymbolHelpers.IsInsideStreamSession(context.SemanticModel, invocation))
             return;
 
         // Check whether this Append(...) is applied to state via Fold(...) or When(...)
@@ -101,7 +101,7 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
         {
             if (ancestor is InvocationExpressionSyntax possibleWrapper)
             {
-                var name = GetInvocationName(possibleWrapper);
+                var name = SymbolHelpers.GetInvocationMethodName(possibleWrapper);
                 // Merge nested conditions to reduce complexity and satisfy S1066
                 if (name is { } n && (n == "Fold" || n == "When") && possibleWrapper.ArgumentList != null)
                 {
@@ -120,57 +120,5 @@ public class AppendWithoutApplyAnalyzer : DiagnosticAnalyzer
                 break;
         }
         return false;
-    }
-
-    private static string? GetInvocationName(InvocationExpressionSyntax invocation)
-    {
-        if (invocation.Expression is IdentifierNameSyntax id)
-            return id.Identifier.ValueText;
-        if (invocation.Expression is MemberAccessExpressionSyntax mae && mae.Name is IdentifierNameSyntax name)
-            return name.Identifier.ValueText;
-        return null;
-    }
-
-    private static bool IsInsideAggregateType(SyntaxNodeAnalysisContext context)
-    {
-        var containingSymbol = context.ContainingSymbol;
-        var containingType = (containingSymbol as IMethodSymbol)?.ContainingType ?? containingSymbol?.ContainingType;
-        if (containingType == null)
-            return false;
-
-        for (var type = containingType; type != null; type = type.BaseType)
-        {
-            if (type.ToDisplayString() == AggregateFullName)
-                return true;
-        }
-        return false;
-    }
-
-    private static bool IsInsideStreamSession(SemanticModel model, InvocationExpressionSyntax node)
-    {
-        foreach (var ancestor in node.Ancestors())
-        {
-            if (ancestor is MethodDeclarationSyntax or LocalFunctionStatementSyntax)
-                break;
-
-            // Combine checks to reduce nested if-statements (S1066)
-            if (ancestor is InvocationExpressionSyntax inv && GetInvocationName(inv) == "Session")
-            {
-                var symbol = model.GetSymbolInfo(inv).Symbol as IMethodSymbol;
-                if (IsEventStreamSession(symbol))
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    private static bool IsEventStreamSession(IMethodSymbol? method)
-    {
-        var type = method?.ContainingType;
-        if (type == null)
-            return false;
-        if (type.ToDisplayString() == IEventStreamFullName)
-            return true;
-        return type.AllInterfaces.Any(i => i.ToDisplayString() == IEventStreamFullName);
     }
 }

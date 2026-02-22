@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>Move Work Item Backward</h2>
+<mat-dialog-content>
+  <p>You are moving this work item backward in the workflow. Please provide a reason:</p>
+
+  <mat-form-field appearance="outline" style="width: 100%; margin-top: 16px;">
+    <mat-label>Reason</mat-label>
+    <textarea
+      matInput
+      [(ngModel)]="reason"
+      placeholder="Enter reason for moving backward..."
+      rows="4"
+      cdkFocusInitial
+    ></textarea>
+  </mat-form-field>
+
+  <mat-checkbox [(ngModel)]="isAccidental" style="margin-top: 8px;">
+    Dragged by accident
+  </mat-checkbox>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onConfirm()" [disabled]="!reason.trim()">
+    Confirm
+  </button>
+</mat-dialog-actions>

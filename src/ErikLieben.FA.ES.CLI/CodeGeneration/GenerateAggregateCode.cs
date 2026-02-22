@@ -1,8 +1,13 @@
+#pragma warning disable S2589 // Boolean expressions should not be gratuitous - defensive length checks after StringBuilder modification
+#pragma warning disable S3267 // Loops should be simplified - explicit loops improve debuggability
+#pragma warning disable S1192 // String literals should not be duplicated - code generation templates
+
 using System.Text;
 using ErikLieben.FA.ES.CLI.Configuration;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Spectre.Console;
 
@@ -60,19 +65,35 @@ public class GenerateAggregateCode
         var foldCode = GenerateFoldCode(aggregate, usings);
         var serializableCode = GenerateJsonSerializableCode(aggregate, usings);
         var (propertyCode, propertySnapshotCode) = GeneratePropertyCode(aggregate, serializableCode);
+
+        // Remove trailing newline from serializableCode to avoid blank line before JsonSourceGenerationOptions
+        if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\n')
+        {
+            serializableCode.Length--;
+            if (serializableCode.Length > 0 && serializableCode[serializableCode.Length - 1] == '\r')
+            {
+                serializableCode.Length--;
+            }
+        }
+
         var (get, ctorInput) = GenerateConstructorParameters(aggregate);
         var setupCode = GenerateSetupCode(aggregate);
-        var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode, version);
+        var processSnapshotCode = GenerateProcessSnapshotCode(aggregate, version);
+        var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode, processSnapshotCode, version);
 
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
-        await File.WriteAllTextAsync(path!, FormatCode(code.ToString()));
+        var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
+        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
     }
 
     internal static List<string> BuildUsings(AggregateDefinition aggregate)
     {
         var usings = new List<string>
         {
+            "System.Collections.Generic",
             "System.Text.Json.Serialization",
+            "System.Threading",
+            "System.Threading.Tasks",
             "ErikLieben.FA.ES",
             "ErikLieben.FA.ES.Processors",
             "ErikLieben.FA.ES.Aggregates",
@@ -91,6 +112,14 @@ public class GenerateAggregateCode
             !usings.Contains(aggregate.IdentifierTypeNamespace))
         {
             usings.Add(aggregate.IdentifierTypeNamespace);
+        }
+
+        // Add upcaster namespaces
+        if (aggregate.Upcasters != null)
+        {
+            usings.AddRange(aggregate.Upcasters
+                .Where(u => !string.IsNullOrWhiteSpace(u.Namespace) && !usings.Contains(u.Namespace))
+                .Select(u => u.Namespace));
         }
 
         return usings;
@@ -138,35 +167,117 @@ public class GenerateAggregateCode
     internal static StringBuilder GenerateFoldCode(AggregateDefinition aggregate, List<string> usings)
     {
         var foldCode = new StringBuilder();
-        foreach (var @event in aggregate.Events)
+
+        // Group events by EventName to handle multiple schema versions
+        var eventsByName = aggregate.Events
+            .Where(e => e.ActivationType != "Command") // Skip events from Command methods
+            .GroupBy(e => e.EventName)
+            .ToList();
+
+        foreach (var eventGroup in eventsByName)
         {
-            if (@event.ActivationType != "When")
+            var events = eventGroup.OrderBy(e => e.SchemaVersion).ToList();
+
+            foreach (var @event in events)
             {
-                continue;
+                if (!usings.Contains(@event.Namespace))
+                {
+                    usings.Add(@event.Namespace);
+                }
             }
 
-            if (!usings.Contains(@event.Namespace))
+            if (events.Count == 1)
             {
-                usings.Add(@event.Namespace);
-            }
-
-            if (@event.Parameters.Count > 1)
-            {
-                GenerateFoldCodeWithMultipleParameters(@event, foldCode);
+                // Single version - generate simple case
+                var @event = events[0];
+                if (@event.Parameters.Count == 0)
+                {
+                    GenerateFoldCodeWithNoParameters(@event, foldCode);
+                }
+                else if (@event.Parameters.Count > 1)
+                {
+                    GenerateFoldCodeWithMultipleParameters(@event, foldCode);
+                }
+                else
+                {
+                    GenerateFoldCodeWithSingleParameter(@event, foldCode);
+                }
             }
             else
             {
-                GenerateFoldCodeWithSingleParameter(@event, foldCode);
+                // Multiple versions - generate schema version dispatch
+                GenerateFoldCodeWithSchemaVersionDispatch(events, foldCode);
             }
         }
         return foldCode;
+    }
+
+    internal static void GenerateFoldCodeWithSchemaVersionDispatch(List<EventDefinition> events, StringBuilder foldCode)
+    {
+        var eventName = events[0].EventName;
+        foldCode.AppendLine($$"""
+                              case "{{eventName}}":
+                          """);
+
+        for (int i = 0; i < events.Count; i++)
+        {
+            var @event = events[i];
+            var isLast = i == events.Count - 1;
+            var condition = GetSchemaVersionCondition(i, isLast, @event.SchemaVersion);
+
+            if (@event.Parameters.Count == 0)
+            {
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}();
+                                      """);
+            }
+            else if (@event.Parameters.Count > 1)
+            {
+                var paramBuilder = new StringBuilder();
+                foreach (var p in @event.Parameters.Skip(1))
+                {
+                    switch (p.Type)
+                    {
+                        case "IObjectDocument":
+                            paramBuilder.Append($", Stream.Document");
+                            break;
+                        case "IEvent":
+                            paramBuilder.Append($", @event");
+                            break;
+                    }
+                }
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}){{paramBuilder}});
+                                      """);
+            }
+            else
+            {
+                foldCode.AppendLine($$"""
+                                          {{condition}}
+                                              {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
+                                      """);
+            }
+        }
+
+        foldCode.AppendLine("    break;");
+    }
+
+    internal static void GenerateFoldCodeWithNoParameters(EventDefinition @event, StringBuilder foldCode)
+    {
+        foldCode.AppendLine($$"""
+                              case "{{@event.EventName}}":
+                                  {{@event.ActivationType}}();
+                              break;
+                              """);
     }
 
     internal static void GenerateFoldCodeWithMultipleParameters(EventDefinition @event, StringBuilder foldCode)
     {
         foldCode.Append($$$"""
                                case "{{{@event.EventName}}}":
-                                    When(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
+                                    {{{@event.ActivationType}}}(JsonEvent.To(@event, {{{@event.TypeName}}}JsonSerializerContext.Default.{{{@event.TypeName}}}),
                                """);
 
         foreach (var p in @event.Parameters.Skip(1))
@@ -196,9 +307,24 @@ public class GenerateAggregateCode
     {
         foldCode.AppendLine($$"""
                               case "{{@event.EventName}}":
-                                  When(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
+                                  {{@event.ActivationType}}(JsonEvent.To(@event, {{@event.TypeName}}JsonSerializerContext.Default.{{@event.TypeName}}));
                               break;
                               """);
+    }
+
+    private static string GetSchemaVersionCondition(int index, bool isLast, int schemaVersion)
+    {
+        if (isLast)
+        {
+            return "else";
+        }
+
+        if (index == 0)
+        {
+            return $"if (@event.SchemaVersion == {schemaVersion})";
+        }
+
+        return $"else if (@event.SchemaVersion == {schemaVersion})";
     }
 
     internal static StringBuilder GenerateJsonSerializableCode(AggregateDefinition aggregate, List<string> usings)
@@ -240,6 +366,12 @@ public class GenerateAggregateCode
 
         foreach (var property in aggregate.Properties)
         {
+            // Skip ObjectName - it's a static member on the aggregate class, not an instance property
+            if (property.Name == "ObjectName")
+            {
+                continue;
+            }
+
             var type = BuildPropertyType(property);
             propertyCode.AppendLine($"public {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get;}}");
             propertySnapshotCode.AppendLine($"public required {type}{(property.IsNullable ? "?" : string.Empty)} {property.Name} {{get; init; }}");
@@ -256,7 +388,12 @@ public class GenerateAggregateCode
     internal static string BuildPropertyType(PropertyDefinition property)
     {
         var typeBuilder = new StringBuilder(property.Type);
-        if (!property.IsGeneric)
+
+        // Check if property.Type already includes generic parameters (e.g., "StronglyTypedId<Guid>")
+        // If so, don't append them again to avoid duplication like "StronglyTypedId<Guid>< Guid >"
+        var alreadyHasGenerics = property.Type.Contains('<') && property.Type.Contains('>');
+
+        if (!property.IsGeneric || alreadyHasGenerics)
         {
             return typeBuilder.ToString();
         }
@@ -296,19 +433,61 @@ public class GenerateAggregateCode
         var setupCode = new StringBuilder();
         foreach (var usedEvent in aggregate.Events)
         {
+            if (usedEvent.SchemaVersion == 1)
+            {
+                setupCode.AppendLine($$"""
+                     Stream.RegisterEvent<{{usedEvent.TypeName}}>(
+                         "{{usedEvent.EventName}}",
+                         {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 """);
+            }
+            else
+            {
+                setupCode.AppendLine($$"""
+                     Stream.RegisterEvent<{{usedEvent.TypeName}}>(
+                         "{{usedEvent.EventName}}",
+                         {{usedEvent.SchemaVersion}},
+                         {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 """);
+            }
+        }
+
+        // Register upcasters
+        foreach (var upcaster in aggregate.Upcasters)
+        {
             setupCode.AppendLine($$"""
-                 Stream.RegisterEvent<{{usedEvent.TypeName}}>(
-                     "{{usedEvent.EventName}}",
-                     {{usedEvent.TypeName}}JsonSerializerContext.Default.{{usedEvent.TypeName}});
+                 Stream.RegisterUpcast(new {{upcaster.TypeName}}());
              """);
         }
 
         setupCode.AppendLine($$"""
              Stream.SetSnapShotType({{aggregate.IdentifierName}}JsonSerializerContext.Default.{{aggregate.IdentifierName}}Snapshot);
              Stream.SetAggregateType({{aggregate.IdentifierName}}JsonSerializerContext.Default.{{aggregate.IdentifierName}});
+
+             // Freeze the EventTypeRegistry for optimized lookups (~50% faster)
+             Stream.EventTypeRegistry.Freeze();
         """);
 
         return setupCode;
+    }
+
+    internal static string GenerateProcessSnapshotCode(AggregateDefinition aggregate, string version)
+    {
+        // If user has their own ProcessSnapshot, don't generate one
+        if (aggregate.HasUserDefinedProcessSnapshot)
+        {
+            return string.Empty;
+        }
+
+        return $$"""
+
+                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                              [ExcludeFromCodeCoverage]
+                              public override void ProcessSnapshot(object snapshot)
+                              {
+                                  throw new NotImplementedException();
+                              }
+                """;
     }
 
     /// <summary>
@@ -317,6 +496,14 @@ public class GenerateAggregateCode
     internal static string? GetDocumentStoreFromAttribute(AggregateDefinition aggregate)
     {
         return aggregate.EventStreamBlobSettingsAttribute?.DocumentStore;
+    }
+
+    /// <summary>
+    /// Gets the DocumentType value from the EventStreamType attribute, or null if not configured.
+    /// </summary>
+    internal static string? GetDocumentTypeFromAttribute(AggregateDefinition aggregate)
+    {
+        return aggregate.EventStreamTypeAttribute?.DocumentType;
     }
 
     /// <summary>
@@ -343,6 +530,32 @@ public class GenerateAggregateCode
         return AggregateSettingsCodeGenerator.BuildSettingsCodeBlock(assignments);
     }
 
+    /// <summary>
+    /// Formats a nullable attribute value as a C# string literal or "null".
+    /// </summary>
+    private static string FormatAsStringLiteralOrNull(string? value)
+    {
+        return value != null ? $"\"{value}\"" : "null";
+    }
+
+    /// <summary>
+    /// Formats a nullable attribute value as an optional argument (e.g., ', "value"') or empty string.
+    /// </summary>
+    private static string FormatAsOptionalArgument(string? value)
+    {
+        return value != null ? $", \"{value}\"" : "";
+    }
+
+    /// <summary>
+    /// Returns the EditorBrowsable attribute when the user has defined a partial, or empty string.
+    /// </summary>
+    private static string GetEditorBrowsableAttribute(bool hasUserDefinedPartial)
+    {
+        return hasUserDefinedPartial
+            ? "[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]"
+            : "";
+    }
+
     internal static StringBuilder AssembleAggregateCode(
         AggregateDefinition aggregate,
         List<string> usings,
@@ -354,12 +567,33 @@ public class GenerateAggregateCode
         string get,
         string ctorInput,
         StringBuilder setupCode,
+        string processSnapshotCode,
         string version)
     {
         var code = new StringBuilder();
-        string codeGetById = "";
 
-        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Order())
+        AppendUsings(code, usings);
+
+        // Pre-compute attribute-based values to reduce inline ternary complexity
+        var documentStoreLiteral = FormatAsStringLiteralOrNull(GetDocumentStoreFromAttribute(aggregate));
+        var documentTypeLiteral = FormatAsStringLiteralOrNull(GetDocumentTypeFromAttribute(aggregate));
+        var documentTagStoreArg = FormatAsOptionalArgument(GetDocumentTagStoreFromAttribute(aggregate));
+        var documentStoreArg = FormatAsOptionalArgument(GetDocumentStoreFromAttribute(aggregate));
+        var settingsCode = GenerateSettingsApplicationCode(aggregate);
+        var factoryEditorBrowsable = GetEditorBrowsableAttribute(aggregate.HasUserDefinedFactoryPartial);
+        var repoEditorBrowsable = GetEditorBrowsableAttribute(aggregate.HasUserDefinedRepositoryPartial);
+
+        AppendAggregateClass(code, aggregate, foldCode, postWhenCode, setupCode, processSnapshotCode, version);
+        AppendInterfaceAndSnapshot(code, aggregate, propertyCode, propertySnapshotCode, serializableCode, version);
+        AppendFactory(code, aggregate, get, ctorInput, documentStoreLiteral, documentTypeLiteral, documentTagStoreArg, documentStoreArg, settingsCode, factoryEditorBrowsable, version);
+        AppendRepository(code, aggregate, documentStoreLiteral, documentTypeLiteral, documentTagStoreArg, documentStoreArg, repoEditorBrowsable);
+
+        return code;
+    }
+
+    private static void AppendUsings(StringBuilder code, List<string> usings)
+    {
+        foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
         {
             code.AppendLine($"using {namespaceName};");
         }
@@ -367,16 +601,48 @@ public class GenerateAggregateCode
         code.AppendLine("");
         code.AppendLine("#nullable enable");
         code.AppendLine("");
+    }
+
+    private static void AppendAggregateClass(
+        StringBuilder code,
+        AggregateDefinition aggregate,
+        StringBuilder foldCode,
+        StringBuilder postWhenCode,
+        StringBuilder setupCode,
+        string processSnapshotCode,
+        string version)
+    {
+        var testableAggregateMethods = $$"""
+
+                              /// <summary>
+                              /// Creates a new instance of the aggregate from an event stream (AOT-friendly factory).
+                              /// </summary>
+                              /// <param name="stream">The event stream for the aggregate.</param>
+                              /// <returns>A new instance of the aggregate.</returns>
+                              public static {{aggregate.IdentifierName}} Create(IEventStream stream) => new {{aggregate.IdentifierName}}(stream);
+                """;
+
         code.AppendLine($$"""
                           namespace {{aggregate.Namespace}};
 
                           // <auto-generated />
+                          /// <summary>
+                          /// {{aggregate.IdentifierName}} aggregate root implementing event sourcing patterns.
+                          /// </summary>
                           [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
                           [ExcludeFromCodeCoverage]
                           public partial class {{aggregate.IdentifierName}} : Aggregate, IBase, I{{aggregate.IdentifierName}} {
 
-                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
-                              [ExcludeFromCodeCoverage]
+                              /// <summary>
+                              /// Gets the logical object name for this aggregate type (AOT-friendly static member).
+                              /// </summary>
+                              public static string ObjectName => "{{aggregate.ObjectName}}";
+                          {{testableAggregateMethods}}
+
+                              /// <summary>
+                              /// Applies an event to the aggregate state by dispatching to the appropriate When method.
+                              /// </summary>
+                              /// <param name="event">The event to apply to the aggregate.</param>
                               public override void Fold(IEvent @event)
                               {
                                   switch (@event.EventType)
@@ -394,22 +660,33 @@ public class GenerateAggregateCode
                               {
                                 {{setupCode}}
                               }
-
-                              [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
-                              [ExcludeFromCodeCoverage]
-                              public override void ProcessSnapshot(object snapshot)
-                              {
-                                  throw new NotImplementedException();
-                              }
-
+                          {{processSnapshotCode}}
                           }
+                          """);
+    }
+
+    private static void AppendInterfaceAndSnapshot(
+        StringBuilder code,
+        AggregateDefinition aggregate,
+        StringBuilder propertyCode,
+        StringBuilder propertySnapshotCode,
+        StringBuilder serializableCode,
+        string version)
+    {
+        code.AppendLine($$"""
 
                           // <auto-generated />
+                          /// <summary>
+                          /// Interface defining the public state properties of {{aggregate.IdentifierName}}.
+                          /// </summary>
                           public interface I{{aggregate.IdentifierName}} {
                                 {{propertyCode}}
                           }
 
                           // <auto-generated />
+                          /// <summary>
+                          /// Snapshot record for persisting {{aggregate.IdentifierName}} aggregate state.
+                          /// </summary>
                           [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
                           [ExcludeFromCodeCoverage]
                           public record {{aggregate.IdentifierName}}Snapshot : I{{aggregate.IdentifierName}} {
@@ -418,16 +695,42 @@ public class GenerateAggregateCode
 
                           {{serializableCode}}
                           // <auto-generated />
+                          /// <summary>
+                          /// JSON serializer context for {{aggregate.IdentifierName}} types.
+                          /// </summary>
                           internal partial class {{aggregate.IdentifierName}}JsonSerializerContext : JsonSerializerContext
                           {
                           }
 
                           //<auto-generated />
+                          /// <summary>
+                          /// Factory interface for creating {{aggregate.IdentifierName}} aggregate instances.
+                          /// </summary>
                           public partial interface I{{aggregate.IdentifierName}}Factory : IAggregateFactory<{{aggregate.IdentifierName}}, {{aggregate.IdentifierType}}>
                           {
                           }
+                          """);
+    }
+
+    private static void AppendFactory(
+        StringBuilder code,
+        AggregateDefinition aggregate,
+        string get,
+        string ctorInput,
+        string documentStoreLiteral,
+        string documentTypeLiteral,
+        string documentTagStoreArg,
+        string documentStoreArg,
+        string settingsCode,
+        string factoryEditorBrowsable,
+        string version)
+    {
+        code.AppendLine($$"""
 
                           //<auto-generated />
+                          /// <summary>
+                          /// Factory for creating and loading {{aggregate.IdentifierName}} aggregate instances from documents and event streams.
+                          /// </summary>
                           [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
                           [ExcludeFromCodeCoverage]
                           public partial class {{aggregate.IdentifierName}}Factory : I{{aggregate.IdentifierName}}Factory
@@ -436,13 +739,26 @@ public class GenerateAggregateCode
                             private readonly IObjectDocumentFactory objectDocumentFactory;
                             private readonly IServiceProvider serviceProvider;
 
+                            /// <summary>
+                            /// Gets the object name used for document storage.
+                            /// </summary>
                             public static string ObjectName => "{{aggregate.ObjectName}}";
 
+                            /// <summary>
+                            /// Gets the object name used for document storage.
+                            /// </summary>
+                            /// <returns>The object name.</returns>
                             public string GetObjectName()
                             {
                                 return ObjectName;
                             }
 
+                            /// <summary>
+                            /// Initializes a new instance of the {{aggregate.IdentifierName}}Factory class.
+                            /// </summary>
+                            /// <param name="serviceProvider">Service provider for dependency injection.</param>
+                            /// <param name="eventStreamFactory">Factory for creating event streams.</param>
+                            /// <param name="objectDocumentFactory">Factory for creating and managing object documents.</param>
                             public {{aggregate.IdentifierName}}Factory(
                               IServiceProvider serviceProvider,
                               IEventStreamFactory eventStreamFactory,
@@ -457,6 +773,11 @@ public class GenerateAggregateCode
                               this.objectDocumentFactory = objectDocumentFactory;
                             }
 
+                            /// <summary>
+                            /// Creates a {{aggregate.IdentifierName}} instance from an event stream.
+                            /// </summary>
+                            /// <param name="eventStream">The event stream to create the aggregate from.</param>
+                            /// <returns>A new {{aggregate.IdentifierName}} instance.</returns>
                             public {{aggregate.IdentifierName}} Create(IEventStream eventStream)
                             {
                               ArgumentNullException.ThrowIfNull(eventStream);
@@ -467,6 +788,11 @@ public class GenerateAggregateCode
                               return new {{aggregate.IdentifierName}}(eventStream{{ctorInput}});
                             }
 
+                            /// <summary>
+                            /// Creates a {{aggregate.IdentifierName}} instance from an object document.
+                            /// </summary>
+                            /// <param name="document">The object document to create the aggregate from.</param>
+                            /// <returns>A new {{aggregate.IdentifierName}} instance.</returns>
                             public {{aggregate.IdentifierName}} Create(IObjectDocument document)
                             {
                               ArgumentNullException.ThrowIfNull(document);
@@ -479,45 +805,96 @@ public class GenerateAggregateCode
                             }
 
 
-                             public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id)
+                             {{factoryEditorBrowsable}}
+                             /// <summary>
+                             /// Creates a new {{aggregate.IdentifierName}} aggregate with the specified identifier.
+                             /// </summary>
+                             /// <param name="id">The identifier for the new aggregate.</param>
+                             /// <param name="cancellationToken">A token to cancel the operation.</param>
+                             /// <returns>A new {{aggregate.IdentifierName}} instance.</returns>
+                             public async Task<{{aggregate.IdentifierName}}> CreateAsync({{aggregate.IdentifierType}} id, CancellationToken cancellationToken = default)
                              {
-                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
-                             {{GenerateSettingsApplicationCode(aggregate)}}
+                                 var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
+                             {{settingsCode}}
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return obj;
                              }
 
-                             protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent) where T : class
+                             /// <summary>
+                             /// Creates a new {{aggregate.IdentifierName}} aggregate with the specified identifier and first event.
+                             /// </summary>
+                             /// <typeparam name="T">The type of the first event.</typeparam>
+                             /// <param name="id">The identifier for the new aggregate.</param>
+                             /// <param name="firstEvent">The first event to append to the aggregate's event stream.</param>
+                             /// <param name="metadata">Optional metadata to attach to the event.</param>
+                             /// <returns>A new {{aggregate.IdentifierName}} instance with the event applied.</returns>
+                             protected async Task<{{aggregate.IdentifierName}}> CreateAsync<T>({{aggregate.IdentifierType}} id, T firstEvent, ActionMetadata? metadata = null) where T : class
                              {
-                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
-                            {{GenerateSettingsApplicationCode(aggregate)}}
+                                var document = await this.objectDocumentFactory.GetOrCreateAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
+                            {{settingsCode}}
                                 var eventStream = eventStreamFactory.Create(document);
                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
-                                await eventStream.Session(context => context.Append(firstEvent));
+                                await eventStream.Session(context => context.Append(firstEvent, metadata));
                                 await obj.Fold();
                                 return obj;
                              }
 
-                             public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id)
+                             /// <summary>
+                             /// Gets an existing {{aggregate.IdentifierName}} aggregate by identifier.
+                             /// </summary>
+                             /// <param name="id">The identifier of the aggregate to retrieve.</param>
+                             /// <param name="upToVersion">Optional maximum event version to fold. If null, loads to current state.</param>
+                             /// <param name="cancellationToken">A token to cancel the operation.</param>
+                             /// <returns>The loaded {{aggregate.IdentifierName}} instance.</returns>
+                             [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetByIdAsync instead. This method will be removed in a future version.")]
+                             public async Task<{{aggregate.IdentifierName}}> GetAsync({{aggregate.IdentifierType}} id, int? upToVersion = null, CancellationToken cancellationToken = default)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
-                                 var obj = Create(document);
-                                 await obj.Fold();
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
+
+                                 // Create event stream
+                                 var eventStream = eventStreamFactory.Create(document);
+
+                                 // Create aggregate FIRST to register upcasters and event handlers
+                                 var obj = new {{aggregate.IdentifierName}}(eventStream);
+
+                                 // Read events up to version WITH upcasting applied
+                                 var events = await eventStream.ReadAsync(0, upToVersion);
+
+                                 // Fold events into the aggregate
+                                 foreach (var e in events)
+                                 {
+                                     obj.Fold(e);
+                                 }
+
                                  return obj;
                              }
 
-                             public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id)
+                             /// <summary>
+                             /// Gets an existing {{aggregate.IdentifierName}} aggregate by identifier along with its document.
+                             /// </summary>
+                             /// <param name="id">The identifier of the aggregate to retrieve.</param>
+                             /// <param name="cancellationToken">A token to cancel the operation.</param>
+                             /// <returns>A tuple containing the loaded {{aggregate.IdentifierName}} instance and its document.</returns>
+                             [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetByIdWithDocumentAsync instead. This method will be removed in a future version.")]
+                             public async Task<({{aggregate.IdentifierName}}, IObjectDocument)> GetWithDocumentAsync({{aggregate.IdentifierType}} id, CancellationToken cancellationToken = default)
                              {
-                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(){{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
+                                 var document = await this.objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
                                  var obj = Create(document);
                                  await obj.Fold();
                                  return (obj, document);
                              }
 
-                            public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag)
+                            /// <summary>
+                            /// Gets the first {{aggregate.IdentifierName}} aggregate with the specified document tag.
+                            /// </summary>
+                            /// <param name="tag">The document tag to search for.</param>
+                            /// <param name="cancellationToken">A token to cancel the operation.</param>
+                            /// <returns>The first matching {{aggregate.IdentifierName}} instance, or null if not found.</returns>
+                            [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetFirstByDocumentTagAsync instead. This method will be removed in a future version.")]
+                            public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTag(string tag, CancellationToken cancellationToken = default)
                             {
-                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentTagStoreFromAttribute(aggregate) + "\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}});
+                                var document = await this.objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{documentTagStoreArg}}{{documentStoreArg}});
                                 if (document == null)
                                 {
                                     return null;
@@ -527,9 +904,16 @@ public class GenerateAggregateCode
                                 return obj;
                             }
 
-                            public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag)
+                            /// <summary>
+                            /// Gets all {{aggregate.IdentifierName}} aggregates with the specified document tag.
+                            /// </summary>
+                            /// <param name="tag">The document tag to search for.</param>
+                            /// <param name="cancellationToken">A token to cancel the operation.</param>
+                            /// <returns>A collection of all matching {{aggregate.IdentifierName}} instances.</returns>
+                            [Obsolete("Use I{{aggregate.IdentifierName}}Repository.GetAllByDocumentTagAsync instead. This method will be removed in a future version.")]
+                            public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTag(string tag, CancellationToken cancellationToken = default)
                             {
-                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{(GetDocumentTagStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentTagStoreFromAttribute(aggregate) + "\"" : "")}}{{(GetDocumentStoreFromAttribute(aggregate) != null ? ", \"" + GetDocumentStoreFromAttribute(aggregate) + "\"" : "")}}));
+                                var documents = (await this.objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{documentTagStoreArg}}{{documentStoreArg}}));
                                 var items = new List<{{aggregate.IdentifierName}}>();
                                 foreach (var document in documents)
                                 {
@@ -540,26 +924,216 @@ public class GenerateAggregateCode
                                 return items;
                             }
 
-                          {{codeGetById}}
-
                           }
                           """);
-
-        return code;
     }
 
-    private static string FormatCode(string code, CancellationToken cancelToken = default)
+    private static void AppendRepository(
+        StringBuilder code,
+        AggregateDefinition aggregate,
+        string documentStoreLiteral,
+        string documentTypeLiteral,
+        string documentTagStoreArg,
+        string documentStoreArg,
+        string repoEditorBrowsable)
     {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code, cancellationToken: cancelToken);
-        var syntaxNode = syntaxTree.GetRoot(cancelToken);
+        code.AppendLine($$"""
 
-        using var workspace = new AdhocWorkspace();
-        var options = workspace.Options
-            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp,
-                FormattingOptions.IndentStyle.Smart);
+                          //<auto-generated />
+                          public partial interface I{{aggregate.IdentifierName}}Repository
+                          {
+                              /// <summary>
+                              /// Gets a paginated list of all {{aggregate.IdentifierName}} object IDs using continuation tokens.
+                              /// </summary>
+                              Task<PagedResult<string>> GetObjectIdsAsync(
+                                  string? continuationToken = null,
+                                  int pageSize = 100,
+                                  CancellationToken cancellationToken = default);
 
-        var formattedNode = Formatter.Format(syntaxNode, workspace, options, cancellationToken: cancelToken);
-        return formattedNode.ToFullString();
+                              /// <summary>
+                              /// Gets a single aggregate by ID.
+                              /// </summary>
+                              /// <param name="upToVersion">Optional: The maximum event version to fold. If null, loads to current state.</param>
+                              Task<{{aggregate.IdentifierName}}?> GetByIdAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  int? upToVersion = null,
+                                  CancellationToken cancellationToken = default);
+
+                              /// <summary>
+                              /// Gets a single aggregate by ID along with its document.
+                              /// </summary>
+                              Task<({{aggregate.IdentifierName}}?, IObjectDocument?)> GetByIdWithDocumentAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  CancellationToken cancellationToken = default);
+
+                              /// <summary>
+                              /// Gets the first aggregate with the specified document tag.
+                              /// </summary>
+                              Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTagAsync(
+                                  string tag,
+                                  CancellationToken cancellationToken = default);
+
+                              /// <summary>
+                              /// Gets all aggregates with the specified document tag.
+                              /// </summary>
+                              Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTagAsync(
+                                  string tag,
+                                  CancellationToken cancellationToken = default);
+
+                              /// <summary>
+                              /// Checks if an aggregate with the given ID exists.
+                              /// </summary>
+                              Task<bool> ExistsAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  CancellationToken cancellationToken = default);
+
+                              /// <summary>
+                              /// Gets the total count of aggregates.
+                              /// Warning: This may be expensive for large datasets.
+                              /// </summary>
+                              Task<long> CountAsync(CancellationToken cancellationToken = default);
+                          }
+
+                          //<auto-generated />
+                          /// <summary>
+                          /// Repository for querying and managing {{aggregate.IdentifierName}} aggregates.
+                          /// </summary>
+                          public partial class {{aggregate.IdentifierName}}Repository : I{{aggregate.IdentifierName}}Repository
+                          {
+                              private readonly I{{aggregate.IdentifierName}}Factory {{aggregate.IdentifierName.ToLowerInvariant()}}Factory;
+                              private readonly IObjectDocumentFactory objectDocumentFactory;
+                              private readonly IObjectIdProvider objectIdProvider;
+
+                              /// <summary>
+                              /// Gets the object name used for document storage.
+                              /// </summary>
+                              public static string ObjectName => "{{aggregate.ObjectName}}";
+
+                              /// <summary>
+                              /// Initializes a new instance of the {{aggregate.IdentifierName}}Repository class.
+                              /// </summary>
+                              /// <param name="{{aggregate.IdentifierName.ToLowerInvariant()}}Factory">Factory for creating {{aggregate.IdentifierName}} instances.</param>
+                              /// <param name="objectDocumentFactory">Factory for managing object documents.</param>
+                              /// <param name="objectIdProvider">Provider for querying object identifiers.</param>
+                              public {{aggregate.IdentifierName}}Repository(
+                                  I{{aggregate.IdentifierName}}Factory {{aggregate.IdentifierName.ToLowerInvariant()}}Factory,
+                                  IObjectDocumentFactory objectDocumentFactory,
+                                  IObjectIdProvider objectIdProvider)
+                              {
+                                  ArgumentNullException.ThrowIfNull({{aggregate.IdentifierName.ToLowerInvariant()}}Factory);
+                                  ArgumentNullException.ThrowIfNull(objectDocumentFactory);
+                                  ArgumentNullException.ThrowIfNull(objectIdProvider);
+
+                                  this.{{aggregate.IdentifierName.ToLowerInvariant()}}Factory = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory;
+                                  this.objectDocumentFactory = objectDocumentFactory;
+                                  this.objectIdProvider = objectIdProvider;
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<PagedResult<string>> GetObjectIdsAsync(
+                                  string? continuationToken = null,
+                                  int pageSize = 100,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+                                  ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, 1000);
+
+                                  return await objectIdProvider.GetObjectIdsAsync(
+                                      ObjectName,
+                                      continuationToken,
+                                      pageSize,
+                                      cancellationToken);
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<{{aggregate.IdentifierName}}?> GetByIdAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  int? upToVersion = null,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  try
+                                  {
+                                      return await {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.GetAsync(id, upToVersion);
+                                  }
+                                  catch (Exception)
+                                  {
+                                      return null;
+                                  }
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<({{aggregate.IdentifierName}}?, IObjectDocument?)> GetByIdWithDocumentAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  try
+                                  {
+                                      var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
+                                      var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
+                                      await obj.Fold();
+                                      return (obj, document);
+                                  }
+                                  catch (Exception)
+                                  {
+                                      return (null, null);
+                                  }
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<{{aggregate.IdentifierName}}?> GetFirstByDocumentTagAsync(
+                                  string tag,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+                                  var document = await objectDocumentFactory.GetFirstByObjectDocumentTag(ObjectName, tag{{documentTagStoreArg}}{{documentStoreArg}});
+                                  if (document == null)
+                                  {
+                                      return null;
+                                  }
+
+                                  var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
+                                  await obj.Fold();
+                                  return obj;
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<IEnumerable<{{aggregate.IdentifierName}}>> GetAllByDocumentTagAsync(
+                                  string tag,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+                                  var documents = await objectDocumentFactory.GetByObjectDocumentTag(ObjectName, tag{{documentTagStoreArg}}{{documentStoreArg}});
+                                  var items = new List<{{aggregate.IdentifierName}}>();
+
+                                  foreach (var document in documents)
+                                  {
+                                      var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
+                                      await obj.Fold();
+                                      items.Add(obj);
+                                  }
+
+                                  return items;
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<bool> ExistsAsync(
+                                  {{aggregate.IdentifierType}} id,
+                                  CancellationToken cancellationToken = default)
+                              {
+                                  return await objectIdProvider.ExistsAsync(
+                                      ObjectName,
+                                      id.ToString(),
+                                      cancellationToken);
+                              }
+
+                              {{repoEditorBrowsable}}
+                              public async Task<long> CountAsync(CancellationToken cancellationToken = default)
+                              {
+                                  return await objectIdProvider.CountAsync(ObjectName, cancellationToken);
+                              }
+                          }
+                          """);
     }
-
 }

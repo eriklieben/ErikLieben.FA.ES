@@ -1,5 +1,9 @@
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
 using ErikLieben.FA.ES.Documents;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests;
 
@@ -133,7 +137,7 @@ public class ObjectMetadataTests
     } 
     
     [Fact]
-    public void Should_()
+    public void Should_throw_InvalidOperationException_when_Id_is_null()
     {
         // Arrange
         var document = Substitute.For<IObjectDocument>();
@@ -152,13 +156,71 @@ public class ObjectMetadataTests
         mockEvent.EventVersion.Returns(1);
         var sut = ObjectMetadata<string>.From(document, mockEvent, null!);
         var objectName = "test-name";
-        
+
         // Act
-        var exception = 
+        var exception =
             Assert.Throws<InvalidOperationException>(() => sut.ToVersionToken(objectName));
-        
+
         // Assert
         Assert.NotNull(exception);
         Assert.Equal("Id is null", exception.Message);
-    } 
+    }
+
+    [Fact]
+    public void ToCausationId_should_return_same_as_ToVersionToken_Value()
+    {
+        // Arrange
+        var document = Substitute.For<IObjectDocument>();
+        document.Active.Returns(streamInformation);
+        var mockEvent = Substitute.For<IEvent>();
+        mockEvent.EventVersion.Returns(5);
+        var sut = ObjectMetadata<string>.From(document, mockEvent, "test-id");
+        var objectName = "workitem";
+
+        // Act
+        var causationId = sut.ToCausationId(objectName);
+        var versionToken = sut.ToVersionToken(objectName);
+
+        // Assert
+        Assert.Equal(versionToken.Value, causationId);
+    }
+
+    [Fact]
+    public void ToCausationId_should_throw_when_objectName_is_null()
+    {
+        // Arrange
+        var document = Substitute.For<IObjectDocument>();
+        document.Active.Returns(streamInformation);
+        var mockEvent = Substitute.For<IEvent>();
+        mockEvent.EventVersion.Returns(1);
+        var sut = ObjectMetadata<string>.From(document, mockEvent, "test-id");
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => sut.ToCausationId(null!));
+    }
+
+    [Fact]
+    public void ToCausationId_should_throw_when_StreamId_is_null()
+    {
+        // Arrange
+        var document = Substitute.For<IObjectDocument>();
+        document.Active.Returns(new StreamInformation
+        {
+            CurrentStreamVersion = 1,
+            DocumentTagType = "DocType",
+            DocumentTagConnectionName = "Store",
+            StreamIdentifier = null!,
+            StreamType = "Blob",
+            StreamConnectionName = "Store",
+            StreamTagConnectionName = "TagStore",
+            SnapShotConnectionName = "SnapshotStore"
+        });
+        var mockEvent = Substitute.For<IEvent>();
+        mockEvent.EventVersion.Returns(1);
+        var sut = ObjectMetadata<string>.From(document, mockEvent, "test-id");
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() => sut.ToCausationId("test-name"));
+        Assert.Equal("StreamId is null or whitespace", exception.Message);
+    }
 }

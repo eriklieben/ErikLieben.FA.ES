@@ -1,7 +1,12 @@
-﻿using System;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using ErikLieben.FA.ES.CLI.Commands;
 using Spectre.Console.Cli;
@@ -134,11 +139,11 @@ EndGlobal
             Assert.NotNull(mi);
 
             // Act
-            var result = (string?)mi!.Invoke(null, Array.Empty<object>());
+            var result = (string?)mi!.Invoke(null, []);
 
             // Assert
             Assert.NotNull(result);
-            Assert.True(result!.EndsWith("App.sln", StringComparison.OrdinalIgnoreCase));
+            Assert.EndsWith("App.sln", result!, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

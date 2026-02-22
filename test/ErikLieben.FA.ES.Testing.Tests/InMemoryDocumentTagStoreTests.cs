@@ -1,4 +1,9 @@
-﻿using ErikLieben.FA.ES.Documents;
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Testing.InMemory;
 using ErikLieben.FA.ES.Testing.InMemory.Model;
 using Xunit;
@@ -81,7 +86,7 @@ public class InMemoryDocumentTagStoreTests
         // Pre-populate the private Tags dictionary under the document id
         var field = typeof(InMemoryDocumentTagStore).GetField("Tags", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         var dict = (Dictionary<string, List<string>>)field!.GetValue(store)!;
-        dict[doc.ObjectId] = new List<string> { "existing" };
+        dict[doc.ObjectId] = ["existing"];
 
         // Act
         await store.SetAsync(doc, "new-tag"); // should add
@@ -91,5 +96,101 @@ public class InMemoryDocumentTagStoreTests
         Assert.Equal(2, dict[doc.ObjectId].Count);
         Assert.Contains("existing", dict[doc.ObjectId]);
         Assert.Contains("new-tag", dict[doc.ObjectId]);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_throw_when_document_is_null()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.RemoveAsync(null!, "x"));
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_throw_when_tag_is_null_or_whitespace()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Act + Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.RemoveAsync(doc, null!));
+        await Assert.ThrowsAsync<ArgumentException>(() => store.RemoveAsync(doc, " "));
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_remove_tag_from_document()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Pre-populate the private Tags dictionary
+        var field = typeof(InMemoryDocumentTagStore).GetField("Tags", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var dict = (Dictionary<string, List<string>>)field!.GetValue(store)!;
+        dict[doc.ObjectId] = ["tag1", "tag2"];
+
+        // Act
+        await store.RemoveAsync(doc, "tag1");
+
+        // Assert
+        Assert.Single(dict[doc.ObjectId]);
+        Assert.Contains("tag2", dict[doc.ObjectId]);
+        Assert.DoesNotContain("tag1", dict[doc.ObjectId]);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_not_throw_when_tag_does_not_exist()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Act - should not throw
+        await store.RemoveAsync(doc, "nonexistent");
+
+        // Assert
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task RemoveAsync_should_not_throw_when_document_has_no_tags()
+    {
+        // Arrange
+        var store = new InMemoryDocumentTagStore();
+        var doc = new InMemoryEventStreamDocument(
+            "1",
+            "order",
+            new StreamInformation(),
+            [],
+            "1.0.0");
+
+        // Pre-populate the private Tags dictionary with empty list
+        var field = typeof(InMemoryDocumentTagStore).GetField("Tags", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var dict = (Dictionary<string, List<string>>)field!.GetValue(store)!;
+        dict[doc.ObjectId] = [];
+
+        // Act - should not throw
+        await store.RemoveAsync(doc, "any-tag");
+
+        // Assert
+        Assert.Empty(dict[doc.ObjectId]);
     }
 }

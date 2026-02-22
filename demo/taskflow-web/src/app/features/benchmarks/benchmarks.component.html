@@ -1,0 +1,351 @@
+<div class="benchmarks-container">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">speed</mat-icon>
+      <div>
+        <h1>Performance Benchmark Results</h1>
+        <p class="subtitle">ErikLieben.FA.ES Event Sourcing Library</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="refresh()" matTooltip="Refresh data">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </header>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Loading benchmark results...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (loadError()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ loadError() }}</span>
+        <button mat-button (click)="refresh()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (summaries().length > 0) {
+    <!-- Overview Section -->
+    <section class="card overview-section">
+      <h2>What These Benchmarks Measure</h2>
+      <div class="overview-intro">
+        <p>These benchmarks measure the core performance characteristics of the ErikLieben.FA.ES event sourcing library. Each section below explains what is being tested, what to look for in the results, and key insights. All times are per-operation averages - lower is better.</p>
+      </div>
+
+      <div class="benchmark-toc">
+        <h3>Jump to Section</h3>
+        <div class="toc-grid">
+          @for (entry of groupedByType() | keyvalue; track entry.key) {
+            @let metadata = getTypeMetadata(entry.key);
+            <a class="toc-item" href="javascript:void(0)" (click)="scrollToSection(entry.key)">
+              <mat-icon>{{ getCategoryIcon(entry.key) }}</mat-icon>
+              <span>{{ metadata.title }}</span>
+            </a>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="card summary-section">
+      <h2>Quick Stats</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-icon">
+            <mat-icon>category</mat-icon>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ availableTypes().length }}</span>
+            <span class="summary-label">Benchmark Categories</span>
+            <span class="summary-detail">Different test groups</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <mat-icon>speed</mat-icon>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ totalBenchmarkCount() }}</span>
+            <span class="summary-label">Total Benchmarks</span>
+            <span class="summary-detail">Individual measurements</span>
+          </div>
+        </div>
+        <div class="summary-item zero-alloc">
+          <div class="summary-icon">
+            <mat-icon>memory</mat-icon>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ getZeroAllocCount() }}</span>
+            <span class="summary-label">Zero-Allocation Operations</span>
+            <span class="summary-detail">{{ getZeroAllocPercentage() }}% allocation-free</span>
+          </div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-icon">
+            <mat-icon>folder_open</mat-icon>
+          </div>
+          <div class="summary-content">
+            <span class="summary-value">{{ totalFileCount() }}</span>
+            <span class="summary-label">Result Files</span>
+            <span class="summary-detail">Combined into this view</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Test Environment -->
+    @if (hostInfo(); as info) {
+      <section class="card env-section">
+        <h2>Test Environment</h2>
+        <div class="env-grid">
+          <div class="env-item">
+            <span class="env-label">Operating System</span>
+            <span class="env-value">{{ info.OsVersion }}</span>
+          </div>
+          <div class="env-item">
+            <span class="env-label">Architecture</span>
+            <span class="env-value">{{ info.Architecture }}</span>
+          </div>
+          <div class="env-item">
+            <span class="env-label">.NET Runtime</span>
+            <span class="env-value">{{ info.RuntimeVersion }}</span>
+          </div>
+          <div class="env-item">
+            <span class="env-label">.NET SDK</span>
+            <span class="env-value">{{ info.DotNetCliVersion }}</span>
+          </div>
+          <div class="env-item">
+            <span class="env-label">BenchmarkDotNet</span>
+            <span class="env-value">{{ info.BenchmarkDotNetVersion }}</span>
+          </div>
+          <div class="env-item">
+            <span class="env-label">Configuration</span>
+            <span class="env-value">{{ info.Configuration }}</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Understanding the Metrics -->
+    <section class="card metrics-section">
+      <mat-expansion-panel class="metrics-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>help_outline</mat-icon>
+            Understanding the Metrics
+          </mat-panel-title>
+          <mat-panel-description>
+            Click to learn what each column means
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-name">Mean</span>
+            <span class="metric-desc">Average execution time per operation. <strong>Lower is better.</strong></span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-name">Std Dev</span>
+            <span class="metric-desc">Standard deviation. Lower means more consistent, predictable performance.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-name">Allocated</span>
+            <span class="metric-desc">Heap memory allocated per operation. Lower reduces GC pauses and improves throughput.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-name">Ratio</span>
+            <span class="metric-desc">Performance relative to baseline (1.00). Values &lt;1 are faster than baseline.</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-name">Gen0 / Gen1 / Gen2</span>
+            <span class="metric-desc">GC collections per 1,000 operations. Lower means less memory pressure.</span>
+          </div>
+        </div>
+        <div class="time-units">
+          <h4>Time Units Reference</h4>
+          <div class="units-grid">
+            <span class="unit"><strong>ns</strong> = nanoseconds (1 billionth of a second)</span>
+            <span class="unit"><strong>us</strong> = microseconds (1 millionth of a second)</span>
+            <span class="unit"><strong>ms</strong> = milliseconds (1 thousandth of a second)</span>
+            <span class="unit"><strong>B</strong> = bytes of memory allocated</span>
+            <span class="unit"><strong>KB</strong> = kilobytes (1,024 bytes)</span>
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </section>
+
+    <!-- Benchmark Results by Category -->
+    @for (entry of groupedByType() | keyvalue; track entry.key) {
+      @let metadata = getTypeMetadata(entry.key);
+      @let benchmarks = entry.value;
+      <section class="card benchmark-section" [id]="'section-' + getShortTypeName(entry.key)">
+        <div class="section-header">
+          <mat-icon class="section-icon">{{ getCategoryIcon(entry.key) }}</mat-icon>
+          <div class="section-title-content">
+            <h2>{{ metadata.title }}</h2>
+            <span class="section-subtitle">{{ getShortTypeName(entry.key) }}</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="benchmark-description">
+          <p>{{ metadata.description }}</p>
+        </div>
+
+        <!-- What to Look For - Prominent guidance -->
+        @if (metadata.whatToLookFor) {
+          <div class="what-to-look-for">
+            <h4><mat-icon>visibility</mat-icon> What to Look For</h4>
+            <p>{{ metadata.whatToLookFor }}</p>
+          </div>
+        }
+
+        <!-- Key Insights for this category -->
+        @if (metadata.insights && metadata.insights.length > 0) {
+          <div class="category-insights">
+            <h4><mat-icon>lightbulb</mat-icon> Key Insights</h4>
+            <ul>
+              @for (insight of metadata.insights; track insight) {
+                <li>{{ insight }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        <!-- Results Table -->
+        <div class="results-table">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-method">Method</th>
+                <th class="col-params">Parameters</th>
+                <th class="col-mean numeric">Mean</th>
+                <th class="col-stddev numeric">Std Dev</th>
+                <th class="col-alloc numeric">Allocated</th>
+                <th class="col-ratio numeric">Ratio</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of benchmarks; track row.name) {
+                @let methodMeta = getMethodMetadata(row.type, row.method);
+                <tr [class.baseline-row]="row.isBaseline" [class.fastest-row]="isRowFastest(row, benchmarks)">
+                  <td class="col-method">
+                    <div class="method-cell">
+                      <span class="method-name">{{ row.method }}</span>
+                      @if (methodMeta && methodMeta.description) {
+                        <span class="method-desc">{{ methodMeta.description }}</span>
+                      }
+                      @if (methodMeta && methodMeta.importance) {
+                        <span class="method-importance">{{ methodMeta.importance }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="col-params">
+                    @if (row.parameters) {
+                      <span class="param-badge">{{ row.parameters }}</span>
+                    } @else {
+                      <span class="no-params">-</span>
+                    }
+                  </td>
+                  <td class="col-mean numeric">
+                    <span class="mean-value">{{ row.meanFormatted }}</span>
+                  </td>
+                  <td class="col-stddev numeric">
+                    <span class="stddev-value">{{ row.stdDevFormatted }}</span>
+                  </td>
+                  <td class="col-alloc numeric">
+                    <span class="alloc-value" [class.zero-alloc]="row.allocatedBytes === 0">
+                      {{ row.allocatedFormatted }}
+                    </span>
+                  </td>
+                  <td class="col-ratio numeric">
+                    <span class="ratio-badge" [class]="getRatioClass(row.ratio)">
+                      {{ formatRatio(row.ratio) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Category Summary Stats -->
+        <div class="category-summary">
+          <div class="stat">
+            <span class="stat-value fastest-color">{{ benchmarkApi.formatTime(getMinMean(benchmarks)) }}</span>
+            <span class="stat-label">Fastest in category</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value slowest-color">{{ benchmarkApi.formatTime(getMaxMean(benchmarks)) }}</span>
+            <span class="stat-label">Slowest in category</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ benchmarks.length }}</span>
+            <span class="stat-label">Benchmarks</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ getZeroAllocInCategory(benchmarks) }}</span>
+            <span class="stat-label">Zero allocations</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Key Takeaways -->
+    <section class="card takeaways-section">
+      <h2><mat-icon>emoji_objects</mat-icon> Key Takeaways</h2>
+      <ul class="takeaways-list">
+        @if (getZeroAllocCount() > 0) {
+          <li>
+            <strong>Memory efficiency:</strong> {{ getZeroAllocCount() }} operations ({{ getZeroAllocPercentage() }}%) achieve zero heap allocations, reducing GC pressure
+          </li>
+        }
+        @if (hasSourceGenBenchmarks()) {
+          <li>
+            <strong>Source generation:</strong> Source-generated JSON serializers are faster than reflection and required for Native AOT compilation
+          </li>
+        }
+        @if (hasFrozenRegistryBenchmarks()) {
+          <li>
+            <strong>FrozenDictionary:</strong> Provides 3-4x faster lookups than ConcurrentDictionary for immutable registry data
+          </li>
+        }
+        <li>
+          <strong>Compare within categories:</strong> Each category above has its own baseline - compare methods within the same payload size or parameter set
+        </li>
+      </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer class="file-info-footer">
+      <p>
+        <mat-icon>description</mat-icon>
+        Combined results from <strong>{{ totalFileCount() }} benchmark files</strong>
+        <span class="file-meta">{{ totalBenchmarkCount() }} total benchmarks</span>
+      </p>
+    </footer>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading() && !loadError() && files().length === 0) {
+    <section class="card empty-section">
+      <div class="empty-content">
+        <mat-icon class="empty-icon">inbox</mat-icon>
+        <h3>No Benchmark Results Found</h3>
+        <p>Run benchmarks to generate performance data:</p>
+        <div class="code-block">
+          <code>dotnet run -c Release --project benchmarks/ErikLieben.FA.ES.Benchmarks -- --config fast --all</code>
+        </div>
+        <p class="hint">Results will be saved to <code>BenchmarkDotNet.Artifacts/results/</code></p>
+        <p class="hint">Use <code>--config fast</code> for quick results (~30 minutes for all benchmarks)</p>
+      </div>
+    </section>
+  }
+</div>

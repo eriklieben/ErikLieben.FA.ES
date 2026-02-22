@@ -1,0 +1,386 @@
+<div class="page-layout">
+      <div class="main-content">
+        <div class="header">
+          <h1>CLI Tool</h1>
+          <p class="subtitle">Code generator for aggregates, projections, and serializers</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+          <h2><mat-icon>info</mat-icon> Overview</h2>
+          <p class="section-description">
+            The <code>faes</code> CLI tool analyzes your solution and generates companion code for aggregates
+            and projections. It creates factories, serializer contexts, event mapping code, and DI registration
+            extensions - eliminating boilerplate while maintaining full type safety.
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <mat-icon>factory</mat-icon>
+              <h3>Factory Generation</h3>
+              <p>Generates IXxxFactory interfaces and implementations for each aggregate.</p>
+            </div>
+            <div class="feature-card">
+              <mat-icon>transform</mat-icon>
+              <h3>Serializer Contexts</h3>
+              <p>Creates JsonSerializerContext for AOT-compatible JSON serialization.</p>
+            </div>
+            <div class="feature-card">
+              <mat-icon>sync_alt</mat-icon>
+              <h3>Event Mapping</h3>
+              <p>Generates Fold method dispatch code that maps events to When methods.</p>
+            </div>
+            <div class="feature-card">
+              <mat-icon>settings_applications</mat-icon>
+              <h3>DI Registration</h3>
+              <p>Creates extension methods to register all generated services.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Installation Section -->
+        <section id="installation" class="doc-section">
+          <h2><mat-icon>download</mat-icon> Installation</h2>
+          <p class="section-description">
+            Install the CLI tool as a local .NET tool in your solution:
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>terminal</mat-icon>
+              <span>Install CLI Tool</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="installCodeHtml()"></div>
+          </div>
+
+          <div class="info-callout">
+            <mat-icon>lightbulb</mat-icon>
+            <div>
+              <strong>Local Tool Manifest</strong>
+              <p>The tool manifest (<code>.config/dotnet-tools.json</code>) tracks the tool version
+              and ensures all team members use the same version.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Commands Section -->
+        <section id="commands" class="doc-section">
+          <h2><mat-icon>terminal</mat-icon> Commands</h2>
+          <p class="section-description">
+            The CLI provides commands for code generation and analysis:
+          </p>
+
+          <div class="command-grid">
+            <div class="command-card">
+              <h3>generate</h3>
+              <p>Analyzes the solution and generates code for all aggregates and projections.</p>
+              <div class="code-block compact">
+                <div class="shiki-container" [innerHTML]="generateCommandCodeHtml()"></div>
+              </div>
+            </div>
+            <div class="command-card">
+              <h3>watch</h3>
+              <p>Watches for file changes and regenerates code automatically.</p>
+              <div class="code-block compact">
+                <div class="shiki-container" [innerHTML]="watchCommandCodeHtml()"></div>
+              </div>
+            </div>
+          </div>
+
+          <h3>Generate Command Options</h3>
+          <div class="options-table">
+            <div class="option-row header">
+              <span class="option-name">Option</span>
+              <span class="option-desc">Description</span>
+            </div>
+            <div class="option-row">
+              <span class="option-name"><code>[Path]</code></span>
+              <span class="option-desc">Path to solution file (.sln or .slnx). If not provided, auto-detects from current directory.</span>
+            </div>
+            <div class="option-row">
+              <span class="option-name"><code>-d, --with-diff</code></span>
+              <span class="option-desc">Opens VS Code diff view showing changes to analyzed data.</span>
+            </div>
+          </div>
+
+          <h3>Watch Command Options</h3>
+          <div class="options-table">
+            <div class="option-row header">
+              <span class="option-name">Option</span>
+              <span class="option-desc">Description</span>
+            </div>
+            <div class="option-row">
+              <span class="option-name"><code>[Path]</code></span>
+              <span class="option-desc">Path to solution file (.sln or .slnx). If not provided, auto-detects from current directory.</span>
+            </div>
+            <div class="option-row">
+              <span class="option-name"><code>-v, --verbose</code></span>
+              <span class="option-desc">Show verbose output including all file changes.</span>
+            </div>
+            <div class="option-row">
+              <span class="option-name"><code>--simple</code></span>
+              <span class="option-desc">Use simple output mode without the full-screen TUI.</span>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- What Gets Generated Section -->
+        <section id="generated" class="doc-section">
+          <h2><mat-icon>code</mat-icon> What Gets Generated</h2>
+          <p class="section-description">
+            For each aggregate and projection, the CLI generates companion files with the <code>.Generated.cs</code> suffix:
+          </p>
+
+          <h3>Per Aggregate</h3>
+          <div class="generated-list">
+            <div class="generated-item">
+              <mat-icon>sync_alt</mat-icon>
+              <div>
+                <strong>Fold Method Override</strong>
+                <span>Switch statement dispatching events to When methods using <code>JsonEvent.To()</code>.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>settings</mat-icon>
+              <div>
+                <strong>GeneratedSetup Method</strong>
+                <span>Registers all events with their serializers via <code>Stream.RegisterEvent()</code>.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>factory</mat-icon>
+              <div>
+                <strong>Factory Interface & Implementation</strong>
+                <span><code>ICustomerFactory</code> with <code>CreateAsync</code>, <code>GetAsync</code>, and DI integration.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>storage</mat-icon>
+              <div>
+                <strong>Repository Interface & Implementation</strong>
+                <span><code>ICustomerRepository</code> with <code>GetByIdAsync</code>, <code>ExistsAsync</code>, <code>CountAsync</code>.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>description</mat-icon>
+              <div>
+                <strong>State Interface</strong>
+                <span><code>ICustomer</code> interface exposing the aggregate's public state properties.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>transform</mat-icon>
+              <div>
+                <strong>JsonSerializerContexts</strong>
+                <span>Per-event source-generated serializers for AOT-compatible JSON serialization.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>photo_camera</mat-icon>
+              <div>
+                <strong>Snapshot Support</strong>
+                <span>Snapshot record type and restoration code if snapshots are enabled.</span>
+              </div>
+            </div>
+          </div>
+
+          <h3>Per Projection</h3>
+          <div class="generated-list">
+            <div class="generated-item">
+              <mat-icon>factory</mat-icon>
+              <div>
+                <strong>Projection Factory</strong>
+                <span><code>IProjectionFactory&lt;T&gt;</code> implementation for loading and creating projections.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>sync_alt</mat-icon>
+              <div>
+                <strong>Fold Method Override</strong>
+                <span>Event-to-When method dispatch code.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>transform</mat-icon>
+              <div>
+                <strong>JsonSerializerContext</strong>
+                <span>Serializer for projection state and checkpoint data.</span>
+              </div>
+            </div>
+          </div>
+
+          <h3>Solution-Wide</h3>
+          <div class="generated-list">
+            <div class="generated-item">
+              <mat-icon>factory</mat-icon>
+              <div>
+                <strong>Domain Factory Class</strong>
+                <span><code>YourProjectDomainFactory</code> class with <code>Register()</code> method for all aggregates.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>settings_applications</mat-icon>
+              <div>
+                <strong>DI Extension Method</strong>
+                <span><code>ConfigureYourProjectDomainFactory()</code> extension for easy service registration.</span>
+              </div>
+            </div>
+            <div class="generated-item">
+              <mat-icon>transform</mat-icon>
+              <div>
+                <strong>Event Serializer Contexts</strong>
+                <span>Per-event <code>JsonSerializerContext</code> classes for all events in the solution.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Example Output Section -->
+        <section id="example" class="doc-section">
+          <h2><mat-icon>description</mat-icon> Example Output</h2>
+          <p class="section-description">
+            Here's what generated code looks like for a simple Customer aggregate:
+          </p>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>Customer.Generated.cs</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="generatedExampleCodeHtml()"></div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>YourProject.DomainExtensions.Generated.cs</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="extensionsExampleCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Analysis Process Section -->
+        <section id="analysis" class="doc-section">
+          <h2><mat-icon>analytics</mat-icon> How Analysis Works</h2>
+          <p class="section-description">
+            The CLI uses Roslyn to analyze your codebase:
+          </p>
+
+          <div class="process-steps">
+            <div class="process-step">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <strong>Load Solution</strong>
+                <p>Opens the .sln/.slnx file and loads all projects using MSBuild.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <strong>Find Aggregates & Projections</strong>
+                <p>Scans for classes inheriting from Aggregate, Projection, or RoutedProjection.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <strong>Extract When Methods</strong>
+                <p>Finds all When methods and [When&lt;T&gt;] attributes to build event mappings.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <strong>Generate Code</strong>
+                <p>Creates .Generated.cs files alongside the source files.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="warning-callout">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <strong>Partial Classes Required</strong>
+              <p>Aggregates and projections must be declared <code>partial</code> so the generated code can
+              extend them. The analyzer FAES0003 warns if you forget.</p>
+            </div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Integration Section -->
+        <section id="integration" class="doc-section">
+          <h2><mat-icon>build</mat-icon> Build Integration</h2>
+          <p class="section-description">
+            Integrate code generation into your build process:
+          </p>
+
+          <h3>CI/CD Pipeline</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <mat-icon>code</mat-icon>
+              <span>azure-pipelines.yml</span>
+            </div>
+            <div class="shiki-container" [innerHTML]="cicdCodeHtml()"></div>
+          </div>
+        </section>
+
+        <mat-divider></mat-divider>
+
+        <!-- Troubleshooting Section -->
+        <section id="troubleshooting" class="doc-section">
+          <h2><mat-icon>build_circle</mat-icon> Troubleshooting</h2>
+          <p class="section-description">
+            Common issues and their solutions:
+          </p>
+
+          <div class="troubleshoot-grid">
+            <div class="troubleshoot-card">
+              <h3><mat-icon>error</mat-icon> "Class must be partial"</h3>
+              <p>Add the <code>partial</code> keyword to your aggregate or projection class.</p>
+            </div>
+            <div class="troubleshoot-card">
+              <h3><mat-icon>error</mat-icon> "No solution found"</h3>
+              <p>Run the command from your solution directory or use <code>--solution</code> to specify the path.</p>
+            </div>
+            <div class="troubleshoot-card">
+              <h3><mat-icon>error</mat-icon> "Build errors in generated code"</h3>
+              <p>Ensure your source code compiles first. The CLI needs a compilable codebase for analysis.</p>
+            </div>
+            <div class="troubleshoot-card">
+              <h3><mat-icon>error</mat-icon> "Missing When methods"</h3>
+              <p>Make sure When methods are in the same partial class file as the aggregate declaration.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Navigation -->
+      <nav class="doc-nav">
+        <div class="nav-header">On this page</div>
+        <ul class="nav-list">
+          @for (item of navItems; track item.id) {
+            <li>
+              <a
+                [href]="'#' + item.id"
+                [class.active]="activeSection() === item.id"
+                (click)="scrollToSection($event, item.id)">
+                <mat-icon>{{ item.icon }}</mat-icon>
+                {{ item.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    </div>

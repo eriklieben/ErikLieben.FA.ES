@@ -1,17 +1,19 @@
-﻿using Azure;
+﻿using System.Collections.Concurrent;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.AzureStorage.Exceptions;
 using ErikLieben.FA.ES.Documents;
+using ErikLieben.FA.ES.Validation;
 using Microsoft.Extensions.Azure;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using ErikLieben.FA.ES.AzureStorage.Blob.Model;
 using ErikLieben.FA.ES.Configuration;
-using BlobEventStreamDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobEventStreamDocumentContext;
+using SerializeBlobEventStreamDocumentContext = ErikLieben.FA.ES.AzureStorage.Blob.Model.SerializeBlobEventStreamDocumentContext;
 
 namespace ErikLieben.FA.ES.AzureStorage.Blob;
 
@@ -20,9 +22,11 @@ namespace ErikLieben.FA.ES.AzureStorage.Blob;
 /// </summary>
 public class BlobDocumentStore : IBlobDocumentStore
 {
+    private static readonly ConcurrentDictionary<string, bool> VerifiedContainers = new(StringComparer.OrdinalIgnoreCase);
     private readonly IAzureClientFactory<BlobServiceClient> clientFactory;
     private readonly EventStreamBlobSettings blobSettings;
     private readonly IDocumentTagDocumentFactory documentTagStoreFactory;
+    private readonly EventStreamDefaultTypeSettings typeSettings;
 
     /// <summary>
 /// Initializes a new instance of the <see cref="BlobDocumentStore"/> class.
@@ -30,19 +34,23 @@ public class BlobDocumentStore : IBlobDocumentStore
 /// <param name="clientFactory">The Azure client factory used to create <see cref="BlobServiceClient"/> instances.</param>
 /// <param name="documentTagStoreFactory">The factory used to access document tag storage.</param>
 /// <param name="blobSettings">The blob storage settings used for containers and chunking.</param>
+/// <param name="typeSettings">The default type settings for streams, documents, and tags.</param>
 /// <exception cref="ArgumentNullException">Thrown when any required parameter is null.</exception>
 public BlobDocumentStore(
         IAzureClientFactory<BlobServiceClient> clientFactory,
         IDocumentTagDocumentFactory documentTagStoreFactory,
-        EventStreamBlobSettings blobSettings)
+        EventStreamBlobSettings blobSettings,
+        EventStreamDefaultTypeSettings typeSettings)
     {
         ArgumentNullException.ThrowIfNull(clientFactory);
         ArgumentNullException.ThrowIfNull(blobSettings);
         ArgumentNullException.ThrowIfNull(documentTagStoreFactory);
+        ArgumentNullException.ThrowIfNull(typeSettings);
 
         this.clientFactory = clientFactory;
         this.blobSettings = blobSettings;
         this.documentTagStoreFactory = documentTagStoreFactory;
+        this.typeSettings = typeSettings;
     }
 
     /// <summary>
@@ -59,46 +67,54 @@ public BlobDocumentStore(
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
+
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
-        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var blob = await CreateBlobClientAsync(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         try
         {
             if (!await blob.ExistsAsync())
             {
-                await blob.SaveEntityAsync(
-                    new BlobEventStreamDocument(
-                        objectId,
-                        name,
-                        new StreamInformation
-                        {
-                            StreamConnectionName = targetStore,
-                            SnapShotConnectionName = blobSettings.DefaultSnapShotStore,
-                            DocumentTagConnectionName = blobSettings.DefaultDocumentTagStore,
-                            StreamTagConnectionName = blobSettings.DefaultDocumentTagStore,
-                            StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
-                            StreamType = "blob",
-                            DocumentTagType = "blob",
-                            CurrentStreamVersion = -1,
-                            // Initialize store settings from the target store
-                            DocumentStore = targetStore,
-                            DataStore = targetStore,
-                            ChunkSettings = blobSettings.EnableStreamChunks
-                                ? new StreamChunkSettings
-                                {
-                                    EnableChunks = blobSettings.EnableStreamChunks,
-                                    ChunkSize = blobSettings.DefaultChunkSize,
-                                }
-                                : null,
-                            StreamChunks = blobSettings.EnableStreamChunks
-                                ?
-                                [
-                                    new(chunkIdentifier: 0, firstEventVersion: 0, lastEventVersion: -1)
-                                ]
-                                : []
-                        }, []),
-                BlobEventStreamDocumentContext.Default.BlobEventStreamDocument);
+                // Create new document using SerializeBlobEventStreamDocument to exclude legacy properties
+                var newDocument = new SerializeBlobEventStreamDocument
+                {
+                    ObjectId = objectId,
+                    ObjectName = name,
+                    TerminatedStreams = [],
+                    Active = new SerializeStreamInformation
+                    {
+                        StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
+                        // Use type settings instead of hardcoded values
+                        StreamType = typeSettings.StreamType,
+                        DocumentType = typeSettings.DocumentType,
+                        DocumentTagType = typeSettings.DocumentTagType,
+                        EventStreamTagType = typeSettings.EventStreamTagType,
+                        DocumentRefType = typeSettings.DocumentRefType,
+                        CurrentStreamVersion = -1,
+                        // Initialize store settings from the target store and blob settings (new *Store properties only)
+                        DocumentStore = targetStore,
+                        DataStore = targetStore,
+                        DocumentTagStore = blobSettings.DefaultDocumentTagStore,
+                        StreamTagStore = blobSettings.DefaultDocumentTagStore,
+                        SnapShotStore = blobSettings.DefaultSnapShotStore,
+                        ChunkSettings = blobSettings.EnableStreamChunks
+                            ? new StreamChunkSettings
+                            {
+                                EnableChunks = blobSettings.EnableStreamChunks,
+                                ChunkSize = blobSettings.DefaultChunkSize,
+                            }
+                            : null,
+                        StreamChunks = blobSettings.EnableStreamChunks
+                            ?
+                            [
+                                new(chunkIdentifier: 0, firstEventVersion: 0, lastEventVersion: -1)
+                            ]
+                            : []
+                    }
+                };
+                await blob.SaveEntityAsync(newDocument, SerializeBlobEventStreamDocumentContext.Default.SerializeBlobEventStreamDocument);
             }
         }
         catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "ContainerNotFound")
@@ -126,21 +142,15 @@ public BlobDocumentStore(
         }
         var newDoc = ToBlobEventStreamDocument(doc);
 
-        newDoc.SetHash(ComputeSha256Hash(json), ComputeSha256Hash(json));
+        var hash = ComputeSha256Hash(json);
+        newDoc.SetHash(hash, hash);
         return newDoc;
     }
 
     private static BlobEventStreamDocument ToBlobEventStreamDocument(DeserializeBlobEventStreamDocument doc)
     {
-        return new BlobEventStreamDocument(
-            doc.ObjectId,
-            doc.ObjectName,
-            doc.Active,
-            doc.TerminatedStreams,
-            doc.SchemaVersion,
-            doc.Hash,
-            doc.PrevHash,
-            doc.DocumentPath);
+        // Use the conversion method which handles migration of legacy *ConnectionName to *Store
+        return doc.ToBlobEventStreamDocument();
     }
 
     /// <summary>
@@ -156,10 +166,11 @@ public async Task<IObjectDocument> GetAsync(
         string objectId,
         string? store = null)
     {
+        ObjectIdValidator.Validate(objectId);
 
         var documentPath = $"{name}/{objectId}.json";
         var targetStore = store ?? blobSettings.DefaultDocumentStore;
-        var blob = CreateBlobClient(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var blob = await CreateBlobClientAsync(targetStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
         ETag? etag;
         try
@@ -253,11 +264,12 @@ public async Task<IObjectDocument> GetAsync(
         var documentPath = $"{document.ObjectName}/{document.ObjectId}.json";
 
         // Use document-specific store if configured, otherwise fall back to default
-        var documentStore = GetDocumentStore(document);
-        var blob = CreateBlobClient(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
+        var documentStore = GetDocumentConnectionName(document);
+        var blob = await CreateBlobClientAsync(documentStore, blobSettings.DefaultDocumentContainerName, documentPath);
 
-        var blobDoc = BlobEventStreamDocument.From(document);
-        ArgumentNullException.ThrowIfNull(blobDoc);
+        // Use SerializeBlobEventStreamDocument to exclude legacy *ConnectionName properties
+        var serializeDoc = SerializeBlobEventStreamDocument.From(document);
+        ArgumentNullException.ThrowIfNull(serializeDoc);
 
         // Try to get properties, but handle the case where blob doesn't exist yet
         ETag? etag = null;
@@ -273,23 +285,24 @@ public async Task<IObjectDocument> GetAsync(
             etag = null;
         }
 
-        var (_, hash) = await blob.SaveEntityAsync(blobDoc, BlobEventStreamDocumentContext.Default.BlobEventStreamDocument,
+        var (_, hash) = await blob.SaveEntityAsync(serializeDoc, SerializeBlobEventStreamDocumentContext.Default.SerializeBlobEventStreamDocument,
             new BlobRequestConditions { IfMatch = etag });
 
-        document.SetHash(hash,blobDoc.Hash);
+        document.SetHash(hash, document.Hash);
     }
 
-    private BlobClient CreateBlobClient(
+    private async Task<BlobClient> CreateBlobClientAsync(
         string connectionName,
         string objectDocumentContainerName,
         string documentPath)
     {
         var client = clientFactory.CreateClient(connectionName);
 
-        var container = client.GetBlobContainerClient(objectDocumentContainerName.ToLowerInvariant());
-        if (blobSettings.AutoCreateContainer)
+        var containerNameLower = objectDocumentContainerName.ToLowerInvariant();
+        var container = client.GetBlobContainerClient(containerNameLower);
+        if (blobSettings.AutoCreateContainer && VerifiedContainers.TryAdd(containerNameLower, true))
         {
-            container.CreateIfNotExists();
+            await container.CreateIfNotExistsAsync();
         }
         var blob = container.GetBlobClient(documentPath)
             ?? throw new DocumentConfigurationException("Unable to create blobClient.");
@@ -299,24 +312,34 @@ public async Task<IObjectDocument> GetAsync(
     private static string ComputeSha256Hash(string rawData)
     {
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        StringBuilder builder = new();
-        foreach (byte b in bytes)
+        Span<char> chars = stackalloc char[bytes.Length * 2];
+        for (int i = 0; i < bytes.Length; i++)
         {
-            builder.Append(b.ToString("x2"));
+            bytes[i].TryFormat(chars.Slice(i * 2, 2), out _, "x2");
         }
-
-        return builder.ToString();
+        return new string(chars);
     }
 
     /// <summary>
-    /// Gets the document store name from the document's active stream, falling back to the default if not configured.
+    /// Gets the document connection name from the document's active stream, falling back to the default if not configured.
     /// </summary>
-    /// <param name="document">The document to retrieve the store setting from.</param>
-    /// <returns>The configured store name or the default document store.</returns>
-    private string GetDocumentStore(IObjectDocument document)
+    /// <param name="document">The document to retrieve the connection name from.</param>
+    /// <returns>The configured connection name or the default document store.</returns>
+    private string GetDocumentConnectionName(IObjectDocument document)
     {
-        return !string.IsNullOrWhiteSpace(document.Active.DocumentStore)
-            ? document.Active.DocumentStore
-            : blobSettings.DefaultDocumentStore;
+        // Use DocumentStore, falling back to deprecated DocumentConnectionName for backwards compatibility
+        if (!string.IsNullOrWhiteSpace(document.Active.DocumentStore))
+        {
+            return document.Active.DocumentStore;
+        }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (!string.IsNullOrWhiteSpace(document.Active.DocumentConnectionName))
+        {
+            return document.Active.DocumentConnectionName;
+        }
+#pragma warning restore CS0618
+
+        return blobSettings.DefaultDocumentStore;
     }
 }

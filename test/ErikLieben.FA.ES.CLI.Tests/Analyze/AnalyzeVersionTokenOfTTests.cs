@@ -1,4 +1,8 @@
-﻿using System;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -87,7 +91,7 @@ namespace App.Tokens {
 
         var compilation = CSharpCompilation.Create(
             testAssembly,
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -97,11 +101,12 @@ namespace App.Tokens {
         return (semanticModel.GetDeclaredSymbol(recordNode), recordNode, semanticModel, compilation);
     }
 
-    private static List<PortableExecutableReference> References { get; } = new()
-    {
+    private static List<PortableExecutableReference> References { get; } =
+    [
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "mscorlib.dll")),
         MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Runtime.dll")),
-        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Collections.dll")),
+        MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(),
+            "System.Collections.dll")),
         MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
-    };
+    ];
 }

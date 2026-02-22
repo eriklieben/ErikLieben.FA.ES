@@ -1,0 +1,176 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
+using System.Threading.Tasks;
+using Azure;
+using Azure.Data.Tables;
+using ErikLieben.FA.ES.AzureStorage.Configuration;
+using ErikLieben.FA.ES.AzureStorage.Table;
+using ErikLieben.FA.ES.Documents;
+using Microsoft.Extensions.Azure;
+using NSubstitute;
+using Xunit;
+
+namespace ErikLieben.FA.ES.AzureStorage.Tests.Table;
+
+public class TableDocumentTagStoreTests
+{
+    private readonly IAzureClientFactory<TableServiceClient> clientFactory;
+    private readonly TableServiceClient tableServiceClient;
+    private readonly TableClient tableClient;
+    private readonly IObjectDocument objectDocument;
+    private readonly EventStreamTableSettings settings;
+
+    public TableDocumentTagStoreTests()
+    {
+        clientFactory = Substitute.For<IAzureClientFactory<TableServiceClient>>();
+        tableServiceClient = Substitute.For<TableServiceClient>();
+        tableClient = Substitute.For<TableClient>();
+        objectDocument = Substitute.For<IObjectDocument>();
+        settings = new EventStreamTableSettings("test-connection");
+
+        // Setup default stream information
+        var streamInformation = Substitute.For<StreamInformation>();
+        streamInformation.StreamIdentifier = "test-stream";
+        streamInformation.DocumentTagStore = "test-connection";
+
+        // Setup default object document
+        objectDocument.Active.Returns(streamInformation);
+        objectDocument.ObjectName.Returns("TestObject");
+        objectDocument.ObjectId.Returns("test-id");
+
+        // Setup table client chain
+        clientFactory.CreateClient(Arg.Any<string>()).Returns(tableServiceClient);
+        tableServiceClient.GetTableClient(Arg.Any<string>()).Returns(tableClient);
+    }
+
+    public class Constructor : TableDocumentTagStoreTests
+    {
+        [Fact]
+        public void Should_throw_argument_null_exception_when_client_factory_is_null()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() =>
+                new TableDocumentTagStore(null!, settings, "test-connection"));
+        }
+
+        [Fact]
+        public void Should_throw_argument_null_exception_when_settings_is_null()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() =>
+                new TableDocumentTagStore(clientFactory, null!, "test-connection"));
+        }
+
+        [Fact]
+        public void Should_create_instance_when_all_parameters_are_valid()
+        {
+            // Act
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Assert
+            Assert.NotNull(sut);
+        }
+    }
+
+    public class SetAsync : TableDocumentTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.SetAsync(null!, "test-tag"));
+        }
+    }
+
+    public class RemoveAsync : TableDocumentTagStoreTests
+    {
+        [Fact]
+        public async Task Should_throw_argument_null_exception_when_document_is_null()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(null!, "test-tag"));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_null()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => sut.RemoveAsync(objectDocument, null!));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_empty()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, ""));
+        }
+
+        [Fact]
+        public async Task Should_throw_argument_exception_when_tag_is_whitespace()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() => sut.RemoveAsync(objectDocument, "   "));
+        }
+
+        [Fact]
+        public async Task Should_call_delete_entity_async()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            clientFactory.CreateClient("test-connection").Returns(tableServiceClient);
+            tableServiceClient.GetTableClient(settings.DefaultDocumentTagTableName).Returns(tableClient);
+
+            // Act
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert
+            await tableClient.Received(1).DeleteEntityAsync(
+                Arg.Is<string>(pk => pk == "testobject_test-tag"),
+                Arg.Is<string>(rk => rk == "test-id"),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task Should_not_throw_when_entity_not_found()
+        {
+            // Arrange
+            var sut = new TableDocumentTagStore(clientFactory, settings, "test-connection");
+
+            clientFactory.CreateClient("test-connection").Returns(tableServiceClient);
+            tableServiceClient.GetTableClient(settings.DefaultDocumentTagTableName).Returns(tableClient);
+
+            tableClient.DeleteEntityAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<ETag>(),
+                Arg.Any<CancellationToken>())
+                .Returns<Task<Response>>(_ => throw new RequestFailedException(404, "Entity not found"));
+
+            // Act - should not throw
+            await sut.RemoveAsync(objectDocument, "test-tag");
+
+            // Assert - verifying no exception was thrown
+            Assert.True(true);
+        }
+    }
+}

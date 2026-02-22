@@ -1,0 +1,107 @@
+<div class="detail-container">
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else if (workItem()) {
+    <div class="header">
+      <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>{{ workItem()!.title }}</h1>
+      <div class="actions">
+        <button mat-raised-button color="primary" (click)="editWorkItem()">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+        @if (workItem()!.status !== 'Completed') {
+          <button mat-raised-button color="accent" (click)="completeWorkItem()">
+            <mat-icon>check_circle</mat-icon>
+            Complete
+          </button>
+        }
+      </div>
+    </div>
+
+    <mat-card>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Status</label>
+            <mat-chip [class]="'status-' + workItem()!.status.toLowerCase()">
+              {{ getStatusDisplay(workItem()!.status) }}
+            </mat-chip>
+          </div>
+
+          <div class="info-item">
+            <label>Priority</label>
+            <mat-chip [class]="'priority-' + workItem()!.priority.toLowerCase()">
+              {{ workItem()!.priority }}
+            </mat-chip>
+          </div>
+
+          <div class="info-item">
+            <label>Assigned To</label>
+            <span>{{ workItem()!.assignedTo || 'Unassigned' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Project ID</label>
+            <span>{{ workItem()!.projectId }}</span>
+          </div>
+
+          @if (workItem()!.deadline) {
+            <div class="info-item">
+              <label>Deadline</label>
+              <span [class.overdue]="isOverdue(workItem()!.deadline!)">
+                {{ formatDate(workItem()!.deadline!) }}
+              </span>
+            </div>
+          }
+
+          @if (workItem()!.estimatedHours) {
+            <div class="info-item">
+              <label>Estimated Hours</label>
+              <span>{{ workItem()!.estimatedHours }} hours</span>
+            </div>
+          }
+
+          <div class="info-item">
+            <label>Version</label>
+            <span>{{ workItem()!.version }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Comments</label>
+            <span>{{ workItem()!.commentCount }} comments</span>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="description-section">
+          <h3>Description</h3>
+          <p class="description">{{ workItem()!.description }}</p>
+        </div>
+
+        @if (workItem()!.tags && workItem()!.tags.length > 0) {
+          <mat-divider></mat-divider>
+          <div class="tags-section">
+            <h3>Tags</h3>
+            <div class="tags">
+              @for (tag of workItem()!.tags; track tag) {
+                <mat-chip>{{ tag }}</mat-chip>
+              }
+            </div>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="error">
+      <mat-icon>error_outline</mat-icon>
+      <p>Work item not found</p>
+      <button mat-raised-button (click)="goBack()">Go Back</button>
+    </div>
+  }
+</div>

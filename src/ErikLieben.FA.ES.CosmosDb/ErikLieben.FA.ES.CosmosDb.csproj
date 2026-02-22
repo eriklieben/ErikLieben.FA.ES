@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <PackageId>ErikLieben.FA.ES.CosmosDb</PackageId>
+    <PackageVersion Condition="'$(PackageVersion)' == '' and '$(Version)' != ''">$(Version)</PackageVersion>
+    <Authors>Erik Lieben</Authors>
+    <Description>Azure Cosmos DB storage provider for ErikLieben.FA.ES event sourcing framework. Optimized for RU efficiency with proper partition key strategies.</Description>
+    <PackageTags>event-sourcing;cosmosdb;azure;cqrs;ddd</PackageTags>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+
+    <!-- We use CosmosDbSystemTextJsonSerializer (System.Text.Json) instead of the SDK's default Newtonsoft.Json serializer.
+         This suppresses the SDK's build-time check requiring an explicit Newtonsoft.Json reference.
+         Newtonsoft.Json is still available as a transitive dependency from Microsoft.Azure.Cosmos. -->
+    <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ErikLieben.FA.ES.CosmosDb.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.57.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+  </ItemGroup>
+
+</Project>

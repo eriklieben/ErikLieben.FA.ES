@@ -1,0 +1,409 @@
+<div class="page-layout">
+  <div class="main-content">
+    <div class="header">
+      <h1>Azure Functions Integration</h1>
+      <p class="subtitle">Bindings for using event sourcing in Azure Functions (isolated worker model)</p>
+    </div>
+
+    <!-- Overview Section -->
+    <section id="overview" class="doc-section">
+      <h2><mat-icon>info</mat-icon> Overview</h2>
+      <p class="section-description">
+        The <code>ErikLieben.FA.ES.Azure.Functions.Worker.Extensions</code> package provides bindings
+        for using event sourcing in Azure Functions with the isolated worker model.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <mat-icon>input</mat-icon>
+          <h3>[EventStreamInput]</h3>
+          <p>Load aggregates automatically from event streams.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>visibility</mat-icon>
+          <h3>[ProjectionInput]</h3>
+          <p>Load projections automatically from storage.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>output</mat-icon>
+          <h3>[ProjectionOutput&lt;T&gt;]</h3>
+          <p>Update projections after function execution.</p>
+        </div>
+        <div class="benefit-card">
+          <mat-icon>bolt</mat-icon>
+          <h3>Automatic Binding</h3>
+          <p>Route parameters resolve to object IDs automatically.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Installation Section -->
+    <section id="installation" class="doc-section">
+      <h2><mat-icon>download</mat-icon> Installation</h2>
+      <p class="section-description">
+        Add the Azure Functions extension package to your project:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>terminal</mat-icon>
+          <span>Install Package</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="installCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Setup Section -->
+    <section id="setup" class="doc-section">
+      <h2><mat-icon>settings</mat-icon> Setup</h2>
+      <p class="section-description">
+        Configure your Azure Functions project in Program.cs:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>code</mat-icon>
+          <span>Program.cs Configuration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="setupCodeHtml()"></div>
+      </div>
+
+      <h3>Projection Factory Registration</h3>
+      <p>For each projection type you want to use with <code>[ProjectionInput]</code>, register the factory:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>factory</mat-icon>
+          <span>Factory Registration</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="factoryRegCodeHtml()"></div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>lightbulb</mat-icon>
+        <div>
+          <strong>Key Configuration Steps</strong>
+          <p>1. Configure Azure Blob Storage client<br>
+          2. Configure Event Store services<br>
+          3. Call <code>ConfigureEventStoreBindings()</code><br>
+          4. Register your domain and projection factories</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- EventStreamInput Section -->
+    <section id="event-stream-input" class="doc-section">
+      <h2><mat-icon>input</mat-icon> EventStreamInput Binding</h2>
+      <p class="section-description">
+        Load aggregates automatically from event streams using route parameters:
+      </p>
+
+      <h3>Reading Aggregates</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>download</mat-icon>
+          <span>Get Aggregate</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="getAggregateCodeHtml()"></div>
+      </div>
+
+      <h3>Modifying Aggregates</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>edit</mat-icon>
+          <span>Modify Aggregate</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="modifyAggregateCodeHtml()"></div>
+      </div>
+
+      <h3>Creating New Aggregates</h3>
+      <p>For creation, use the factory directly with <code>[FromServices]</code>:</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>add</mat-icon>
+          <span>Create Aggregate</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="createAggregateCodeHtml()"></div>
+      </div>
+
+      <h3>Attribute Properties</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ObjectId</code></span>
+          <span class="assertion-desc">Object identifier (supports route binding like <code>&#123;id&#125;</code>)</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>ObjectType</code></span>
+          <span class="assertion-desc">Optional object type name for document resolution</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>Connection</code></span>
+          <span class="assertion-desc">Connection configuration name</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>DocumentType</code></span>
+          <span class="assertion-desc">Document type for factory selection</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>CreateEmptyObjectWhenNonExistent</code></span>
+          <span class="assertion-desc">Create new if doesn't exist (default: false)</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- ProjectionInput Section -->
+    <section id="projection-input" class="doc-section">
+      <h2><mat-icon>visibility</mat-icon> ProjectionInput Binding</h2>
+      <p class="section-description">
+        Load projections automatically in your functions:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>analytics</mat-icon>
+          <span>Load Projections</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="projectionInputCodeHtml()"></div>
+      </div>
+
+      <h3>Attribute Properties</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>BlobName</code></span>
+          <span class="assertion-desc">Optional specific blob name to load from</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>CreateIfNotExists</code></span>
+          <span class="assertion-desc">Create new projection if not found (default: true)</span>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>tips_and_updates</mat-icon>
+        <div>
+          <strong>Works with All Triggers</strong>
+          <p>ProjectionInput works with HTTP triggers, queue triggers, timer triggers, and any other
+          Azure Functions trigger type.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- ProjectionOutput Section -->
+    <section id="projection-output" class="doc-section">
+      <h2><mat-icon>output</mat-icon> ProjectionOutput Binding</h2>
+      <p class="section-description">
+        Update projections after function execution completes successfully:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>sync</mat-icon>
+          <span>Projection Updates</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="projectionOutputCodeHtml()"></div>
+      </div>
+
+      <h3>How It Works</h3>
+      <div class="architecture-box">
+        <div class="component-list">
+          <div class="component-item">
+            <div class="step-number">1</div>
+            <div>
+              <strong>Function Executes</strong>
+              <span>Your function logic runs normally</span>
+            </div>
+          </div>
+          <div class="component-item">
+            <div class="step-number">2</div>
+            <div>
+              <strong>Success Check</strong>
+              <span>If function succeeds, middleware takes over</span>
+            </div>
+          </div>
+          <div class="component-item">
+            <div class="step-number">3</div>
+            <div>
+              <strong>Load Projections</strong>
+              <span>Each marked projection is loaded</span>
+            </div>
+          </div>
+          <div class="component-item">
+            <div class="step-number">4</div>
+            <div>
+              <strong>Update</strong>
+              <span>Calls <code>UpdateToLatestVersion()</code></span>
+            </div>
+          </div>
+          <div class="component-item">
+            <div class="step-number">5</div>
+            <div>
+              <strong>Save</strong>
+              <span>Updated projections saved to storage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Attribute Properties</h3>
+      <div class="assertion-table">
+        <div class="assertion-row header">
+          <span class="assertion-method">Property</span>
+          <span class="assertion-desc">Description</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>BlobName</code></span>
+          <span class="assertion-desc">Optional blob name for routed projections</span>
+        </div>
+        <div class="assertion-row">
+          <span class="assertion-method"><code>SaveAfterUpdate</code></span>
+          <span class="assertion-desc">Save projection after updating (default: true)</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Complete Example Section -->
+    <section id="complete-example" class="doc-section">
+      <h2><mat-icon>code</mat-icon> Complete Example</h2>
+      <p class="section-description">
+        A complete Azure Functions class using all bindings:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>functions</mat-icon>
+          <span>WorkItemFunctions.cs</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="completeExampleCodeHtml()"></div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Troubleshooting Section -->
+    <section id="troubleshooting" class="doc-section">
+      <h2><mat-icon>bug_report</mat-icon> Troubleshooting</h2>
+      <p class="section-description">
+        Common issues and their solutions:
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <mat-icon>build</mat-icon>
+          <span>Common Fixes</span>
+        </div>
+        <div class="shiki-container" [innerHTML]="troubleshootingCodeHtml()"></div>
+      </div>
+
+      <div class="problem-list">
+        <div class="problem-item">
+          <div class="problem-header">
+            <mat-icon>error</mat-icon>
+            <strong>"No factory found for projection type"</strong>
+          </div>
+          <p>Register both <code>IProjectionFactory&lt;T&gt;</code> and <code>IProjectionFactory</code> for your projection type.</p>
+        </div>
+        <div class="problem-item">
+          <div class="problem-header">
+            <mat-icon>error</mat-icon>
+            <strong>"Cannot bind parameter"</strong>
+          </div>
+          <p>Ensure <code>ConfigureEventStoreBindings()</code> is called in Program.cs and route parameter names match binding expressions.</p>
+        </div>
+        <div class="problem-item">
+          <div class="problem-header">
+            <mat-icon>error</mat-icon>
+            <strong>"Aggregate not found"</strong>
+          </div>
+          <p>Either handle the null case in your function or set <code>CreateEmptyObjectWhenNonExistent = true</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Best Practices Section -->
+    <section id="best-practices" class="doc-section">
+      <h2><mat-icon>verified</mat-icon> Best Practices</h2>
+      <p class="section-description">
+        Follow these guidelines for effective Azure Functions integration:
+      </p>
+
+      <div class="practice-grid">
+        <div class="practice-card do">
+          <div class="practice-header">
+            <mat-icon>check_circle</mat-icon>
+            <h3>Do</h3>
+          </div>
+          <ul>
+            <li>Register projection factories for all types you'll use</li>
+            <li>Use <code>[ProjectionOutput&lt;T&gt;]</code> for immediate consistency</li>
+            <li>Keep functions focused on single operations</li>
+            <li>Use <code>[FromServices]</code> for factories when creating aggregates</li>
+            <li>Handle missing aggregate/projection cases gracefully</li>
+          </ul>
+        </div>
+        <div class="practice-card dont">
+          <div class="practice-header">
+            <mat-icon>cancel</mat-icon>
+            <h3>Don't</h3>
+          </div>
+          <ul>
+            <li>Use <code>[EventStreamInput]</code> for creating new aggregates</li>
+            <li>Mix multiple aggregate modifications in one function</li>
+            <li>Forget to register projection factories</li>
+            <li>Rely on eventual consistency if immediate updates needed</li>
+            <li>Skip error handling for not-found cases</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="info-callout">
+        <mat-icon>integration_instructions</mat-icon>
+        <div>
+          <strong>Aspire Integration</strong>
+          <p>When using .NET Aspire, use <code>builder.AddServiceDefaults()</code> and configure
+          connection strings from <code>builder.Configuration.GetConnectionString("events")</code>.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right Navigation -->
+  <nav class="doc-nav">
+    <div class="nav-header">On this page</div>
+    <ul class="nav-list">
+      @for (item of navItems; track item.id) {
+        <li>
+          <a
+            [href]="'#' + item.id"
+            [class.active]="activeSection() === item.id"
+            (click)="scrollToSection($event, item.id)">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</div>

@@ -1,13 +1,22 @@
-﻿using System.Security.Cryptography;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type - testing null scenarios
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using ErikLieben.FA.ES.AzureStorage.Blob.Extensions;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob.Extensions
 {

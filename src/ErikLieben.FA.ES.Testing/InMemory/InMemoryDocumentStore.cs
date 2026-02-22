@@ -3,23 +3,27 @@ using ErikLieben.FA.ES.Testing.InMemory.Model;
 
 namespace ErikLieben.FA.ES.Testing.InMemory;
 
-public class InMemoryDocumentStore
+/// <summary>
+/// In-memory implementation of IDocumentStore for testing purposes.
+/// </summary>
+public class InMemoryDocumentStore : IDocumentStore
 {
     private const string InMemoryConnectionName = "inMemory";
 
     private readonly Dictionary<string, IObjectDocument> documents = new();
 
-    public Task<IObjectDocument> CreateAsync(string name, string objectId)
+    /// <inheritdoc />
+    public Task<IObjectDocument> CreateAsync(string name, string objectId, string? store = null)
     {
         var created = new InMemoryEventStreamDocument(
             objectId,
             name.ToLowerInvariant(),
             new StreamInformation
             {
-                StreamConnectionName = InMemoryConnectionName,
-                SnapShotConnectionName = InMemoryConnectionName,
-                DocumentTagConnectionName = InMemoryConnectionName,
-                StreamTagConnectionName = InMemoryConnectionName,
+                DataStore = InMemoryConnectionName,
+                SnapShotStore = InMemoryConnectionName,
+                DocumentTagStore = InMemoryConnectionName,
+                StreamTagStore = InMemoryConnectionName,
                 StreamIdentifier = $"{objectId.Replace("-", string.Empty)}-0000000000",
                 StreamType = InMemoryConnectionName,
                 DocumentTagType = InMemoryConnectionName,
@@ -52,7 +56,8 @@ public class InMemoryDocumentStore
         return Task.CompletedTask;
     }
 
-    public Task<IObjectDocument> GetAsync(string name, string objectId)
+    /// <inheritdoc />
+    public Task<IObjectDocument> GetAsync(string name, string objectId, string? store = null)
     {
         return Task.FromResult(documents[$"{name.ToLowerInvariant()}/{objectId}"]);
     }

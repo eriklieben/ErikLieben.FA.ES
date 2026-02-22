@@ -1,22 +1,28 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$Token,
-    
+
     [Parameter(Mandatory=$true)]
     [string]$ProjectKey,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$Organization,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$Branch = "main",
-    
+
+    [Parameter(Mandatory=$false)]
+    [string]$PullRequest,
+
     [Parameter(Mandatory=$false)]
     [string]$OutputFile = "sonarcloud-report.md",
-    
+
     [Parameter(Mandatory=$false)]
     [switch]$IncludeResolved
 )
+
+# Determine whether to use branch or pullRequest parameter
+$branchOrPr = if ($PullRequest) { @{ pullRequest = $PullRequest } } else { @{ branch = $Branch } }
 
 # Base URL for SonarCloud API
 $baseUrl = "https://sonarcloud.io/api"
@@ -55,22 +61,21 @@ function Get-AllSonarCloudIssues {
         [string]$Branch,
         [bool]$IncludeResolved
     )
-    
+
     $allIssues = @()
     $pageIndex = 1
     $pageSize = 500
     $totalFetched = 0
-    
+
     do {
         Write-Host "Fetching issues page $pageIndex..." -ForegroundColor Yellow
-        
+
         $issuesParams = @{
             componentKeys = $ProjectKey
-            branch = $Branch
             resolved = if ($IncludeResolved) { "true" } else { "false" }
             ps = $pageSize
             p = $pageIndex
-        }
+        } + $branchOrPr
         
         $response = Get-SonarCloudData -Endpoint "/issues/search" -Params $issuesParams
         
@@ -95,21 +100,20 @@ function Get-AllSonarCloudHotspots {
         [string]$ProjectKey,
         [string]$Branch
     )
-    
+
     $allHotspots = @()
     $pageIndex = 1
     $pageSize = 500
     $totalFetched = 0
-    
+
     do {
         Write-Host "Fetching hotspots page $pageIndex..." -ForegroundColor Yellow
-        
+
         $hotspotsParams = @{
             projectKey = $ProjectKey
-            branch = $Branch
             ps = $pageSize
             p = $pageIndex
-        }
+        } + $branchOrPr
         
         $response = Get-SonarCloudData -Endpoint "/hotspots/search" -Params $hotspotsParams
         
@@ -129,27 +133,28 @@ function Get-AllSonarCloudHotspots {
     }
 }
 
-Write-Host "Fetching SonarCloud data for project: $ProjectKey (Branch: $Branch)" -ForegroundColor Cyan
+$targetLabel = if ($PullRequest) { "PR #$PullRequest" } else { "Branch: $Branch" }
+Write-Host "Fetching SonarCloud data for project: $ProjectKey ($targetLabel)" -ForegroundColor Cyan
 
 # Get project measures
 $measuresParams = @{
     component = $ProjectKey
-    branch = $Branch
     metricKeys = "alert_status,bugs,vulnerabilities,code_smells,security_hotspots,coverage,duplicated_lines_density,ncloc,sqale_index,reliability_rating,security_rating,sqale_rating"
-}
+} + $branchOrPr
 
 $measures = Get-SonarCloudData -Endpoint "/measures/component" -Params $measuresParams
 
 # Get all issues (paginated)
 $issuesResult = Get-AllSonarCloudIssues -ProjectKey $ProjectKey -Branch $Branch -IncludeResolved $IncludeResolved.IsPresent
 
+
 # Start building markdown
 $markdown = @"
 # SonarCloud Analysis Report
 
-**Project:** ``$ProjectKey``  
-**Branch:** ``$Branch``  
-**Generated:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")  
+**Project:** ``$ProjectKey``
+**Branch/PR:** ``$targetLabel``
+**Generated:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 **Organization:** $Organization
 
 ---
@@ -300,7 +305,7 @@ $markdown += @"
 ---
 
 *Report generated from SonarCloud API*  
-*View full results at: https://sonarcloud.io/dashboard?id=$ProjectKey&branch=$Branch*
+*View full results at: https://sonarcloud.io/dashboard?id=$ProjectKey&$(if ($PullRequest) { "pullRequest=$PullRequest" } else { "branch=$Branch" })*
 
 "@
 

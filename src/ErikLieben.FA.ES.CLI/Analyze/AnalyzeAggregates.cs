@@ -1,6 +1,8 @@
 ﻿using ErikLieben.FA.ES.CLI.Analyze.Helpers;
 using ErikLieben.FA.ES.CLI.Model;
+using ErikLieben.FA.ES.CodeAnalysis;
 using Microsoft.CodeAnalysis;
+using static ErikLieben.FA.ES.CodeAnalysis.TypeConstants;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Spectre.Console;
 
@@ -63,6 +65,34 @@ public class AnalyzeAggregates
         var newCommands = CommandHelper.GetCommandMethods(typeSymbol, roslyn)
             .Where(c => declaration.Commands.All(existing => !AreCommandsEqual(existing, c)));
         declaration.Commands.AddRange(newCommands);
+
+        // Merge events from commands into the aggregate's event list (for events without When handlers, like legacy events that get upcasted)
+        foreach (var command in declaration.Commands)
+        {
+            foreach (var commandEvent in command.ProducesEvents)
+            {
+                // Convert CommandEventDefinition to EventDefinition
+                var eventDef = new EventDefinition
+                {
+                    EventName = commandEvent.EventName,
+                    TypeName = commandEvent.TypeName,
+                    Namespace = commandEvent.Namespace,
+                    File = commandEvent.File,
+                    SchemaVersion = commandEvent.SchemaVersion,
+                    ActivationType = "Command", // Mark as coming from a command, not a When method
+                    ActivationAwaitRequired = false, // Event registration doesn't require await
+                    Parameters = [], // Commands don't have When parameters
+                    Properties = [] // Will be populated from event type
+                };
+
+                // Only add if not already in the events list
+                if (declaration.Events.All(existing => !AreEventsEqual(existing, eventDef)))
+                {
+                    declaration.Events.Add(eventDef);
+                }
+            }
+        }
+
         if (declaration.PostWhen == null)
         {
             declaration.PostWhen = PostWhenHelper.GetPostWhenMethod(typeSymbol);
@@ -75,7 +105,21 @@ public class AnalyzeAggregates
         declaration.EventStreamTypeAttribute = AttributeExtractor.ExtractEventStreamTypeAttribute(classSymbol);
         declaration.EventStreamBlobSettingsAttribute = AttributeExtractor.ExtractEventStreamBlobSettingsAttribute(classSymbol);
 
+        // Extract upcasters
+        var newUpcasters = AttributeExtractor.ExtractUseUpcasterAttributes(classSymbol)
+            .Where(u => declaration.Upcasters.All(existing => existing.TypeName != u.TypeName || existing.Namespace != u.Namespace));
+        declaration.Upcasters.AddRange(newUpcasters);
+
         AppendIdentifierTypeFromMetadata(declaration);
+
+        // Detect if user has defined their own partial factory
+        declaration.HasUserDefinedFactoryPartial = DetectUserDefinedFactoryPartial(declaration);
+
+        // Detect if user has defined their own partial repository
+        declaration.HasUserDefinedRepositoryPartial = DetectUserDefinedRepositoryPartial(declaration);
+
+        // Detect if user has defined their own ProcessSnapshot override
+        declaration.HasUserDefinedProcessSnapshot = DetectUserDefinedProcessSnapshot(typeSymbol);
     }
 
 
@@ -107,19 +151,12 @@ public class AnalyzeAggregates
         return existing.Type == newItem.Type && existing.Namespace == newItem.Namespace;
     }
 
-    private static readonly List<string> StreamInterfaces =
-    [
-        "IAsyncPostCommitAction",
-        "IPostAppendAction",
-        "IPostReadAction",
-        "IPreAppendAction",
-        "IPreReadAction"
-    ];
 
     private static List<StreamActionDefinition> GetStreamActions(INamedTypeSymbol parameterTypeSymbol)
     {
         return parameterTypeSymbol.GetAttributes()
-            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 })
+            .Where(a => a.AttributeClass is { TypeArguments.Length: > 0 } &&
+                       a.AttributeClass.Name != "UseUpcasterAttribute") // Exclude upcaster attributes
             .SelectMany(attribute => attribute.AttributeClass!.TypeArguments)
             .Where(typeArgument => typeArgument.TypeKind != TypeKind.Error)
             .Select(typeArgument => new StreamActionDefinition
@@ -127,9 +164,10 @@ public class AnalyzeAggregates
                 Namespace = RoslynHelper.GetFullNamespace(typeArgument),
                 Type = RoslynHelper.GetFullTypeName(typeArgument),
                 StreamActionInterfaces = typeArgument.AllInterfaces
-                    .Where(i => StreamInterfaces.Contains(i.Name))
+                    .Where(i => StreamActionInterfaceNames.Contains(i.Name))
                     .Select(i => i.Name)
-                    .ToList()
+                    .ToList(),
+                RegistrationType = "Attribute"
             })
             .ToList();
     }
@@ -176,5 +214,90 @@ public class AnalyzeAggregates
         }
         aggregate.IdentifierType = genericType.Name;
         aggregate.IdentifierTypeNamespace = genericType.Namespace;
+    }
+
+    private bool DetectUserDefinedFactoryPartial(AggregateDefinition aggregate)
+    {
+        var factoryName = $"{aggregate.IdentifierName}Factory";
+
+        // Search for all types with the factory name in the compilation
+        var factoryTypes = compilation.GetSymbolsWithName(factoryName, SymbolFilter.Type)
+            .OfType<INamedTypeSymbol>()
+            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+
+        foreach (var factoryType in factoryTypes)
+        {
+            // Check if any of the partial declarations are in non-generated files
+            var hasUserDefinedPartial = factoryType.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedPartial)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial factory for {aggregate.IdentifierName}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool DetectUserDefinedRepositoryPartial(AggregateDefinition aggregate)
+    {
+        var repositoryName = $"{aggregate.IdentifierName}Repository";
+
+        // Search for all types with the repository name in the compilation
+        var repositoryTypes = compilation.GetSymbolsWithName(repositoryName, SymbolFilter.Type)
+            .OfType<INamedTypeSymbol>()
+            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+
+        foreach (var repositoryType in repositoryTypes)
+        {
+            // Check if any of the partial declarations are in non-generated files
+            var hasUserDefinedPartial = repositoryType.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedPartial)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial repository for {aggregate.IdentifierName}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool DetectUserDefinedProcessSnapshot(INamedTypeSymbol typeSymbol)
+    {
+        // Look for ProcessSnapshot method in the aggregate class
+        var processSnapshotMethods = typeSymbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => m.Name == "ProcessSnapshot" && m.IsOverride);
+
+        foreach (var method in processSnapshotMethods)
+        {
+            // Check if it's defined in a non-generated file
+            var hasUserDefinedMethod = method.DeclaringSyntaxReferences
+                .Any(syntaxRef =>
+                {
+                    var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                    return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (hasUserDefinedMethod)
+            {
+                AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined ProcessSnapshot for {typeSymbol.Name}");
+                return true;
+            }
+        }
+
+        return false;
     }
 }

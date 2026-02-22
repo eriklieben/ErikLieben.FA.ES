@@ -43,9 +43,10 @@ internal class EventStreamConverter : IInputConverter
     {
         try
         {
+            // Return Unhandled for sources we don't handle - let other converters try
             if (modelBindingData.Source is not "ErikLieben.FA.ES")
             {
-                throw new InvalidBindingSourceException(modelBindingData.Source, "ErikLieben.FA.ES.Azure.Functions.Worker.Extensions");
+                return ConversionResult.Unhandled();
             }
 
             var eventStreamData = GetBindingDataContent(modelBindingData);
@@ -101,8 +102,8 @@ internal class EventStreamConverter : IInputConverter
             throw new InvalidOperationException("Configuration error: factory for the requested target type is not configured or cannot be resolved.");
         }
         var document = data.CreateEmptyObjectWhenNonExistent ?
-            await objectDocumentFactory.GetOrCreateAsync(factory.GetObjectName(), data.ObjectId, data.ObjectType) :
-            await objectDocumentFactory.GetAsync(factory.GetObjectName(), data.ObjectId, data.ObjectType);
+            await objectDocumentFactory.GetOrCreateAsync(factory.GetObjectName(), data.ObjectId, data.DocumentType) :
+            await objectDocumentFactory.GetAsync(factory.GetObjectName(), data.ObjectId, data.DocumentType);
 
         var eventStream = eventStreamFactory.Create(document);
         var obj = factory.Create(eventStream);

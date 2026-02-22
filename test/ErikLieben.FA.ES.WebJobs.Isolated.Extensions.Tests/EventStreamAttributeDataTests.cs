@@ -1,4 +1,6 @@
-﻿namespace ErikLieben.FA.ES.WebJobs.Isolated.Extensions
+﻿using Xunit;
+
+namespace ErikLieben.FA.ES.WebJobs.Isolated.Extensions
 {
     public class EventStreamAttributeDataTests
     {

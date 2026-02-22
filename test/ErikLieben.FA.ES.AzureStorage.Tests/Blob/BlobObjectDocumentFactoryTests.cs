@@ -1,4 +1,11 @@
-﻿using System.Diagnostics;
+#pragma warning disable CS8602 // Dereference of a possibly null reference - test assertions handle null checks
+#pragma warning disable CS8604 // Possible null reference argument - test data is always valid
+#pragma warning disable xUnit1012 // Null values in [InlineData] for non-nullable parameters - testing null scenarios
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using ErikLieben.FA.ES.AzureStorage.Blob;
 using ErikLieben.FA.ES.AzureStorage.Configuration;
@@ -6,6 +13,7 @@ using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.Documents;
 using Microsoft.Extensions.Azure;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
 {
@@ -73,7 +81,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
@@ -86,7 +94,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_id_is_invalid(string? objectId)
             {
@@ -129,7 +137,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_name_is_invalid(string objectName)
             {
@@ -142,7 +150,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_id_is_invalid(string objectId)
             {
@@ -185,7 +193,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
@@ -198,7 +206,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_document_tag_is_invalid(string? objectDocumentTag)
             {
@@ -241,7 +249,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
@@ -254,7 +262,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_document_tag_is_invalid(string? objectDocumentTag)
             {
@@ -297,7 +305,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_object_name_is_invalid(string? objectName)
             {
@@ -310,7 +318,7 @@ namespace ErikLieben.FA.ES.AzureStorage.Tests.Blob
             }
 
             [Theory]
-            [InlineData(null)]
+            [InlineData(null!)]
             [InlineData("")]
             public void Should_throw_when_document_tag_is_invalid(string objectDocumentTag)
             {

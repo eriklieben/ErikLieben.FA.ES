@@ -1,4 +1,4 @@
-﻿using ErikLieben.FA.ES.CLI.Model;
+using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -11,57 +11,122 @@ internal static class WhenMethodHelper
         Compilation compilation,
         RoslynHelper roslyn)
     {
-        var whenMethods = symbol.GetMembers("When")
+        var allWhenMethods = CollectWhenMethods(symbol);
+        var items = new List<ProjectionEventDefinition>();
+
+        foreach (var whenMethod in allWhenMethods)
+        {
+            var definition = CreateEventDefinition(whenMethod, compilation, roslyn);
+            if (definition != null)
+            {
+                items.Add(definition);
+            }
+        }
+
+        return items;
+    }
+
+    private static List<IMethodSymbol> CollectWhenMethods(INamedTypeSymbol symbol)
+    {
+        // Get methods named "When"
+        var whenMethods = symbol.GetMembers("When").OfType<IMethodSymbol>();
+
+        // Get methods with [When<TEvent>] attribute
+        var attributeBasedMethods = symbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(m => HasWhenAttribute(m));
+
+        // Combine both approaches
+        return whenMethods.Concat(attributeBasedMethods)
+            .Distinct(SymbolEqualityComparer.Default)
             .OfType<IMethodSymbol>()
             .ToList();
+    }
 
-        var items = new List<ProjectionEventDefinition>();
-        foreach (var whenMethod in whenMethods)
+    private static ProjectionEventDefinition? CreateEventDefinition(
+        IMethodSymbol whenMethod,
+        Compilation compilation,
+        RoslynHelper roslyn)
+    {
+        var parameterTypeSymbol = ResolveEventTypeSymbol(whenMethod);
+        if (parameterTypeSymbol == null || parameterTypeSymbol.Name == "IExecutionContextWithEvent")
         {
-            var parameter = whenMethod.Parameters.FirstOrDefault();
-            if (parameter?.Type is not INamedTypeSymbol parameterTypeSymbol)
-            {
-                continue;
-            }
-
-            if (parameterTypeSymbol.Name == "IExecutionContextWithEvent")
-            {
-                continue;
-            }
-
-            var eventName = RoslynHelper.GetEventName(parameterTypeSymbol);
-            var extra = whenMethod.Parameters.Skip(1).ToList();
-
-            var typeName = parameterTypeSymbol.Name;
-            if (parameterTypeSymbol.TypeArguments.Length is > 0 and 1)
-            {
-                typeName = RoslynHelper.GetFullTypeName(parameterTypeSymbol.TypeArguments[0]);
-            }
-
-            items.Add(new ProjectionEventDefinition
-            {
-                ActivationType = whenMethod.Name,
-                ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
-                EventName = eventName,
-                Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
-                File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
-                TypeName = typeName,
-                Properties = PropertyHelper.GetPublicGetterProperties(parameterTypeSymbol),
-                Parameters = ParameterHelper.GetParameters(whenMethod),
-                // StreamActions = GetStreamActions(parameterTypeSymbol),
-                WhenParameterValueFactories = GetWhenParameterValueFactories(whenMethod),
-                WhenParameterDeclarations = extra.Select(p => new WhenParameterDeclaration
-                {
-                    Name = p.Name,
-                    Type = RoslynHelper.GetFullTypeName(p.Type),
-                    Namespace = RoslynHelper.GetFullNamespace(p.Type),
-                    GenericArguments = p.Type is INamedTypeSymbol namedType
-                        ? RoslynHelper.GetGenericArguments(namedType)
-                        : []
-                }).ToList(),
-            });
+            return null;
         }
-        return items;
+
+        var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
+        var hasEventParameter = eventTypeFromAttribute == null;
+        var skipCount = hasEventParameter ? 1 : 0;
+        var extra = whenMethod.Parameters.Skip(skipCount).ToList();
+
+        var typeName = parameterTypeSymbol.TypeArguments.Length == 1
+            ? RoslynHelper.GetFullTypeName(parameterTypeSymbol.TypeArguments[0])
+            : parameterTypeSymbol.Name;
+
+        return new ProjectionEventDefinition
+        {
+            ActivationType = whenMethod.Name,
+            ActivationAwaitRequired = IsAwaitable(whenMethod, compilation),
+            EventName = RoslynHelper.GetEventName(parameterTypeSymbol),
+            SchemaVersion = AttributeExtractor.ExtractEventVersionAttribute(parameterTypeSymbol),
+            Namespace = RoslynHelper.GetFullNamespace(parameterTypeSymbol),
+            File = roslyn.GetFilePaths(parameterTypeSymbol).FirstOrDefault() ?? string.Empty,
+            TypeName = typeName,
+            Properties = PropertyHelper.GetPublicGetterProperties(parameterTypeSymbol),
+            Parameters = ParameterHelper.GetParameters(whenMethod),
+            WhenParameterValueFactories = GetWhenParameterValueFactories(whenMethod),
+            WhenParameterDeclarations = extra.Select(p => new WhenParameterDeclaration
+            {
+                Name = p.Name,
+                Type = RoslynHelper.GetFullTypeName(p.Type),
+                Namespace = RoslynHelper.GetFullNamespace(p.Type),
+                GenericArguments = p.Type is INamedTypeSymbol namedType
+                    ? RoslynHelper.GetGenericArguments(namedType)
+                    : [],
+                IsExecutionContext = IsExecutionContextType(p.Type)
+            }).ToList(),
+        };
+    }
+
+    private static INamedTypeSymbol? ResolveEventTypeSymbol(IMethodSymbol whenMethod)
+    {
+        // Try to get event type from attribute first
+        var eventTypeFromAttribute = GetEventTypeFromWhenAttribute(whenMethod);
+        if (eventTypeFromAttribute != null)
+        {
+            return eventTypeFromAttribute;
+        }
+
+        // Fall back to parameter-based detection
+        var parameter = whenMethod.Parameters.FirstOrDefault();
+        return parameter?.Type as INamedTypeSymbol;
+    }
+
+    /// <summary>
+    /// Checks if a method has the [When&lt;TEvent&gt;] attribute.
+    /// </summary>
+    private static bool HasWhenAttribute(IMethodSymbol methodSymbol)
+    {
+        return methodSymbol.GetAttributes()
+            .Any(a => a.AttributeClass != null &&
+                     a.AttributeClass.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Attributes.WhenAttribute<TEvent>");
+    }
+
+    /// <summary>
+    /// Extracts the event type from the [When&lt;TEvent&gt;] attribute if present.
+    /// </summary>
+    private static INamedTypeSymbol? GetEventTypeFromWhenAttribute(IMethodSymbol methodSymbol)
+    {
+        var whenAttribute = methodSymbol.GetAttributes()
+            .FirstOrDefault(a => a.AttributeClass != null &&
+                                a.AttributeClass.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.Attributes.WhenAttribute<TEvent>");
+
+        if (whenAttribute?.AttributeClass is INamedTypeSymbol { TypeArguments.Length: 1 } namedSymbol)
+        {
+            return namedSymbol.TypeArguments[0] as INamedTypeSymbol;
+        }
+
+        return null;
     }
 
 
@@ -113,6 +178,29 @@ internal static class WhenMethodHelper
                  }))
              .ToList();
      }
+
+    /// <summary>
+    /// Checks if a type symbol is or implements IExecutionContext.
+    /// </summary>
+    private static bool IsExecutionContextType(ITypeSymbol typeSymbol)
+    {
+        // Check if it's exactly IExecutionContext or starts with IExecutionContext (covers IExecutionContextWithData etc.)
+        var typeName = typeSymbol.Name;
+        if (typeName.StartsWith("IExecutionContext"))
+        {
+            return true;
+        }
+
+        // Check if it implements IExecutionContext
+        if (typeSymbol is INamedTypeSymbol namedType)
+        {
+            return namedType.AllInterfaces.Any(i =>
+                i.Name == "IExecutionContext" ||
+                i.OriginalDefinition.ToDisplayString() == "ErikLieben.FA.ES.IExecutionContext");
+        }
+
+        return false;
+    }
 
     private static bool IsAwaitable(IMethodSymbol methodSymbol, Compilation compilation)
     {

@@ -1,3 +1,126 @@
+## [2.0.0-preview.9](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.8...v2.0.0-preview.9) (2026-02-22)
+
+### 🐛 Bug fixes
+
+* replace single-iteration loop with enumerator check in CosmosDbStreamMetadataProvider ([b2cc6e3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b2cc6e31e82dcbaa0608444cd9042ac187ea5a8d))
+* update tagFormat to v-prefixed tags for consistent release tagging ([93bb6c5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/93bb6c5061147a60a44298a3a307f9579a7f1cd4))
+
+### ✨ New features
+
+* add append blob storage provider ([e74723c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e74723c4f51e5d957169241062e994d6d1f8344e))
+* add closed stream caching and S3 conditional writes ([738c89d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/738c89d7fdba87b17b23af2b7f7a980461729926))
+* add provider parity - metadata providers and projection status ([9f38cdf](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9f38cdf2b08e6e1f5ecda9fe7fff9db024262be7))
+* add public API tracking across all packages ([03d1758](https://github.com/eriklieben/ErikLieben.FA.ES/commit/03d1758c2060c7b189dd341fb3107a1ce7eed53c))
+* add timesheet aggregate to demo app ([b9e6bf5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b9e6bf57f0e8b3cdaf6923c7f3954ad4679d8eed))
+
+### 🧪 (Unit)test cases adjusted
+
+* add S3 integration tests with MinIO testcontainers ([bca3393](https://github.com/eriklieben/ErikLieben.FA.ES/commit/bca3393709071b4187eb6fa23bcdda86181cac5a))
+
+### ♻️ Refactor
+
+* migrate CosmosDb projection status to System.Text.Json ([6407e9e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/6407e9e0a735362a18d3ae1f939529d6d76094bc))
+
+## [2.0.0-preview.8](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.7...2.0.0-preview.8) (2026-01-07)
+
+### ✨ New features
+
+* **table-storage:** add conditional payload chunking for large events ([474db9d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/474db9d26651205b4b17b4e8447abab6f39d1791))
+
+## [2.0.0-preview.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.6...2.0.0-preview.7) (2026-01-07)
+
+### 🐛 Bug fixes
+
+* **live-migration:** reload document before close to prevent hash conflict ([37995c8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/37995c8cdd4e22a93c4c6f33955f07165b0fc00b))
+* **tests:** resolve CosmosDB integration test failures in CI ([bbff8fb](https://github.com/eriklieben/ErikLieben.FA.ES/commit/bbff8fb7954ac0a0524c7bc52e1f7277bf1aeda7))
+* **tests:** resolve serializer stream disposal and test parallelism ([246e942](https://github.com/eriklieben/ErikLieben.FA.ES/commit/246e9423bfc2bcafe853c57d30eebc623c285f5f))
+
+### ✨ New features
+
+* add TaskFlow demo application and comprehensive documentation ([abb3c7c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/abb3c7cc9f86f25d3cf39e38a6698f1e838d2f94))
+* production readiness features for v2.0.0 ([0209f91](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0209f91aacd0f686554f10e76c4c474042e9e970))
+* **scale:** add streaming reads, closed stream cache, and AOT serialization ([798ddb8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/798ddb8405d9d3ea29b278d7bc657699cc6312cd))
+
+## [2.0.0-preview.6](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.5...2.0.0-preview.6) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* **live-migration:** prevent infinite loop when source stream already closed ([3520562](https://github.com/eriklieben/ErikLieben.FA.ES/commit/352056218cd615f221d9fae742df0ee983dfe052))
+
+## [2.0.0-preview.5](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.4...2.0.0-preview.5) (2026-01-05)
+
+### ✨ New features
+
+* implement migration dry-run and backup execution ([804272b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/804272bb055e4c870c4fdf9dba1abfe254fc23c7))
+* implement migration verification, rollback, and book closing ([4ebba9e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/4ebba9e932af56be64ea3763831c6ddfa9f83447))
+* implement stream tag support ([50badb8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/50badb81954da583e525c7dffabffe63d023a016))
+* **live-migration:** add per-event callbacks for migration progress ([f7dd08f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f7dd08fd1de712ca0b66f2e037bd7d930e3f01d1))
+
+## [2.0.0-preview.4](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.3...2.0.0-preview.4) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* prevent duplicate generic parameters in projection and aggregate code generation ([fa35522](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fa35522befb9552ec6cd9c71e229d88a9c207432))
+
+## [2.0.0-preview.3](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.2...2.0.0-preview.3) (2026-01-05)
+
+### 🐛 Bug fixes
+
+* prevent duplicate generic parameters in JsonSerializable attributes ([468e131](https://github.com/eriklieben/ErikLieben.FA.ES/commit/468e1316b1bfda93f9d9d3666535959ba24ef52d))
+
+## [2.0.0-preview.2](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.1...2.0.0-preview.2) (2025-12-30)
+
+### 📚 Documentation
+
+* add markdown documentation ([046d650](https://github.com/eriklieben/ErikLieben.FA.ES/commit/046d650e2c7a9a2412c1fcae08bd66c9089c2b33))
+
+### 🐛 Bug fixes
+
+* don't generate type names that are already generic types ([8d542cd](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d542cdaea3d6e538d461dee6a0064d7408619d1))
+
+### ✨ New features
+
+* add RemoveAsync/RemoveTagAsync for document tag removal ([70dfab2](https://github.com/eriklieben/ErikLieben.FA.ES/commit/70dfab2cfa39abdc2a262a14a7b83b53166724df))
+* include live migrations and extend test cases ([040264e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/040264e5de915679aa0418138c9521315d0d0c79))
+
+### 💄 Code style adjustments
+
+* resolve sonarcloud issues ([5000d5c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5000d5c059bbe93f1e4d12107af858947eab3e45))
+* resolve sonarcloud issues ([b843f78](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b843f78c98ced401bbae307a15559230df39bf3a))
+* resolve sonarcloud issues ([43a4fe3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/43a4fe313e941e4065b0e2b03b55dd3de10bc4da))
+* resolve sonarcloud issues ([4363332](https://github.com/eriklieben/ErikLieben.FA.ES/commit/4363332ef9ce7f9ccb7329e516dfb2942b7f6a4a))
+* resolve sonarcloud issues ([e32cf7a](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e32cf7a06385a6b4d592eb030e7b7a68714d6278))
+* resolve sonarcloud issues ([8fde5a9](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8fde5a98034bdbf6bb1c1f9faddf919414d3273d))
+* resolve sonarcloud issues ([0bab9bf](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0bab9bf51109b9ebc80c7efed161e2a58b6187f5))
+* resolve sonarcloud issues ([5bb1d98](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5bb1d985a5ffc755b33ed5295ce682483355acbb))
+* resolve sonarcloud issues ([9a7d1ea](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9a7d1ea4cffa6c972448b97c4a87ec10004b3337))
+* resolve sonarcloud issues ([5722369](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5722369bab23507036df8fb5c0b3362b0615b11e))
+
+### 🧪 (Unit)test cases adjusted
+
+* add RemoveAsync test cases for all tag store implementations ([e0b9517](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e0b9517ef07086f206bddeb872a2635f79af0668))
+* extend test coverage for CosmosDb and EventStreamManagement ([6712325](https://github.com/eriklieben/ErikLieben.FA.ES/commit/67123253b6d80fe038971a281c89c51ee54dd865))
+* extend tests cases ([2d0b21e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2d0b21e568291a44b46be9be06fb5c1590219eee))
+* fix test cases for new ILogger generator ([a8c93f4](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a8c93f4df5ee8984d9d17c3a78cadd9e8654b12d))
+* fix test cases for new ILogger generator ([24e0253](https://github.com/eriklieben/ErikLieben.FA.ES/commit/24e0253aa65fdec9319832915e891e3f2d386f50))
+* improve test coverage ([a85669d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a85669df560b606d6e6753ee03e4d399c5983be9))
+* improve tests and setup usage of coverage.runsettings ([f39d2ef](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f39d2ef904faae07e9bee375be5025094fce0bb1))
+* make the tests work on linux env as well ([8d91842](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8d918429fd729f7eb65d4dbb2922a3b7533ff7f6))
+* resolve test failures ([9f00af8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9f00af8d29e2dc39354548f1672b3c9a734b3104))
+* update test coverage ([f298f61](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f298f61712936af0848e08fe85070bb8deefbd0d))
+
+## [2.0.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.0...2.0.0-preview.1) (2025-12-07)
+
+### 🐛 Bug fixes
+
+* publish nuget package as preview to prod nuget.org ([7b57e12](https://github.com/eriklieben/ErikLieben.FA.ES/commit/7b57e129142cdc1ecefff58ec21b129e32a23bbd))
+
+## [1.4.0-preview.1](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.4.0-preview.1) (2025-12-07)
+
+### ✨ New features
+
+* combined changes for v2 ([159acf3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/159acf3de8acc75c92587e17aca3f671cd082e83))
+
 ## [1.3.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.3.7) (2026-02-13)
 
 ### 🐛 Bug fixes

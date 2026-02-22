@@ -42,4 +42,23 @@ public class InMemoryDocumentTagStore : IDocumentTagStore
         }
         return Task.FromResult<IEnumerable<string>>(value);
     }
+
+    /// <summary>
+    /// Removes the specified tag from the given document in memory.
+    /// </summary>
+    /// <param name="document">The document to remove the tag from.</param>
+    /// <param name="tag">The tag value to remove.</param>
+    /// <returns>A completed task.</returns>
+    public Task RemoveAsync(IObjectDocument document, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(tag);
+
+        if (Tags.TryGetValue(document.ObjectId, out var list))
+        {
+            list.Remove(tag);
+        }
+
+        return Task.CompletedTask;
+    }
 }

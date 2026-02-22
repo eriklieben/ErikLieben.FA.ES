@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Exceptions;
+﻿using System;
+using ErikLieben.FA.ES.Exceptions;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Exceptions;

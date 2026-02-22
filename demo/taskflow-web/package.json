@@ -1,0 +1,61 @@
+{
+  "name": "taskflow-web",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "dev": "run-script-os",
+    "dev:win32": "ng serve --port %PORT% --proxy-config proxy.conf.js",
+    "dev:linux": "ng serve --port $PORT --proxy-config proxy.conf.js",
+    "dev:darwin": "ng serve --port $PORT --proxy-config proxy.conf.js",
+    "start": "run-script-os",
+    "start:win32": "ng serve --port %PORT% --proxy-config proxy.conf.js",
+    "start:linux": "ng serve --port $PORT --proxy-config proxy.conf.js",
+    "start:darwin": "ng serve --port $PORT --proxy-config proxy.conf.js",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^20.3.10",
+    "@angular/cdk": "^20.2.12",
+    "@angular/common": "^20.1.0",
+    "@angular/compiler": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/forms": "^20.1.0",
+    "@angular/material": "^20.2.12",
+    "@angular/platform-browser": "^20.1.0",
+    "@angular/router": "^20.1.0",
+    "@microsoft/signalr": "^9.0.6",
+    "ngx-monaco-editor-v2": "^20.3.0",
+    "rxjs": "~7.8.0",
+    "shiki": "^3.17.0",
+    "tslib": "^2.3.0",
+    "zod": "^3.25.76",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.1.1",
+    "@angular/cli": "^20.1.1",
+    "@angular/compiler-cli": "^20.1.0",
+    "@types/jasmine": "~5.1.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "run-script-os": "^1.1.6",
+    "typescript": "~5.8.2"
+  }
+}

@@ -1,0 +1,285 @@
+#nullable enable
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.DictionaryObjectIdentifierVersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>>
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string, string>>
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier>
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.S3VersionIndexDocument.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument>
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+~ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>
+abstract ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.HasExternalCheckpoint.get -> bool
+abstract ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.LoadFromJson(string! json, ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> T?
+abstract ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.New() -> T!
+ErikLieben.FA.ES.S3.Extensions.S3Extensions
+ErikLieben.FA.ES.S3.IS3ClientFactory
+ErikLieben.FA.ES.S3.IS3ClientFactory.CreateClient(string! name) -> Amazon.S3.IAmazonS3!
+ErikLieben.FA.ES.S3.IS3DocumentStore
+ErikLieben.FA.ES.S3.IS3DocumentStore.GetByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.S3.IS3DocumentStore.GetFirstByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.Active.get -> ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation!
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.Active.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.DeserializeS3EventStreamDocument() -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.DocumentPath.get -> string?
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.DocumentPath.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.Hash.get -> string?
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.Hash.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.ObjectId.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.ObjectId.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.ObjectName.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.ObjectName.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.PrevHash.get -> string?
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.PrevHash.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.SchemaVersion.get -> string?
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.TerminatedStreams.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.TerminatedStream!>!
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.TerminatedStreams.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3EventStreamDocument.ToS3EventStreamDocument() -> ErikLieben.FA.ES.S3.Model.S3EventStreamDocument!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.ChunkSettings.get -> ErikLieben.FA.ES.Documents.StreamChunkSettings?
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.ChunkSettings.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.CurrentStreamVersion.get -> int
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.CurrentStreamVersion.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DataStore.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DataStore.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DeserializeS3StreamInformation() -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentRefType.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentRefType.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentStore.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentStore.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentTagStore.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentTagStore.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentTagType.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentTagType.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentType.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.DocumentType.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.EventStreamTagType.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.EventStreamTagType.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.SnapShots.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.StreamSnapShot!>!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.SnapShots.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.SnapShotStore.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.SnapShotStore.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamChunks.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.StreamChunk!>!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamChunks.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamIdentifier.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamIdentifier.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamTagStore.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamTagStore.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamType.get -> string!
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.StreamType.set -> void
+ErikLieben.FA.ES.S3.Model.DeserializeS3StreamInformation.ToStreamInformation() -> ErikLieben.FA.ES.Documents.StreamInformation!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.Events.get -> System.Collections.Generic.List<ErikLieben.FA.ES.S3.Model.S3JsonEvent!>!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.Events.set -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.LastObjectDocumentHash.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.LastObjectDocumentHash.set -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.ObjectId.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.ObjectId.set -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.ObjectName.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.ObjectName.set -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.S3DataStoreDocument() -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.SchemaVersion.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.Terminated.get -> bool
+ErikLieben.FA.ES.S3.Model.S3DataStoreDocument.Terminated.set -> void
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.ObjectIds.get -> System.Collections.Generic.List<string!>!
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.ObjectIds.set -> void
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.S3DocumentTagStoreDocument() -> void
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.SchemaVersion.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.Tag.get -> string!
+ErikLieben.FA.ES.S3.Model.S3DocumentTagStoreDocument.Tag.set -> void
+ErikLieben.FA.ES.S3.Model.S3EventStreamDocument
+ErikLieben.FA.ES.S3.Model.S3EventStreamDocument.DocumentPath.get -> string?
+ErikLieben.FA.ES.S3.Model.S3EventStreamDocument.DocumentPath.set -> void
+ErikLieben.FA.ES.S3.Model.S3EventStreamDocument.S3EventStreamDocument(string! objectId, string! objectName, ErikLieben.FA.ES.Documents.StreamInformation! active, System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.TerminatedStream!>! terminatedStreams, string? schemaVersion = null, string? hash = null, string? prevHash = null, string? documentPath = null) -> void
+ErikLieben.FA.ES.S3.Model.S3JsonEvent
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.Payload.get -> string!
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.Payload.set -> void
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.S3JsonEvent() -> void
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.S3JsonEvent(ErikLieben.FA.ES.S3.Model.S3JsonEvent! original) -> void
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.Timestamp.get -> System.DateTimeOffset
+ErikLieben.FA.ES.S3.Model.S3JsonEvent.Timestamp.set -> void
+ErikLieben.FA.ES.S3.Model.S3PayloadConverter
+ErikLieben.FA.ES.S3.Model.S3PayloadConverter.S3PayloadConverter() -> void
+ErikLieben.FA.ES.S3.Model.S3VersionIndexContext
+ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.S3VersionIndexContext() -> void
+ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.S3VersionIndexContext(System.Text.Json.JsonSerializerOptions! options) -> void
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.S3VersionIndexDocument() -> void
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.SchemaVersion.get -> string!
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.VersionIndex.get -> System.Collections.Generic.Dictionary<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!>!
+ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.VersionIndex.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.Active.get -> ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation!
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.Active.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.Hash.get -> string?
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.Hash.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.ObjectId.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.ObjectId.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.ObjectName.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.ObjectName.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.PrevHash.get -> string?
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.PrevHash.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.SchemaVersion.get -> string?
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.SchemaVersion.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.SerializeS3EventStreamDocument() -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.TerminatedStreams.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.TerminatedStream!>!
+ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.TerminatedStreams.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.ChunkSettings.get -> ErikLieben.FA.ES.Documents.StreamChunkSettings?
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.ChunkSettings.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.CurrentStreamVersion.get -> int
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.CurrentStreamVersion.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DataStore.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DataStore.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentRefType.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentRefType.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentStore.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentStore.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentTagStore.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentTagStore.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentTagType.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentTagType.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentType.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.DocumentType.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.EventStreamTagType.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.EventStreamTagType.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.SerializeS3StreamInformation() -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.SnapShots.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.StreamSnapShot!>!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.SnapShots.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.SnapShotStore.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.SnapShotStore.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamChunks.get -> System.Collections.Generic.List<ErikLieben.FA.ES.Documents.StreamChunk!>!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamChunks.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamIdentifier.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamIdentifier.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamTagStore.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamTagStore.set -> void
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamType.get -> string!
+ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.StreamType.set -> void
+ErikLieben.FA.ES.S3.S3ClientFactory
+ErikLieben.FA.ES.S3.S3ClientFactory.CreateClient(string! name) -> Amazon.S3.IAmazonS3!
+ErikLieben.FA.ES.S3.S3ClientFactory.S3ClientFactory(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> void
+ErikLieben.FA.ES.S3.S3DataStore
+ErikLieben.FA.ES.S3.S3DataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, bool preserveTimestamp, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3DataStore.AppendAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken, params ErikLieben.FA.ES.IEvent![]! events) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3DataStore.ReadAsStreamAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<ErikLieben.FA.ES.IEvent!>!
+ErikLieben.FA.ES.S3.S3DataStore.ReadAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int startVersion = 0, int? untilVersion = null, int? chunk = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.IEvent!>?>!
+ErikLieben.FA.ES.S3.S3DataStore.RemoveEventsForFailedCommitAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int fromVersion, int toVersion) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.S3.S3DataStore.S3DataStore(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> void
+ErikLieben.FA.ES.S3.S3DocumentStore
+ErikLieben.FA.ES.S3.S3DocumentStore.CreateAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.S3.S3DocumentStore.GetAsync(string! name, string! objectId, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.S3.S3DocumentStore.GetByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.S3.S3DocumentStore.GetFirstByDocumentByTagAsync(string! objectName, string! tag, string? documentTagStore = null, string? store = null) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.S3.S3DocumentStore.S3DocumentStore(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagStoreFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! s3Settings, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! typeSettings) -> void
+ErikLieben.FA.ES.S3.S3DocumentStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3DocumentTagStore
+ErikLieben.FA.ES.S3.S3DocumentTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.S3.S3DocumentTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3DocumentTagStore.S3DocumentTagStore(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, string! defaultDocumentTagType, string! defaultStoreName, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! s3Settings) -> void
+ErikLieben.FA.ES.S3.S3DocumentTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3EventStream
+ErikLieben.FA.ES.S3.S3EventStream.S3EventStream(ErikLieben.FA.ES.Documents.IObjectDocumentWithMethods! document, ErikLieben.FA.ES.EventStream.IStreamDependencies! streamDependencies) -> void
+ErikLieben.FA.ES.S3.S3EventStreamFactory
+ErikLieben.FA.ES.S3.S3EventStreamFactory.Create(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IEventStream!
+ErikLieben.FA.ES.S3.S3EventStreamFactory.S3EventStreamFactory(ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings, ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagFactory, ErikLieben.FA.ES.IObjectDocumentFactory! objectDocumentFactory, ErikLieben.FA.ES.Aggregates.IAggregateFactory! aggregateFactory) -> void
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.GetAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.GetByDocumentTagAsync(string! objectName, string! objectDocumentTag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.GetByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Documents.IObjectDocument!>!>!
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.GetFirstByObjectDocumentTag(string! objectName, string! objectDocumentTag, string? documentTagStore = null, string? store = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument?>!
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.GetOrCreateAsync(string! objectName, string! objectId, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Documents.IObjectDocument!>!
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.S3ObjectDocumentFactory(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.IDocumentTagDocumentFactory! documentTagStore, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! s3Settings) -> void
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.S3ObjectDocumentFactory(ErikLieben.FA.ES.S3.IS3DocumentStore! s3DocumentStore) -> void
+ErikLieben.FA.ES.S3.S3ObjectDocumentFactory.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string? store = null, string? documentType = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ObjectIdProvider
+ErikLieben.FA.ES.S3.S3ObjectIdProvider.CountAsync(string! objectName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<long>!
+ErikLieben.FA.ES.S3.S3ObjectIdProvider.ExistsAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.S3.S3ObjectIdProvider.GetObjectIdsAsync(string! objectName, string? continuationToken, int pageSize, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.PagedResult<string!>!>!
+ErikLieben.FA.ES.S3.S3ObjectIdProvider.S3ObjectIdProvider(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> void
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetBucketNameAsync() -> System.Threading.Tasks.Task<string!>!
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetOrCreateProjectionAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.Projection!>!
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetS3Client() -> Amazon.S3.IAmazonS3!
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.ProjectionType.get -> System.Type!
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.S3ProjectionFactory(ErikLieben.FA.ES.S3.IS3ClientFactory! s3ClientFactory, string! clientName, string! bucketOrPath, bool autoCreateBucket = true) -> void
+ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.SaveProjectionAsync(ErikLieben.FA.ES.Projections.Projection! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.CancelRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, string? error = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.CompleteRebuildAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.DisableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.EnableAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.GetByStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ErikLieben.FA.ES.Projections.ProjectionStatusInfo!>!>!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.GetStatusAsync(string! projectionName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatusInfo?>!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.MarkReadyAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.RecoverStuckRebuildsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.S3ProjectionStatusCoordinator(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings, string! prefix = "projection-status", Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator!>? logger = null) -> void
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.StartCatchUpAsync(ErikLieben.FA.ES.Projections.RebuildToken! token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3ProjectionStatusCoordinator.StartRebuildAsync(string! projectionName, string! objectId, ErikLieben.FA.ES.Projections.RebuildStrategy strategy, System.TimeSpan timeout, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.RebuildToken!>!
+ErikLieben.FA.ES.S3.S3SnapShotStore
+ErikLieben.FA.ES.S3.S3SnapShotStore.DeleteAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+ErikLieben.FA.ES.S3.S3SnapShotStore.DeleteManyAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Collections.Generic.IEnumerable<int>! versions, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+ErikLieben.FA.ES.S3.S3SnapShotStore.GetAsync(System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+ErikLieben.FA.ES.S3.S3SnapShotStore.GetAsync<T>(System.Text.Json.Serialization.Metadata.JsonTypeInfo<T!>! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+ErikLieben.FA.ES.S3.S3SnapShotStore.ListSnapshotsAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<ErikLieben.FA.ES.Snapshots.SnapshotMetadata!>!>!
+ErikLieben.FA.ES.S3.S3SnapShotStore.S3SnapShotStore(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings) -> void
+ErikLieben.FA.ES.S3.S3SnapShotStore.SetAsync(ErikLieben.FA.ES.Processors.IBase! object, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo, ErikLieben.FA.ES.Documents.IObjectDocument! document, int version, string? name = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3StreamMetadataProvider
+ErikLieben.FA.ES.S3.S3StreamMetadataProvider.GetStreamMetadataAsync(string! objectName, string! objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Retention.StreamMetadata?>!
+ErikLieben.FA.ES.S3.S3StreamMetadataProvider.S3StreamMetadataProvider(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! settings, Microsoft.Extensions.Logging.ILogger<ErikLieben.FA.ES.S3.S3StreamMetadataProvider!>? logger = null) -> void
+ErikLieben.FA.ES.S3.S3StreamTagStore
+ErikLieben.FA.ES.S3.S3StreamTagStore.GetAsync(string! objectName, string! tag) -> System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<string!>!>!
+ErikLieben.FA.ES.S3.S3StreamTagStore.RemoveAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3StreamTagStore.S3StreamTagStore(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, string! defaultStoreName, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! s3Settings) -> void
+ErikLieben.FA.ES.S3.S3StreamTagStore.SetAsync(ErikLieben.FA.ES.Documents.IObjectDocument! document, string! tag) -> System.Threading.Tasks.Task!
+ErikLieben.FA.ES.S3.S3TagFactory
+ErikLieben.FA.ES.S3.S3TagFactory.CreateDocumentTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.S3.S3TagFactory.CreateDocumentTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.S3.S3TagFactory.CreateDocumentTagStore(string! type) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.S3.S3TagFactory.CreateStreamTagStore() -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.S3.S3TagFactory.CreateStreamTagStore(ErikLieben.FA.ES.Documents.IObjectDocument! document) -> ErikLieben.FA.ES.IDocumentTagStore!
+ErikLieben.FA.ES.S3.S3TagFactory.S3TagFactory(ErikLieben.FA.ES.S3.IS3ClientFactory! clientFactory, ErikLieben.FA.ES.Configuration.EventStreamDefaultTypeSettings! settings, ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings! s3Settings) -> void
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.<Clone>$() -> ErikLieben.FA.ES.S3.Model.S3JsonEvent!
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.EqualityContract.get -> System.Type!
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.Equals(object? obj) -> bool
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.GetHashCode() -> int
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override ErikLieben.FA.ES.S3.Model.S3JsonEvent.ToString() -> string!
+override ErikLieben.FA.ES.S3.Model.S3PayloadConverter.Read(ref System.Text.Json.Utf8JsonReader reader, System.Type! typeToConvert, System.Text.Json.JsonSerializerOptions! options) -> string?
+override ErikLieben.FA.ES.S3.Model.S3PayloadConverter.Write(System.Text.Json.Utf8JsonWriter! writer, string! value, System.Text.Json.JsonSerializerOptions! options) -> void
+override ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+override ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+override sealed ErikLieben.FA.ES.S3.Model.S3JsonEvent.Equals(ErikLieben.FA.ES.JsonEvent? other) -> bool
+static ErikLieben.FA.ES.S3.Builder.FaesBuilderExtensions.WithS3ProjectionStatusCoordinator(this ErikLieben.FA.ES.Builder.IFaesBuilder! builder, string! prefix = "projection-status") -> ErikLieben.FA.ES.Builder.IFaesBuilder!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.EnsureBucketAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName) -> System.Threading.Tasks.Task!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.GetObjectAsEntityAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo) -> System.Threading.Tasks.Task<object?>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.GetObjectAsEntityAsync<TDocument>(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key, System.Text.Json.Serialization.Metadata.JsonTypeInfo<TDocument!>! jsonTypeInfo, string? ifMatchETag = null) -> System.Threading.Tasks.Task<(TDocument? Document, string? Hash, string? ETag)>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.GetObjectAsStringAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key) -> System.Threading.Tasks.Task<string?>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.GetObjectETagAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key) -> System.Threading.Tasks.Task<string?>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.ObjectExistsAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key) -> System.Threading.Tasks.Task<bool>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.PutObjectAsEntityAsync<TDocument>(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key, TDocument! entity, System.Text.Json.Serialization.Metadata.JsonTypeInfo<TDocument!>! jsonTypeInfo, string? ifMatchETag = null, string? ifNoneMatch = null) -> System.Threading.Tasks.Task<(string! ETag, string! Hash)>!
+static ErikLieben.FA.ES.S3.Extensions.S3Extensions.PutObjectAsync(this Amazon.S3.IAmazonS3! s3Client, string! bucketName, string! key, object! entity, System.Text.Json.Serialization.Metadata.JsonTypeInfo! jsonTypeInfo) -> System.Threading.Tasks.Task<string!>!
+static ErikLieben.FA.ES.S3.Model.S3EventStreamDocument.From(ErikLieben.FA.ES.Documents.IObjectDocument! objectDocument) -> ErikLieben.FA.ES.S3.Model.S3EventStreamDocument!
+static ErikLieben.FA.ES.S3.Model.S3JsonEvent.From(ErikLieben.FA.ES.IEvent! event, bool preserveTimestamp = false) -> ErikLieben.FA.ES.S3.Model.S3JsonEvent?
+static ErikLieben.FA.ES.S3.Model.S3JsonEvent.operator !=(ErikLieben.FA.ES.S3.Model.S3JsonEvent? left, ErikLieben.FA.ES.S3.Model.S3JsonEvent? right) -> bool
+static ErikLieben.FA.ES.S3.Model.S3JsonEvent.operator ==(ErikLieben.FA.ES.S3.Model.S3JsonEvent? left, ErikLieben.FA.ES.S3.Model.S3JsonEvent? right) -> bool
+static ErikLieben.FA.ES.S3.Model.S3VersionIndexContext.Default.get -> ErikLieben.FA.ES.S3.Model.S3VersionIndexContext!
+static ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.FromJson(string! json) -> ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument!
+static ErikLieben.FA.ES.S3.Model.S3VersionIndexDocument.ToJson(System.Collections.Generic.Dictionary<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!>! versionIndex) -> string!
+static ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument.From(ErikLieben.FA.ES.Documents.IObjectDocument! source) -> ErikLieben.FA.ES.S3.Model.SerializeS3EventStreamDocument!
+static ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation.From(ErikLieben.FA.ES.Documents.StreamInformation! source) -> ErikLieben.FA.ES.S3.Model.SerializeS3StreamInformation!
+static ErikLieben.FA.ES.S3.S3DataStore.ClearClosedStreamCache() -> void
+static ErikLieben.FA.ES.S3.S3DataStore.ClearVerifiedBucketsCache() -> void
+virtual ErikLieben.FA.ES.S3.Model.S3JsonEvent.Equals(ErikLieben.FA.ES.S3.Model.S3JsonEvent? other) -> bool
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.DeleteAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.ExistsAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetLastModifiedAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.DateTimeOffset?>!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetOrCreateAsync(ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T!>!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.GetStatusAsync(string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Projections.ProjectionStatus>!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.LoadCheckpointAsync(string! checkpointFingerprint, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<ErikLieben.FA.ES.Checkpoint?>!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.SaveAsync(T! projection, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.SaveCheckpointAsync(T! projection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+virtual ErikLieben.FA.ES.S3.S3ProjectionFactory<T>.SetStatusAsync(ErikLieben.FA.ES.Projections.ProjectionStatus status, string? blobName = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+

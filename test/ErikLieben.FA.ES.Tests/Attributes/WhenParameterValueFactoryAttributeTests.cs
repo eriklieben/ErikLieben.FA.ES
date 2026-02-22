@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Attributes;
+﻿using System;
+using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.Projections;
 using Xunit;
 

@@ -1,4 +1,6 @@
-﻿namespace ErikLieben.FA.ES.AzureStorage.Configuration;
+using System.ComponentModel.DataAnnotations;
+
+namespace ErikLieben.FA.ES.AzureStorage.Configuration;
 
 /// <summary>
 /// Represents configuration settings for Blob Storage-backed event streams and related stores.
@@ -8,21 +10,25 @@ public record EventStreamBlobSettings
     /// <summary>
     /// Gets the default data store key used for event streams (e.g., "blob").
     /// </summary>
+    [Required]
     public string DefaultDataStore { get; init; }
 
     /// <summary>
     /// Gets the default document store key used for object documents.
     /// </summary>
+    [Required]
     public string DefaultDocumentStore { get; init; }
 
     /// <summary>
     /// Gets the default snapshot store key used for snapshots.
     /// </summary>
+    [Required]
     public string DefaultSnapShotStore { get; init; }
 
     /// <summary>
     /// Gets the default tag store key used for document and stream tags.
     /// </summary>
+    [Required]
     public string DefaultDocumentTagStore { get; init; }
 
     /// <summary>
@@ -38,11 +44,13 @@ public record EventStreamBlobSettings
     /// <summary>
     /// Gets the default number of events per chunk when chunking is enabled.
     /// </summary>
+    [Range(1, int.MaxValue, ErrorMessage = "Chunk size must be at least 1")]
     public int DefaultChunkSize { get; init; }
 
     /// <summary>
     /// Gets the default container name used to store materialized object documents.
     /// </summary>
+    [Required]
     public string DefaultDocumentContainerName { get; init; }
 
     /// <summary>

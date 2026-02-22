@@ -1,7 +1,13 @@
-﻿using ErikLieben.FA.ES.Documents;
+#pragma warning disable CS0618 // Type or member is obsolete - testing deprecated API intentionally
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.Projections;
 using ErikLieben.FA.ES.VersionTokenParts;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.Tests.Projections
 {
@@ -652,7 +658,9 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 documentFactory.GetAsync("ObjectName1", objectId1).Returns(document1);
                 var eventStream1 = Substitute.For<IEventStream>();
                 eventStreamFactory.Create(document1).Returns(eventStream1);
-                eventStream1.ReadAsync(2).Returns(new List<IEvent>());
+                // ToLatestVersion() uses ReadAsync(startIdx, null, false) - returns IReadOnlyCollection<IEvent>
+                eventStream1.ReadAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<bool>())
+                    .Returns([]);
 
                 // Setup for the second token
                 var document2 = Substitute.For<IObjectDocument>();
@@ -661,14 +669,18 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 documentFactory.GetAsync("ObjectName2", objectId2).Returns(document2);
                 var eventStream2 = Substitute.For<IEventStream>();
                 eventStreamFactory.Create(document2).Returns(eventStream2);
-                eventStream2.ReadAsync(3).Returns(new List<IEvent>());
+                // ToLatestVersion() uses ReadAsync(startIdx, null, false) - returns IReadOnlyCollection<IEvent>
+                eventStream2.ReadAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<bool>())
+                    .Returns([]);
 
                 // Act
                 await sut.UpdateToLatestVersion(context);
 
                 // Assert
-                Assert.Equal(0, sut.FoldCallCount); // No events were returned
-                Assert.Equal(0, sut.PostWhenAllCallCount); // No events were processed
+                // PostWhenAll is called once per checkpoint entry (2 entries)
+                Assert.Equal(2, sut.PostWhenAllCallCount);
+                // No events were returned, so Fold should not have been called
+                Assert.Equal(0, sut.FoldCallCount);
             }
         }
 
@@ -705,6 +717,138 @@ namespace ErikLieben.FA.ES.Tests.Projections
             }
         }
 
+        public class GetWhenParameterValueWithVersionTokenMethod
+        {
+            [Fact]
+            public void Should_return_null_when_no_factory_registered()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var versionToken = new VersionToken("TestObject", "obj-123", "stream-456", 1);
+                var @event = Substitute.For<IEvent>();
+
+                // Act
+                var result = sut.GetWhenParameterValueWithVersionTokenPublic<string, TestEventData>("unknownType", versionToken, @event);
+
+                // Assert
+                Assert.Null(result);
+            }
+
+            [Fact]
+            public void Should_use_version_token_factory_when_available()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var versionToken = new VersionToken("TestObject", "obj-123", "stream-456", 1);
+                var @event = Substitute.For<IEvent>();
+
+                var factory = Substitute.For<IProjectionWhenParameterValueFactoryWithVersionToken<string>>();
+                factory.Create(versionToken, @event).Returns("factory-result");
+                sut.AddWhenParameterValueFactory("testType", factory);
+
+                // Act
+                var result = sut.GetWhenParameterValueWithVersionTokenPublic<string, TestEventData>("testType", versionToken, @event);
+
+                // Assert
+                Assert.Equal("factory-result", result);
+            }
+
+            [Fact]
+            public void Should_use_typed_event_version_token_factory_when_available()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var versionToken = new VersionToken("TestObject", "obj-123", "stream-456", 1);
+                var eventData = new TestEventData { Value = "test-value" };
+                var @event = Substitute.For<IEvent<TestEventData>>();
+                @event.Data().Returns(eventData);
+
+                var factory = Substitute.For<IProjectionWhenParameterValueFactoryWithVersionToken<string, TestEventData>>();
+                factory.Create(versionToken, @event).Returns("typed-factory-result");
+                sut.AddWhenParameterValueFactory<string, TestEventData>("typedTestType", factory);
+
+                // Act
+                var result = sut.GetWhenParameterValueWithVersionTokenPublic<string, TestEventData>("typedTestType", versionToken, @event);
+
+                // Assert
+                Assert.Equal("typed-factory-result", result);
+            }
+        }
+
+        public class InitializeFromMetadataMethod
+        {
+            [Fact]
+            public void Should_not_throw_with_empty_metadata()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var metadata = new Dictionary<string, string>();
+
+                // Act - should not throw
+                sut.InitializeFromMetadataPublic(metadata);
+
+                // Assert - no exception means success
+                Assert.NotNull(sut);
+            }
+
+            [Fact]
+            public void Should_accept_metadata_with_values()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var metadata = new Dictionary<string, string>
+                {
+                    ["key1"] = "value1",
+                    ["key2"] = "value2"
+                };
+
+                // Act - should not throw
+                sut.InitializeFromMetadataPublic(metadata);
+
+                // Assert - no exception means success
+                Assert.NotNull(sut);
+            }
+        }
+
+        public class FoldWithVersionTokenMethod
+        {
+            [Fact]
+            public async Task Should_fold_event_with_version_token()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var versionToken = new VersionToken("TestObject", "obj-123", "stream-456", 1);
+                var @event = Substitute.For<IEvent>();
+                @event.EventType.Returns("TestEvent");
+
+                // Act
+                await sut.Fold(@event, versionToken);
+
+                // Assert
+                Assert.Equal(1, sut.FoldCallCount);
+                Assert.Equal(@event, sut.LastFoldEvent);
+            }
+
+            [Fact]
+            public async Task Should_fold_event_with_version_token_and_data()
+            {
+                // Arrange
+                var sut = new TestProjection();
+                var versionToken = new VersionToken("TestObject", "obj-123", "stream-456", 1);
+                var @event = Substitute.For<IEvent>();
+                var data = new TestData { Name = "test-data" };
+                var context = Substitute.For<IExecutionContext>();
+
+                // Act
+                await sut.Fold(@event, versionToken, data, context);
+
+                // Assert
+                Assert.Equal(1, sut.FoldCallCount);
+                Assert.Equal(@event, sut.LastFoldEvent);
+                Assert.Equal(data, sut.LastFoldData);
+                Assert.Equal(context, sut.LastFoldContext);
+            }
+        }
 
         private class TestProjection : Projection
         {
@@ -747,6 +891,7 @@ namespace ErikLieben.FA.ES.Tests.Projections
             {
             }
 
+            [Obsolete("Use Fold(IEvent, VersionToken, T?, IExecutionContext?) instead. This overload will be removed in a future major version.")]
             public override async Task Fold<T>(IEvent @event, IObjectDocument document, T? data = null,
                 IExecutionContext? context = null) where T : class
             {
@@ -756,6 +901,16 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 LastFoldData = data;
                 LastFoldContext = context;
                 await Task.CompletedTask;
+            }
+
+            public override Task Fold<T>(IEvent @event, VersionToken versionToken, T? data = null,
+                IExecutionContext? parentContext = null) where T : class
+            {
+                FoldCallCount++;
+                LastFoldEvent = @event;
+                LastFoldData = data;
+                LastFoldContext = parentContext;
+                return Task.CompletedTask;
             }
 
             public async Task FoldWithContext(IEvent @event, IObjectDocument document, IExecutionContext context)
@@ -785,9 +940,62 @@ namespace ErikLieben.FA.ES.Tests.Projections
                 return GetWhenParameterValue<T, Te>(forType, document, @event);
             }
 
+            public T? GetWhenParameterValueWithVersionTokenPublic<T, Te>(string forType, VersionToken versionToken, IEvent @event)
+                where Te : class where T : class
+            {
+                return GetWhenParameterValue<T, Te>(forType, versionToken, @event);
+            }
+
             public void AddWhenParameterValueFactory(string key, IProjectionWhenParameterValueFactory factory)
             {
                 whenParameterValueFactories[key] = factory;
+            }
+
+            public void AddWhenParameterValueFactory<T>(string key, IProjectionWhenParameterValueFactoryWithVersionToken<T> factory)
+            {
+                // Wrap the version token factory in a bridge that implements IProjectionWhenParameterValueFactory
+                whenParameterValueFactories[key] = new VersionTokenFactoryBridge<T>(factory);
+            }
+
+            public void AddWhenParameterValueFactory<T, Te>(string key, IProjectionWhenParameterValueFactoryWithVersionToken<T, Te> factory)
+                where Te : class
+            {
+                // Wrap the typed event version token factory in a bridge
+                whenParameterValueFactories[key] = new TypedVersionTokenFactoryBridge<T, Te>(factory);
+            }
+
+            // Bridge class that allows IProjectionWhenParameterValueFactoryWithVersionToken to be stored
+            // in the dictionary alongside IProjectionWhenParameterValueFactory
+            private class VersionTokenFactoryBridge<T> : IProjectionWhenParameterValueFactory, IProjectionWhenParameterValueFactoryWithVersionToken<T>
+            {
+                private readonly IProjectionWhenParameterValueFactoryWithVersionToken<T> _inner;
+
+                public VersionTokenFactoryBridge(IProjectionWhenParameterValueFactoryWithVersionToken<T> inner)
+                {
+                    _inner = inner;
+                }
+
+                public T Create(VersionToken versionToken, IEvent @event) => _inner.Create(versionToken, @event);
+            }
+
+            // Bridge class for typed event version token factories
+            private class TypedVersionTokenFactoryBridge<T, Te> : IProjectionWhenParameterValueFactory, IProjectionWhenParameterValueFactoryWithVersionToken<T, Te>
+                where Te : class
+            {
+                private readonly IProjectionWhenParameterValueFactoryWithVersionToken<T, Te> _inner;
+
+                public TypedVersionTokenFactoryBridge(IProjectionWhenParameterValueFactoryWithVersionToken<T, Te> inner)
+                {
+                    _inner = inner;
+                }
+
+                public T Create(VersionToken versionToken, IEvent @event) => _inner.Create(versionToken, @event);
+                public T Create(VersionToken versionToken, IEvent<Te> @event) => _inner.Create(versionToken, @event);
+            }
+
+            public void InitializeFromMetadataPublic(Dictionary<string, string> metadata)
+            {
+                InitializeFromMetadata(metadata);
             }
         }
 

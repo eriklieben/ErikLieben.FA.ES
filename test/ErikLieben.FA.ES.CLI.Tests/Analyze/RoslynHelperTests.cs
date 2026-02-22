@@ -1,4 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using ErikLieben.FA.ES.Attributes;
 using ErikLieben.FA.ES.CLI.Analyze.Helpers;
@@ -7,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using NSubstitute;
+using Xunit;
 
 namespace ErikLieben.FA.ES.CLI.Tests.Analyze;
 
@@ -556,10 +560,12 @@ public class RoslynHelperTests
                 new CSharpParseOptions(),
                 file);
             var textSpan = TextSpan.FromBounds(0, 1);
-            symbol.Locations.Returns(new Location[]
-            {
-                Location.Create(syntaxTree, textSpan),
-            }.ToImmutableArray());
+            symbol.Locations.Returns([
+                ..new Location[]
+                {
+                    Location.Create(syntaxTree, textSpan),
+                }
+            ]);
             var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
@@ -582,10 +588,12 @@ public class RoslynHelperTests
                 new CSharpParseOptions(),
                 file);
             var textSpan = TextSpan.FromBounds(0, 1);
-            symbol.Locations.Returns(new Location[]
-            {
-                Location.Create(syntaxTree, textSpan),
-            }.ToImmutableArray());
+            symbol.Locations.Returns([
+                ..new Location[]
+                {
+                    Location.Create(syntaxTree, textSpan),
+                }
+            ]);
             var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
@@ -610,10 +618,12 @@ public class RoslynHelperTests
                 new CSharpParseOptions(),
                 file);
             var textSpan = TextSpan.FromBounds(0, 1);
-            symbol.Locations.Returns(new Location[]
-            {
-                Location.Create(syntaxTree, textSpan),
-            }.ToImmutableArray());
+            symbol.Locations.Returns([
+                ..new Location[]
+                {
+                    Location.Create(syntaxTree, textSpan),
+                }
+            ]);
             var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
@@ -638,10 +648,12 @@ public class RoslynHelperTests
                 new CSharpParseOptions(),
                 file);
             var textSpan = TextSpan.FromBounds(0, 1);
-            symbol.Locations.Returns(new Location[]
-            {
-                Location.Create(syntaxTree, textSpan),
-            }.ToImmutableArray());
+            symbol.Locations.Returns([
+                ..new Location[]
+                {
+                    Location.Create(syntaxTree, textSpan),
+                }
+            ]);
             var sut = new RoslynHelper(null!, root + System.IO.Path.DirectorySeparatorChar);
 
             // Act
@@ -667,8 +679,8 @@ public class RoslynHelperTests
             var metadataReference = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
             var compilation = CSharpCompilation.Create(
                 assemblyName: "TestAssembly",
-                syntaxTrees: new[] { syntaxTree },
-                references: new[] { metadataReference });
+                syntaxTrees: [syntaxTree],
+                references: [metadataReference]);
             var symbol = compilation.GetTypeByMetadataName("System.DateTime");
             Assert.NotNull(symbol);
             var sut = new RoslynHelper(null!, System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Repository", "App") + System.IO.Path.DirectorySeparatorChar);
@@ -678,10 +690,11 @@ public class RoslynHelperTests
             var result = filePath.First().Split("ErikLieben.FA.ES.CLI.Tests")[1];
 
             // Assert
+            var tfm = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription.Contains("10") ? "net10.0" : "net9.0";
 #if DEBUG
-            Assert.Equal(@"\bin\Debug\net9.0\System.Private.CoreLib.dll", result);
+            Assert.Equal($@"\bin\Debug\{tfm}\System.Private.CoreLib.dll", result);
 #else
-            Assert.Equal(@"\bin\Release\net9.0\System.Private.CoreLib.dll", result);
+            Assert.Equal($@"\bin\Release\{tfm}\System.Private.CoreLib.dll", result);
 #endif
         }
 
@@ -719,7 +732,7 @@ public class RoslynHelperTests
         var syntaxTree = CSharpSyntaxTree.ParseText(code);
         var compilation = CSharpCompilation.Create(
             "TestAssembly",
-            new[] { syntaxTree },
+            [syntaxTree],
             References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );

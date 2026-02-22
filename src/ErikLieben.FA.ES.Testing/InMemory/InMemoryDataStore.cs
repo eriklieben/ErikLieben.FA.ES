@@ -1,4 +1,5 @@
-﻿using ErikLieben.FA.ES.Documents;
+﻿using System.Runtime.CompilerServices;
+using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 
 namespace ErikLieben.FA.ES.Testing.InMemory;
@@ -6,7 +7,7 @@ namespace ErikLieben.FA.ES.Testing.InMemory;
 /// <summary>
 /// Provides an in-memory implementation of <see cref="IDataStore"/> intended for tests.
 /// </summary>
-public class InMemoryDataStore : IDataStore
+public class InMemoryDataStore : IDataStore, IDataStoreRecovery
 {
     /// <summary>
     /// Gets the internal storage of events grouped by stream identifier and version.
@@ -17,9 +18,10 @@ public class InMemoryDataStore : IDataStore
     /// Appends the specified events to the in-memory event stream for the given document.
     /// </summary>
     /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <param name="events">The events to append in order.</param>
     /// <returns>A completed task.</returns>
-    public Task AppendAsync(IObjectDocument document, params IEvent[] events)
+    public Task AppendAsync(IObjectDocument document, CancellationToken cancellationToken, params IEvent[] events)
     {
         var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
         foreach (var @event in events)
@@ -38,14 +40,30 @@ public class InMemoryDataStore : IDataStore
     }
 
     /// <summary>
+    /// Appends the specified events to the in-memory event stream for the given document.
+    /// The preserveTimestamp parameter is ignored for in-memory storage as events are stored as-is.
+    /// </summary>
+    /// <param name="document">The document whose event stream is appended to.</param>
+    /// <param name="preserveTimestamp">Ignored for in-memory storage.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="events">The events to append in order.</param>
+    /// <returns>A completed task.</returns>
+    public Task AppendAsync(IObjectDocument document, bool preserveTimestamp, CancellationToken cancellationToken, params IEvent[] events)
+    {
+        // In-memory storage doesn't modify timestamps, so just delegate to the regular method
+        return AppendAsync(document, cancellationToken, events);
+    }
+
+    /// <summary>
     /// Reads events for the specified document from in-memory storage.
     /// </summary>
     /// <param name="document">The document whose events are read.</param>
     /// <param name="startVersion">The zero-based version to start reading from (inclusive). Ignored by this implementation.</param>
     /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end. Ignored by this implementation.</param>
     /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise. Ignored by this implementation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A sequence of events ordered by version, or an empty sequence when the stream does not exist.</returns>
-    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null)
+    public Task<IEnumerable<IEvent>?> ReadAsync(IObjectDocument document, int startVersion = 0, int? untilVersion = null, int? chunk = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);
@@ -59,6 +77,52 @@ public class InMemoryDataStore : IDataStore
 
         var storedEvents = dict.Values.ToList();
         return Task.FromResult<IEnumerable<IEvent>?>(storedEvents);
+    }
+
+    /// <summary>
+    /// Reads events for the specified document as a streaming async enumerable.
+    /// </summary>
+    /// <param name="document">The document whose events are read.</param>
+    /// <param name="startVersion">The zero-based version to start reading from (inclusive).</param>
+    /// <param name="untilVersion">The final version to read up to (inclusive); null to read to the end.</param>
+    /// <param name="chunk">The chunk identifier when chunking is enabled; null otherwise.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable of events ordered by version.</returns>
+    public IAsyncEnumerable<IEvent> ReadAsStreamAsync(
+        IObjectDocument document,
+        int startVersion = 0,
+        int? untilVersion = null,
+        int? chunk = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentException.ThrowIfNullOrWhiteSpace(document.Active.StreamIdentifier);
+        return ReadAsStreamAsyncCore(document, startVersion, untilVersion, chunk, cancellationToken);
+    }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators
+    private async IAsyncEnumerable<IEvent> ReadAsStreamAsyncCore(
+        IObjectDocument document,
+        int startVersion,
+        int? untilVersion,
+        int? chunk,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+#pragma warning restore CS1998
+    {
+        var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
+
+        if (!Store.TryGetValue(identifier, out var dict))
+        {
+            yield break;
+        }
+
+        foreach (var evt in dict.Values
+            .Where(e => e.EventVersion >= startVersion && (!untilVersion.HasValue || e.EventVersion <= untilVersion))
+            .OrderBy(e => e.EventVersion))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return evt;
+        }
     }
 
     /// <summary>
@@ -93,6 +157,27 @@ public class InMemoryDataStore : IDataStore
             }
         }
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<int> RemoveEventsForFailedCommitAsync(IObjectDocument document, int fromVersion, int toVersion)
+    {
+        var identifier = GetStoreKey(document.ObjectName, document.ObjectId);
+        if (!Store.TryGetValue(identifier, out var dict))
+        {
+            return Task.FromResult(0);
+        }
+
+        var removed = 0;
+        for (var version = fromVersion; version <= toVersion; version++)
+        {
+            if (dict.Remove(version))
+            {
+                removed++;
+            }
+        }
+
+        return Task.FromResult(removed);
     }
 
     /// <summary>

@@ -37,15 +37,30 @@ internal static class AggregateSettingsCodeGenerator
             return;
 
         if (attribute.DataStore != null)
+        {
             assignments.Add($"document.Active.DataStore = \"{attribute.DataStore}\";");
+            assignments.Add($"document.Active.StreamConnectionName = \"{attribute.DataStore}\";");
+        }
         if (attribute.DocumentStore != null)
+        {
             assignments.Add($"document.Active.DocumentStore = \"{attribute.DocumentStore}\";");
+            assignments.Add($"document.Active.DocumentConnectionName = \"{attribute.DocumentStore}\";");
+        }
         if (attribute.DocumentTagStore != null)
+        {
             assignments.Add($"document.Active.DocumentTagStore = \"{attribute.DocumentTagStore}\";");
+            assignments.Add($"document.Active.DocumentTagConnectionName = \"{attribute.DocumentTagStore}\";");
+        }
         if (attribute.StreamTagStore != null)
+        {
             assignments.Add($"document.Active.StreamTagStore = \"{attribute.StreamTagStore}\";");
+            assignments.Add($"document.Active.StreamTagConnectionName = \"{attribute.StreamTagStore}\";");
+        }
         if (attribute.SnapShotStore != null)
+        {
             assignments.Add($"document.Active.SnapShotStore = \"{attribute.SnapShotStore}\";");
+            assignments.Add($"document.Active.SnapShotConnectionName = \"{attribute.SnapShotStore}\";");
+        }
     }
 
     /// <summary>
