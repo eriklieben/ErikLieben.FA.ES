@@ -1,3 +1,26 @@
+## [2.0.0-preview.9](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.8...v2.0.0-preview.9) (2026-02-22)
+
+### 🐛 Bug fixes
+
+* replace single-iteration loop with enumerator check in CosmosDbStreamMetadataProvider ([b2cc6e3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b2cc6e31e82dcbaa0608444cd9042ac187ea5a8d))
+* update tagFormat to v-prefixed tags for consistent release tagging ([93bb6c5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/93bb6c5061147a60a44298a3a307f9579a7f1cd4))
+
+### ✨ New features
+
+* add append blob storage provider ([e74723c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/e74723c4f51e5d957169241062e994d6d1f8344e))
+* add closed stream caching and S3 conditional writes ([738c89d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/738c89d7fdba87b17b23af2b7f7a980461729926))
+* add provider parity - metadata providers and projection status ([9f38cdf](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9f38cdf2b08e6e1f5ecda9fe7fff9db024262be7))
+* add public API tracking across all packages ([03d1758](https://github.com/eriklieben/ErikLieben.FA.ES/commit/03d1758c2060c7b189dd341fb3107a1ce7eed53c))
+* add timesheet aggregate to demo app ([b9e6bf5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b9e6bf57f0e8b3cdaf6923c7f3954ad4679d8eed))
+
+### 🧪 (Unit)test cases adjusted
+
+* add S3 integration tests with MinIO testcontainers ([bca3393](https://github.com/eriklieben/ErikLieben.FA.ES/commit/bca3393709071b4187eb6fa23bcdda86181cac5a))
+
+### ♻️ Refactor
+
+* migrate CosmosDb projection status to System.Text.Json ([6407e9e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/6407e9e0a735362a18d3ae1f939529d6d76094bc))
+
 ## [2.0.0-preview.8](https://github.com/eriklieben/ErikLieben.FA.ES/compare/2.0.0-preview.7...2.0.0-preview.8) (2026-01-07)
 
 ### ✨ New features
