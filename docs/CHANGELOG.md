@@ -1,3 +1,15 @@
+## [1.4.0](https://github.com/eriklieben/ErikLieben.FA.ES/compare/1.3.7...1.4.0) (2026-02-24)
+
+### ✨ New features
+
+* add option to update active document settings ([cb599e0](https://github.com/eriklieben/ErikLieben.FA.ES/commit/cb599e02a30e5a7e5d3f4f3dd50e52bd4dc35189))
+
+### ⬆️ Dependency updates
+
+* **deps:** Update dependency Azure.Storage.Blobs to 12.27.0 ([#68](https://github.com/eriklieben/ErikLieben.FA.ES/issues/68)) ([3cb0b57](https://github.com/eriklieben/ErikLieben.FA.ES/commit/3cb0b57388c1e92fd790c13fc007266b5a84a32b))
+* **deps:** Update dependency Microsoft.Extensions.Azure to 1.13.1 ([#46](https://github.com/eriklieben/ErikLieben.FA.ES/issues/46)) ([24e8ff9](https://github.com/eriklieben/ErikLieben.FA.ES/commit/24e8ff9ac22520e6ae513cc1b02cafd737ad0d8f))
+* **deps:** Update dependency Spectre.Console.Cli to 0.53.1 ([#55](https://github.com/eriklieben/ErikLieben.FA.ES/issues/55)) ([01d39c7](https://github.com/eriklieben/ErikLieben.FA.ES/commit/01d39c7425ab1f107a307f1fcda5bb96a1dcfe5c))
+
 ## [1.3.7](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v1.3.6...1.3.7) (2026-02-13)
 
 ### 🐛 Bug fixes
