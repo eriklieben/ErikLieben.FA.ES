@@ -309,6 +309,133 @@ public async Task<IObjectDocument> GetAsync(
     }
 
     /// <summary>
+    /// Updates the active stream configuration of an object document and synchronizes the
+    /// <c>LastObjectDocumentHash</c> stored in the corresponding stream document so that
+    /// subsequent append operations pass the optimistic concurrency check.
+    /// </summary>
+    /// <param name="name">The object type/name used to determine the container and path.</param>
+    /// <param name="objectId">The identifier of the object to update.</param>
+    /// <param name="activeConfiguration">The new active stream configuration to apply.</param>
+    /// <param name="store">Optional store name override for loading the object document. If not provided, uses the default document store.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    public Task UpdateActiveConfigurationAsync(
+        string name,
+        string objectId,
+        StreamInformation activeConfiguration,
+        string? store = null)
+    {
+        ArgumentNullException.ThrowIfNull(activeConfiguration);
+
+        return UpdateActiveConfigurationCoreAsync(name, objectId, active =>
+        {
+            active.StreamIdentifier = activeConfiguration.StreamIdentifier;
+            active.StreamType = activeConfiguration.StreamType;
+            active.DocumentTagType = activeConfiguration.DocumentTagType;
+            active.CurrentStreamVersion = activeConfiguration.CurrentStreamVersion;
+            active.StreamConnectionName = activeConfiguration.StreamConnectionName;
+            active.DocumentTagConnectionName = activeConfiguration.DocumentTagConnectionName;
+            active.StreamTagConnectionName = activeConfiguration.StreamTagConnectionName;
+            active.SnapShotConnectionName = activeConfiguration.SnapShotConnectionName;
+            active.ChunkSettings = activeConfiguration.ChunkSettings;
+            active.StreamChunks = activeConfiguration.StreamChunks;
+            active.SnapShots = activeConfiguration.SnapShots;
+            active.DocumentType = activeConfiguration.DocumentType;
+            active.EventStreamTagType = activeConfiguration.EventStreamTagType;
+            active.DocumentRefType = activeConfiguration.DocumentRefType;
+            active.DataStore = activeConfiguration.DataStore;
+            active.DocumentStore = activeConfiguration.DocumentStore;
+            active.DocumentTagStore = activeConfiguration.DocumentTagStore;
+            active.StreamTagStore = activeConfiguration.StreamTagStore;
+            active.SnapShotStore = activeConfiguration.SnapShotStore;
+        }, store);
+    }
+
+    /// <summary>
+    /// Updates the active stream configuration of an object document by applying the specified
+    /// modifications and synchronizes the <c>LastObjectDocumentHash</c> stored in the corresponding
+    /// stream document so that subsequent append operations pass the optimistic concurrency check.
+    /// </summary>
+    /// <param name="name">The object type/name used to determine the container and path.</param>
+    /// <param name="objectId">The identifier of the object to update.</param>
+    /// <param name="configure">An action that receives the current <see cref="StreamInformation"/> for in-place modification.</param>
+    /// <param name="store">Optional store name override for loading the object document. If not provided, uses the default document store.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    public Task UpdateActiveConfigurationAsync(
+        string name,
+        string objectId,
+        Action<StreamInformation> configure,
+        string? store = null)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        return UpdateActiveConfigurationCoreAsync(name, objectId, configure, store);
+    }
+
+    private async Task UpdateActiveConfigurationCoreAsync(
+        string name,
+        string objectId,
+        Action<StreamInformation> configure,
+        string? store)
+    {
+        // Load the current document
+        var document = await GetAsync(name, objectId, store);
+
+        // Capture old stream location before modifying Active so we can
+        // locate the existing stream blob that holds LastObjectDocumentHash.
+        var oldStreamConnectionName = document.Active.StreamConnectionName;
+        var oldStreamIdentifier = document.Active.StreamIdentifier;
+        var oldChunkingEnabled = document.Active.ChunkingEnabled();
+        var oldStreamChunks = document.Active.StreamChunks.ToList();
+
+        // Apply the caller's modifications to the active stream
+        configure(document.Active);
+
+        // Save the object document — this produces a new content hash
+        await SetAsync(document);
+
+        // Update the stream document's LastObjectDocumentHash using the OLD
+        // stream location (the stream blob hasn't moved).
+        string streamDocumentPath;
+        if (oldChunkingEnabled && oldStreamChunks.Count > 0)
+        {
+            var lastChunk = oldStreamChunks[^1];
+            streamDocumentPath = $"{oldStreamIdentifier}-{lastChunk.ChunkIdentifier:d10}.json";
+        }
+        else
+        {
+            streamDocumentPath = $"{oldStreamIdentifier}.json";
+        }
+
+        var client = clientFactory.CreateClient(oldStreamConnectionName);
+        var container = client.GetBlobContainerClient(name.ToLowerInvariant());
+        var streamBlob = container.GetBlobClient(streamDocumentPath);
+
+        if (!await streamBlob.ExistsAsync())
+        {
+            // No stream document yet (no events appended) — nothing to synchronize
+            return;
+        }
+
+        var properties = await streamBlob.GetPropertiesAsync();
+        var etag = properties.Value.ETag;
+
+        var (streamDoc, _) = await streamBlob.AsEntityAsync(
+            BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+            new BlobRequestConditions { IfMatch = etag });
+
+        if (streamDoc == null)
+        {
+            return;
+        }
+
+        streamDoc.LastObjectDocumentHash = document.Hash ?? "*";
+        await streamBlob.SaveEntityAsync(
+            streamDoc,
+            BlobDataStoreDocumentContext.Default.BlobDataStoreDocument,
+            new BlobRequestConditions { IfMatch = etag });
+    }
+
+    /// <summary>
     /// Gets the document store name from the document's active stream, falling back to the default if not configured.
     /// </summary>
     /// <param name="document">The document to retrieve the store setting from.</param>

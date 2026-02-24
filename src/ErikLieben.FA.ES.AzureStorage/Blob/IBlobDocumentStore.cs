@@ -59,4 +59,37 @@ public interface IBlobDocumentStore
     /// <param name="document">The document to save.</param>
     /// <returns>A task that represents the asynchronous save operation.</returns>
     Task SetAsync(IObjectDocument document);
+
+    /// <summary>
+    /// Updates the active stream configuration of an object document and synchronizes the
+    /// <c>LastObjectDocumentHash</c> stored in the corresponding stream document so that
+    /// subsequent <see cref="IDataStore.AppendAsync"/> calls pass the optimistic concurrency check.
+    /// </summary>
+    /// <param name="name">The object type/name used to determine the container and path.</param>
+    /// <param name="objectId">The identifier of the object to update.</param>
+    /// <param name="activeConfiguration">The new active stream configuration to apply.</param>
+    /// <param name="store">Optional store name override for loading the object document. If not provided, uses the default document store.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task UpdateActiveConfigurationAsync(
+        string name,
+        string objectId,
+        StreamInformation activeConfiguration,
+        string? store = null);
+
+    /// <summary>
+    /// Updates the active stream configuration of an object document by applying the specified
+    /// modifications and synchronizes the <c>LastObjectDocumentHash</c> stored in the corresponding
+    /// stream document so that subsequent <see cref="IDataStore.AppendAsync"/> calls pass the
+    /// optimistic concurrency check.
+    /// </summary>
+    /// <param name="name">The object type/name used to determine the container and path.</param>
+    /// <param name="objectId">The identifier of the object to update.</param>
+    /// <param name="configure">An action that receives the current <see cref="StreamInformation"/> for in-place modification.</param>
+    /// <param name="store">Optional store name override for loading the object document. If not provided, uses the default document store.</param>
+    /// <returns>A task that represents the asynchronous update operation.</returns>
+    Task UpdateActiveConfigurationAsync(
+        string name,
+        string objectId,
+        Action<StreamInformation> configure,
+        string? store = null);
 }
