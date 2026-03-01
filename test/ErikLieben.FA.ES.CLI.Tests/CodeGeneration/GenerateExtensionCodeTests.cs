@@ -358,9 +358,9 @@ public class GenerateExtensionCodeTests
         Assert.True(File.Exists(generatedPath));
         var code = await File.ReadAllTextAsync(generatedPath);
 
-        // Repository registrations with AddScoped
-        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
-        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+        // Repository registrations with AddSingleton
+        Assert.Contains("serviceCollection.AddSingleton<IProductRepository, ProductRepository>();", code);
+        Assert.Contains("serviceCollection.AddSingleton<IOrderRepository, OrderRepository>();", code);
     }
 
     [Fact]
@@ -404,7 +404,7 @@ public class GenerateExtensionCodeTests
         var code = await File.ReadAllTextAsync(generatedPath);
 
         // Repository registration for inherited aggregate
-        Assert.Contains("serviceCollection.AddScoped<IOrderRepository, OrderRepository>();", code);
+        Assert.Contains("serviceCollection.AddSingleton<IOrderRepository, OrderRepository>();", code);
     }
 
     [Fact]
@@ -455,7 +455,7 @@ public class GenerateExtensionCodeTests
         var code = await File.ReadAllTextAsync(generatedPath);
 
         // Repository for partial aggregate should be registered
-        Assert.Contains("serviceCollection.AddScoped<IProductRepository, ProductRepository>();", code);
+        Assert.Contains("serviceCollection.AddSingleton<IProductRepository, ProductRepository>();", code);
 
         // Repository for non-partial aggregate should NOT be registered
         Assert.DoesNotContain("ITempRepository", code);

@@ -164,11 +164,11 @@ public partial class MyAppDomainFactory : AggregateFactory, IAggregateFactory
         // Aggregate factories
         serviceCollection.AddSingleton<IAggregateFactory<Customer, CustomerId>, CustomerFactory>();
         serviceCollection.AddSingleton<ICustomerFactory, CustomerFactory>();
-        serviceCollection.AddScoped<ICustomerRepository, CustomerRepository>();
+        serviceCollection.AddSingleton<ICustomerRepository, CustomerRepository>();
 
         serviceCollection.AddSingleton<IAggregateFactory<Order, OrderId>, OrderFactory>();
         serviceCollection.AddSingleton<IOrderFactory, OrderFactory>();
-        serviceCollection.AddScoped<IOrderRepository, OrderRepository>();
+        serviceCollection.AddSingleton<IOrderRepository, OrderRepository>();
 
         serviceCollection.AddSingleton<IAggregateFactory, MyAppDomainFactory>();
     }

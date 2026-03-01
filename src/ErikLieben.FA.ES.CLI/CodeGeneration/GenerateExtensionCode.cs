@@ -257,7 +257,7 @@ public async Task Generate()
         registerCode.AppendLine(
             $"serviceCollection.AddSingleton<I{identifierName}Factory, {identifierName}Factory>();");
         registerCode.AppendLine(
-            $"serviceCollection.AddScoped<I{identifierName}Repository, {identifierName}Repository>();");
+            $"serviceCollection.AddSingleton<I{identifierName}Repository, {identifierName}Repository>();");
         mappingCode.AppendLine(
             $"Type agg when agg == typeof({identifierName}) => typeof(IAggregateFactory<{identifierName}, {identifierType}>),");
     }

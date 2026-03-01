@@ -143,7 +143,7 @@ public partial class MyAppFactory : AggregateFactory, IAggregateFactory
         // Registers all aggregate factories
         serviceCollection.AddSingleton<IAggregateFactory<Order>, OrderFactory>();
         serviceCollection.AddSingleton<IOrderFactory, OrderFactory>();
-        serviceCollection.AddScoped<IOrderRepository, OrderRepository>();
+        serviceCollection.AddSingleton<IOrderRepository, OrderRepository>();
         // ... more registrations
     }
 }
