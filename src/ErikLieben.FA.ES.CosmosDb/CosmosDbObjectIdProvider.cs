@@ -152,7 +152,10 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
         var objectNameLower = objectName.ToLowerInvariant();
         var container = await GetDocumentsContainerAsync();
 
-        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.objectName = @objectName")
+        // Avoid SELECT VALUE COUNT(1) aggregate query — the CosmosDB vnext-preview
+        // emulator has a known SDK bug (RewrittenAggregateProjections) that causes
+        // ArgumentException even with stream iterators. Instead, select IDs and count.
+        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.objectName = @objectName")
             .WithParameter("@objectName", objectNameLower);
 
         var queryOptions = new QueryRequestOptions
@@ -160,21 +163,15 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
             PartitionKey = new PartitionKey(objectNameLower)
         };
 
+        long count = 0;
+
         try
         {
-            // Use stream iterator to bypass SDK aggregate query deserialization bugs
-            // in the CosmosDB emulator. The raw response JSON is reliable.
-            using var iterator = container.GetItemQueryStreamIterator(query, requestOptions: queryOptions);
-            if (iterator.HasMoreResults)
+            using var iterator = container.GetItemQueryIterator<JsonElement>(query, requestOptions: queryOptions);
+            while (iterator.HasMoreResults)
             {
-                using var response = await iterator.ReadNextAsync(cancellationToken);
-                response.EnsureSuccessStatusCode();
-                using var json = await JsonDocument.ParseAsync(response.Content, cancellationToken: cancellationToken);
-                var documents = json.RootElement.GetProperty("Documents");
-                if (documents.GetArrayLength() > 0)
-                {
-                    return documents[0].GetInt64();
-                }
+                var response = await iterator.ReadNextAsync(cancellationToken);
+                count += response.Count;
             }
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -182,7 +179,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
             return 0;
         }
 
-        return 0;
+        return count;
     }
 
     private async Task<Container> GetDocumentsContainerAsync()
