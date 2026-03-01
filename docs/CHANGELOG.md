@@ -1,3 +1,17 @@
+## [2.0.0-preview.10](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.9...v2.0.0-preview.10) (2026-03-01)
+
+### 🐛 Bug fixes
+
+* clear seperation between factory and repository, no more deps ([514ed6a](https://github.com/eriklieben/ErikLieben.FA.ES/commit/514ed6aab948c71c1ffa8a747e71e83fbe411855))
+* generate AddSingleton instead of AddScoped for repositories ([52b08a4](https://github.com/eriklieben/ErikLieben.FA.ES/commit/52b08a4ecebe8e95c4e15f05d2444aacd406d51c))
+* make sure that CosmosDb works with broken SDK version ([cec02c6](https://github.com/eriklieben/ErikLieben.FA.ES/commit/cec02c611a839bdb7548d6e955cbf32c8d78ffe1))
+* resolve issues with CosmosDb emulator ([7ddda1e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/7ddda1e53163a9dbf3ea3dab885f7b13c5157b35))
+
+### 🧪 (Unit)test cases adjusted
+
+* comment out flaky cosmosdb tests due to failing SDK ([12a701f](https://github.com/eriklieben/ErikLieben.FA.ES/commit/12a701f68dcbc8ce98d10323b47c25616c397112))
+* resolve test case issues for cosmosdb ([fa07397](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fa07397a2cff5e073e6599626463a0863142da95))
+
 ## [2.0.0-preview.9](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.8...v2.0.0-preview.9) (2026-02-22)
 
 ### 🐛 Bug fixes
