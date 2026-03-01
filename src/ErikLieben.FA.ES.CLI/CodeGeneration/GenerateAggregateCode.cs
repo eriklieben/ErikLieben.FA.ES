@@ -1053,7 +1053,23 @@ public class GenerateAggregateCode
                               {
                                   try
                                   {
-                                      return await {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.GetAsync(id, upToVersion);
+                                      var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(), {{documentStoreLiteral}}, {{documentTypeLiteral}});
+                                      var obj = {{aggregate.IdentifierName.ToLowerInvariant()}}Factory.Create(document);
+
+                                      if (upToVersion.HasValue)
+                                      {
+                                          var events = await obj.EventStream.ReadAsync(0, upToVersion);
+                                          foreach (var e in events)
+                                          {
+                                              obj.Fold(e);
+                                          }
+                                      }
+                                      else
+                                      {
+                                          await obj.Fold();
+                                      }
+
+                                      return obj;
                                   }
                                   catch (Exception)
                                   {

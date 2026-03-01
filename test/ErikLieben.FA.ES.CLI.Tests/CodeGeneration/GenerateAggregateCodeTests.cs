@@ -1116,7 +1116,7 @@ public partial class GenerateAggregateCodeTests
     }
 
     [Fact]
-    public async Task Generate_repository_GetByIdAsync_delegates_to_factory_with_upToVersion()
+    public async Task Generate_repository_GetByIdAsync_is_self_contained()
     {
         // Arrange
         var aggregate = new AggregateDefinition
@@ -1165,8 +1165,12 @@ public partial class GenerateAggregateCodeTests
         var generatedPath = Path.Combine(outDir, "Demo", "Domain", "Review.Generated.cs");
         var code = await File.ReadAllTextAsync(generatedPath);
 
-        // Repository GetByIdAsync should delegate to factory with upToVersion
-        Assert.Contains("return await reviewFactory.GetAsync(id, upToVersion);", code);
+        // Repository GetByIdAsync should be self-contained, not delegating to obsolete factory.GetAsync
+        Assert.DoesNotContain("reviewFactory.GetAsync(", code);
+        Assert.Contains("objectDocumentFactory.GetAsync(ObjectName, id.ToString()", code);
+        Assert.Contains("reviewFactory.Create(document)", code);
+        Assert.Contains("obj.EventStream.ReadAsync(0, upToVersion)", code);
+        Assert.Contains("await obj.Fold();", code);
     }
 
     [Fact]

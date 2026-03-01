@@ -262,44 +262,104 @@ public partial class Order : Aggregate { }
 public partial class Order : Aggregate { }
 ```
 
-## Aggregate Factory
+## Aggregate Factory and Repository
 
-The CLI generates a factory for creating and loading aggregates:
+The CLI generates a **factory** and a **repository** for each aggregate, with distinct responsibilities:
+
+- **Factory** — creates and instantiates single aggregate instances
+- **Repository** — retrieves and queries aggregates (single or multiple results)
+
+### Factory (Creation)
+
+Use the factory when you need to **create** a new aggregate:
 
 ```csharp
-// Inject the factory
 public class OrderService
 {
-    private readonly IAggregateFactory<Order> _orderFactory;
+    private readonly IOrderFactory _orderFactory;
 
-    public OrderService(IAggregateFactory<Order> orderFactory)
+    public OrderService(IOrderFactory orderFactory)
     {
         _orderFactory = orderFactory;
     }
 
     public async Task<Order> CreateOrder(string customerId)
     {
-        // Create new aggregate with new ID
         var order = await _orderFactory.CreateAsync(Guid.NewGuid().ToString());
         await order.Create(customerId);
         return order;
     }
+}
+```
 
-    public async Task<Order> GetOrder(string orderId)
+#### Factory Methods
+
+| Method | Description |
+|--------|-------------|
+| `CreateAsync(id)` | Create a new aggregate with the given ID |
+| `Create(IEventStream)` | Instantiate an aggregate from an event stream |
+| `Create(IObjectDocument)` | Instantiate an aggregate from a document |
+
+### Repository (Retrieval and Queries)
+
+Use the repository when you need to **retrieve** or **query** aggregates:
+
+```csharp
+public class OrderService
+{
+    private readonly IOrderRepository _orderRepository;
+
+    public OrderService(IOrderRepository orderRepository)
     {
-        // Load existing aggregate
-        return await _orderFactory.GetAsync(orderId);
+        _orderRepository = orderRepository;
+    }
+
+    public async Task<Order?> GetOrder(string orderId)
+    {
+        return await _orderRepository.GetByIdAsync(orderId);
+    }
+
+    public async Task<Order?> FindByEmail(string email)
+    {
+        return await _orderRepository.GetFirstByDocumentTagAsync(email);
     }
 }
 ```
 
-### Factory Methods
+#### Repository Methods
 
 | Method | Description |
 |--------|-------------|
-| `CreateAsync(id)` | Create new aggregate with given ID |
-| `GetAsync(id)` | Load existing aggregate |
-| `GetOrCreateAsync(id)` | Load or create if doesn't exist |
+| `GetByIdAsync(id, upToVersion?)` | Get a single aggregate by ID (returns `null` if not found) |
+| `GetByIdWithDocumentAsync(id)` | Get a single aggregate with its document |
+| `GetFirstByDocumentTagAsync(tag)` | Get the first aggregate matching a document tag |
+| `GetAllByDocumentTagAsync(tag)` | Get all aggregates matching a document tag |
+| `GetObjectIdsAsync(token?, pageSize)` | Get a paginated list of all aggregate IDs |
+| `ExistsAsync(id)` | Check if an aggregate exists |
+| `CountAsync()` | Get total count of aggregates |
+
+### Using Both Together
+
+For endpoints that create or retrieve, inject both:
+
+```csharp
+app.MapPost("/orders", async (
+    [FromBody] CreateOrderRequest request,
+    IOrderFactory factory) =>
+{
+    var order = await factory.CreateAsync(Guid.NewGuid().ToString());
+    await order.Create(request.CustomerId);
+    return Results.Created($"/orders/{order.Id}", new { order.Id });
+});
+
+app.MapGet("/orders/{id}", async (
+    string id,
+    IOrderRepository repository) =>
+{
+    var order = await repository.GetByIdAsync(id);
+    return order is not null ? Results.Ok(order) : Results.NotFound();
+});
+```
 
 ## Stream Actions
 

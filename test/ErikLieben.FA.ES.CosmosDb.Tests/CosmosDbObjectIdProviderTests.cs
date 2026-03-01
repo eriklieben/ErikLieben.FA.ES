@@ -280,12 +280,12 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<long>>();
+            var feedIterator = Substitute.For<FeedIterator>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
 
-            container.GetItemQueryIterator<long>(
+            container.GetItemQueryStreamIterator(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -300,10 +300,10 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<long>>();
+            var feedIterator = Substitute.For<FeedIterator>();
             feedIterator.HasMoreResults.Returns(false);
 
-            container.GetItemQueryIterator<long>(
+            container.GetItemQueryStreamIterator(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -318,14 +318,15 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedResponse = Substitute.For<FeedResponse<long>>();
-            feedResponse.GetEnumerator().Returns(new List<long> { 42L }.GetEnumerator());
+            var json = """{"Documents":[42],"_count":1}"""u8;
+            var stream = new MemoryStream(json.ToArray());
+            var responseMessage = new ResponseMessage(HttpStatusCode.OK) { Content = stream };
 
-            var feedIterator = Substitute.For<FeedIterator<long>>();
+            var feedIterator = Substitute.For<FeedIterator>();
             feedIterator.HasMoreResults.Returns(true, false);
-            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
+            feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(responseMessage);
 
-            container.GetItemQueryIterator<long>(
+            container.GetItemQueryStreamIterator(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);

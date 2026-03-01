@@ -61,6 +61,97 @@ protected T? GetWhenParameterValue<T, Te>(string forType, IObjectDocument docume
 protected T? GetWhenParameterValue<T, Te>(string forType, VersionToken versionToken, IEvent @event);
 ```
 
+### Factory Retrieval Methods → Repository
+
+The retrieval and query methods on the aggregate factory are deprecated. Use the generated repository instead.
+
+The **factory** is now focused on **creating and instantiating** single aggregate instances, while the **repository** handles **retrieval and queries**.
+
+#### Deprecated Factory Methods
+
+| Deprecated Factory Method | Repository Replacement |
+|---------------------------|----------------------|
+| `factory.GetAsync(id)` | `repository.GetByIdAsync(id)` |
+| `factory.GetAsync(id, upToVersion)` | `repository.GetByIdAsync(id, upToVersion)` |
+| `factory.GetWithDocumentAsync(id)` | `repository.GetByIdWithDocumentAsync(id)` |
+| `factory.GetFirstByDocumentTag(tag)` | `repository.GetFirstByDocumentTagAsync(tag)` |
+| `factory.GetAllByDocumentTag(tag)` | `repository.GetAllByDocumentTagAsync(tag)` |
+
+**Action Required**: Replace factory retrieval calls with repository equivalents:
+
+```csharp
+// Before (deprecated)
+public class OrderService
+{
+    private readonly IOrderFactory _factory;
+
+    public async Task<Order> GetOrder(string id)
+    {
+        return await _factory.GetAsync(id);  // Deprecated
+    }
+
+    public async Task<Order?> FindByEmail(string email)
+    {
+        return await _factory.GetFirstByDocumentTag(email);  // Deprecated
+    }
+}
+
+// After (recommended)
+public class OrderService
+{
+    private readonly IOrderFactory _factory;
+    private readonly IOrderRepository _repository;
+
+    public async Task<Order?> GetOrder(string id)
+    {
+        return await _repository.GetByIdAsync(id);
+    }
+
+    public async Task<Order?> FindByEmail(string email)
+    {
+        return await _repository.GetFirstByDocumentTagAsync(email);
+    }
+
+    public async Task<Order> CreateOrder(string customerId)
+    {
+        // Factory is still used for creation
+        var order = await _factory.CreateAsync(Guid.NewGuid().ToString());
+        await order.Create(customerId);
+        return order;
+    }
+}
+```
+
+#### Behavior Differences
+
+| | Factory | Repository |
+|-|---------|-----------|
+| **Not found** | Throws exception | Returns `null` |
+| **Snapshot support** | No (reads from version 0) | Yes (uses snapshots when available) |
+| **Registration** | Singleton | Singleton |
+
+#### Repository-Only Methods
+
+The repository also provides query methods with no factory equivalent:
+
+| Method | Description |
+|--------|-------------|
+| `GetObjectIdsAsync(token?, pageSize)` | Paginated listing of all aggregate IDs |
+| `ExistsAsync(id)` | Efficient existence check without loading the aggregate |
+| `CountAsync()` | Total count of aggregates |
+
+#### What Stays on the Factory
+
+These factory methods are **not deprecated** and remain the correct way to create aggregates:
+
+| Method | Description |
+|--------|-------------|
+| `CreateAsync(id)` | Create a new aggregate |
+| `Create(IEventStream)` | Instantiate from an event stream (used by `[EventStream]` binding) |
+| `Create(IObjectDocument)` | Instantiate from a document |
+
+Custom factory extensions using `protected CreateAsync<T>(id, firstEvent, metadata)` continue to work as before.
+
 ### StreamInformation Properties
 
 Several properties have been renamed for clarity:
@@ -285,6 +376,7 @@ Address compiler warnings for deprecated APIs:
 1. Update `Fold(IEvent, IObjectDocument)` calls to use `VersionToken`
 2. Update `StreamInformation` property references
 3. Update `GetWhenParameterValue` calls
+4. Replace `factory.GetAsync()` / `factory.GetFirstByDocumentTag()` / `factory.GetAllByDocumentTag()` calls with the repository equivalents (inject `IOrderRepository` instead of or alongside `IOrderFactory`)
 
 ### Step 5: Test Thoroughly
 

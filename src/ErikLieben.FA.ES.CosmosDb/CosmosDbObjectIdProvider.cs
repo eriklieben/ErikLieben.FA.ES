@@ -12,7 +12,7 @@ namespace ErikLieben.FA.ES.CosmosDb;
 /// </summary>
 public class CosmosDbObjectIdProvider : IObjectIdProvider
 {
-    private sealed record CountResult(long Count);
+
     private readonly CosmosClient cosmosClient;
     private readonly EventStreamCosmosDbSettings settings;
     private Container? documentsContainer;
@@ -152,7 +152,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
         var objectNameLower = objectName.ToLowerInvariant();
         var container = await GetDocumentsContainerAsync();
 
-        var query = new QueryDefinition("SELECT COUNT(1) AS count FROM c WHERE c.objectName = @objectName")
+        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.objectName = @objectName")
             .WithParameter("@objectName", objectNameLower);
 
         var queryOptions = new QueryRequestOptions
@@ -162,11 +162,19 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
 
         try
         {
-            using var iterator = container.GetItemQueryIterator<CountResult>(query, requestOptions: queryOptions);
+            // Use stream iterator to bypass SDK aggregate query deserialization bugs
+            // in the CosmosDB emulator. The raw response JSON is reliable.
+            using var iterator = container.GetItemQueryStreamIterator(query, requestOptions: queryOptions);
             if (iterator.HasMoreResults)
             {
-                var response = await iterator.ReadNextAsync(cancellationToken);
-                return response.FirstOrDefault()?.Count ?? 0;
+                using var response = await iterator.ReadNextAsync(cancellationToken);
+                response.EnsureSuccessStatusCode();
+                using var json = await JsonDocument.ParseAsync(response.Content, cancellationToken: cancellationToken);
+                var documents = json.RootElement.GetProperty("Documents");
+                if (documents.GetArrayLength() > 0)
+                {
+                    return documents[0].GetInt64();
+                }
             }
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
