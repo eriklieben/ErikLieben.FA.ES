@@ -220,24 +220,33 @@ public class AnalyzeAggregates
     {
         var factoryName = $"{aggregate.IdentifierName}Factory";
 
-        // Search for all types with the factory name in the compilation
+        // Search for all types with the factory name in the compilation (any namespace)
         var factoryTypes = compilation.GetSymbolsWithName(factoryName, SymbolFilter.Type)
-            .OfType<INamedTypeSymbol>()
-            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+            .OfType<INamedTypeSymbol>();
 
         foreach (var factoryType in factoryTypes)
         {
             // Check if any of the partial declarations are in non-generated files
-            var hasUserDefinedPartial = factoryType.DeclaringSyntaxReferences
-                .Any(syntaxRef =>
+            var userDefinedSyntaxRef = factoryType.DeclaringSyntaxReferences
+                .FirstOrDefault(syntaxRef =>
                 {
                     var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
                     return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
                 });
 
-            if (hasUserDefinedPartial)
+            if (userDefinedSyntaxRef != null)
             {
+                var filePath = userDefinedSyntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                var factoryNamespace = factoryType.ContainingNamespace?.ToDisplayString();
+
+                aggregate.UserDefinedFactoryFileLocation = filePath.Replace(solutionRootPath, string.Empty);
+                aggregate.UserDefinedFactoryNamespace = factoryNamespace != aggregate.Namespace ? factoryNamespace : null;
+
                 AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial factory for {aggregate.IdentifierName}");
+                if (aggregate.UserDefinedFactoryNamespace != null)
+                {
+                    AnsiConsole.MarkupLine($"    Namespace: [blue]{aggregate.UserDefinedFactoryNamespace}[/]");
+                }
                 return true;
             }
         }
@@ -249,24 +258,33 @@ public class AnalyzeAggregates
     {
         var repositoryName = $"{aggregate.IdentifierName}Repository";
 
-        // Search for all types with the repository name in the compilation
+        // Search for all types with the repository name in the compilation (any namespace)
         var repositoryTypes = compilation.GetSymbolsWithName(repositoryName, SymbolFilter.Type)
-            .OfType<INamedTypeSymbol>()
-            .Where(t => t.ContainingNamespace?.ToDisplayString() == aggregate.Namespace);
+            .OfType<INamedTypeSymbol>();
 
         foreach (var repositoryType in repositoryTypes)
         {
             // Check if any of the partial declarations are in non-generated files
-            var hasUserDefinedPartial = repositoryType.DeclaringSyntaxReferences
-                .Any(syntaxRef =>
+            var userDefinedSyntaxRef = repositoryType.DeclaringSyntaxReferences
+                .FirstOrDefault(syntaxRef =>
                 {
                     var filePath = syntaxRef.SyntaxTree.FilePath ?? string.Empty;
                     return !filePath.Contains(".Generated.cs", StringComparison.OrdinalIgnoreCase);
                 });
 
-            if (hasUserDefinedPartial)
+            if (userDefinedSyntaxRef != null)
             {
+                var filePath = userDefinedSyntaxRef.SyntaxTree.FilePath ?? string.Empty;
+                var repoNamespace = repositoryType.ContainingNamespace?.ToDisplayString();
+
+                aggregate.UserDefinedRepositoryFileLocation = filePath.Replace(solutionRootPath, string.Empty);
+                aggregate.UserDefinedRepositoryNamespace = repoNamespace != aggregate.Namespace ? repoNamespace : null;
+
                 AnsiConsole.MarkupLine($"  [green]✓[/] Detected user-defined partial repository for {aggregate.IdentifierName}");
+                if (aggregate.UserDefinedRepositoryNamespace != null)
+                {
+                    AnsiConsole.MarkupLine($"    Namespace: [blue]{aggregate.UserDefinedRepositoryNamespace}[/]");
+                }
                 return true;
             }
         }

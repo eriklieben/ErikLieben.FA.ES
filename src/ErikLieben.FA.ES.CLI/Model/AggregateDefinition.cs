@@ -45,10 +45,30 @@ public record AggregateDefinition
     public bool HasUserDefinedFactoryPartial { get; set; }
 
     /// <summary>
+    /// File path (relative to solution) of user-defined factory partial, if detected.
+    /// </summary>
+    public string? UserDefinedFactoryFileLocation { get; set; }
+
+    /// <summary>
+    /// Namespace of user-defined factory partial, if it differs from the aggregate namespace.
+    /// </summary>
+    public string? UserDefinedFactoryNamespace { get; set; }
+
+    /// <summary>
     /// Indicates whether the user has defined their own partial repository class.
     /// When true, generated repository methods will be hidden from IntelliSense.
     /// </summary>
     public bool HasUserDefinedRepositoryPartial { get; set; }
+
+    /// <summary>
+    /// File path (relative to solution) of user-defined repository partial, if detected.
+    /// </summary>
+    public string? UserDefinedRepositoryFileLocation { get; set; }
+
+    /// <summary>
+    /// Namespace of user-defined repository partial, if it differs from the aggregate namespace.
+    /// </summary>
+    public string? UserDefinedRepositoryNamespace { get; set; }
 
     /// <summary>
     /// Indicates whether the user has defined their own ProcessSnapshot method override.
