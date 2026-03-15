@@ -52,7 +52,7 @@ public class GenerateAggregateCode
         }
     }
 
-    private static async Task GenerateAggregate(AggregateDefinition aggregate, string? path, string version)
+    private async Task GenerateAggregate(AggregateDefinition aggregate, string? path, string version)
     {
         if (!aggregate.IsPartialClass)
         {
@@ -79,11 +79,77 @@ public class GenerateAggregateCode
         var (get, ctorInput) = GenerateConstructorParameters(aggregate);
         var setupCode = GenerateSetupCode(aggregate);
         var processSnapshotCode = GenerateProcessSnapshotCode(aggregate, version);
-        var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode, processSnapshotCode, version);
 
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
+        // Determine if factory/repository should be in separate files
         var projectDir = CodeFormattingHelper.FindProjectDirectory(path!);
-        await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
+        var factoryOutputPath = ResolveOutputPath(aggregate.UserDefinedFactoryFileLocation, config.Generation.Factory.OutputDirectory, aggregate.IdentifierName + "Factory", projectDir);
+        var repositoryOutputPath = ResolveOutputPath(aggregate.UserDefinedRepositoryFileLocation, config.Generation.Repository.OutputDirectory, aggregate.IdentifierName + "Repository", projectDir);
+
+        if (factoryOutputPath != null || repositoryOutputPath != null)
+        {
+            // Split mode
+            var coreCode = AssembleAggregateCore(
+                aggregate, usings, postWhenCode, foldCode, serializableCode,
+                propertyCode, propertySnapshotCode, setupCode, processSnapshotCode, version,
+                factorySeparate: true);
+
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
+            await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(coreCode.ToString(), projectDir));
+
+            // Write factory
+            var factoryPath = factoryOutputPath ?? GetGeneratedFilePathForType(path!, aggregate.IdentifierName + "Factory");
+            var factoryNamespace = aggregate.UserDefinedFactoryNamespace
+                ?? Generation.AggregateCodeGenerator.ResolveConfigNamespace(config.Generation.Factory.Namespace, aggregate.Namespace);
+            var factoryCode = AssembleFactoryFile(aggregate, usings, get, ctorInput, version, factoryNamespace);
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(factoryPath)!);
+            await File.WriteAllTextAsync(factoryPath, CodeFormattingHelper.FormatCode(factoryCode.ToString(), projectDir));
+            AnsiConsole.MarkupLine($"  Factory: [blue]{factoryPath}[/]");
+
+            // Write repository
+            var repoPath = repositoryOutputPath ?? GetGeneratedFilePathForType(path!, aggregate.IdentifierName + "Repository");
+            var repoNamespace = aggregate.UserDefinedRepositoryNamespace
+                ?? Generation.AggregateCodeGenerator.ResolveConfigNamespace(config.Generation.Repository.Namespace, aggregate.Namespace);
+            var repoCode = AssembleRepositoryFile(aggregate, usings, repoNamespace, factoryNamespace);
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(repoPath)!);
+            await File.WriteAllTextAsync(repoPath, CodeFormattingHelper.FormatCode(repoCode.ToString(), projectDir));
+            AnsiConsole.MarkupLine($"  Repository: [blue]{repoPath}[/]");
+        }
+        else
+        {
+            // Default: everything in one file (backward compatible)
+            var code = AssembleAggregateCode(aggregate, usings, postWhenCode, foldCode, serializableCode, propertyCode, propertySnapshotCode, get, ctorInput, setupCode, processSnapshotCode, version);
+
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path!)!);
+            await File.WriteAllTextAsync(path!, CodeFormattingHelper.FormatCode(code.ToString(), projectDir));
+        }
+    }
+
+    private string? ResolveOutputPath(string? userDefinedFileLocation, string? configOutputDir, string typeName, string? projectDir)
+    {
+        if (userDefinedFileLocation != null)
+        {
+            var rel = userDefinedFileLocation.Replace('\\', '/');
+            var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+                ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
+                : rel + ".Generated.cs";
+            var normalized = relGen.Replace('/', System.IO.Path.DirectorySeparatorChar)
+                .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            return System.IO.Path.Combine(solutionPath, normalized);
+        }
+
+        if (configOutputDir != null && projectDir != null)
+        {
+            var outputDir = System.IO.Path.Combine(projectDir, configOutputDir);
+            return System.IO.Path.Combine(outputDir, $"{typeName}.Generated.cs");
+        }
+
+        return null;
+    }
+
+    private static string GetGeneratedFilePathForType(string aggregateGeneratedPath, string typeName)
+    {
+        var directory = System.IO.Path.GetDirectoryName(aggregateGeneratedPath)!;
+        return System.IO.Path.Combine(directory, $"{typeName}.Generated.cs");
     }
 
     internal static List<string> BuildUsings(AggregateDefinition aggregate)
@@ -359,9 +425,9 @@ public class GenerateAggregateCode
         var propertySubTypes = new List<string>();
 
         foreach (var subType in aggregate.Properties.SelectMany(p => p.SubTypes)
-            .Where(st => !propertySubTypes.Contains(st.Namespace + "." + st.Name)))
+            .Where(st => !propertySubTypes.Contains(QualifyTypeName(st.Namespace, st.Name))))
         {
-            propertySubTypes.Add(subType.Namespace + "." + subType.Name);
+            propertySubTypes.Add(QualifyTypeName(subType.Namespace, subType.Name));
         }
 
         foreach (var property in aggregate.Properties)
@@ -383,6 +449,14 @@ public class GenerateAggregateCode
         }
 
         return (propertyCode, propertySnapshotCode);
+    }
+
+    /// <summary>
+    /// Combines a namespace and type name, handling the case where namespace may be empty.
+    /// </summary>
+    internal static string QualifyTypeName(string namespaceName, string typeName)
+    {
+        return string.IsNullOrEmpty(namespaceName) ? typeName : $"{namespaceName}.{typeName}";
     }
 
     internal static string BuildPropertyType(PropertyDefinition property)
@@ -591,6 +665,121 @@ public class GenerateAggregateCode
         return code;
     }
 
+    /// <summary>
+    /// Assembles a self-contained file for the aggregate core: class, interface, snapshot, JSON context.
+    /// Factory interface is excluded when factory is being written to a separate file.
+    /// </summary>
+    internal static StringBuilder AssembleAggregateCore(
+        AggregateDefinition aggregate,
+        List<string> usings,
+        StringBuilder postWhenCode,
+        StringBuilder foldCode,
+        StringBuilder serializableCode,
+        StringBuilder propertyCode,
+        StringBuilder propertySnapshotCode,
+        StringBuilder setupCode,
+        string processSnapshotCode,
+        string version,
+        bool factorySeparate = false)
+    {
+        var code = new StringBuilder();
+        AppendUsings(code, usings);
+        AppendAggregateClass(code, aggregate, foldCode, postWhenCode, setupCode, processSnapshotCode, version);
+        // Factory interface always stays in core file (user partials of the interface may exist in the aggregate's namespace)
+        AppendInterfaceAndSnapshot(code, aggregate, propertyCode, propertySnapshotCode, serializableCode, version, includeFactoryInterface: true);
+        return code;
+    }
+
+    /// <summary>
+    /// Assembles a self-contained file for the factory: IFactory interface + Factory class.
+    /// </summary>
+    internal static StringBuilder AssembleFactoryFile(
+        AggregateDefinition aggregate,
+        List<string> baseUsings,
+        string get,
+        string ctorInput,
+        string version,
+        string? overrideNamespace = null)
+    {
+        var code = new StringBuilder();
+        var factoryNamespace = overrideNamespace ?? aggregate.Namespace;
+
+        // Build usings for the factory file
+        var factoryUsings = new List<string>(baseUsings);
+        if (overrideNamespace != null && !factoryUsings.Contains(aggregate.Namespace))
+        {
+            factoryUsings.Add(aggregate.Namespace);
+        }
+        AppendUsings(code, factoryUsings);
+
+        var documentStoreLiteral = FormatAsStringLiteralOrNull(GetDocumentStoreFromAttribute(aggregate));
+        var documentTypeLiteral = FormatAsStringLiteralOrNull(GetDocumentTypeFromAttribute(aggregate));
+        var documentTagStoreArg = FormatAsOptionalArgument(GetDocumentTagStoreFromAttribute(aggregate));
+        var documentStoreArg = FormatAsOptionalArgument(GetDocumentStoreFromAttribute(aggregate));
+        var settingsCode = GenerateSettingsApplicationCode(aggregate);
+        var factoryEditorBrowsable = GetEditorBrowsableAttribute(aggregate.HasUserDefinedFactoryPartial);
+
+        code.AppendLine($"namespace {factoryNamespace};");
+        code.AppendLine();
+        AppendFactory(code, aggregate, get, ctorInput, documentStoreLiteral, documentTypeLiteral, documentTagStoreArg, documentStoreArg, settingsCode, factoryEditorBrowsable, version);
+
+        return code;
+    }
+
+    /// <summary>
+    /// Assembles a self-contained file for the repository: IRepository interface + Repository class.
+    /// </summary>
+    internal static StringBuilder AssembleRepositoryFile(
+        AggregateDefinition aggregate,
+        List<string> baseUsings,
+        string? overrideNamespace = null,
+        string? factoryNamespace = null)
+    {
+        var code = new StringBuilder();
+        var repoNamespace = overrideNamespace ?? aggregate.Namespace;
+
+        // Build usings for the repository file
+        var repoUsings = new List<string>(baseUsings);
+        if (overrideNamespace != null && !repoUsings.Contains(aggregate.Namespace))
+        {
+            repoUsings.Add(aggregate.Namespace);
+        }
+        // Repository references IFactory, so include factory namespace if different
+        if (factoryNamespace != null && !repoUsings.Contains(factoryNamespace))
+        {
+            repoUsings.Add(factoryNamespace);
+        }
+        AppendUsings(code, repoUsings);
+
+        var documentStoreLiteral = FormatAsStringLiteralOrNull(GetDocumentStoreFromAttribute(aggregate));
+        var documentTypeLiteral = FormatAsStringLiteralOrNull(GetDocumentTypeFromAttribute(aggregate));
+        var documentTagStoreArg = FormatAsOptionalArgument(GetDocumentTagStoreFromAttribute(aggregate));
+        var documentStoreArg = FormatAsOptionalArgument(GetDocumentStoreFromAttribute(aggregate));
+        var repoEditorBrowsable = GetEditorBrowsableAttribute(aggregate.HasUserDefinedRepositoryPartial);
+
+        code.AppendLine($"namespace {repoNamespace};");
+        code.AppendLine();
+        AppendRepository(code, aggregate, documentStoreLiteral, documentTypeLiteral, documentTagStoreArg, documentStoreArg, repoEditorBrowsable);
+
+        return code;
+    }
+
+    /// <summary>
+    /// Appends just the factory interface (used when factory is in a separate file).
+    /// </summary>
+    private static void AppendFactoryInterface(StringBuilder code, AggregateDefinition aggregate)
+    {
+        code.AppendLine($$"""
+                          //<auto-generated />
+                          /// <summary>
+                          /// Factory interface for creating {{aggregate.IdentifierName}} aggregate instances.
+                          /// </summary>
+                          public partial interface I{{aggregate.IdentifierName}}Factory : IAggregateFactory<{{aggregate.IdentifierName}}, {{aggregate.IdentifierType}}>
+                          {
+                          }
+                          """);
+    }
+
     private static void AppendUsings(StringBuilder code, List<string> usings)
     {
         foreach (var namespaceName in usings.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().Order())
@@ -671,7 +860,8 @@ public class GenerateAggregateCode
         StringBuilder propertyCode,
         StringBuilder propertySnapshotCode,
         StringBuilder serializableCode,
-        string version)
+        string version,
+        bool includeFactoryInterface = true)
     {
         code.AppendLine($$"""
 
@@ -701,15 +891,21 @@ public class GenerateAggregateCode
                           internal partial class {{aggregate.IdentifierName}}JsonSerializerContext : JsonSerializerContext
                           {
                           }
-
-                          //<auto-generated />
-                          /// <summary>
-                          /// Factory interface for creating {{aggregate.IdentifierName}} aggregate instances.
-                          /// </summary>
-                          public partial interface I{{aggregate.IdentifierName}}Factory : IAggregateFactory<{{aggregate.IdentifierName}}, {{aggregate.IdentifierType}}>
-                          {
-                          }
                           """);
+
+        if (includeFactoryInterface)
+        {
+            code.AppendLine($$"""
+
+                              //<auto-generated />
+                              /// <summary>
+                              /// Factory interface for creating {{aggregate.IdentifierName}} aggregate instances.
+                              /// </summary>
+                              public partial interface I{{aggregate.IdentifierName}}Factory : IAggregateFactory<{{aggregate.IdentifierName}}, {{aggregate.IdentifierType}}>
+                              {
+                              }
+                              """);
+        }
     }
 
     private static void AppendFactory(

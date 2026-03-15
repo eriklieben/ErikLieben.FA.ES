@@ -219,6 +219,10 @@ public async Task Generate()
             CollectNamespace(namespaces, declaration.Namespace);
             CollectNamespace(namespaces, declaration.IdentifierTypeNamespace);
 
+            // Collect factory/repository namespaces when they differ from aggregate namespace
+            CollectNamespace(namespaces, declaration.UserDefinedFactoryNamespace);
+            CollectNamespace(namespaces, declaration.UserDefinedRepositoryNamespace);
+
             AppendAggregateRegistration(registerCode, mappingCode, declaration.IdentifierName, declaration.IdentifierType);
         }
     }
@@ -377,7 +381,7 @@ public async Task Generate()
         // Check if type.Name already includes generic parameters (e.g., "StronglyTypedId<Guid>")
         // If so, use it as-is to avoid duplication like "StronglyTypedId<Guid>< Guid >"
         var alreadyHasGenerics = type.Name.Contains('<') && type.Name.Contains('>');
-
+        // Use unqualified type name — the namespace is already added to usings
         if (type.GenericTypes.Count != 0 && !alreadyHasGenerics)
         {
             var genericSignature = BuildGenericTypeSignature(type.GenericTypes, nameSpaceUsings);
@@ -426,6 +430,7 @@ public async Task Generate()
 
                 if (parameter.Type != subType.Name)
                 {
+                    // Use unqualified type name — the namespace is already added to usings
                     jsonSerializerCodeList.Add($"[JsonSerializable(typeof({subType.Name}))]");
                 }
             }

@@ -17,6 +17,11 @@ public class Config
 /// </summary>
 [JsonPropertyName("ES")]
 public EsConfig Es { get; init; } = new();
+
+    /// <summary>
+    /// Gets configuration for code generation output locations.
+    /// </summary>
+    public GenerationConfig Generation { get; init; } = new();
 }
 
 
@@ -29,4 +34,29 @@ public class EsConfig
     /// Gets a value indicating whether diagnostic output is enabled for CLI operations.
     /// </summary>
     public bool EnableDiagnostics { get; init; } = false;
+}
+
+/// <summary>
+/// Configuration for code generation output locations.
+/// </summary>
+public class GenerationConfig
+{
+    public GeneratedTypeConfig Factory { get; init; } = new();
+    public GeneratedTypeConfig Repository { get; init; } = new();
+}
+
+/// <summary>
+/// Configuration for a specific generated type's output location.
+/// </summary>
+public class GeneratedTypeConfig
+{
+    /// <summary>
+    /// Relative to project root, e.g. "Factories".
+    /// </summary>
+    public string? OutputDirectory { get; init; }
+
+    /// <summary>
+    /// Namespace override. Supports {ProjectNamespace} placeholder.
+    /// </summary>
+    public string? Namespace { get; init; }
 }
