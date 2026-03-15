@@ -287,16 +287,16 @@ internal class RoslynHelper(
                 continue;
             }
 
-            if (!TryGetEventTypeInfo(firstArgument!, out var symbolInfo, out var typeInfo))
+            if (!TryGetEventTypeInfo(firstArgument!, out var eventTypeSymbol, out var typeInfo))
             {
                 continue;
             }
 
             list.Add(new CommandEventDefinition
             {
-                EventName = GetEventName(symbolInfo.Symbol!),
-                Namespace = SymbolHelpers.GetFullNamespace(symbolInfo.Symbol!),
-                File = GetFilePaths(symbolInfo.Symbol!).FirstOrDefault() ?? string.Empty,
+                EventName = GetEventName(eventTypeSymbol),
+                Namespace = SymbolHelpers.GetFullNamespace(eventTypeSymbol),
+                File = GetFilePaths(eventTypeSymbol).FirstOrDefault() ?? string.Empty,
                 TypeName = SymbolHelpers.GetFullTypeName(typeInfo.Type!),
                 SchemaVersion = typeInfo.Type is INamedTypeSymbol namedType
                     ? AttributeExtractor.ExtractEventVersionAttribute(namedType)
@@ -331,32 +331,52 @@ internal class RoslynHelper(
         }
 
         firstArgument = argumentList.Arguments[0];
-        return firstArgument.Expression is ObjectCreationExpressionSyntax;
+
+        // Accept both inline new expressions and variable references
+        return firstArgument.Expression is ObjectCreationExpressionSyntax
+            or ImplicitObjectCreationExpressionSyntax
+            or IdentifierNameSyntax;
     }
 
     private bool TryGetEventTypeInfo(
         ArgumentSyntax argument,
-        out SymbolInfo symbolInfo,
+        out ISymbol eventTypeSymbol,
         out TypeInfo typeInfo)
     {
-        symbolInfo = default;
+        eventTypeSymbol = null!;
         typeInfo = default;
 
-        if (argument.Expression is not ObjectCreationExpressionSyntax objectCreationExpression)
+        switch (argument.Expression)
         {
-            return false;
+            case ObjectCreationExpressionSyntax objectCreation:
+            {
+                var typeSyntax = objectCreation.Type;
+                if (typeSyntax == null) return false;
+                var symbolInfo = semanticModel.GetSymbolInfo(typeSyntax);
+                typeInfo = semanticModel.GetTypeInfo(argument.Expression);
+                if (symbolInfo.Symbol == null || typeInfo.Type == null) return false;
+                eventTypeSymbol = symbolInfo.Symbol;
+                return true;
+            }
+            case ImplicitObjectCreationExpressionSyntax:
+            {
+                // new() { ... } — type comes from the expression's type info
+                typeInfo = semanticModel.GetTypeInfo(argument.Expression);
+                if (typeInfo.Type == null) return false;
+                eventTypeSymbol = typeInfo.Type;
+                return true;
+            }
+            case IdentifierNameSyntax:
+            {
+                // Variable reference: var @event = new SomeEvent(); ... context.Append(@event)
+                typeInfo = semanticModel.GetTypeInfo(argument.Expression);
+                if (typeInfo.Type == null) return false;
+                eventTypeSymbol = typeInfo.Type;
+                return true;
+            }
+            default:
+                return false;
         }
-
-        var typeSyntax = objectCreationExpression.Type;
-        if (typeSyntax == null)
-        {
-            return false;
-        }
-
-        symbolInfo = semanticModel.GetSymbolInfo(typeSyntax);
-        typeInfo = semanticModel.GetTypeInfo(argument.Expression);
-
-        return symbolInfo.Symbol != null && typeInfo.Type != null;
     }
 
     private bool IsStreamOfTypeIEventStream(ExpressionSyntax expression)

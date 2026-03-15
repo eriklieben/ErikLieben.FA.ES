@@ -198,6 +198,131 @@ public class CommandHelperTests
     }
 
     [Fact]
+    public void Should_detect_event_from_variable_reference()
+    {
+        // Arrange — matches the pattern:
+        //   var @event = new SomeEvent { ... };
+        //   await Stream.Session(context => Fold(context.Append(@event)));
+        var (classSymbol, semanticModel, _) = GetClassSymbol(
+            """
+            using ErikLieben.FA.ES;
+            using ErikLieben.FA.ES.Processors;
+            using System.Threading.Tasks;
+
+            namespace TestDomain;
+
+            public record UserDirectoryRemoved(string RemovedBy);
+
+            public class MyAggregate(IEventStream stream) : Aggregate(stream)
+            {
+                public async Task RemoveUserDirectory(string removedBy)
+                {
+                    var @event = new UserDirectoryRemoved(removedBy);
+                    await Stream.Session(context => context.Append(@event));
+                }
+            }
+            """,
+            assembly: "TestVarRefAsm"
+        );
+        Assert.NotNull(classSymbol);
+        var roslyn = new RoslynHelper(semanticModel, "c:\\repo\\");
+
+        // Act
+        var commands = CommandHelper.GetCommandMethods(classSymbol!, roslyn);
+
+        // Assert
+        var cmd = Assert.Single(commands);
+        Assert.Equal("RemoveUserDirectory", cmd.CommandName);
+        Assert.True(cmd.RequiresAwait);
+
+        var produced = Assert.Single(cmd.ProducesEvents);
+        Assert.Equal("User.Directory.Removed", produced.EventName);
+        Assert.Equal("TestDomain", produced.Namespace);
+        Assert.Equal("UserDirectoryRemoved", produced.TypeName);
+    }
+
+    [Fact]
+    public void Should_detect_multiple_events_from_variable_references()
+    {
+        // Arrange
+        var (classSymbol, semanticModel, _) = GetClassSymbol(
+            """
+            using ErikLieben.FA.ES;
+            using ErikLieben.FA.ES.Processors;
+            using System.Threading.Tasks;
+
+            namespace TestDomain;
+
+            public record FirstEvent();
+            public record SecondEvent();
+
+            public class MyAggregate(IEventStream stream) : Aggregate(stream)
+            {
+                public async Task DoMultiple()
+                {
+                    var evt1 = new FirstEvent();
+                    var evt2 = new SecondEvent();
+                    await Stream.Session(context => { context.Append(evt1); context.Append(evt2); });
+                }
+            }
+            """,
+            assembly: "TestMultiVarAsm"
+        );
+        Assert.NotNull(classSymbol);
+        var roslyn = new RoslynHelper(semanticModel, "c:\\repo\\");
+
+        // Act
+        var commands = CommandHelper.GetCommandMethods(classSymbol!, roslyn);
+
+        // Assert
+        var cmd = Assert.Single(commands);
+        Assert.Equal("DoMultiple", cmd.CommandName);
+        Assert.Equal(2, cmd.ProducesEvents.Count);
+        Assert.Contains(cmd.ProducesEvents, e => e.TypeName == "FirstEvent");
+        Assert.Contains(cmd.ProducesEvents, e => e.TypeName == "SecondEvent");
+    }
+
+    [Fact]
+    public void Should_detect_mixed_inline_and_variable_reference_events()
+    {
+        // Arrange
+        var (classSymbol, semanticModel, _) = GetClassSymbol(
+            """
+            using ErikLieben.FA.ES;
+            using ErikLieben.FA.ES.Processors;
+            using System.Threading.Tasks;
+
+            namespace TestDomain;
+
+            public record InlineEvent();
+            public record VariableEvent();
+
+            public class MyAggregate(IEventStream stream) : Aggregate(stream)
+            {
+                public async Task DoMixed()
+                {
+                    var evt = new VariableEvent();
+                    await Stream.Session(context => { context.Append(new InlineEvent()); context.Append(evt); });
+                }
+            }
+            """,
+            assembly: "TestMixedAsm"
+        );
+        Assert.NotNull(classSymbol);
+        var roslyn = new RoslynHelper(semanticModel, "c:\\repo\\");
+
+        // Act
+        var commands = CommandHelper.GetCommandMethods(classSymbol!, roslyn);
+
+        // Assert
+        var cmd = Assert.Single(commands);
+        Assert.Equal("DoMixed", cmd.CommandName);
+        Assert.Equal(2, cmd.ProducesEvents.Count);
+        Assert.Contains(cmd.ProducesEvents, e => e.TypeName == "InlineEvent");
+        Assert.Contains(cmd.ProducesEvents, e => e.TypeName == "VariableEvent");
+    }
+
+    [Fact]
     public void Should_handle_generic_parameters_with_arrays()
     {
         // Arrange
