@@ -50,12 +50,12 @@ public class MinioContainerFixture : IAsyncLifetime
             region: "us-east-1",
             autoCreateBucket: autoCreateBucket);
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _minioContainer.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _minioContainer.DisposeAsync();
     }

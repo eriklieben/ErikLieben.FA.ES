@@ -19,20 +19,20 @@ public class S3DataStoreIntegrationTests : IAsyncLifetime
         _settings = fixture.CreateSettings(bucketName: $"datastore-{Guid.NewGuid():N}");
     }
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         S3DataStore.ClearVerifiedBucketsCache();
         S3DataStore.ClearClosedStreamCache();
         var clientFactory = new S3ClientFactory(_settings);
         _sut = new S3DataStore(clientFactory, _settings);
-        return Task.CompletedTask;
+        return default;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         S3DataStore.ClearVerifiedBucketsCache();
         S3DataStore.ClearClosedStreamCache();
-        return Task.CompletedTask;
+        return default;
     }
 
     [Fact]

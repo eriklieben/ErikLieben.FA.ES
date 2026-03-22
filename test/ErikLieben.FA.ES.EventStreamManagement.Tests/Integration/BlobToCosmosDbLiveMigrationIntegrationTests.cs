@@ -46,7 +46,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         };
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create CosmosDB database for this test
         _database = (await _fixture.CosmosDb.CosmosClient!.CreateDatabaseIfNotExistsAsync(_cosmosSettings.DatabaseName)).Database;
@@ -68,7 +68,7 @@ public class BlobToCosmosDbLiveMigrationIntegrationTests : IAsyncLifetime
         _documentStore.SetAsync(Arg.Any<IObjectDocument>()).Returns(Task.CompletedTask);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         // Clean up CosmosDB database
         if (_database != null)

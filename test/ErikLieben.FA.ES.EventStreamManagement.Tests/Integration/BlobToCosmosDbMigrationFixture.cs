@@ -9,19 +9,19 @@ public class BlobToCosmosDbMigrationFixture : IAsyncLifetime
     public AzuriteContainerFixture Azurite { get; } = new();
     public CosmosDbContainerFixture CosmosDb { get; } = new();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Start both containers in parallel for faster initialization
         await Task.WhenAll(
-            Azurite.InitializeAsync(),
-            CosmosDb.InitializeAsync());
+            Azurite.InitializeAsync().AsTask(),
+            CosmosDb.InitializeAsync().AsTask());
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await Task.WhenAll(
-            Azurite.DisposeAsync(),
-            CosmosDb.DisposeAsync());
+            Azurite.DisposeAsync().AsTask(),
+            CosmosDb.DisposeAsync().AsTask());
     }
 }
 
