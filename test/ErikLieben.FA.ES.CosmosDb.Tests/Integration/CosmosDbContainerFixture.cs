@@ -33,7 +33,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
     public CosmosClient? CosmosClient { get; private set; }
     public string ConnectionString => _cosmosDbContainer.GetConnectionString();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _cosmosDbContainer.StartAsync();
 
@@ -44,7 +44,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
         CosmosClient = new CosmosClient(ConnectionString, cosmosClientOptions);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         CosmosClient?.Dispose();
         await _cosmosDbContainer.DisposeAsync();

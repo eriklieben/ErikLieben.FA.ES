@@ -29,7 +29,7 @@ public class TableDataStoreIntegrationTests : IAsyncLifetime
         _testId = Guid.NewGuid().ToString("N")[..8];
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var tableClientFactory = CreateTableClientFactory(_fixture.TableServiceClient!);
 
@@ -45,9 +45,9 @@ public class TableDataStoreIntegrationTests : IAsyncLifetime
         await tableClient.CreateIfNotExistsAsync();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     [Fact]

@@ -43,7 +43,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
     /// </summary>
     public const string AccountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _azuriteContainer.StartAsync();
 
@@ -58,7 +58,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
         TableServiceClient = new TableServiceClient(TableConnectionString);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _azuriteContainer.DisposeAsync();
     }

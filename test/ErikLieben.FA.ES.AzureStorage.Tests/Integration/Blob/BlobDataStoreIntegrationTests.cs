@@ -28,7 +28,7 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         _testId = Guid.NewGuid().ToString("N")[..8];
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Create blob data store using a factory that returns the test client
         var blobClientFactory = CreateBlobClientFactory(_fixture.BlobServiceClient!);
@@ -40,9 +40,9 @@ public class BlobDataStoreIntegrationTests : IAsyncLifetime
         await container.CreateIfNotExistsAsync();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public class BlobDocumentStoreIntegrationTests : IAsyncLifetime
         _testId = Guid.NewGuid().ToString("N")[..8];
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var blobClientFactory = CreateBlobClientFactory(_fixture.BlobServiceClient!);
 
@@ -57,9 +57,9 @@ public class BlobDocumentStoreIntegrationTests : IAsyncLifetime
         await container.CreateIfNotExistsAsync();
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     [Fact]
