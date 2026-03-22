@@ -109,3 +109,11 @@ future_features/
 # Local generated docs (Claude-generated markdown, reviews, plans)
 local-docs/
 CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+
+# Agentic workflow — personal context
+.claude/
+context/
+scripts/
+workflow.json
