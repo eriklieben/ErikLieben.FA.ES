@@ -20,8 +20,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
     {
         // Use vnext-preview image which works in GitHub Actions CI
         // See: https://github.com/testcontainers/testcontainers-dotnet/discussions/1306
-        _cosmosDbContainer = new CosmosDbBuilder()
-            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+        _cosmosDbContainer = new CosmosDbBuilder("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
             .WithCommand("--protocol", "https")
             .WithEnvironment("ENABLE_EXPLORER", "false")
             .WithWaitStrategy(Wait.ForUnixContainer()
@@ -32,7 +31,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
     public CosmosClient? CosmosClient { get; private set; }
     public string ConnectionString => _cosmosDbContainer.GetConnectionString();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _cosmosDbContainer.StartAsync();
 
@@ -52,7 +51,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
         CosmosClient = new CosmosClient(ConnectionString, cosmosClientOptions);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         CosmosClient?.Dispose();
         await _cosmosDbContainer.DisposeAsync();

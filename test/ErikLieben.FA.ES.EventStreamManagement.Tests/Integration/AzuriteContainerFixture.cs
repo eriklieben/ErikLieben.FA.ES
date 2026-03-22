@@ -16,8 +16,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
 
     public AzuriteContainerFixture()
     {
-        _azuriteContainer = new ContainerBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
+        _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
             .WithPortBinding(BlobPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .AddCustomWaitStrategy(new AzuriteReadyWaitStrategy(BlobPort)))
@@ -27,7 +26,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
     public BlobServiceClient? BlobServiceClient { get; private set; }
     public string ConnectionString { get; private set; } = string.Empty;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _azuriteContainer.StartAsync();
 
@@ -43,7 +42,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
         BlobServiceClient = new BlobServiceClient(ConnectionString);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _azuriteContainer.DisposeAsync();
     }

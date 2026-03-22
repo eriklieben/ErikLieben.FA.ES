@@ -19,8 +19,7 @@ public class AzuriteContainerFixture : IAsyncLifetime
 
     public AzuriteContainerFixture()
     {
-        _azuriteContainer = new ContainerBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
+        _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
             .WithPortBinding(BlobPort, true)
             .WithPortBinding(QueuePort, true)
             .WithPortBinding(TablePort, true)
