@@ -41,12 +41,12 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />
 	</ItemGroup>
   	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="4.0.18.6" />
-		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.22" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+		<PackageReference Include="AWSSDK.S3" Version="4.0.19.1" />
+		<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.26" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.5" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />

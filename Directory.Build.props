@@ -14,30 +14,30 @@
 
   <!-- .NET 9 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <MicrosoftExtensionsVersion>9.0.13</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>9.0.13</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>9.0.13</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>9.0.13</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftExtensionsVersion>9.0.14</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>9.0.14</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>9.0.14</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>9.0.14</MicrosoftBclAsyncInterfacesVersion>
     <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>
   </PropertyGroup>
 
   <!-- .NET 10 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <MicrosoftExtensionsVersion>10.0.3</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>10.0.3</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>10.0.3</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>10.0.3</MicrosoftBclAsyncInterfacesVersion>
-    <MicrosoftBuildTasksCoreVersion>18.3.3</MicrosoftBuildTasksCoreVersion>
+    <MicrosoftExtensionsVersion>10.0.5</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>10.0.5</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>10.0.5</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>10.0.5</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftBuildTasksCoreVersion>18.4.0</MicrosoftBuildTasksCoreVersion>
   </PropertyGroup>
 
   <!-- Shared versions (not framework-dependent) -->
   <PropertyGroup>
     <!-- Azure SDK packages -->
-    <AzureIdentityVersion>1.17.1</AzureIdentityVersion>
-    <AzureStorageBlobsVersion>12.26.0</AzureStorageBlobsVersion>
+    <AzureIdentityVersion>1.19.0</AzureIdentityVersion>
+    <AzureStorageBlobsVersion>12.27.0</AzureStorageBlobsVersion>
     <AzureDataTablesVersion>12.11.0</AzureDataTablesVersion>
     <MicrosoftExtensionsAzureVersion>1.13.1</MicrosoftExtensionsAzureVersion>
-    <MicrosoftAzureCosmosVersion>3.56.0</MicrosoftAzureCosmosVersion>
+    <MicrosoftAzureCosmosVersion>3.58.0</MicrosoftAzureCosmosVersion>
 
     <!-- Azure Functions packages -->
     <MicrosoftAzureFunctionsWorkerVersion>2.0.0</MicrosoftAzureFunctionsWorkerVersion>

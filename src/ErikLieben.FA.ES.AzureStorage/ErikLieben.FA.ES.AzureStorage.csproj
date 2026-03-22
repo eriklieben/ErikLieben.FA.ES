@@ -41,10 +41,10 @@
 		<PackageReference Include="Azure.Storage.Blobs" Version="$(AzureStorageBlobsVersion)" />
 		<PackageReference Include="Azure.Data.Tables" Version="$(AzureDataTablesVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="$(MicrosoftExtensionsAzureVersion)" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.5" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
