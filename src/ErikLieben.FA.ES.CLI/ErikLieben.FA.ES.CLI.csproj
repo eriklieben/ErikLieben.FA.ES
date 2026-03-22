@@ -41,8 +41,6 @@
       <PackageReference Include="Pastel" Version="$(PastelVersion)" />
       <PackageReference Include="Spectre.Console" Version="0.54.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.53.1" />
-      <PackageReference Include="System.Formats.Asn1" Version="$(SystemFormatsAsn1Version)" />
-      <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
