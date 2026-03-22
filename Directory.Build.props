@@ -8,6 +8,8 @@
   <!-- Enable NuGet package lock files for reproducible builds -->
   <PropertyGroup>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Optional-parameter overloads are intentional in this library's public API -->
+    <NoWarn>$(NoWarn);RS0026</NoWarn>
   </PropertyGroup>
 
   <!-- .NET 9 specific versions -->
