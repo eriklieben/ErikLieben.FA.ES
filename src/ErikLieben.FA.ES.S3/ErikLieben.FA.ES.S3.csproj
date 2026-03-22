@@ -38,7 +38,7 @@
         <InternalsVisibleTo Include="ErikLieben.FA.ES.S3.Tests" />
     </ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersVersion)" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisPublicApiAnalyzersVersion)" PrivateAssets="all" />
 	</ItemGroup>
   	<ItemGroup>
 		<PackageReference Include="AWSSDK.S3" Version="4.0.19.1" />
