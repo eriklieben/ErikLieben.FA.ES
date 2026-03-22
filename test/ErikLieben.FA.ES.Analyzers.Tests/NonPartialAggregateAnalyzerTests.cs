@@ -1,10 +1,7 @@
-#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -41,7 +38,7 @@ namespace Test
             .WithMessage("Class 'MyAgg' inherits from Aggregate and should be declared partial to allow CLI code generation");
 
         // Act
-        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -68,7 +65,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -100,7 +97,7 @@ namespace Test
             .WithLocation(1);
 
         // Act
-        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<NonPartialAggregateAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,

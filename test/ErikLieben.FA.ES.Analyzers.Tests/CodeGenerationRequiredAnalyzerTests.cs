@@ -1,9 +1,7 @@
-#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -79,7 +77,7 @@ namespace Test
             .WithMessage("Class 'MyAggregate' requires code generation. Run 'dotnet faes' to generate supporting code.");
 
         // Act & Assert
-        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode,
@@ -158,7 +156,7 @@ namespace Test
             .WithMessage("Event handler 'When' for 'ProjectCreated' is not in generated code. Run 'dotnet faes' to update.");
 
         // Act & Assert
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             ExpectedDiagnostics = { expected }
@@ -241,7 +239,7 @@ namespace Test
             .WithMessage("Event handler 'When' for 'ProjectRenamed' is not in generated code. Run 'dotnet faes' to update.");
 
         // Act & Assert
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             ExpectedDiagnostics = { expected }
@@ -311,7 +309,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
         };
@@ -346,7 +344,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics from this analyzer (FAES0003 handles non-partial)
-        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode
@@ -373,7 +371,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected (no When methods)
-        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode
@@ -409,7 +407,7 @@ namespace Test
             .WithMessage("Class 'MyProjection' requires code generation. Run 'dotnet faes' to generate supporting code.");
 
         // Act & Assert
-        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode,
@@ -446,7 +444,7 @@ namespace Test
             .WithMessage("Class 'MyRoutedProjection' requires code generation. Run 'dotnet faes' to generate supporting code.");
 
         // Act & Assert
-        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode,
@@ -522,7 +520,7 @@ namespace Test
             .WithMessage("Property 'NewProperty' is not in generated interface 'IMyAggregate'. Run 'dotnet faes' to update.");
 
         // Act & Assert
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             ExpectedDiagnostics = { expected }
@@ -594,7 +592,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
         };
@@ -664,7 +662,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected (private properties shouldn't be in interface)
-        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<CodeGenerationRequiredAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
         };

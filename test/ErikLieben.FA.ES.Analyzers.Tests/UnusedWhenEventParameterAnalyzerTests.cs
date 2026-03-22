@@ -1,10 +1,7 @@
-#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -65,7 +62,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -101,7 +98,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -137,7 +134,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -172,7 +169,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -205,7 +202,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected (method is not named "When")
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -237,7 +234,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected (not an Aggregate or Projection)
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -269,7 +266,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -300,7 +297,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -335,7 +332,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -371,7 +368,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -407,7 +404,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -440,7 +437,7 @@ namespace Test
             .WithLocation(0);
 
         // Act & Assert
-        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<UnusedWhenEventParameterAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,

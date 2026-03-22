@@ -1,10 +1,7 @@
-﻿#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -66,7 +63,7 @@ namespace Test
         var expected = new DiagnosticResult(AppendWithoutApplyAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
             .WithLocation(0);
 
-        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -100,7 +97,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -133,7 +130,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -167,7 +164,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -200,7 +197,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<AppendWithoutApplyAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test

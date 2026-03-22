@@ -1,9 +1,7 @@
-#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -64,7 +62,7 @@ namespace Test
             .WithMessage("VersionToken 'ProjectVersionToken' requires code generation. Run 'dotnet faes' to generate supporting code.");
 
         // Act & Assert
-        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode,
@@ -109,7 +107,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        var test = new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
         };
@@ -140,7 +138,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode
@@ -165,7 +163,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<VersionTokenGenerationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode

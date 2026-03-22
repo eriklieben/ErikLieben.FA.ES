@@ -1,10 +1,7 @@
-﻿#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.CSharp.Testing.XUnit;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -66,7 +63,7 @@ namespace Test
         var expected = new DiagnosticResult(WhenUsageAnalyzer.DiagnosticId, DiagnosticSeverity.Warning)
             .WithLocation(0);
 
-        await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<WhenUsageAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test,
@@ -101,7 +98,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<WhenUsageAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -136,7 +133,7 @@ namespace Test
 ";
 
         // Act
-        await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<WhenUsageAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = test
@@ -176,7 +173,7 @@ namespace Test
                 .WithLocation(0)
                 .WithMessage("Use Fold(...) instead of When(...), and remove trailing .Data() when switching to Fold");
 
-            await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+            await new CSharpAnalyzerTest<WhenUsageAnalyzer, DefaultVerifier>
             {
                 ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
                 TestCode = test,
@@ -216,7 +213,7 @@ namespace Test
                 .WithLocation(0)
                 .WithMessage("Use Fold(...) instead of When(...), and remove trailing .Data() when switching to Fold");
 
-            await new CSharpAnalyzerTest<WhenUsageAnalyzer, XUnitVerifier>
+            await new CSharpAnalyzerTest<WhenUsageAnalyzer, DefaultVerifier>
             {
                 ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
                 TestCode = test,

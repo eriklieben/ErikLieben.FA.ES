@@ -1,9 +1,7 @@
-#pragma warning disable 0618 // XUnitVerifier is obsolete in Roslyn testing; suppress to avoid warnings without changing packages
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Xunit;
 
 namespace ErikLieben.FA.ES.Analyzers.Tests;
@@ -47,7 +45,7 @@ namespace Test
             .WithMessage("Project contains Aggregates but no Extensions.Generated.cs file. Run 'dotnet faes' to generate.");
 
         // Act & Assert
-        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode,
@@ -113,7 +111,7 @@ namespace Test
             .WithMessage("Aggregate 'MyAggregate' is not registered in Extensions. Run 'dotnet faes' to update.");
 
         // Act & Assert
-        var test = new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             ExpectedDiagnostics = { expected }
@@ -171,7 +169,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        var test = new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, XUnitVerifier>
+        var test = new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90
         };
@@ -200,7 +198,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics from this analyzer (FAES0003 handles non-partial)
-        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode
@@ -225,7 +223,7 @@ namespace Test
 ";
 
         // Act & Assert - no diagnostics expected
-        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, XUnitVerifier>
+        await new CSharpAnalyzerTest<ExtensionsRegistrationAnalyzer, DefaultVerifier>
         {
             ReferenceAssemblies = ReferenceAssemblies.Net.Net90,
             TestCode = sourceCode
