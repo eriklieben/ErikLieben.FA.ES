@@ -22,7 +22,7 @@ public class CosmosDbContainerFixture : IAsyncLifetime
         // Use vnext-preview image which works in GitHub Actions CI
         // See: https://github.com/testcontainers/testcontainers-dotnet/discussions/1306
         _cosmosDbContainer = new CosmosDbBuilder()
-            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-EN20260227")
             .WithCommand("--protocol", "https")
             .WithEnvironment("ENABLE_EXPLORER", "false")
             .WithWaitStrategy(Wait.ForUnixContainer()

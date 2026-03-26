@@ -275,6 +275,19 @@ EventsThroughput = null  // Uses shared database throughput
 - **Autoscale** - Automatic throughput scaling
 - **TTL** - Automatic expiration of old events
 
+### AOT Compatibility
+
+The Cosmos DB provider uses System.Text.Json with source-generated serializer contexts (`CosmosDbJsonContext`) and a custom `CosmosLinqSerializer` to avoid reflection in serialization hot paths. However, **full Native AOT is not currently possible** due to upstream limitations in the `Microsoft.Azure.Cosmos` SDK (v3.x):
+
+- The SDK internally depends on `Newtonsoft.Json` and `System.Linq.Expressions`, both of which are incompatible with Native AOT.
+- `Microsoft.Azure.Cosmos.Direct.dll` produces IL2104 and IL3053 trim/AOT warnings.
+- At runtime under Native AOT, the SDK crashes in `DocumentClient.Initialize()` due to `ConfigurationManager.AppSettings` usage.
+- A `DefaultJsonTypeInfoResolver` fallback is included in the serializer for SDK-internal types not covered by the source-generated contexts. This is suppressed with `[UnconditionalSuppressMessage]` but would fail at runtime for unknown types under true AOT.
+
+The Cosmos DB SDK team has [no public timeline](https://github.com/Azure/azure-cosmos-dotnet-v3/issues/4458) for resolving these issues. The planned v4 SDK (which would have moved to `System.Text.Json` as default) has been [paused indefinitely](https://github.com/Azure/azure-cosmos-dotnet-v3/discussions/2601) since May 2023. AOT support is not tracked in the [Azure SDK trimming initiative](https://github.com/Azure/azure-sdk-for-net/issues/24238).
+
+Native AOT is not supported by Microsoft for the Cosmos DB .NET SDK.
+
 ## Mixed Storage Providers
 
 Use different providers for different aggregates:

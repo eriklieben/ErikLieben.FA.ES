@@ -65,7 +65,7 @@ dotnet run --project demo/src/TaskFlow.AppHost -- --PersistStorage=true
 | Aggregates | Encapsulate state and behavior; rebuild state by folding events |
 | Projections | Read models that materialize streams into queryable shapes |
 | CLI Tool | Generates Fold mappings, factories, and JSON serializers |
-| AOT-friendly | Source-generated serializers, no reflection in hot paths |
+| AOT-friendly | Source-generated serializers, no reflection in hot paths ([Cosmos DB limitations](docs/StorageProviders.md#aot-compatibility)) |
 | Storage Providers | Azure Blob, Table, and Cosmos DB support |
 | Minimal APIs | `[EventStream]` and `[Projection]` parameter binding |
 | Azure Functions | Input bindings for aggregates and projections |

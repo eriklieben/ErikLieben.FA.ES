@@ -152,10 +152,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
         var objectNameLower = objectName.ToLowerInvariant();
         var container = await GetDocumentsContainerAsync();
 
-        // Avoid SELECT VALUE COUNT(1) aggregate query — the CosmosDB vnext-preview
-        // emulator has a known SDK bug (RewrittenAggregateProjections) that causes
-        // ArgumentException even with stream iterators. Instead, select IDs and count.
-        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.objectName = @objectName")
+        var query = new QueryDefinition("SELECT VALUE COUNT(1) FROM c WHERE c.objectName = @objectName")
             .WithParameter("@objectName", objectNameLower);
 
         var queryOptions = new QueryRequestOptions
@@ -163,15 +160,13 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
             PartitionKey = new PartitionKey(objectNameLower)
         };
 
-        long count = 0;
-
         try
         {
-            using var iterator = container.GetItemQueryIterator<JsonElement>(query, requestOptions: queryOptions);
-            while (iterator.HasMoreResults)
+            using var iterator = container.GetItemQueryIterator<long>(query, requestOptions: queryOptions);
+            if (iterator.HasMoreResults)
             {
                 var response = await iterator.ReadNextAsync(cancellationToken);
-                count += response.Count;
+                return response.FirstOrDefault();
             }
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -179,7 +174,7 @@ public class CosmosDbObjectIdProvider : IObjectIdProvider
             return 0;
         }
 
-        return count;
+        return 0;
     }
 
     private async Task<Container> GetDocumentsContainerAsync()
