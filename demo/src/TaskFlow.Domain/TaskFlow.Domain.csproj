@@ -20,11 +20,21 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
   </ItemGroup>
 
+  <!-- Exclude incomplete Release aggregate (events/value objects not yet defined) -->
+  <ItemGroup>
+    <Compile Remove="Aggregates/Release.cs" />
+    <Compile Remove="Aggregates/Release.Generated.cs" />
+    <Compile Remove="Aggregates/ReleaseFactory.cs" />
+    <Compile Remove="Projections/ReleaseDashboard.cs" />
+    <Compile Remove="Projections/ReleaseDashboard.Generated.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);SYSLIB0020</NoWarn>
+    <AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
   </PropertyGroup>
 
 </Project>
