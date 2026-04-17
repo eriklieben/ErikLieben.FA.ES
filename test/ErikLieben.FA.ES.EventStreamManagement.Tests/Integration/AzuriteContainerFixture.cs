@@ -16,7 +16,9 @@ public class AzuriteContainerFixture : IAsyncLifetime
 
     public AzuriteContainerFixture()
     {
-        _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
+        // Pinned: newer Azurite versions are required to accept newer x-ms-version
+        // headers sent by recent Azure.Storage.Blobs releases.
+        _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:3.35.0")
             .WithPortBinding(BlobPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .AddCustomWaitStrategy(new AzuriteReadyWaitStrategy(BlobPort)))

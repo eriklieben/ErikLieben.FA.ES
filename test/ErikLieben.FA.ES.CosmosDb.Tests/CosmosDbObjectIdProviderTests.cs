@@ -280,12 +280,12 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
+            var feedIterator = Substitute.For<FeedIterator<long>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>())
                 .ThrowsAsync(new CosmosException("Not found", HttpStatusCode.NotFound, 0, "", 0));
 
-            container.GetItemQueryIterator<JsonElement>(
+            container.GetItemQueryIterator<long>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -300,10 +300,10 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
+            var feedIterator = Substitute.For<FeedIterator<long>>();
             feedIterator.HasMoreResults.Returns(false);
 
-            container.GetItemQueryIterator<JsonElement>(
+            container.GetItemQueryIterator<long>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);
@@ -318,21 +318,17 @@ public class CosmosDbObjectIdProviderTests
         {
             var sut = new CosmosDbObjectIdProvider(cosmosClient, settings);
 
-            var items = new List<JsonElement>();
-            for (int i = 0; i < 42; i++)
-            {
-                items.Add(JsonDocument.Parse("""{"id":"x"}""").RootElement.Clone());
-            }
+            // SELECT VALUE COUNT(1) returns a single scalar long per response.
+            var values = new List<long> { 42 };
+            var feedResponse = Substitute.For<FeedResponse<long>>();
+            feedResponse.Count.Returns(1);
+            feedResponse.GetEnumerator().Returns(_ => values.GetEnumerator());
 
-            var feedResponse = Substitute.For<FeedResponse<JsonElement>>();
-            feedResponse.Count.Returns(42);
-            feedResponse.GetEnumerator().Returns(items.GetEnumerator());
-
-            var feedIterator = Substitute.For<FeedIterator<JsonElement>>();
+            var feedIterator = Substitute.For<FeedIterator<long>>();
             feedIterator.HasMoreResults.Returns(true, false);
             feedIterator.ReadNextAsync(Arg.Any<CancellationToken>()).Returns(feedResponse);
 
-            container.GetItemQueryIterator<JsonElement>(
+            container.GetItemQueryIterator<long>(
                 Arg.Any<QueryDefinition>(),
                 Arg.Any<string>(),
                 Arg.Any<QueryRequestOptions>()).Returns(feedIterator);

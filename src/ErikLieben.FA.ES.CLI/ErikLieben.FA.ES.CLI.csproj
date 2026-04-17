@@ -36,6 +36,9 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Microsoft.Build.Tasks.Core" Version="$(MicrosoftBuildTasksCoreVersion)" />
+      <!-- Pin transitive System.Security.Cryptography.Xml to a patched version
+           (GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf). -->
+      <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlVersion)" />
       <PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisVersion)" />
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(MicrosoftCodeAnalysisVersion)" />
       <PackageReference Include="Pastel" Version="$(PastelVersion)" />

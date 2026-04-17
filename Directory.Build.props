@@ -14,26 +14,28 @@
 
   <!-- .NET 9 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <MicrosoftExtensionsVersion>9.0.14</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>9.0.14</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>9.0.14</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>9.0.14</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftExtensionsVersion>9.0.15</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>9.0.15</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>9.0.15</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>9.0.15</MicrosoftBclAsyncInterfacesVersion>
     <MicrosoftBuildTasksCoreVersion>17.14.28</MicrosoftBuildTasksCoreVersion>
+    <SystemSecurityCryptographyXmlVersion>9.0.15</SystemSecurityCryptographyXmlVersion>
   </PropertyGroup>
 
   <!-- .NET 10 specific versions -->
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <MicrosoftExtensionsVersion>10.0.5</MicrosoftExtensionsVersion>
-    <SystemTextJsonVersion>10.0.5</SystemTextJsonVersion>
-    <SystemFormatsAsn1Version>10.0.5</SystemFormatsAsn1Version>
-    <MicrosoftBclAsyncInterfacesVersion>10.0.5</MicrosoftBclAsyncInterfacesVersion>
+    <MicrosoftExtensionsVersion>10.0.6</MicrosoftExtensionsVersion>
+    <SystemTextJsonVersion>10.0.6</SystemTextJsonVersion>
+    <SystemFormatsAsn1Version>10.0.6</SystemFormatsAsn1Version>
+    <MicrosoftBclAsyncInterfacesVersion>10.0.6</MicrosoftBclAsyncInterfacesVersion>
     <MicrosoftBuildTasksCoreVersion>18.4.0</MicrosoftBuildTasksCoreVersion>
+    <SystemSecurityCryptographyXmlVersion>10.0.6</SystemSecurityCryptographyXmlVersion>
   </PropertyGroup>
 
   <!-- Shared versions (not framework-dependent) -->
   <PropertyGroup>
     <!-- Azure SDK packages -->
-    <AzureIdentityVersion>1.19.0</AzureIdentityVersion>
+    <AzureIdentityVersion>1.21.0</AzureIdentityVersion>
     <AzureStorageBlobsVersion>12.27.0</AzureStorageBlobsVersion>
     <AzureDataTablesVersion>12.11.0</AzureDataTablesVersion>
     <MicrosoftExtensionsAzureVersion>1.13.1</MicrosoftExtensionsAzureVersion>
