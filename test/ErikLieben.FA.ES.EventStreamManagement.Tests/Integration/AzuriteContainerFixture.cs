@@ -18,6 +18,14 @@ public class AzuriteContainerFixture : IAsyncLifetime
     {
         _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
             .WithPortBinding(BlobPort, true)
+            // --skipApiVersionCheck: Azure SDK sends newer x-ms-version headers than
+            // the pinned Azurite image supports; the check is not meaningful against
+            // the emulator and blocks integration tests on CI.
+            .WithCommand(
+                "--blobHost", "0.0.0.0",
+                "--queueHost", "0.0.0.0",
+                "--tableHost", "0.0.0.0",
+                "--skipApiVersionCheck")
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .AddCustomWaitStrategy(new AzuriteReadyWaitStrategy(BlobPort)))
             .Build();
