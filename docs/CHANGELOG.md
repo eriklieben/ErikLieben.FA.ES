@@ -1,3 +1,13 @@
+## [2.0.0-preview.12](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.11...v2.0.0-preview.12) (2026-04-17)
+
+### ⬆️ Dependency updates
+
+* **deps:** bump coverlet 8.0.1 -> 10.0.0 and Microsoft.NET.Test.Sdk 18.3.0 -> 18.4.0 ([a208f72](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a208f72e6990ee262b71cade609a3e62b239f944))
+
+### 🚀 Release
+
+* cut preview.12 with CI plumbing and dep maintenance ([f13d4d8](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f13d4d871b13c344093bcf6bac5de132c577ca83))
+
 ## [2.0.0-preview.11](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.10...v2.0.0-preview.11) (2026-04-17)
 
 ### 🐛 Bug fixes
