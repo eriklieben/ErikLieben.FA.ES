@@ -374,26 +374,26 @@ public class BackupRestoreServiceTests
             var document = CreateMockDocument();
             var handle = CreateMockBackupHandle();
             var events = new List<IEvent> { CreateMockEvent(), CreateMockEvent() };
-            var progressReported = false;
+            var progressSignal = new TaskCompletionSource<BackupProgress>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             dataStore.ReadAsync(document, 0, null, null).Returns(events);
             backupProvider.BackupAsync(Arg.Any<BackupContext>(), Arg.Any<IProgress<BackupProgress>?>(), Arg.Any<CancellationToken>())
                 .Returns(handle);
 
-            var progress = new Progress<BackupProgress>(p =>
-            {
-                progressReported = true;
-                Assert.Equal(2, p.TotalEvents);
-            });
+            // Assertions inside Progress<T> callbacks are swallowed — capture the
+            // reported value and assert on it after awaiting a clear signal.
+            var progress = new Progress<BackupProgress>(p => progressSignal.TrySetResult(p));
 
             var sut = new BackupRestoreService(backupProvider, documentStore, dataStore, logger);
 
             // Act
             await sut.BackupDocumentAsync(document, progress: progress);
 
-            // Assert - allow time for progress reporting
-            await Task.Delay(100);
-            Assert.True(progressReported);
+            // Assert — wait for the callback with a generous timeout rather than a
+            // fixed sleep; Progress<T> callbacks post via the sync context / thread
+            // pool and can be delayed under CI load.
+            var reported = await progressSignal.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(2, reported.TotalEvents);
         }
     }
 

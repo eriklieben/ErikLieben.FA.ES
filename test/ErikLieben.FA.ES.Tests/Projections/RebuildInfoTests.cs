@@ -86,7 +86,12 @@ public class RebuildInfoTests
 
         var duration = info.Duration;
 
-        Assert.True(duration >= TimeSpan.FromMilliseconds(50));
+        // 40ms lower bound (not 50ms): Task.Delay + UtcNow have a few ms of
+        // timer-granularity jitter on Linux CI runners and occasionally return
+        // slightly before the target. The assertion still confirms Duration
+        // advances roughly with wall-clock time.
+        Assert.True(duration >= TimeSpan.FromMilliseconds(40),
+            $"Expected duration >= 40ms, got {duration.TotalMilliseconds}ms");
     }
 
     [Fact]
@@ -98,7 +103,8 @@ public class RebuildInfoTests
 
         var duration = completedInfo.Duration;
 
-        Assert.True(duration >= TimeSpan.FromMilliseconds(50));
+        Assert.True(duration >= TimeSpan.FromMilliseconds(40),
+            $"Expected duration >= 40ms, got {duration.TotalMilliseconds}ms");
     }
 
     [Fact]
