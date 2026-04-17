@@ -16,6 +16,13 @@ concurrency:
 # Minimal top-level permissions, defined per job
 permissions: {}
 
+
+# Opt into Node.js 24 for JavaScript actions. Silences the Node 20
+# deprecation warning until the pinned action versions are rolled
+# forward (Renovate PRs track those bumps independently).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   # Build, test, and prepare release artifacts
   build:

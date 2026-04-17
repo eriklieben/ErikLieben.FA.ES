@@ -1,16 +1,16 @@
 #nullable enable
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbDocumentEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbSnapshotEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTagEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity>>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo>>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.NullableInt32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int?>
-~ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbDocumentEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbDocumentEntity!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbSnapshotEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbSnapshotEntity!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbStreamInfo!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTagEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTagEntity!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.CosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbEventEntity.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbEventEntity!>!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.ListCosmosDbTerminatedStreamInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.List<ErikLieben.FA.ES.CosmosDb.Model.CosmosDbTerminatedStreamInfo!>!>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.NullableInt32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int?>!
+ErikLieben.FA.ES.CosmosDb.Model.CosmosDbJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string!>!
 abstract ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.LoadFromJson(string! json, ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> T?
 abstract ErikLieben.FA.ES.CosmosDb.CosmosDbMultiDocumentProjectionFactory<T>.New() -> T!
 abstract ErikLieben.FA.ES.CosmosDb.CosmosDbProjectionFactory<T>.HasExternalCheckpoint.get -> bool

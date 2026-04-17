@@ -6,8 +6,8 @@ namespace ErikLieben.FA.ES.Builder;
 /// Builder interface for configuring FAES (ErikLieben.FA.ES) event sourcing services.
 /// </summary>
 /// <remarks>
-/// Use this builder through the <see cref="FaesServiceCollectionExtensions.AddFaes"/> extension method
-/// to configure event sourcing with a fluent API.
+/// Use this builder through the <see cref="FaesServiceCollectionExtensions.AddFaes(IServiceCollection, System.Action{IFaesBuilder})"/>
+/// extension method to configure event sourcing with a fluent API.
 /// </remarks>
 public interface IFaesBuilder
 {

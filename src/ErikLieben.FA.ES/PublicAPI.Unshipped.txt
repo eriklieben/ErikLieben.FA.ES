@@ -1,15 +1,15 @@
 #nullable enable
-~ErikLieben.FA.ES.JsonEventSerializerContext.ActionMetadata.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.ActionMetadata>
-~ErikLieben.FA.ES.JsonEventSerializerContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
-~ErikLieben.FA.ES.JsonEventSerializerContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string, string>>
-~ErikLieben.FA.ES.JsonEventSerializerContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
-~ErikLieben.FA.ES.JsonEventSerializerContext.JsonEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.JsonEvent>
-~ErikLieben.FA.ES.JsonEventSerializerContext.NullableDateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset?>
-~ErikLieben.FA.ES.JsonEventSerializerContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
-~ErikLieben.FA.ES.JsonEventSerializerContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken>
-~ErikLieben.FA.ES.VersionTokenJsonContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier>
-~ErikLieben.FA.ES.VersionTokenJsonContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>
-~ErikLieben.FA.ES.VersionTokenJsonContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken>
+ErikLieben.FA.ES.JsonEventSerializerContext.ActionMetadata.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.ActionMetadata!>!
+ErikLieben.FA.ES.JsonEventSerializerContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>!
+ErikLieben.FA.ES.JsonEventSerializerContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string!, string!>!>!
+ErikLieben.FA.ES.JsonEventSerializerContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>!
+ErikLieben.FA.ES.JsonEventSerializerContext.JsonEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.JsonEvent!>!
+ErikLieben.FA.ES.JsonEventSerializerContext.NullableDateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset?>!
+ErikLieben.FA.ES.JsonEventSerializerContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string!>!
+ErikLieben.FA.ES.JsonEventSerializerContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken!>!
+ErikLieben.FA.ES.VersionTokenJsonContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!>!
+ErikLieben.FA.ES.VersionTokenJsonContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!>!
+ErikLieben.FA.ES.VersionTokenJsonContext.VersionToken.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionToken!>!
 const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.CoreName = "ErikLieben.FA.ES" -> string!
 const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.ProjectionsName = "ErikLieben.FA.ES.Projections" -> string!
 const ErikLieben.FA.ES.Observability.FaesInstrumentation.ActivitySources.StorageName = "ErikLieben.FA.ES.Storage" -> string!

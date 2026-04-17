@@ -1,10 +1,10 @@
 #nullable enable
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.BlobVersionIndexDocument.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobVersionIndexDocument>
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.DictionaryObjectIdentifierVersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>>
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string, string>>
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier>
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
-~ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier>
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.BlobVersionIndexDocument.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.AzureStorage.Blob.Model.BlobVersionIndexDocument!>!
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.DictionaryObjectIdentifierVersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!, ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!>!>!
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.DictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.Dictionary<string!, string!>!>!
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.ObjectIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.ObjectIdentifier!>!
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string!>!
+ErikLieben.FA.ES.AzureStorage.Blob.Model.VersionIndexContext.VersionIdentifier.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.VersionTokenParts.VersionIdentifier!>!
 abstract ErikLieben.FA.ES.AzureStorage.Blob.BlobProjectionFactory<T>.HasExternalCheckpoint.get -> bool
 abstract ErikLieben.FA.ES.AzureStorage.Blob.BlobProjectionFactory<T>.LoadFromJson(string! json, ErikLieben.FA.ES.IObjectDocumentFactory! documentFactory, ErikLieben.FA.ES.IEventStreamFactory! eventStreamFactory) -> T?
 abstract ErikLieben.FA.ES.AzureStorage.Blob.BlobProjectionFactory<T>.New() -> T!

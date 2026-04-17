@@ -1,12 +1,12 @@
 #nullable enable
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.EventsRolledBackEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, string>>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.RollbackReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosedEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosureReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason>
-~ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.EventsRolledBackEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.EventsRolledBackEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.RollbackReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.RollbackReason!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosedEvent.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosedEvent!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.StreamClosureReason.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<ErikLieben.FA.ES.EventStreamManagement.Events.StreamClosureReason!>!
+ErikLieben.FA.ES.EventStreamManagement.LiveMigration.LiveMigrationJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string!>!
 ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder
 ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.BackupBuilder() -> void
 ErikLieben.FA.ES.EventStreamManagement.Backup.BackupBuilder.IncludeObjectDocument() -> ErikLieben.FA.ES.EventStreamManagement.Backup.IBackupBuilder!
