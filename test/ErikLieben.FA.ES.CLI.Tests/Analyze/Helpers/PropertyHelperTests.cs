@@ -145,4 +145,111 @@ public class PropertyHelperTests
         Assert.True(record.SubTypes.Count >= 1);
         Assert.Contains(record.SubTypes, s => s.Name == "Inner" || s.Name.EndsWith("Inner"));
     }
+
+    // Regression test for FAES0007 false-positive on array-typed aggregate properties.
+    // See spikes/faes0007-array-properties-skipped-by-generator.md
+    [Fact]
+    public void Should_include_string_array_property()
+    {
+        // Arrange
+        var (classSymbol, _) = GetClassSymbol(
+            """
+            public class Demo
+            {
+                public string[] VariantKeys { get; private set; } = [];
+            }
+            """
+        );
+        Assert.NotNull(classSymbol);
+
+        // Act
+        var props = PropertyHelper.GetPublicGetterProperties(classSymbol!);
+
+        // Assert
+        var prop = Assert.Single(props);
+        Assert.Equal("VariantKeys", prop.Name);
+        Assert.Equal("String[]", prop.Type);
+        Assert.Equal("System", prop.Namespace);
+        Assert.False(prop.IsNullable); // non-nullable array
+        Assert.Empty(prop.GenericTypes);
+    }
+
+    [Fact]
+    public void Should_mark_nullable_array_property_as_nullable()
+    {
+        // Arrange
+        var (classSymbol, _) = GetClassSymbol(
+            """
+            #nullable enable
+            public class Demo
+            {
+                public string[]? Maybe { get; } = null;
+            }
+            """
+        );
+        Assert.NotNull(classSymbol);
+
+        // Act
+        var props = PropertyHelper.GetPublicGetterProperties(classSymbol!);
+
+        // Assert
+        var prop = Assert.Single(props);
+        Assert.Equal("Maybe", prop.Name);
+        Assert.Equal("String[]", prop.Type);
+        Assert.True(prop.IsNullable);
+    }
+
+    [Fact]
+    public void Should_include_custom_record_array_property_with_element_as_subtype()
+    {
+        // Arrange
+        var (classSymbol, _) = GetClassSymbol(
+            """
+            public record RolloutStage(string Name);
+
+            public class Demo
+            {
+                public RolloutStage[] Stages { get; private set; } = [];
+            }
+            """
+        );
+        Assert.NotNull(classSymbol);
+
+        // Act
+        var props = PropertyHelper.GetPublicGetterProperties(classSymbol!);
+
+        // Assert
+        var prop = Assert.Single(props);
+        Assert.Equal("Stages", prop.Name);
+        Assert.Equal("RolloutStage[]", prop.Type);
+        // Element type should be present in SubTypes so the generator can emit
+        // a [JsonSerializable(typeof(RolloutStage))] attribute for it.
+        Assert.Contains(prop.SubTypes, s => s.Name == "RolloutStage");
+    }
+
+    [Fact]
+    public void Should_include_array_property_via_include_parent_definitions()
+    {
+        // Arrange
+        var (classSymbol, _) = GetClassSymbol(
+            """
+            public class Parent
+            {
+                public string[] ParentTags { get; private set; } = [];
+            }
+            public class Child : Parent
+            {
+                public int[] ChildNumbers { get; private set; } = [];
+            }
+            """
+        );
+        Assert.NotNull(classSymbol);
+
+        // Act
+        var props = PropertyHelper.GetPublicGetterPropertiesIncludeParentDefinitions(classSymbol!);
+
+        // Assert
+        Assert.Contains(props, p => p.Name == "ParentTags" && p.Type == "String[]");
+        Assert.Contains(props, p => p.Name == "ChildNumbers" && p.Type == "Int32[]");
+    }
 }

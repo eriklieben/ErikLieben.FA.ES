@@ -123,7 +123,7 @@ public class GenerateInheritedAggregateCodeTests
 
         // Parent interface using and IOrder interface extending it
         Assert.Contains("using Demo.App.Domain;", code);
-        Assert.Contains("public interface IOrder : Demo.App.Domain.IOrder", code);
+        Assert.Contains("public partial interface IOrder : Demo.App.Domain.IOrder", code);
 
         // Command signature appears in the IOrder interface
         Assert.Contains("Task PlaceOrder(Guid orderId)", code);

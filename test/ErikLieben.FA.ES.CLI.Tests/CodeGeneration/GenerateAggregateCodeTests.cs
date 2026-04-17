@@ -167,7 +167,7 @@ public partial class GenerateAggregateCodeTests
         Assert.Contains("Stream.SetAggregateType(AccountJsonSerializerContext.Default.Account);", code);
 
         // Interfaces and snapshot record
-        Assert.Contains("public interface IAccount", code);
+        Assert.Contains("public partial interface IAccount", code);
         Assert.Contains("public record AccountSnapshot : IAccount", code);
         Assert.Contains("public required String Name { get; init; }", code);
 
@@ -665,7 +665,7 @@ public partial class GenerateAggregateCodeTests
         Assert.Contains("public partial class TestAggregate : Aggregate, IBase, ITestAggregate", code);
         Assert.Contains("PostWhen();", code);
         Assert.Contains("case \"test\": break;", code);
-        Assert.Contains("public interface ITestAggregate", code);
+        Assert.Contains("public partial interface ITestAggregate", code);
         Assert.Contains("public record TestAggregateSnapshot : ITestAggregate", code);
         Assert.Contains("[JsonSerializable(typeof(TestAggregate))]", code);
         Assert.Contains("public partial class TestAggregateFactory : ITestAggregateFactory", code);

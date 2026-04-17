@@ -449,7 +449,7 @@ public class GenerateInheritedAggregateCode
                           /// <summary>
                           /// Interface defining the command methods and properties of {{aggregate.IdentifierName}}.
                           /// </summary>
-                          public interface I{{aggregate.IdentifierName}} : {{aggregate.ParentInterface}} {
+                          public partial interface I{{aggregate.IdentifierName}} : {{aggregate.ParentInterface}} {
                                 {{commandMethodSignatures}}
                           }
                           """);

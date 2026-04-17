@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using ErikLieben.FA.ES.CLI.Model;
 using Microsoft.CodeAnalysis;
 
@@ -21,36 +21,7 @@ internal static class PropertyHelper
                 p.GetMethod.DeclaredAccessibility != Accessibility.Internal &&
                 // Exclude EqualityContract
                 p.Name != "EqualityContract")
-            .Select(p =>
-            {
-                if (p.Type is not INamedTypeSymbol namedTypeSymbol)
-                {
-                    return null;
-                }
-
-                // PropertyGenericTypeDefinition
-                var genericTypes = GetGenericTypes(namedTypeSymbol.TypeArguments);
-                var namespaceString = RoslynHelper.GetFullNamespace(namedTypeSymbol);
-
-                HashSet<ITypeSymbol> collectedTypes = [];
-                TypeCollector.GetAllTypesInClass(namedTypeSymbol, collectedTypes);
-
-                return new PropertyDefinition
-                {
-                    Name = p.Name,
-                    Type = RoslynHelper.GetFullTypeName(namedTypeSymbol),
-                    Namespace = namespaceString,
-                    IsNullable = RoslynHelper.IsSystemNullable(namedTypeSymbol) ||
-                                 RoslynHelper.IsExplicitlyNullableType(namedTypeSymbol),
-                    GenericTypes = genericTypes,
-                    SubTypes = collectedTypes
-                        .Where(t => t.Name != namedTypeSymbol.Name)
-                        .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
-                        .Where(t => t != null)
-                        .Select(t => t!)
-                        .ToList(),
-                };
-            })
+            .Select(BuildPropertyDefinition)
             .Where(p => p != null)
             .Select(p => p!)
             .ToList();
@@ -76,34 +47,7 @@ internal static class PropertyHelper
                     p.GetMethod != null &&
                     p.GetMethod.DeclaredAccessibility != Accessibility.Private &&
                     p.GetMethod.DeclaredAccessibility != Accessibility.Internal)
-                .Select(p =>
-                {
-                    if (p.Type is not INamedTypeSymbol namedTypeSymbol)
-                    {
-                        return null;
-                    }
-
-                    // PropertyGenericTypeDefinition
-                    var genericTypes = GetGenericTypes(namedTypeSymbol.TypeArguments);
-                    var namespaceString = RoslynHelper.GetFullNamespace(namedTypeSymbol);
-                    HashSet<ITypeSymbol> collectedTypes = [];
-                    TypeCollector.GetAllTypesInClass(namedTypeSymbol, collectedTypes);
-                    return new PropertyDefinition
-                    {
-                        Name = p.Name,
-                        Type = RoslynHelper.GetFullTypeName(namedTypeSymbol),
-                        Namespace = namespaceString,
-                        IsNullable = RoslynHelper.IsSystemNullable(namedTypeSymbol) ||
-                                     RoslynHelper.IsExplicitlyNullableType(namedTypeSymbol),
-                        GenericTypes = genericTypes,
-                        SubTypes = collectedTypes
-                            .Where(t => t.Name != namedTypeSymbol.Name)
-                            .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
-                            .Where(t => t != null)
-                            .Select(t => t!)
-                            .ToList(),
-                    };
-                })
+                .Select(BuildPropertyDefinition)
                 .Where(p => p != null)
                 .Select(p => p!);
 
@@ -118,6 +62,81 @@ internal static class PropertyHelper
             .GroupBy(p => p.Name)
             .Select(g => g.First()) // Take the most derived implementation
             .ToList();
+    }
+
+    private static PropertyDefinition? BuildPropertyDefinition(IPropertySymbol property)
+    {
+        switch (property.Type)
+        {
+            case IArrayTypeSymbol arrayType:
+                return BuildArrayPropertyDefinition(property, arrayType);
+
+            case INamedTypeSymbol namedTypeSymbol:
+                return BuildNamedPropertyDefinition(property, namedTypeSymbol);
+
+            default:
+                // Pointer, type parameter, function pointer, dynamic — not supported
+                return null;
+        }
+    }
+
+    private static PropertyDefinition BuildNamedPropertyDefinition(
+        IPropertySymbol property,
+        INamedTypeSymbol namedTypeSymbol)
+    {
+        var genericTypes = GetGenericTypes(namedTypeSymbol.TypeArguments);
+        var namespaceString = RoslynHelper.GetFullNamespace(namedTypeSymbol);
+
+        HashSet<ITypeSymbol> collectedTypes = [];
+        TypeCollector.GetAllTypesInClass(namedTypeSymbol, collectedTypes);
+
+        return new PropertyDefinition
+        {
+            Name = property.Name,
+            Type = RoslynHelper.GetFullTypeName(namedTypeSymbol),
+            Namespace = namespaceString,
+            IsNullable = RoslynHelper.IsSystemNullable(namedTypeSymbol) ||
+                         RoslynHelper.IsExplicitlyNullableType(namedTypeSymbol),
+            GenericTypes = genericTypes,
+            SubTypes = collectedTypes
+                .Where(t => t.Name != namedTypeSymbol.Name)
+                .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+                .Where(t => t != null)
+                .Select(t => t!)
+                .ToList(),
+        };
+    }
+
+    private static PropertyDefinition BuildArrayPropertyDefinition(
+        IPropertySymbol property,
+        IArrayTypeSymbol arrayType)
+    {
+        var elementType = arrayType.ElementType;
+        var elementNamedType = elementType as INamedTypeSymbol;
+
+        HashSet<ITypeSymbol> collectedTypes = [];
+        if (elementNamedType != null)
+        {
+            TypeCollector.GetAllTypesInClass(elementNamedType, collectedTypes);
+        }
+
+        // Array property is nullable if the array itself is annotated as nullable (string[]?).
+        // The element-type nullability is independent and not represented on the outer property.
+        var isNullable = arrayType.NullableAnnotation == NullableAnnotation.Annotated;
+
+        return new PropertyDefinition
+        {
+            Name = property.Name,
+            Type = $"{RoslynHelper.GetFullTypeName(elementType)}[]",
+            Namespace = RoslynHelper.GetFullNamespace(elementType),
+            IsNullable = isNullable,
+            GenericTypes = [],
+            SubTypes = collectedTypes
+                .Select(t => ConvertToPropertyGenericTypeDefinition(t as INamedTypeSymbol))
+                .Where(t => t != null)
+                .Select(t => t!)
+                .ToList(),
+        };
     }
 
     private static List<PropertyGenericTypeDefinition> GetGenericTypes(ImmutableArray<ITypeSymbol>? typeArguments)

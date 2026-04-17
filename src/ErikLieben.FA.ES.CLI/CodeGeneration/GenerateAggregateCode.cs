@@ -869,7 +869,7 @@ public class GenerateAggregateCode
                           /// <summary>
                           /// Interface defining the public state properties of {{aggregate.IdentifierName}}.
                           /// </summary>
-                          public interface I{{aggregate.IdentifierName}} {
+                          public partial interface I{{aggregate.IdentifierName}} {
                                 {{propertyCode}}
                           }
 
