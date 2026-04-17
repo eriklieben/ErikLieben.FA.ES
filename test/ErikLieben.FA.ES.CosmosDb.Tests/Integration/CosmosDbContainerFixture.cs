@@ -19,10 +19,13 @@ public class CosmosDbContainerFixture : IAsyncLifetime
 
     public CosmosDbContainerFixture()
     {
-        // Use vnext-preview image which works in GitHub Actions CI
+        // Use :vnext-preview (floating tag) which is more reliable in GitHub Actions
+        // CI than the pinned :vnext-EN20260227 build. The sibling fixture in
+        // EventStreamManagement.Tests uses the same tag with much lower failure
+        // rates (5/901 vs 35/467 on pinned) in the same CI environment.
         // See: https://github.com/testcontainers/testcontainers-dotnet/discussions/1306
         _cosmosDbContainer = new CosmosDbBuilder()
-            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-EN20260227")
+            .WithImage("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
             .WithCommand("--protocol", "https")
             .WithEnvironment("ENABLE_EXPLORER", "false")
             .WithWaitStrategy(Wait.ForUnixContainer()
