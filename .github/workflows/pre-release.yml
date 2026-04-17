@@ -79,8 +79,12 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Run tests with coverage
+        # Integration tests (Category=Integration) are excluded: the Cosmos
+        # emulator is unreliable in GitHub Actions and blocks preview releases.
+        # Integration coverage still runs in release.yml on main.
         run: |
           dotnet test --configuration Release --no-build \
+            --filter "Category!=Integration" \
             --collect:"XPlat Code Coverage" \
             --results-directory ./coverage \
             --settings coverage.runsettings
