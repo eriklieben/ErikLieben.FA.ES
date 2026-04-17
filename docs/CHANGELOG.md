@@ -1,3 +1,31 @@
+## [2.0.0-preview.11](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.10...v2.0.0-preview.11) (2026-04-17)
+
+### 🐛 Bug fixes
+
+* **cli:** include array-typed properties in generated aggregate interface and snapshot ([f6c522b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f6c522b784cb2ec441e95d3e152762c47fcf066e))
+* remove unnecessary System.Formats.Asn1 and System.Text.Json refs from CLI ([0ff8bd3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/0ff8bd337963659b51f7c3a3d4774b30a4c9275e))
+* restore CosmosDB aggregate count query and re-enable integration tests ([225a198](https://github.com/eriklieben/ErikLieben.FA.ES/commit/225a1982fe345942f32c2bd5f0cbd31fdd384c12))
+* restore xunit.runner.visualstudio for xunit.v3 test discovery ([3862ffe](https://github.com/eriklieben/ErikLieben.FA.ES/commit/3862ffe952c3ee64b0bc6eeb2d9dd5be6cd0d5fd))
+* support variable references and implicit object creation in event detection ([f4e387b](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f4e387b3211a9b1eab8eb0e10ae33ae630a3b049))
+
+### ✨ New features
+
+* detect factory and repository locations across namespaces ([2beaf89](https://github.com/eriklieben/ErikLieben.FA.ES/commit/2beaf89876fd7c7a5c572a64a5a55c430c482aec))
+* split generated factories and repositories into separate files ([55e2002](https://github.com/eriklieben/ErikLieben.FA.ES/commit/55e2002b9a11c13f188c5e48851b37048e522041))
+
+### 🧪 (Unit)test cases adjusted
+
+* migrate Analyzers.Tests to xunit.v3 and generic Roslyn verifiers ([cd923c3](https://github.com/eriklieben/ErikLieben.FA.ES/commit/cd923c3118daf93bf8823b129b6c5b50b9502428))
+* migrate remaining test projects to xunit.v3 ([f332119](https://github.com/eriklieben/ErikLieben.FA.ES/commit/f3321192029e49a146fd8944cc648fa5d3b7bc5a))
+* migrate S3 and EventStreamManagement tests to xunit.v3 ([70147a2](https://github.com/eriklieben/ErikLieben.FA.ES/commit/70147a2aa573266c54e6cc8efc364f78a4b7fc98))
+* pass --skipApiVersionCheck with full argv to Azurite fixtures ([16fd016](https://github.com/eriklieben/ErikLieben.FA.ES/commit/16fd016ea6da182351dd307915e2ac48189e4d3e))
+* switch CosmosDb.Tests emulator tag to :vnext-preview ([8a58c29](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8a58c29490819505f676b5a49d809fb6ad3ec36f))
+* use image parameter for Testcontainers constructors ([b3775ac](https://github.com/eriklieben/ErikLieben.FA.ES/commit/b3775ac951cb0096480bf6addeba79969b8ce2d6))
+
+### ⬆️ Dependency updates
+
+* **deps:** bump patches, fix System.Security.Cryptography.Xml CVE, pin Azurite image ([875e4b5](https://github.com/eriklieben/ErikLieben.FA.ES/commit/875e4b51c14d96570506072b971f2833d1bc7670))
+
 ## [2.0.0-preview.10](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.9...v2.0.0-preview.10) (2026-03-01)
 
 ### 🐛 Bug fixes
