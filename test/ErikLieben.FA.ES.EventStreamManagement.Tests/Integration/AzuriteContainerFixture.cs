@@ -16,10 +16,20 @@ public class AzuriteContainerFixture : IAsyncLifetime
 
     public AzuriteContainerFixture()
     {
-        // Pinned: newer Azurite versions are required to accept newer x-ms-version
-        // headers sent by recent Azure.Storage.Blobs releases.
+        // Azurite 3.35.0 still rejects the x-ms-version 2026-02-06 that
+        // Azure.Storage.Blobs 12.27.0 sends, so pass --skipApiVersionCheck.
+        // The full argv mirrors the image's default CMD; passing only the
+        // skip flag leaves docker-entrypoint.sh without a target and the
+        // container exits with code 9.
         _azuriteContainer = new ContainerBuilder("mcr.microsoft.com/azure-storage/azurite:3.35.0")
             .WithPortBinding(BlobPort, true)
+            .WithCommand(
+                "azurite",
+                "-l", "/data",
+                "--blobHost", "0.0.0.0",
+                "--queueHost", "0.0.0.0",
+                "--tableHost", "0.0.0.0",
+                "--skipApiVersionCheck")
             .WithWaitStrategy(Wait.ForUnixContainer()
                 .AddCustomWaitStrategy(new AzuriteReadyWaitStrategy(BlobPort)))
             .Build();
