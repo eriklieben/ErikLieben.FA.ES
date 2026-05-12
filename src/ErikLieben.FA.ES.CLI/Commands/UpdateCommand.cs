@@ -338,21 +338,34 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
 
     private static async Task<string?> DetectCurrentVersionAsync(string folderPath, CancellationToken cancellationToken)
     {
-        // Find any .csproj file with ErikLieben.FA.ES reference
-        var csprojFiles = Directory.GetFiles(folderPath, "*.csproj", SearchOption.AllDirectories);
+        // 1) Central Package Management: Directory.Packages.props uses <PackageVersion Include="..." Version="..." />.
+        //    Walk up from folderPath to root since CPM files are inherited from ancestor directories.
+        var propsFiles = FindDirectoryPackagesPropsFiles(folderPath);
+        foreach (var props in propsFiles)
+        {
+            var content = await File.ReadAllTextAsync(props, cancellationToken);
+            var match = Regex.Match(
+                content,
+                @"<PackageVersion\s+Include=""ErikLieben\.FA\.ES""[^>]*Version=""([^""]+)""",
+                RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+            if (match.Success)
+            {
+                return match.Groups[1].Value;
+            }
+        }
 
+        // 2) Per-project PackageReference with inline Version attribute or <Version> child element.
+        var csprojFiles = Directory.GetFiles(folderPath, "*.csproj", SearchOption.AllDirectories);
         foreach (var csproj in csprojFiles)
         {
             var content = await File.ReadAllTextAsync(csproj, cancellationToken);
 
-            // Match PackageReference for ErikLieben.FA.ES packages
             var match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES""[^>]*Version=""([^""]+)""", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
             if (match.Success)
             {
                 return match.Groups[1].Value;
             }
 
-            // Also check the closing tag format
             match = Regex.Match(content, @"<PackageReference\s+Include=""ErikLieben\.FA\.ES[^""]*""\s*>\s*<Version>([^<]+)</Version>", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
             if (match.Success)
             {
@@ -361,6 +374,26 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
         }
 
         return null;
+    }
+
+    private static List<string> FindDirectoryPackagesPropsFiles(string folderPath)
+    {
+        // CPM applies to all projects under the directory containing Directory.Packages.props,
+        // and is inherited by ancestor directories. Collect any matches in the tree at/under
+        // folderPath plus walk up to the filesystem root.
+        var found = new List<string>(Directory.GetFiles(folderPath, "Directory.Packages.props", SearchOption.AllDirectories));
+
+        var dir = new DirectoryInfo(folderPath).Parent;
+        while (dir != null)
+        {
+            var candidate = System.IO.Path.Combine(dir.FullName, "Directory.Packages.props");
+            if (File.Exists(candidate))
+            {
+                found.Add(candidate);
+            }
+            dir = dir.Parent;
+        }
+        return found;
     }
 
     private static async Task<string?> GetLatestVersionAsync(CancellationToken cancellationToken)
@@ -451,6 +484,25 @@ public class UpdateCommand : AsyncCommand<UpdateCommand.Settings>
             {
                 await File.WriteAllTextAsync(csproj, content, cancellationToken);
                 AnsiConsole.MarkupLine($"[green]✓[/] Updated [white]{projectName}[/]");
+            }
+        }
+
+        // Central Package Management: also update Directory.Packages.props files.
+        foreach (var props in FindDirectoryPackagesPropsFiles(folderPath))
+        {
+            var content = await File.ReadAllTextAsync(props, cancellationToken);
+            var originalContent = content;
+
+            foreach (var package in packagesToUpdate)
+            {
+                var pattern = $@"(<PackageVersion\s+Include=""{Regex.Escape(package)}""[^>]*Version="")[^""]+("")";
+                content = Regex.Replace(content, pattern, $"${{1}}{targetVersion}${{2}}", RegexOptions.None, TimeSpan.FromSeconds(1));
+            }
+
+            if (content != originalContent)
+            {
+                await File.WriteAllTextAsync(props, content, cancellationToken);
+                AnsiConsole.MarkupLine($"[green]✓[/] Updated [white]{System.IO.Path.GetFileName(props)}[/]");
             }
         }
 
