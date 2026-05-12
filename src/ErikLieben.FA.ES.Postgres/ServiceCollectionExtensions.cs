@@ -61,6 +61,34 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers an additional named <see cref="NpgsqlDataSource"/> for projection storage.
+    /// Resolved by the codegen-emitted projection factory when a projection is annotated
+    /// with <c>[PostgresJsonbProjection(Connection = "name")]</c>.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="connectionName">The key under which the data source is registered.</param>
+    /// <param name="connectionString">The Npgsql connection string.</param>
+    public static IServiceCollection AddNamedNpgsqlDataSource(
+        this IServiceCollection services,
+        string connectionName,
+        string connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+
+        services.AddKeyedSingleton<NpgsqlDataSource>(connectionName, (_, _) =>
+        {
+            var builder = new NpgsqlDataSourceBuilder(connectionString);
+            builder.ConnectionStringBuilder.Multiplexing = true;
+            builder.ConnectionStringBuilder.MaxAutoPrepare = 32;
+            return builder.Build();
+        });
+
+        return services;
+    }
+
+    /// <summary>
     /// Registers a status-code extractor for <see cref="ResilientDataStore"/> so that PostgresException
     /// SQL states map to HTTP-style codes used by the retry policy.
     /// </summary>

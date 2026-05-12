@@ -89,10 +89,13 @@ public class GenerateProjectionCode
         var (getExtra, ctorInputExtra) = GenerateExtraCtorParamsForFactory(extraCtorParams);
         var jsonBlobFactoryCode = GenerateBlobFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra, generatorVersion);
         var cosmosDbFactoryCode = GenerateCosmosDbFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra);
-        // Combine factory codes - a projection can have either Blob or CosmosDB (or neither)
+        var postgresFactoryCode = GeneratePostgresFactoryCode(projection, usings, get, ctorInput, getExtra, ctorInputExtra, generatorVersion);
+        // Combine factory codes - a projection can have at most one provider attribute.
         var combinedFactoryCode = !string.IsNullOrEmpty(jsonBlobFactoryCode)
             ? jsonBlobFactoryCode
-            : cosmosDbFactoryCode;
+            : !string.IsNullOrEmpty(cosmosDbFactoryCode)
+                ? cosmosDbFactoryCode
+                : postgresFactoryCode;
         var whenParameterValueBindingCode = GenerateWhenParameterBindingCode(whenParameterDeclarations);
         var postWhenAllDummyCode = GeneratePostWhenAllDummyCode(projection, generatorVersion);
         var foldMethod = GenerateFoldMethod(projection, postWhenAllDummyCode);
@@ -593,6 +596,269 @@ public class GenerateProjectionCode
                      }
                  }
                 """;
+    }
+
+    private static string GeneratePostgresFactoryCode(ProjectionDefinition projection, List<string> usings, string get, string ctorInput, string getExtra, string ctorInputExtra, string version)
+    {
+        if (projection.PostgresProjection == null)
+        {
+            return string.Empty;
+        }
+
+        if (projection is RoutedProjectionDefinition routed && routed.IsRoutedProjection)
+        {
+            return GenerateRoutedPostgresFactoryCode(routed, usings, get, getExtra, ctorInputExtra, version);
+        }
+
+        usings.Add("ErikLieben.FA.ES.Postgres");
+        usings.Add("ErikLieben.FA.ES.Postgres.Projections");
+        usings.Add("Npgsql");
+
+        var (serviceProviderParam, newMethodBody, loadFromJsonBody) = BuildFactoryMethodBodies(
+            projection.Name, get, ctorInput, getExtra, ctorInputExtra);
+
+        var table = !string.IsNullOrWhiteSpace(projection.PostgresProjection.Table)
+            ? projection.PostgresProjection.Table!
+            : DefaultPostgresTableName(projection.Name);
+        var schema = projection.PostgresProjection.Schema ?? string.Empty;
+        var connection = projection.PostgresProjection.Connection;
+
+        // When a named Connection is requested, resolve it from DI via a keyed lookup so multiple
+        // Npgsql data sources can coexist; otherwise take the default singleton directly.
+        if (!string.IsNullOrWhiteSpace(connection))
+        {
+            usings.Add("Microsoft.Extensions.DependencyInjection");
+            return $$"""
+                     /// <summary>
+                     /// Factory for creating and managing {{projection.Name}} PostgreSQL-backed projections.
+                     /// </summary>
+                     public partial class {{projection.Name}}Factory(
+                         IServiceProvider serviceProvider,
+                         IObjectDocumentFactory objectDocumentFactory,
+                         IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
+                         : PostgresJsonbProjectionFactory<{{projection.Name}}>(
+                             serviceProvider.GetRequiredKeyedService<NpgsqlDataSource>("{{connection}}"),
+                             "{{table}}",
+                             "{{schema}}")
+                     {
+                         [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                         [ExcludeFromCodeCoverage]
+                         protected override bool HasExternalCheckpoint => {{projection.ExternalCheckpoint.ToString().ToLowerInvariant()}};
+
+                         [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                         [ExcludeFromCodeCoverage]
+                         protected override {{projection.Name}} New()
+                         {
+                             {{newMethodBody}}
+                         }
+
+                         /// <summary>
+                         /// Loads a {{projection.Name}} instance from JSON with complete state restoration.
+                         /// </summary>
+                         protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                         {
+                             {{loadFromJsonBody}}
+                         }
+                     }
+                    """;
+        }
+
+        return $$"""
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} PostgreSQL-backed projections.
+                 /// </summary>
+                 public partial class {{projection.Name}}Factory(
+                     NpgsqlDataSource dataSource,
+                     IObjectDocumentFactory objectDocumentFactory,
+                     IEventStreamFactory eventStreamFactory{{serviceProviderParam}})
+                     : PostgresJsonbProjectionFactory<{{projection.Name}}>(
+                         dataSource,
+                         "{{table}}",
+                         "{{schema}}")
+                 {
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override bool HasExternalCheckpoint => {{projection.ExternalCheckpoint.ToString().ToLowerInvariant()}};
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override {{projection.Name}} New()
+                     {
+                         {{newMethodBody}}
+                     }
+
+                     /// <summary>
+                     /// Loads a {{projection.Name}} instance from JSON with complete state restoration.
+                     /// </summary>
+                     /// <param name="json">The JSON string containing the serialized projection state.</param>
+                     /// <param name="documentFactory">Factory for managing object documents.</param>
+                     /// <param name="eventStreamFactory">Factory for creating event streams.</param>
+                     /// <returns>A {{projection.Name}} instance with restored state, or null if deserialization fails.</returns>
+                     protected override {{projection.Name}}? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
+                     {
+                         {{loadFromJsonBody}}
+                     }
+                 }
+                """;
+    }
+
+    private static string DefaultPostgresTableName(string projectionTypeName)
+    {
+        // Snake_case the class name and prefix with faes_proj_.
+        var sb = new StringBuilder("faes_proj_");
+        for (var i = 0; i < projectionTypeName.Length; i++)
+        {
+            var c = projectionTypeName[i];
+            if (char.IsUpper(c) && i > 0 && !char.IsUpper(projectionTypeName[i - 1]))
+            {
+                sb.Append('_');
+            }
+            sb.Append(char.ToLowerInvariant(c));
+        }
+        return sb.ToString();
+    }
+
+    private static string GenerateRoutedPostgresFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string getExtra, string ctorInputExtra, string version)
+    {
+        usings.Add("ErikLieben.FA.ES.Postgres");
+        usings.Add("ErikLieben.FA.ES.Postgres.Projections");
+        usings.Add("ErikLieben.FA.ES.Projections");
+        usings.Add("Npgsql");
+
+        var (serviceProviderParam, _, loadMainBody) = BuildFactoryMethodBodies(
+            projection.Name, get, string.Empty, getExtra, ctorInputExtra);
+
+        var mainTable = !string.IsNullOrWhiteSpace(projection.PostgresProjection?.Table)
+            ? projection.PostgresProjection!.Table!
+            : DefaultPostgresTableName(projection.Name);
+        var mainSchema = projection.PostgresProjection?.Schema ?? string.Empty;
+        var connection = projection.PostgresProjection?.Connection;
+
+        string ctorHeader;
+        string baseArgs;
+        if (!string.IsNullOrWhiteSpace(connection))
+        {
+            usings.Add("Microsoft.Extensions.DependencyInjection");
+            ctorHeader =
+                $"public partial class {projection.Name}Factory(\n" +
+                $"    IServiceProvider serviceProvider,\n" +
+                $"    IObjectDocumentFactory objectDocumentFactory,\n" +
+                $"    IEventStreamFactory eventStreamFactory{serviceProviderParam})";
+            baseArgs = $"serviceProvider.GetRequiredKeyedService<NpgsqlDataSource>(\"{connection}\"), \"{mainTable}\", \"{mainSchema}\"";
+        }
+        else
+        {
+            ctorHeader =
+                $"public partial class {projection.Name}Factory(\n" +
+                $"    NpgsqlDataSource dataSource,\n" +
+                $"    IObjectDocumentFactory objectDocumentFactory,\n" +
+                $"    IEventStreamFactory eventStreamFactory{serviceProviderParam})";
+            baseArgs = $"dataSource, \"{mainTable}\", \"{mainSchema}\"";
+        }
+
+        return $$"""
+                 /// <summary>
+                 /// Factory for creating and managing {{projection.Name}} routed PostgreSQL projections.
+                 /// Each destination type lives in its own table; the main row holds the checkpoint + destination registry.
+                 /// </summary>
+                 {{ctorHeader}}
+                     : RoutedPostgresJsonbProjectionFactory<{{projection.Name}}>({{baseArgs}})
+                 {
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override {{projection.Name}}? LoadMainProjectionFromJson(
+                         string json,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory)
+                     {
+                         {{loadMainBody}}
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override Projection LoadDestinationFromJson(
+                         string json,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory,
+                         string destinationKey)
+                     {
+                         {{GenerateLoadDestinationFromJsonBody(projection)}}
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override bool DestinationHasExternalCheckpoint(string destinationTypeName)
+                     {
+                         {{GenerateDestinationHasExternalCheckpointBody(projection)}}
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override (string schema, string table) GetDestinationTable(string destinationTypeName)
+                     {
+                         {{GenerateDestinationPostgresTableLookup(projection)}}
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override string SerializeMainProjection({{projection.Name}} projection)
+                     {
+                         return projection.ToJson();
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override void AddDestinationToProjection(
+                         {{projection.Name}} projection,
+                         string destinationKey,
+                         Projection destination)
+                     {
+                         var destinationsField = typeof(RoutedProjection).GetField("_destinations", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                         var destinations = destinationsField?.GetValue(projection) as System.Collections.Concurrent.ConcurrentDictionary<string, Projection>;
+                         if (destinations != null)
+                         {
+                             destinations[destinationKey] = destination;
+                         }
+                     }
+
+                     [GeneratedCode("ErikLieben.FA.ES", "{{version}}")]
+                     [ExcludeFromCodeCoverage]
+                     protected override void SetFactories(
+                         {{projection.Name}} projection,
+                         IObjectDocumentFactory documentFactory,
+                         IEventStreamFactory eventStreamFactory)
+                     {
+                         var docField = typeof(Projection).GetField("DocumentFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                         var streamField = typeof(Projection).GetField("EventStreamFactory", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                         docField?.SetValue(projection, documentFactory);
+                         streamField?.SetValue(projection, eventStreamFactory);
+                     }
+                 }
+                """;
+    }
+
+    private static string GenerateDestinationPostgresTableLookup(RoutedProjectionDefinition projection)
+    {
+        if (projection.DestinationPostgresTables.Count == 0)
+        {
+            return
+                "throw new InvalidOperationException(\n" +
+                "                            $\"No Postgres table mapping registered for destination type '{destinationTypeName}'. \" +\n" +
+                "                            \"Annotate the destination projection with [PostgresJsonbProjection].\");";
+        }
+
+        var code = new StringBuilder();
+        code.AppendLine("return destinationTypeName switch");
+        code.AppendLine("                        {");
+        foreach (var (typeName, mapping) in projection.DestinationPostgresTables)
+        {
+            var schema = string.IsNullOrEmpty(mapping.Schema) ? "public" : mapping.Schema;
+            code.AppendLine($"                            \"{typeName}\" => (\"{schema}\", \"{mapping.Table}\"),");
+        }
+        code.AppendLine("                            _ => throw new InvalidOperationException(");
+        code.AppendLine("                                $\"No Postgres table mapping for destination type '{destinationTypeName}'.\")");
+        code.Append("                        };");
+        return code.ToString();
     }
 
     private static string GenerateRoutedBlobFactoryCode(RoutedProjectionDefinition projection, List<string> usings, string get, string getExtra, string ctorInputExtra)

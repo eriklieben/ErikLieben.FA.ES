@@ -177,7 +177,7 @@ public class PostgresCoverageFillTests(PostgresContainerFixture fixture) : IAsyn
             .WithPostgresProjectionStatusCoordinator());
 
         using var provider = services.BuildServiceProvider();
-        var coordinator = provider.GetRequiredService<Projections.IProjectionStatusCoordinator>();
+        var coordinator = provider.GetRequiredService<ErikLieben.FA.ES.Projections.IProjectionStatusCoordinator>();
         Assert.IsType<PostgresProjectionStatusCoordinator>(coordinator);
     }
 

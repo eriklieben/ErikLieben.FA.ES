@@ -33,6 +33,7 @@ const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemAzureBlob =
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemAzureTable = "azure_table" -> string!
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemCosmosDb = "cosmosdb" -> string!
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemInMemory = "inmemory" -> string!
+const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DbSystemPostgres = "postgresql" -> string!
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.DurationMs = "faes.duration_ms" -> string!
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventCount = "faes.event.count" -> string!
 const ErikLieben.FA.ES.Observability.FaesSemanticConventions.EventName = "faes.event.name" -> string!

@@ -223,6 +223,11 @@ public static class FaesSemanticConventions
     /// </summary>
     public const string DbSystemInMemory = "inmemory";
 
+    /// <summary>
+    /// Database system value for PostgreSQL.
+    /// </summary>
+    public const string DbSystemPostgres = "postgresql";
+
     #endregion
 
     #region Database Operation Values

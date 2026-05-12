@@ -74,6 +74,17 @@ public class AnalyzeProjections
                 PartitionKeyPath = partitionKeyPath ?? "/projectionName",
             };
         }
+
+        var (isPostgresProjection, pgTable, pgSchema, pgConnection) = CheckPostgresJsonbProjection(classSymbol);
+        if (isPostgresProjection)
+        {
+            projectionDefinition.PostgresProjection = new PostgresProjectionDefinition
+            {
+                Table = pgTable,
+                Schema = pgSchema,
+                Connection = pgConnection,
+            };
+        }
     }
 
     private ProjectionDefinition FindOrCreateProjection(List<ProjectionDefinition> projections)
@@ -95,6 +106,7 @@ public class AnalyzeProjections
             // Extract path templates from destination types' [BlobJsonProjection] attributes
             var destinationPathTemplates = new Dictionary<string, string>();
             var destinationsWithExternalCheckpoint = new HashSet<string>();
+            var destinationPostgresTables = new Dictionary<string, (string Schema, string Table)>();
 
             foreach (var kvp in destinationTypeSymbols)
             {
@@ -108,6 +120,12 @@ public class AnalyzeProjections
                 if (kvp.Value is INamedTypeSymbol namedType && HasExternalCheckpoint(namedType))
                 {
                     destinationsWithExternalCheckpoint.Add(kvp.Key);
+                }
+
+                var pgTable = GetPostgresProjectionTable(kvp.Value, kvp.Key);
+                if (pgTable.HasValue)
+                {
+                    destinationPostgresTables[kvp.Key] = pgTable.Value;
                 }
             }
 
@@ -123,7 +141,8 @@ public class AnalyzeProjections
                 IsRoutedProjection = true,
                 DestinationType = destinationTypeSymbols.Keys.FirstOrDefault(),
                 DestinationPathTemplates = destinationPathTemplates,
-                DestinationsWithExternalCheckpoint = destinationsWithExternalCheckpoint
+                DestinationsWithExternalCheckpoint = destinationsWithExternalCheckpoint,
+                DestinationPostgresTables = destinationPostgresTables
             };
         }
         else
@@ -206,6 +225,27 @@ public class AnalyzeProjections
         return (true, containerValue, connectionValue, partitionKeyPath);
     }
 
+    private static (bool, string?, string?, string?) CheckPostgresJsonbProjection(INamedTypeSymbol classSymbol)
+    {
+        var attributes = classSymbol.GetAttributes();
+
+        var pgAttribute = attributes.FirstOrDefault(a =>
+            a.AttributeClass?.Name == "PostgresJsonbProjectionAttribute");
+
+        if (pgAttribute == null)
+        {
+            return (false, null, null, null);
+        }
+
+        var table = pgAttribute.NamedArguments
+            .FirstOrDefault(kvp => kvp.Key == "Table").Value.Value as string;
+        var schema = pgAttribute.NamedArguments
+            .FirstOrDefault(kvp => kvp.Key == "Schema").Value.Value as string;
+        var connection = pgAttribute.NamedArguments
+            .FirstOrDefault(kvp => kvp.Key == "Connection").Value.Value as string;
+        return (true, table, schema, connection);
+    }
+
     private static bool InheritsFromRoutedProjection(INamedTypeSymbol? type)
     {
         while (type != null)
@@ -257,6 +297,35 @@ public class AnalyzeProjections
         }
 
         return destinationTypes;
+    }
+
+    private static (string Schema, string Table)? GetPostgresProjectionTable(ITypeSymbol typeSymbol, string destinationTypeName)
+    {
+        foreach (var attr in typeSymbol.GetAttributes())
+        {
+            if (attr.AttributeClass?.Name == "PostgresJsonbProjectionAttribute")
+            {
+                var table = attr.NamedArguments.FirstOrDefault(kvp => kvp.Key == "Table").Value.Value as string;
+                var schema = attr.NamedArguments.FirstOrDefault(kvp => kvp.Key == "Schema").Value.Value as string;
+                return (schema ?? string.Empty, table ?? DefaultPostgresTableName(destinationTypeName));
+            }
+        }
+        return null;
+    }
+
+    private static string DefaultPostgresTableName(string projectionTypeName)
+    {
+        var sb = new System.Text.StringBuilder("faes_proj_");
+        for (var i = 0; i < projectionTypeName.Length; i++)
+        {
+            var c = projectionTypeName[i];
+            if (char.IsUpper(c) && i > 0 && !char.IsUpper(projectionTypeName[i - 1]))
+            {
+                sb.Append('_');
+            }
+            sb.Append(char.ToLowerInvariant(c));
+        }
+        return sb.ToString();
     }
 
     private static string? GetBlobProjectionPath(ITypeSymbol typeSymbol)

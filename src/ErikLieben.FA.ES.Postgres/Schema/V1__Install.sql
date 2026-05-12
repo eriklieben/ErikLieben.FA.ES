@@ -105,6 +105,18 @@ CREATE INDEX IF NOT EXISTS ix_faes_projection_status_status
     ON faes_projection_status (status);
 
 -- =====================================================================
+-- faes_projection_checkpoints: dedup-by-fingerprint storage for external
+-- projection checkpoints (mirrors the Azure blob "checkpoints/<type>/<fp>"
+-- layout). Entries are immutable; INSERT ... ON CONFLICT DO NOTHING.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS faes_projection_checkpoints (
+    projection_type text  NOT NULL,
+    fingerprint     text  NOT NULL,
+    checkpoint      jsonb NOT NULL,
+    PRIMARY KEY (projection_type, fingerprint)
+);
+
+-- =====================================================================
 -- faes_append: atomic event append + document version bump.
 --
 -- Contract:

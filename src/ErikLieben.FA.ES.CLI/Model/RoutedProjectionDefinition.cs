@@ -19,4 +19,9 @@ public record RoutedProjectionDefinition : ProjectionDefinition
     /// Set of destination type names that have [ProjectionWithExternalCheckpoint] attribute.
     /// </summary>
     public HashSet<string> DestinationsWithExternalCheckpoint { get; set; } = [];
+
+    /// <summary>
+    /// Maps destination type names to their [PostgresJsonbProjection] (schema, table). Schema may be empty.
+    /// </summary>
+    public Dictionary<string, (string Schema, string Table)> DestinationPostgresTables { get; set; } = new();
 }
