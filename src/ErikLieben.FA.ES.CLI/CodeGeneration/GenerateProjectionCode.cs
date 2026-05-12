@@ -53,13 +53,18 @@ public class GenerateProjectionCode
             foreach (var projection in project.Projections)
             {
                 AnsiConsole.MarkupLine($"Generating supporting partial class for: [yellow]{projection.Name}[/]");
-                var currentFile = projection.FileLocations.FirstOrDefault();
-                if (currentFile is null || currentFile.Contains(".generated", StringComparison.OrdinalIgnoreCase))
+                // Partial classes report both their hand-written source file AND the *.Generated.cs file
+                // in DeclaringSyntaxReferences. FirstOrDefault() ordering is not guaranteed, so explicitly
+                // pick the non-generated location — otherwise regeneration silently skips the projection
+                // whenever the generated half is yielded first.
+                var currentFile = projection.FileLocations
+                    .FirstOrDefault(f => !f.Contains(".generated", StringComparison.OrdinalIgnoreCase));
+                if (currentFile is null)
                 {
                     continue;
                 }
 
-                var rel = (projection.FileLocations.FirstOrDefault() ?? string.Empty).Replace('\\', '/');
+                var rel = currentFile.Replace('\\', '/');
                 var relGen = rel.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
                     ? string.Concat(rel.AsSpan(0, rel.Length - 3), ".Generated.cs")
                     : rel + ".Generated.cs";
