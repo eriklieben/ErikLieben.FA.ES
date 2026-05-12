@@ -1,3 +1,17 @@
+## [2.0.0-preview.13](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.12...v2.0.0-preview.13) (2026-05-12)
+
+### ✨ New features
+
+* add Postgres event store provider (AOT-compatible) ([03d2d8e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/03d2d8eee67317d1891c380c9f4e02385311bdd8))
+
+### 🧪 (Unit)test cases adjusted
+
+* eliminate two flaky timing assertions ([9158ebd](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9158ebd10d2de4d19e246885e64424eba9019630))
+
+### ⬆️ Dependency updates
+
+* **deps:** bump Microsoft.NET.ILLink.Tasks 10.0.6 -> 10.0.7 ([5b9d134](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5b9d134510894f0437c141a2a2c43a816e6a8e9d))
+
 ## [2.0.0-preview.12](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.11...v2.0.0-preview.12) (2026-04-17)
 
 ### ⬆️ Dependency updates
