@@ -25,6 +25,7 @@ $projects = @(
     "src/ErikLieben.FA.ES.CodeAnalysis/ErikLieben.FA.ES.CodeAnalysis.csproj",
     "src/ErikLieben.FA.ES.CosmosDb/ErikLieben.FA.ES.CosmosDb.csproj",
     "src/ErikLieben.FA.ES.EventStreamManagement/ErikLieben.FA.ES.EventStreamManagement.csproj",
+    "src/ErikLieben.FA.ES.Postgres/ErikLieben.FA.ES.Postgres.csproj",
     "src/ErikLieben.FA.ES.Testing/ErikLieben.FA.ES.Testing.csproj",
     "src/ErikLieben.FA.ES.WebJobs.Isolated.Extensions/ErikLieben.FA.ES.WebJobs.Isolated.Extensions.csproj"
 )

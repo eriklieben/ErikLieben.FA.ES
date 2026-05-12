@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.AzureStorage")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.CosmosDb")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.S3")]
+[assembly: InternalsVisibleTo("ErikLieben.FA.ES.Postgres")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.EventStreamManagement")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Testing")]
 
@@ -11,6 +12,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Tests")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.AzureStorage.Tests")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.CosmosDb.Tests")]
+[assembly: InternalsVisibleTo("ErikLieben.FA.ES.Postgres.Tests")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.EventStreamManagement.Tests")]
 [assembly: InternalsVisibleTo("ErikLieben.FA.ES.Testing.Tests")]
 

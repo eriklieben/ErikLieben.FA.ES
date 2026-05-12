@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <PackageId>ErikLieben.FA.ES.Postgres</PackageId>
+    <PackageVersion Condition="'$(PackageVersion)' == '' and '$(Version)' != ''">$(Version)</PackageVersion>
+    <Authors>Erik Lieben</Authors>
+    <Description>PostgreSQL storage provider for ErikLieben.FA.ES event sourcing framework. Uses jsonb for payloads, declarative partitioning by object_name, and a server-side append function for atomic OCC.</Description>
+    <PackageTags>event-sourcing;postgres;postgresql;npgsql;cqrs;ddd</PackageTags>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- AOT Compatibility -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+
+    <!-- PublicApiAnalyzers diagnostics:
+         RS0016 (missing in PublicAPI.Shipped.txt), RS0017 (signature mismatch),
+         RS0037 (#nullable enable header), RS0041 (oblivious nullability).
+         Suppressed for this provider until a maintainer runs the analyzer's IDE codefix
+         to populate PublicAPI.Shipped.txt with the full signed surface. Trim/AOT warnings
+         (IL2xxx / IL3xxx) remain enabled and are the load-bearing checks for this project. -->
+    <NoWarn>$(NoWarn);RS0016;RS0017;RS0037;RS0041</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ErikLieben.FA.ES.Postgres.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Schema\V1__Install.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisPublicApiAnalyzersVersion)" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="$(MicrosoftExtensionsDiagnosticsHealthChecksVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ErikLieben.FA.ES\ErikLieben.FA.ES.csproj" />
+  </ItemGroup>
+
+</Project>
