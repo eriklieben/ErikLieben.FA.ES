@@ -119,13 +119,22 @@ jobs:
         run: cat coverage/report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
       - name: Semantic Release
+        # When dry_run is true, also pass --dry-run to semantic-release itself,
+        # otherwise it pushes the release commit + tag and burns the version on
+        # what's supposed to be a no-op verification run (the publish step is
+        # gated separately below).
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
-        run: npx semantic-release
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npx semantic-release --dry-run
+          else
+            npx semantic-release
+          fi
 
       - name: Check for packages
         id: check-packages
