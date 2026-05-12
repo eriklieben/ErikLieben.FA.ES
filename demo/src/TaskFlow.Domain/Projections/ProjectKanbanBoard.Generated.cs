@@ -168,6 +168,7 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
     {
         // Deserialize each property manually to preserve data
         System.Collections.Generic.Dictionary<System.String, TaskFlow.Domain.Projections.ProjectInfo>? projects = null;
+        System.Int32? codeSchemaVersion = null;
         System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>? destinations = null;
         ErikLieben.FA.ES.Projections.RoutedProjectionMetadata? routingMetadata = null;
         ErikLieben.FA.ES.Projections.DestinationRegistry? registry = null;
@@ -179,7 +180,6 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
         System.Nullable<System.DateTimeOffset> statusChangedAt = null;
         ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
         System.Int32? schemaVersion = null;
-        System.Int32? codeSchemaVersion = null;
         System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
@@ -204,6 +204,12 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
                 case "Projects":
                     projects = JsonSerializer.Deserialize<System.Collections.Generic.Dictionary<System.String, TaskFlow.Domain.Projections.ProjectInfo>>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
                     break;
+                case "$checkpoint":
+                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options) ?? [];
+                    break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
+                    break;
                 case "Destinations":
                     destinations = JsonSerializer.Deserialize<System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
                     break;
@@ -218,9 +224,6 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
                     break;
                 case "Metadata":
                     metadata = JsonSerializer.Deserialize<System.Object>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
-                    break;
-                case "$checkpoint":
-                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options) ?? [];
                     break;
                 case "CurrentDocument":
                     currentDocument = JsonSerializer.Deserialize<ErikLieben.FA.ES.Documents.IObjectDocument>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
@@ -240,9 +243,6 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
                 case "SchemaVersion":
                     schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
                     break;
-                case "CodeSchemaVersion":
-                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
-                    break;
                 case "NeedsSchemaUpgrade":
                     needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, ProjectKanbanBoardJsonSerializerContext.Default.Options);
                     break;
@@ -250,7 +250,7 @@ public partial class ProjectKanbanBoard : IProjectKanbanBoard
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new ProjectKanbanBoard();
+        var instance = new ProjectKanbanBoard(documentFactory, eventStreamFactory);
 
         if (projects != null)
         {
@@ -474,6 +474,7 @@ internal partial class ProjectKanbanBoardDestinationRegistryJsonContext : JsonSe
 public interface IProjectKanbanBoard
 {
     public Dictionary<System.String, TaskFlow.Domain.Projections.ProjectInfo>? Projects { get; }
+    public Int32 CodeSchemaVersion { get; }
     public IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>? Destinations { get; }
     public RoutedProjectionMetadata? RoutingMetadata { get; }
     public DestinationRegistry? Registry { get; }
@@ -485,7 +486,6 @@ public interface IProjectKanbanBoard
     public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
     public RebuildInfo? RebuildInfo { get; }
     public Int32 SchemaVersion { get; }
-    public Int32 CodeSchemaVersion { get; }
     public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore
@@ -512,9 +512,11 @@ public interface IProjectKanbanBoard
 [JsonSerializable(typeof(ProjectLanguagesConfigured))]
 [JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, TaskFlow.Domain.Projections.ProjectInfo>))]
 [JsonSerializable(typeof(TaskFlow.Domain.Projections.ProjectInfo))]
+[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.Projection))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.ProjectionStatus))]
 [JsonSerializable(typeof(System.Enum))]
 [JsonSerializable(typeof(System.DateTimeOffset))]
@@ -529,8 +531,6 @@ public interface IProjectKanbanBoard
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.DestinationMetadata))]
 [JsonSerializable(typeof(System.Object))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Documents.IObjectDocument))]
-[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
 [JsonSerializable(typeof(System.Nullable<System.DateTimeOffset>))]
 [JsonSerializable(typeof(ProjectKanbanBoard))]
 // <auto-generated />

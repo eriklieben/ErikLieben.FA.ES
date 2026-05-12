@@ -168,7 +168,7 @@ public partial class TimeSheetDashboard : ITimeSheetDashboard
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new TimeSheetDashboard();
+        var instance = new TimeSheetDashboard(documentFactory, eventStreamFactory);
 
         if (timeSheets != null)
         {
@@ -195,6 +195,12 @@ public partial class TimeSheetDashboard : ITimeSheetDashboard
     /// </summary>
     [JsonIgnore]
     public override Checkpoint Checkpoint { get; set; } = [];
+
+    /// <summary>
+    /// Gets the schema version defined in code via [ProjectionVersion] attribute.
+    /// </summary>
+    [JsonIgnore]
+    public override int CodeSchemaVersion => 1;
 }
 
 /// <summary>

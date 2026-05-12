@@ -192,7 +192,7 @@ public partial class Project : Aggregate, IBase, IProject
 /// <summary>
 /// Interface defining the public state properties of Project.
 /// </summary>
-public interface IProject
+public partial interface IProject
 {
     public EventTypeRegistry? EventTypeRegistry { get; }
     public String? Name { get; }
@@ -609,7 +609,23 @@ public partial class ProjectRepository : IProjectRepository
     {
         try
         {
-            return await projectFactory.GetAsync(id, upToVersion);
+            var document = await objectDocumentFactory.GetAsync(ObjectName, id.ToString(), null, null);
+            var obj = projectFactory.Create(document);
+
+            if (upToVersion.HasValue)
+            {
+                var events = await obj.EventStream.ReadAsync(0, upToVersion);
+                foreach (var e in events)
+                {
+                    obj.Fold(e);
+                }
+            }
+            else
+            {
+                await obj.Fold();
+            }
+
+            return obj;
         }
         catch (Exception)
         {

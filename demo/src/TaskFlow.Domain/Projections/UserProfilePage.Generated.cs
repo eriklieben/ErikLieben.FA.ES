@@ -86,12 +86,12 @@ public partial class UserProfilePage : IUserProfilePage
         // Deserialize each property manually to preserve data
         System.Int32? pageNumber = null;
         System.Collections.Generic.Dictionary<System.String, TaskFlow.Domain.Projections.UserProfileInfo>? users = null;
+        System.Int32? codeSchemaVersion = null;
         System.String? checkpointFingerprint = null;
         ErikLieben.FA.ES.Projections.ProjectionStatus? status = null;
         System.Nullable<System.DateTimeOffset> statusChangedAt = null;
         ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
         System.Int32? schemaVersion = null;
-        System.Int32? codeSchemaVersion = null;
         System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
@@ -122,6 +122,9 @@ public partial class UserProfilePage : IUserProfilePage
                 case "$checkpoint":
                     checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, UserProfilePageJsonSerializerContext.Default.Options) ?? [];
                     break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilePageJsonSerializerContext.Default.Options);
+                    break;
                 case "$checkpointFingerprint":
                     checkpointFingerprint = JsonSerializer.Deserialize<System.String>(ref reader, UserProfilePageJsonSerializerContext.Default.Options);
                     break;
@@ -137,9 +140,6 @@ public partial class UserProfilePage : IUserProfilePage
                 case "SchemaVersion":
                     schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilePageJsonSerializerContext.Default.Options);
                     break;
-                case "CodeSchemaVersion":
-                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilePageJsonSerializerContext.Default.Options);
-                    break;
                 case "NeedsSchemaUpgrade":
                     needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, UserProfilePageJsonSerializerContext.Default.Options);
                     break;
@@ -147,7 +147,7 @@ public partial class UserProfilePage : IUserProfilePage
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new UserProfilePage();
+        var instance = new UserProfilePage(documentFactory, eventStreamFactory);
 
         if (users != null)
         {
@@ -227,12 +227,12 @@ public interface IUserProfilePage
 {
     public Int32 PageNumber { get; }
     public Dictionary<System.String, TaskFlow.Domain.Projections.UserProfileInfo>? Users { get; }
+    public Int32 CodeSchemaVersion { get; }
     public String? CheckpointFingerprint { get; }
     public ProjectionStatus Status { get; }
     public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
     public RebuildInfo? RebuildInfo { get; }
     public Int32 SchemaVersion { get; }
-    public Int32 CodeSchemaVersion { get; }
     public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore

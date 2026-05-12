@@ -136,13 +136,13 @@ public partial class WorkItemAuditLog : IWorkItemAuditLog
     public static WorkItemAuditLog? LoadFromJson(string json, IObjectDocumentFactory documentFactory, IEventStreamFactory eventStreamFactory)
     {
         // Deserialize each property manually to preserve data
+        System.Int32? codeSchemaVersion = null;
         System.Int32? pendingDocumentCount = null;
         System.String? checkpointFingerprint = null;
         ErikLieben.FA.ES.Projections.ProjectionStatus? status = null;
         System.Nullable<System.DateTimeOffset> statusChangedAt = null;
         ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
         System.Int32? schemaVersion = null;
-        System.Int32? codeSchemaVersion = null;
         System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
@@ -164,11 +164,14 @@ public partial class WorkItemAuditLog : IWorkItemAuditLog
 
             switch (propertyName)
             {
-                case "PendingDocumentCount":
-                    pendingDocumentCount = JsonSerializer.Deserialize<System.Int32>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
-                    break;
                 case "$checkpoint":
                     checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options) ?? [];
+                    break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
+                    break;
+                case "PendingDocumentCount":
+                    pendingDocumentCount = JsonSerializer.Deserialize<System.Int32>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
                     break;
                 case "$checkpointFingerprint":
                     checkpointFingerprint = JsonSerializer.Deserialize<System.String>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
@@ -185,9 +188,6 @@ public partial class WorkItemAuditLog : IWorkItemAuditLog
                 case "SchemaVersion":
                     schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
                     break;
-                case "CodeSchemaVersion":
-                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
-                    break;
                 case "NeedsSchemaUpgrade":
                     needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, WorkItemAuditLogJsonSerializerContext.Default.Options);
                     break;
@@ -195,7 +195,7 @@ public partial class WorkItemAuditLog : IWorkItemAuditLog
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new WorkItemAuditLog();
+        var instance = new WorkItemAuditLog(documentFactory, eventStreamFactory);
 
         instance.Checkpoint = checkpoint;
         instance.CheckpointFingerprint = checkpointFingerprint;
@@ -230,13 +230,13 @@ public partial class WorkItemAuditLog : IWorkItemAuditLog
 /// </summary>
 public interface IWorkItemAuditLog
 {
+    public Int32 CodeSchemaVersion { get; }
     public Int32 PendingDocumentCount { get; }
     public String? CheckpointFingerprint { get; }
     public ProjectionStatus Status { get; }
     public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
     public RebuildInfo? RebuildInfo { get; }
     public Int32 SchemaVersion { get; }
-    public Int32 CodeSchemaVersion { get; }
     public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore
@@ -254,10 +254,10 @@ public interface IWorkItemAuditLog
 [JsonSerializable(typeof(MovedBackFromInProgressToPlanned))]
 [JsonSerializable(typeof(WorkItemRevived))]
 [JsonSerializable(typeof(FeedbackProvided))]
-[JsonSerializable(typeof(System.Int32))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
+[JsonSerializable(typeof(System.Int32))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.ProjectionStatus))]
 [JsonSerializable(typeof(System.Enum))]
 [JsonSerializable(typeof(System.Nullable<System.DateTimeOffset>))]

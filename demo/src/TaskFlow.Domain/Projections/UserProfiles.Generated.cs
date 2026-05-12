@@ -78,6 +78,7 @@ public partial class UserProfiles : IUserProfiles
         // Deserialize each property manually to preserve data
         System.Int32? totalPages = null;
         System.Int32? totalUsers = null;
+        System.Int32? codeSchemaVersion = null;
         System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>? destinations = null;
         ErikLieben.FA.ES.Projections.RoutedProjectionMetadata? routingMetadata = null;
         ErikLieben.FA.ES.Projections.DestinationRegistry? registry = null;
@@ -89,7 +90,6 @@ public partial class UserProfiles : IUserProfiles
         System.Nullable<System.DateTimeOffset> statusChangedAt = null;
         ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
         System.Int32? schemaVersion = null;
-        System.Int32? codeSchemaVersion = null;
         System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
@@ -117,6 +117,12 @@ public partial class UserProfiles : IUserProfiles
                 case "TotalUsers":
                     totalUsers = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
+                case "$checkpoint":
+                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, UserProfilesJsonSerializerContext.Default.Options) ?? [];
+                    break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
+                    break;
                 case "Destinations":
                     destinations = JsonSerializer.Deserialize<System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
@@ -131,9 +137,6 @@ public partial class UserProfiles : IUserProfiles
                     break;
                 case "Metadata":
                     metadata = JsonSerializer.Deserialize<System.Object>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
-                    break;
-                case "$checkpoint":
-                    checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, UserProfilesJsonSerializerContext.Default.Options) ?? [];
                     break;
                 case "CurrentDocument":
                     currentDocument = JsonSerializer.Deserialize<ErikLieben.FA.ES.Documents.IObjectDocument>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
@@ -153,9 +156,6 @@ public partial class UserProfiles : IUserProfiles
                 case "SchemaVersion":
                     schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
-                case "CodeSchemaVersion":
-                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
-                    break;
                 case "NeedsSchemaUpgrade":
                     needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, UserProfilesJsonSerializerContext.Default.Options);
                     break;
@@ -163,7 +163,7 @@ public partial class UserProfiles : IUserProfiles
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new UserProfiles();
+        var instance = new UserProfiles(documentFactory, eventStreamFactory);
 
         instance.Checkpoint = checkpoint;
         instance.CheckpointFingerprint = checkpointFingerprint;
@@ -385,6 +385,7 @@ public interface IUserProfiles
 {
     public Int32 TotalPages { get; }
     public Int32 TotalUsers { get; }
+    public Int32 CodeSchemaVersion { get; }
     public IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>? Destinations { get; }
     public RoutedProjectionMetadata? RoutingMetadata { get; }
     public DestinationRegistry? Registry { get; }
@@ -396,7 +397,6 @@ public interface IUserProfiles
     public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
     public RebuildInfo? RebuildInfo { get; }
     public Int32 SchemaVersion { get; }
-    public Int32 CodeSchemaVersion { get; }
     public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore
@@ -404,9 +404,11 @@ public interface IUserProfiles
 [JsonSerializable(typeof(UserProfileCreated))]
 [JsonSerializable(typeof(UserProfileUpdated))]
 [JsonSerializable(typeof(System.Int32))]
+[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
+[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(System.Collections.Generic.IReadOnlyDictionary<System.String, ErikLieben.FA.ES.Projections.Projection>))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.Projection))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Checkpoint))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.ProjectionStatus))]
 [JsonSerializable(typeof(System.Enum))]
 [JsonSerializable(typeof(System.DateTimeOffset))]
@@ -421,8 +423,6 @@ public interface IUserProfiles
 [JsonSerializable(typeof(ErikLieben.FA.ES.Projections.DestinationMetadata))]
 [JsonSerializable(typeof(System.Object))]
 [JsonSerializable(typeof(ErikLieben.FA.ES.Documents.IObjectDocument))]
-[JsonSerializable(typeof(System.Collections.Generic.Dictionary<System.String, ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory>))]
-[JsonSerializable(typeof(ErikLieben.FA.ES.Projections.IProjectionWhenParameterValueFactory))]
 [JsonSerializable(typeof(System.Nullable<System.DateTimeOffset>))]
 [JsonSerializable(typeof(UserProfiles))]
 // <auto-generated />

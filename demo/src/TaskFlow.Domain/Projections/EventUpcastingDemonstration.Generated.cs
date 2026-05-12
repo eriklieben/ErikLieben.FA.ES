@@ -157,12 +157,12 @@ public partial class EventUpcastingDemonstration : IEventUpcastingDemonstration
     {
         // Deserialize each property manually to preserve data
         System.Collections.Generic.Dictionary<System.String, TaskFlow.Domain.Projections.UpcastingDemoProject>? demoProjects = null;
+        System.Int32? codeSchemaVersion = null;
         System.String? checkpointFingerprint = null;
         ErikLieben.FA.ES.Projections.ProjectionStatus? status = null;
         System.Nullable<System.DateTimeOffset> statusChangedAt = null;
         ErikLieben.FA.ES.Projections.RebuildInfo? rebuildInfo = null;
         System.Int32? schemaVersion = null;
-        System.Int32? codeSchemaVersion = null;
         System.Boolean? needsSchemaUpgrade = null;
         Checkpoint checkpoint = [];
 
@@ -190,6 +190,9 @@ public partial class EventUpcastingDemonstration : IEventUpcastingDemonstration
                 case "$checkpoint":
                     checkpoint = JsonSerializer.Deserialize<ErikLieben.FA.ES.Checkpoint>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options) ?? [];
                     break;
+                case "CodeSchemaVersion":
+                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options);
+                    break;
                 case "$checkpointFingerprint":
                     checkpointFingerprint = JsonSerializer.Deserialize<System.String>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options);
                     break;
@@ -205,9 +208,6 @@ public partial class EventUpcastingDemonstration : IEventUpcastingDemonstration
                 case "SchemaVersion":
                     schemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options);
                     break;
-                case "CodeSchemaVersion":
-                    codeSchemaVersion = JsonSerializer.Deserialize<System.Int32>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options);
-                    break;
                 case "NeedsSchemaUpgrade":
                     needsSchemaUpgrade = JsonSerializer.Deserialize<System.Boolean>(ref reader, EventUpcastingDemonstrationJsonSerializerContext.Default.Options);
                     break;
@@ -215,7 +215,7 @@ public partial class EventUpcastingDemonstration : IEventUpcastingDemonstration
         }
 
         // Create instance with factories and deserialized properties
-        var instance = new EventUpcastingDemonstration();
+        var instance = new EventUpcastingDemonstration(documentFactory, eventStreamFactory);
 
         if (demoProjects != null)
         {
@@ -294,12 +294,12 @@ public partial class EventUpcastingDemonstrationFactory(
 public interface IEventUpcastingDemonstration
 {
     public Dictionary<System.String, TaskFlow.Domain.Projections.UpcastingDemoProject>? DemoProjects { get; }
+    public Int32 CodeSchemaVersion { get; }
     public String? CheckpointFingerprint { get; }
     public ProjectionStatus Status { get; }
     public Nullable<System.DateTimeOffset> StatusChangedAt { get; }
     public RebuildInfo? RebuildInfo { get; }
     public Int32 SchemaVersion { get; }
-    public Int32 CodeSchemaVersion { get; }
     public Boolean NeedsSchemaUpgrade { get; }
 }
 #nullable restore
