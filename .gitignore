@@ -117,3 +117,11 @@ AGENTS.md
 context/
 scripts/
 workflow.json
+
+# Dev TLS material — generate locally with `dotnet dev-certs https`.
+# Never commit private keys or certificates; see demo/taskflow-web/README.md.
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
