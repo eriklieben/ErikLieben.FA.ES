@@ -44,6 +44,18 @@
           "OpenTelemetry.Extensions.Hosting": "1.14.0"
         }
       },
+      "Aspire.Npgsql": {
+        "type": "Direct",
+        "requested": "[13.1.1, )",
+        "resolved": "13.1.1",
+        "contentHash": "Axx1fkLKaeLr0kSwcIAF3VtMFu2I44FMpCCBPL64u5CYs1tnnmSbMng4xLKUmCx8BdXiCX4G6JQ4BUx+zkAkLw==",
+        "dependencies": {
+          "AspNetCore.HealthChecks.NpgSql": "9.0.0",
+          "Npgsql.DependencyInjection": "10.0.0",
+          "Npgsql.OpenTelemetry": "10.0.0",
+          "OpenTelemetry.Extensions.Hosting": "1.14.0"
+        }
+      },
       "AWSSDK.S3": {
         "type": "Direct",
         "requested": "[4.0.19.1, )",
@@ -101,6 +113,14 @@
           "Azure.Storage.Blobs": "12.19.1"
         }
       },
+      "AspNetCore.HealthChecks.NpgSql": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "npc58/AD5zuVxERdhCl2Kb7WnL37mwX42SJcXIwvmEig0/dugOLg3SIwtfvvh3TnvTwR/sk5LYNkkPaBdks61A==",
+        "dependencies": {
+          "Npgsql": "8.0.3"
+        }
+      },
       "AWSSDK.Core": {
         "type": "Transitive",
         "resolved": "4.0.3.19",
@@ -116,12 +136,14 @@
       },
       "Azure.Core": {
         "type": "Transitive",
-        "resolved": "1.51.1",
-        "contentHash": "JRANrRvN5O5FFRh+pMUb8qqWU7jBQ39qXEbVr7Rkb1/s7rqc6RSzVHKGBz5Ro1gDy2WSGjG5YEOJKpPIBiCMcA==",
+        "resolved": "1.53.0",
+        "contentHash": "x9c/toFMOtRrlTdFuE7rlGCVAduQzWVfKmLz5juj41zJAXEhYD5hluiUyyAEzJ6OxpBnKtiaBztzwpZITAVjtg==",
         "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.2",
-          "System.ClientModel": "1.9.0",
-          "System.Memory.Data": "10.0.1"
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.3",
+          "Microsoft.Identity.Client": "4.83.1",
+          "Microsoft.Identity.Client.Extensions.Msal": "4.83.1",
+          "System.ClientModel": "1.10.0",
+          "System.Memory.Data": "10.0.3"
         }
       },
       "Azure.Data.Tables": {
@@ -134,12 +156,10 @@
       },
       "Azure.Identity": {
         "type": "Transitive",
-        "resolved": "1.19.0",
-        "contentHash": "01KY5RC7XHwh3azcZ46GMhVR7ajRsRPFh5ivVuvs7N9nVAYK+9/g2eqXTjBneorm9PTYAUfmHvd1dIdmzBym3w==",
+        "resolved": "1.21.0",
+        "contentHash": "GeFv8sGwRKvDKwI2WFy8r0mhmlxEVZg24Sit2NogTjiSO8RVjllWM65OT6e1sKjOvG8V74y7hAbaELUUPjZQSw==",
         "dependencies": {
-          "Azure.Core": "1.51.1",
-          "Microsoft.Identity.Client": "4.83.1",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.83.1"
+          "Azure.Core": "1.53.0"
         }
       },
       "Azure.Storage.Blobs": {
@@ -289,8 +309,8 @@
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
-        "resolved": "10.0.2",
-        "contentHash": "qE5JhRoeJbAipLqpUCZyNfNwnpAvUttXgIQDnTiJ15d8ji+/bPgoPkB3xLzK5cQTobN2D2ditUesUlDHb7p3Pg=="
+        "resolved": "10.0.3",
+        "contentHash": "TV62UsrJZPX6gbt3c4WrtXh7bmaDIcMqf9uft1cc4L6gJXOU07hDGEh+bFQh/L2Az0R1WVOkiT66lFqS6G2NmA=="
       },
       "Microsoft.Bcl.HashCode": {
         "type": "Transitive",
@@ -422,6 +442,28 @@
         "resolved": "13.0.4",
         "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
+      "Npgsql": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "xZAYhPOU2rUIFpV48xsqhCx9vXs6Y+0jX2LCoSEfDFYMw9jtAOUk3iQsCnDLrFIv9NT3JGMihn7nnuZsPKqJmA=="
+      },
+      "Npgsql.DependencyInjection": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "htuxMDQ7nHgadPxoO6XXVvSgYcVierLrhzOoamyUchvC4oHnYdD05zZ0dYsq80DN0vco9t/Vp+ZxYvnfJxbhIg==",
+        "dependencies": {
+          "Npgsql": "10.0.0"
+        }
+      },
+      "Npgsql.OpenTelemetry": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "eftmCZWng874x4iSfQyfF+PpnfA6hloHGQ3EzELVhRyPOEHcMygxSXhx4KI8HKu/Qg8uK1MF5tcwOVhwL7duJw==",
+        "dependencies": {
+          "Npgsql": "10.0.0",
+          "OpenTelemetry.API": "1.14.0"
+        }
+      },
       "OpenTelemetry": {
         "type": "Transitive",
         "resolved": "1.15.0",
@@ -506,10 +548,10 @@
       },
       "System.ClientModel": {
         "type": "Transitive",
-        "resolved": "1.9.0",
-        "contentHash": "1wdwKtMMMEFEYsxJmtrOd3G+7zVOVO3MlVZAsbKv9H0PnIx6J27fYAarMn0eQS0vKJPQL018DOb7YRK1O97p0A==",
+        "resolved": "1.10.0",
+        "contentHash": "lBEWs54F5Y5pZ9hC+8z4S/X76957ex+DPk7WecRHlbIHtrPfbRMMlOgI3iDn4Jpb3bSxvBnKaaHoD59auFjlBA==",
         "dependencies": {
-          "System.Memory.Data": "10.0.1"
+          "System.Memory.Data": "10.0.3"
         }
       },
       "System.ComponentModel.Annotations": {
@@ -541,8 +583,8 @@
       },
       "System.Memory.Data": {
         "type": "Transitive",
-        "resolved": "10.0.1",
-        "contentHash": "BZC4mhdL569AXV56ep9YO6ShjhxFXGP7SwVX0Bc/e0dJPWnS6aBEXZJXqh64RVx8HquqWHkJUINBydLRQ1yq0g=="
+        "resolved": "10.0.3",
+        "contentHash": "MaGhRfGunmrj/nHjtsi9XkhlYJ/ERGWrbA+BiSKNtGnAjc9XlG5EhAvak6VRcX5LYzPF6pBO8nJ613dTgzabig=="
       },
       "System.Security.Cryptography.ProtectedData": {
         "type": "Transitive",
@@ -575,7 +617,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Data.Tables": "[12.11.0, )",
-          "Azure.Identity": "[1.19.0, )",
+          "Azure.Identity": "[1.21.0, )",
           "Azure.Storage.Blobs": "[12.27.0, )",
           "ErikLieben.FA.ES": "[1.0.0, )",
           "ErikLieben.FA.ES.EventStreamManagement": "[1.0.0, )",
@@ -595,6 +637,13 @@
           "ErikLieben.FA.ES": "[1.0.0, )"
         }
       },
+      "eriklieben.fa.es.postgres": {
+        "type": "Project",
+        "dependencies": {
+          "ErikLieben.FA.ES": "[1.0.0, )",
+          "Npgsql": "[9.0.4, )"
+        }
+      },
       "eriklieben.fa.es.s3": {
         "type": "Project",
         "dependencies": {
@@ -610,6 +659,7 @@
           "ErikLieben.FA.ES": "[1.0.0, )",
           "ErikLieben.FA.ES.AzureStorage": "[1.0.0, )",
           "ErikLieben.FA.ES.CosmosDb": "[1.0.0, )",
+          "ErikLieben.FA.ES.Postgres": "[1.0.0, )",
           "ErikLieben.FA.ES.S3": "[1.0.0, )",
           "ErikLieben.FA.Results": "[1.1.2, )",
           "ErikLieben.FA.Results.Validations": "[1.1.2, )",

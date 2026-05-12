@@ -6,6 +6,7 @@ using ErikLieben.FA.ES.AzureStorage.Configuration;
 using ErikLieben.FA.ES.Configuration;
 using ErikLieben.FA.ES.CosmosDb;
 using ErikLieben.FA.ES.CosmosDb.Configuration;
+using ErikLieben.FA.ES.Postgres;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
 using ErikLieben.FA.ES.EventStreamManagement.Coordination;
@@ -540,6 +541,23 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+
+// Configure the Postgres event store, used by the Note aggregate ([EventStreamType("postgres", "postgres")])
+// and by the Postgres-backed projections (e.g. WorkItemCountByProject). The data source is provisioned by
+// the AppHost as the "projections" database; ConfigureNpgsqlEventStore also registers the NpgsqlDataSource
+// singleton that projection factories pick up. Schema bootstrap runs on first use.
+var postgresConnectionString = builder.Configuration.GetConnectionString("projections");
+if (!string.IsNullOrEmpty(postgresConnectionString))
+{
+    builder.Services.ConfigureNpgsqlEventStore(new ErikLieben.FA.ES.Postgres.Configuration.EventStreamPostgresSettings
+    {
+        ConnectionString = postgresConnectionString
+    });
+
+    // Bootstrap the shared faes_projection_checkpoints table at startup so external-checkpoint
+    // projections have a place to write; per-projection tables are created lazily by the factory.
+    builder.Services.AddHostedService<TaskFlow.Api.Services.PostgresProjectionSchemaInitializer>();
+}
 
 var app = builder.Build();
 

@@ -8,8 +8,8 @@ using System;
 using System.Collections.Generic;
 using TaskFlow.Domain.Aggregates;
 using TaskFlow.Domain.Events.Epic;
+using TaskFlow.Domain.Events.Note;
 using TaskFlow.Domain.Events.Project;
-using TaskFlow.Domain.Events.Release;
 using TaskFlow.Domain.Events.Sprint;
 using TaskFlow.Domain.Events.TimeSheet;
 using TaskFlow.Domain.Events.UserProfile;
@@ -48,25 +48,25 @@ public partial class TaskFlowDomainFactory : AggregateFactory, IAggregateFactory
     {
         serviceCollection.AddSingleton<IAggregateFactory<Epic, EpicId>, EpicFactory>();
         serviceCollection.AddSingleton<IEpicFactory, EpicFactory>();
-        serviceCollection.AddScoped<IEpicRepository, EpicRepository>();
+        serviceCollection.AddSingleton<IEpicRepository, EpicRepository>();
+        serviceCollection.AddSingleton<IAggregateFactory<Note, NoteId>, NoteFactory>();
+        serviceCollection.AddSingleton<INoteFactory, NoteFactory>();
+        serviceCollection.AddSingleton<INoteRepository, NoteRepository>();
         serviceCollection.AddSingleton<IAggregateFactory<Project, ProjectId>, ProjectFactory>();
         serviceCollection.AddSingleton<IProjectFactory, ProjectFactory>();
-        serviceCollection.AddScoped<IProjectRepository, ProjectRepository>();
-        serviceCollection.AddSingleton<IAggregateFactory<Release, ReleaseId>, ReleaseFactory>();
-        serviceCollection.AddSingleton<IReleaseFactory, ReleaseFactory>();
-        serviceCollection.AddScoped<IReleaseRepository, ReleaseRepository>();
+        serviceCollection.AddSingleton<IProjectRepository, ProjectRepository>();
         serviceCollection.AddSingleton<IAggregateFactory<Sprint, SprintId>, SprintFactory>();
         serviceCollection.AddSingleton<ISprintFactory, SprintFactory>();
-        serviceCollection.AddScoped<ISprintRepository, SprintRepository>();
+        serviceCollection.AddSingleton<ISprintRepository, SprintRepository>();
         serviceCollection.AddSingleton<IAggregateFactory<TimeSheet, TimeSheetId>, TimeSheetFactory>();
         serviceCollection.AddSingleton<ITimeSheetFactory, TimeSheetFactory>();
-        serviceCollection.AddScoped<ITimeSheetRepository, TimeSheetRepository>();
+        serviceCollection.AddSingleton<ITimeSheetRepository, TimeSheetRepository>();
         serviceCollection.AddSingleton<IAggregateFactory<UserProfile, UserProfileId>, UserProfileFactory>();
         serviceCollection.AddSingleton<IUserProfileFactory, UserProfileFactory>();
-        serviceCollection.AddScoped<IUserProfileRepository, UserProfileRepository>();
+        serviceCollection.AddSingleton<IUserProfileRepository, UserProfileRepository>();
         serviceCollection.AddSingleton<IAggregateFactory<WorkItem, WorkItemId>, WorkItemFactory>();
         serviceCollection.AddSingleton<IWorkItemFactory, WorkItemFactory>();
-        serviceCollection.AddScoped<IWorkItemRepository, WorkItemRepository>();
+        serviceCollection.AddSingleton<IWorkItemRepository, WorkItemRepository>();
 
         serviceCollection.AddSingleton<IAggregateFactory, TaskFlowDomainFactory>();
     }
@@ -83,8 +83,8 @@ public partial class TaskFlowDomainFactory : AggregateFactory, IAggregateFactory
         return type switch
         {
             Type agg when agg == typeof(Epic) => typeof(IAggregateFactory<Epic, EpicId>),
+            Type agg when agg == typeof(Note) => typeof(IAggregateFactory<Note, NoteId>),
             Type agg when agg == typeof(Project) => typeof(IAggregateFactory<Project, ProjectId>),
-            Type agg when agg == typeof(Release) => typeof(IAggregateFactory<Release, ReleaseId>),
             Type agg when agg == typeof(Sprint) => typeof(IAggregateFactory<Sprint, SprintId>),
             Type agg when agg == typeof(TimeSheet) => typeof(IAggregateFactory<TimeSheet, TimeSheetId>),
             Type agg when agg == typeof(UserProfile) => typeof(IAggregateFactory<UserProfile, UserProfileId>),
@@ -164,7 +164,6 @@ public static class TaskFlowDomainExtensions
         services.AddSingleton<TaskFlow.Domain.Projections.ProjectKanbanBoardFactory>();
         services.AddSingleton<TaskFlow.Domain.Projections.ProjectKanbanDestinationFactory>();
         services.AddSingleton<TaskFlow.Domain.Projections.ProjectKanbanLanguageDestinationFactory>();
-        services.AddSingleton<TaskFlow.Domain.Projections.ReleaseDashboardFactory>();
         services.AddSingleton<TaskFlow.Domain.Projections.TeamMembersFactory>();
         services.AddSingleton<TaskFlow.Domain.Projections.TimeSheetDashboardFactory>();
         services.AddSingleton<TaskFlow.Domain.Projections.UserProfilePageFactory>();
@@ -274,21 +273,6 @@ public static class TaskFlowDomainExtensions
             catch
             {
                 return new TaskFlow.Domain.Projections.ProjectKanbanLanguageDestination(docFactory, streamFactory);
-            }
-        });
-        services.AddSingleton<TaskFlow.Domain.Projections.ReleaseDashboard>(sp =>
-        {
-            var factory = sp.GetRequiredService<TaskFlow.Domain.Projections.ReleaseDashboardFactory>();
-            var docFactory = sp.GetRequiredService<IObjectDocumentFactory>();
-            var streamFactory = sp.GetRequiredService<IEventStreamFactory>();
-
-            try
-            {
-                return factory.GetOrCreateAsync(docFactory, streamFactory).GetAwaiter().GetResult();
-            }
-            catch
-            {
-                return new TaskFlow.Domain.Projections.ReleaseDashboard(docFactory, streamFactory);
             }
         });
         services.AddSingleton<TaskFlow.Domain.Projections.TeamMembers>(sp =>
@@ -429,6 +413,24 @@ internal partial class EpicPriorityChangedJsonSerializerContext : JsonSerializer
 internal partial class EpicCompletedJsonSerializerContext : JsonSerializerContext { }
 
 [JsonSerializable(typeof(DateTime))]
+[JsonSerializable(typeof(NoteCreated))]
+[JsonSerializable(typeof(String))]
+// <auto-generated />
+/// <summary>
+/// JSON serializer context for NoteCreated event type.
+/// </summary>
+internal partial class NoteCreatedJsonSerializerContext : JsonSerializerContext { }
+
+[JsonSerializable(typeof(DateTime))]
+[JsonSerializable(typeof(NoteEdited))]
+[JsonSerializable(typeof(String))]
+// <auto-generated />
+/// <summary>
+/// JSON serializer context for NoteEdited event type.
+/// </summary>
+internal partial class NoteEditedJsonSerializerContext : JsonSerializerContext { }
+
+[JsonSerializable(typeof(DateTime))]
 [JsonSerializable(typeof(ProjectInitiated))]
 [JsonSerializable(typeof(String))]
 // <auto-generated />
@@ -458,6 +460,7 @@ internal partial class ProjectScopeRefinedJsonSerializerContext : JsonSerializer
 [JsonSerializable(typeof(DateTime))]
 [JsonSerializable(typeof(ProjectLanguagesConfigured))]
 [JsonSerializable(typeof(String))]
+[JsonSerializable(typeof(String[]))]
 // <auto-generated />
 /// <summary>
 /// JSON serializer context for ProjectLanguagesConfigured event type.
@@ -605,60 +608,6 @@ internal partial class ProjectReactivatedJsonSerializerContext : JsonSerializerC
 /// JSON serializer context for DemoNoteAdded event type.
 /// </summary>
 internal partial class DemoNoteAddedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseCreated))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseCreated event type.
-/// </summary>
-internal partial class ReleaseCreatedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseNoteAdded))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseNoteAdded event type.
-/// </summary>
-internal partial class ReleaseNoteAddedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseDeployed))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseDeployed event type.
-/// </summary>
-internal partial class ReleaseDeployedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseCompleted))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseCompleted event type.
-/// </summary>
-internal partial class ReleaseCompletedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseStaged))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseStaged event type.
-/// </summary>
-internal partial class ReleaseStagedJsonSerializerContext : JsonSerializerContext { }
-
-[JsonSerializable(typeof(DateTime))]
-[JsonSerializable(typeof(ReleaseRolledBack))]
-[JsonSerializable(typeof(String))]
-// <auto-generated />
-/// <summary>
-/// JSON serializer context for ReleaseRolledBack event type.
-/// </summary>
-internal partial class ReleaseRolledBackJsonSerializerContext : JsonSerializerContext { }
 
 [JsonSerializable(typeof(DateTime))]
 [JsonSerializable(typeof(SprintCreated))]
@@ -923,6 +872,7 @@ internal partial class WorkItemRelocatedJsonSerializerContext : JsonSerializerCo
 
 [JsonSerializable(typeof(DateTime))]
 [JsonSerializable(typeof(String))]
+[JsonSerializable(typeof(String[]))]
 [JsonSerializable(typeof(WorkItemRetagged))]
 // <auto-generated />
 /// <summary>

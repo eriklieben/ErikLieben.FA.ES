@@ -116,6 +116,17 @@ if (enableCosmosDb)
     // Instead, the API creates containers lazily with AutoCreateContainers = true
 }
 
+// PostgreSQL for demonstrating the [PostgresJsonbProjection] storage provider.
+// Provisions a single database that the API uses purely for projection storage
+// (the event store itself still runs on blob/cosmos as configured below).
+var postgres = builder.AddPostgres("postgres");
+if (persistStorage)
+{
+    postgres = postgres.WithDataVolume("postgres-data")
+                       .WithLifetime(ContainerLifetime.Persistent);
+}
+var projectionsDb = postgres.AddDatabase("projections");
+
 // MinIO S3-compatible storage for demonstrating S3 storage provider
 var minio = builder.AddContainer("minio", "minio/minio")
     .WithArgs("server", "/data", "--console-address", ":9001")
@@ -151,10 +162,12 @@ var api = builder.AddProject<Projects.TaskFlow_Api>("api")
                  .WithReference(projectionsContainer)
                  .WithReference(userProfiles)
                  .WithReference(tableStorage)
+                 .WithReference(projectionsDb)
                  // Wait for storage resources to be ready before starting API
                  .WaitFor(storage)
                  .WaitFor(userDataStorage)
                  .WaitFor(minio)
+                 .WaitFor(projectionsDb)
                  .WithExternalHttpEndpoints();
 
 // Add CosmosDB reference if enabled
