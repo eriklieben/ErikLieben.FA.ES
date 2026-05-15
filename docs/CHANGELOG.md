@@ -1,3 +1,17 @@
+## [2.0.0-preview.16](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.15...v2.0.0-preview.16) (2026-05-15)
+
+### ⚠ BREAKING CHANGES
+
+* **postgres:** faes_events and faes_documents column layouts changed.
+
+### ✨ New features
+
+* **postgres:** typed action-metadata columns and hoist current_stream_version ([75a3e88](https://github.com/eriklieben/ErikLieben.FA.ES/commit/75a3e885a6bb23f40375029fb7e22329e51dc626))
+
+### 🧪 (Unit)test cases adjusted
+
+* **postgres:** cover idempotent-key uniqueness and new metadata round-trip ([93a7d9e](https://github.com/eriklieben/ErikLieben.FA.ES/commit/93a7d9eef55c5308e9788812c96881ac3eebc8ad))
+
 ## [2.0.0-preview.15](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.14...v2.0.0-preview.15) (2026-05-15)
 
 ### 🐛 Bug fixes
