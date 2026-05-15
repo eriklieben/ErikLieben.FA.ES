@@ -1,3 +1,16 @@
+## [2.0.0-preview.15](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.14...v2.0.0-preview.15) (2026-05-15)
+
+### 🐛 Bug fixes
+
+* **cli:** detect FA.ES version in Directory.Packages.props ([acaab92](https://github.com/eriklieben/ErikLieben.FA.ES/commit/acaab922aa6ec271f50335a92c6e2049cada5686))
+* **cli:** regenerate projections when partial yields .Generated.cs first ([8428387](https://github.com/eriklieben/ErikLieben.FA.ES/commit/8428387baa5d54bb325894413193e4bc71085f77))
+* **demo:** exclude orphaned Release aggregate code that doesn't compile ([9c76bc0](https://github.com/eriklieben/ErikLieben.FA.ES/commit/9c76bc0df493d05bfd390ffaf267844f179389d0))
+
+### ✨ New features
+
+* **demo:** add Postgres aggregate and projection to TaskFlow ([a6bd718](https://github.com/eriklieben/ErikLieben.FA.ES/commit/a6bd7185870966daadc6068997d00c9bb05356e3))
+* **postgres:** add [PostgresJsonbProjection] attribute and codegen ([5896e9d](https://github.com/eriklieben/ErikLieben.FA.ES/commit/5896e9d58756d07e144df75ebac12c50b0d1e69a))
+
 ## [2.0.0-preview.14](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.13...v2.0.0-preview.14) (2026-05-12)
 
 ### 🚀 Release
