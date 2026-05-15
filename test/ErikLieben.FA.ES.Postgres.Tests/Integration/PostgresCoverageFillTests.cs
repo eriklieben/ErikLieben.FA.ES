@@ -243,6 +243,93 @@ public class PostgresCoverageFillTests(PostgresContainerFixture fixture) : IAsyn
     }
 
     [Fact]
+    public async Task DataStore_round_trips_originated_from_user_and_event_occured_at()
+    {
+        // Covers ParseVersionToken on the read side and the NULLIF::timestamptz cast
+        // in faes_append on the write side — both new in 2.0.0-preview.16.
+        var dataStore = new PostgresDataStore(fixture.DataSource, fixture.Settings);
+        var doc = await documentStore.CreateAsync("Order", "vt-doc");
+
+        var occurred = new DateTimeOffset(2026, 5, 15, 12, 34, 56, TimeSpan.Zero);
+        var token = new VersionToken("Order", "originator-1", "originator-1-0000000000", 7);
+        var evt = new JsonEvent
+        {
+            EventType = "Rich",
+            EventVersion = 0,
+            Payload = """{"x":1}""",
+            ActionMetadata = new ActionMetadata(
+                CorrelationId: "corr",
+                CausationId: "cause",
+                IdempotentKey: "idem-1",
+                OriginatedFromUser: token,
+                EventOccuredAt: occurred),
+        };
+
+        await dataStore.AppendAsync(doc, CancellationToken.None, evt);
+
+        var read = (await dataStore.ReadAsync(doc))!.Single();
+        Assert.Equal("idem-1", read.ActionMetadata!.IdempotentKey);
+        Assert.NotNull(read.ActionMetadata.OriginatedFromUser);
+        Assert.Equal(token.Value, read.ActionMetadata.OriginatedFromUser!.Value);
+        Assert.Equal(token.SchemaVersion, read.ActionMetadata.OriginatedFromUser.SchemaVersion);
+        Assert.Equal(occurred, read.ActionMetadata.EventOccuredAt);
+    }
+
+    [Fact]
+    public async Task DataStore_idempotent_key_unique_constraint_blocks_duplicate_on_same_aggregate()
+    {
+        // Covers ux_faes_events_idempotent_key. Two events with the same IdempotentKey
+        // on the same (object_name, object_id) must violate the partial unique index.
+        var dataStore = new PostgresDataStore(fixture.DataSource, fixture.Settings);
+        var doc = await documentStore.CreateAsync("Order", "idem-doc");
+
+        var first = new JsonEvent
+        {
+            EventType = "Created",
+            EventVersion = 0,
+            Payload = "{}",
+            ActionMetadata = new ActionMetadata(IdempotentKey: "same-key"),
+        };
+        await dataStore.AppendAsync(doc, CancellationToken.None, first);
+
+        var second = new JsonEvent
+        {
+            EventType = "Updated",
+            EventVersion = 1,
+            Payload = "{}",
+            ActionMetadata = new ActionMetadata(IdempotentKey: "same-key"),
+        };
+
+        var ex = await Assert.ThrowsAsync<PostgresProcessingException>(
+            () => dataStore.AppendAsync(doc, CancellationToken.None, second));
+        Assert.Contains("Duplicate", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task DataStore_null_idempotent_keys_do_not_collide()
+    {
+        // Partial unique index has WHERE idempotent_key IS NOT NULL — multiple events
+        // with no idempotent key on the same aggregate must coexist.
+        var dataStore = new PostgresDataStore(fixture.DataSource, fixture.Settings);
+        var doc = await documentStore.CreateAsync("Order", "null-idem-doc");
+
+        await dataStore.AppendAsync(doc, CancellationToken.None,
+            new JsonEvent { EventType = "A", EventVersion = 0, Payload = "{}" });
+        await dataStore.AppendAsync(doc, CancellationToken.None,
+            new JsonEvent { EventType = "B", EventVersion = 1, Payload = "{}" });
+
+        var events = (await dataStore.ReadAsync(doc))!.ToList();
+        Assert.Equal(2, events.Count);
+    }
+
+    [Fact]
+    public async Task DocumentStore_CreateAsync_sets_schema_version_to_2_0_0()
+    {
+        var doc = await documentStore.CreateAsync("Order", "schema-version-doc");
+        Assert.Equal("2.0.0", doc.SchemaVersion);
+    }
+
+    [Fact]
     public async Task Bootstrapper_AutoCreate_None_is_a_noop()
     {
         var noBootstrap = new PostgresSchemaBootstrapper(
