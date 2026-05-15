@@ -6,6 +6,8 @@ namespace ErikLieben.FA.ES.Postgres.Model;
 /// <summary>
 /// Wire-format projection of <see cref="StreamInformation"/> for the active jsonb column.
 /// Mirrors the public, non-obsolete fields only; legacy *ConnectionName properties are not persisted.
+/// CurrentStreamVersion is intentionally excluded — it lives in the dedicated
+/// faes_documents.current_stream_version column to keep faes_append on the HOT update path.
 /// </summary>
 internal sealed record PostgresStreamInformation
 {
@@ -20,7 +22,6 @@ internal sealed record PostgresStreamInformation
     [JsonPropertyName("documentTagStore")] public string DocumentTagStore { get; init; } = string.Empty;
     [JsonPropertyName("streamTagStore")]   public string StreamTagStore { get; init; } = string.Empty;
     [JsonPropertyName("snapShotStore")]    public string SnapShotStore { get; init; } = string.Empty;
-    [JsonPropertyName("currentStreamVersion")] public int CurrentStreamVersion { get; init; } = -1;
     [JsonPropertyName("isBroken")]         public bool IsBroken { get; init; }
 
     public static PostgresStreamInformation From(StreamInformation s) => new()
@@ -36,11 +37,10 @@ internal sealed record PostgresStreamInformation
         DocumentTagStore   = s.DocumentTagStore,
         StreamTagStore     = s.StreamTagStore,
         SnapShotStore      = s.SnapShotStore,
-        CurrentStreamVersion = s.CurrentStreamVersion,
         IsBroken           = s.IsBroken,
     };
 
-    public StreamInformation ToStreamInformation() => new()
+    public StreamInformation ToStreamInformation(int currentStreamVersion) => new()
     {
         StreamIdentifier   = StreamIdentifier,
         StreamType         = StreamType,
@@ -53,7 +53,7 @@ internal sealed record PostgresStreamInformation
         DocumentTagStore   = DocumentTagStore,
         StreamTagStore     = StreamTagStore,
         SnapShotStore      = SnapShotStore,
-        CurrentStreamVersion = CurrentStreamVersion,
+        CurrentStreamVersion = currentStreamVersion,
         IsBroken           = IsBroken,
     };
 }

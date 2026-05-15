@@ -1,9 +1,7 @@
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using ErikLieben.FA.ES.Documents;
 using ErikLieben.FA.ES.EventStream;
-using ErikLieben.FA.ES.Exceptions;
 using ErikLieben.FA.ES.Observability;
 using ErikLieben.FA.ES.Postgres.Configuration;
 using ErikLieben.FA.ES.Postgres.Exceptions;
@@ -80,11 +78,13 @@ public sealed class PostgresDataStore : IDataStore, IDataStoreRecovery
         int? chunk,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        const string columns =
+            "version, event_type, schema_version, payload, " +
+            "correlation_id, causation_id, idempotent_key, originated_from_user, event_occured_at, " +
+            "metadata, external_sequencer";
         var sql = untilVersion.HasValue
-            ? "SELECT version, event_type, schema_version, payload, action_metadata, metadata, external_sequencer " +
-              "FROM faes_events WHERE object_name = $1 AND stream_id = $2 AND version >= $3 AND version <= $4 ORDER BY version"
-            : "SELECT version, event_type, schema_version, payload, action_metadata, metadata, external_sequencer " +
-              "FROM faes_events WHERE object_name = $1 AND stream_id = $2 AND version >= $3 ORDER BY version";
+            ? $"SELECT {columns} FROM faes_events WHERE object_name = $1 AND stream_id = $2 AND version >= $3 AND version <= $4 ORDER BY version"
+            : $"SELECT {columns} FROM faes_events WHERE object_name = $1 AND stream_id = $2 AND version >= $3 ORDER BY version";
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var cmd = new NpgsqlCommand(sql, connection);
@@ -200,17 +200,24 @@ public sealed class PostgresDataStore : IDataStore, IDataStoreRecovery
 
     private static IEvent ReadEvent(NpgsqlDataReader reader)
     {
-        var version          = reader.GetInt32(0);
-        var eventType        = reader.GetString(1);
-        var schemaVersion    = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
-        var payload          = reader.GetString(3);  // jsonb auto-converts to text
-        var actionMetaRaw    = reader.IsDBNull(4) ? null : reader.GetString(4);
-        var metadataRaw      = reader.IsDBNull(5) ? null : reader.GetString(5);
-        var externalSeq      = reader.IsDBNull(6) ? null : reader.GetString(6);
+        var version            = reader.GetInt32(0);
+        var eventType          = reader.GetString(1);
+        var schemaVersion      = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+        var payload            = reader.GetString(3);  // jsonb auto-converts to text
+        var correlationId      = reader.IsDBNull(4)  ? null : reader.GetString(4);
+        var causationId        = reader.IsDBNull(5)  ? null : reader.GetString(5);
+        var idempotentKey      = reader.IsDBNull(6)  ? null : reader.GetString(6);
+        var originatedFromUser = reader.IsDBNull(7)  ? null : reader.GetString(7);
+        var eventOccuredAt     = reader.IsDBNull(8)  ? (DateTimeOffset?)null : reader.GetFieldValue<DateTimeOffset>(8);
+        var metadataRaw        = reader.IsDBNull(9)  ? null : reader.GetString(9);
+        var externalSeq        = reader.IsDBNull(10) ? null : reader.GetString(10);
 
-        var actionMeta = actionMetaRaw is null
-            ? new ActionMetadata()
-            : JsonSerializer.Deserialize(actionMetaRaw, PostgresJsonContext.Default.ActionMetadata) ?? new ActionMetadata();
+        var actionMeta = new ActionMetadata(
+            CorrelationId:      correlationId,
+            CausationId:        causationId,
+            IdempotentKey:      idempotentKey,
+            OriginatedFromUser: ParseVersionToken(originatedFromUser),
+            EventOccuredAt:     eventOccuredAt);
 
         var metadata = metadataRaw is null
             ? new Dictionary<string, string>()
@@ -226,6 +233,27 @@ public sealed class PostgresDataStore : IDataStore, IDataStoreRecovery
             Metadata          = metadata,
             ExternalSequencer = externalSeq,
         };
+    }
+
+    // The wire format for OriginatedFromUser is "vt[<canonical-value>]<schemaVersion>" (see
+    // VersionTokenJsonConverter). originated_from_user stores that raw string; we unwrap it
+    // here rather than round-tripping through STJ to avoid an extra allocation per row.
+    private static VersionToken? ParseVersionToken(string? wire)
+    {
+        if (string.IsNullOrEmpty(wire) || !wire.StartsWith("vt[", StringComparison.Ordinal))
+        {
+            return null;
+        }
+        var endIdx = wire.IndexOf(']');
+        if (endIdx < 4)
+        {
+            return null;
+        }
+        var value = wire.Substring(3, endIdx - 3);
+        var schemaVersion = wire[(endIdx + 1)..];
+        return string.IsNullOrEmpty(schemaVersion)
+            ? new VersionToken(value)
+            : new VersionToken(value) { SchemaVersion = schemaVersion };
     }
 
     /// <summary>

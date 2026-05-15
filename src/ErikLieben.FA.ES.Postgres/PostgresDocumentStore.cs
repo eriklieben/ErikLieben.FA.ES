@@ -62,20 +62,21 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
             DocumentTagStore     = settings.DefaultDocumentTagStore,
             StreamTagStore       = settings.DefaultDocumentTagStore,
             SnapShotStore        = settings.DefaultSnapShotStore,
-            CurrentStreamVersion = -1,
         };
 
         var activeJson = JsonSerializer.Serialize(activeWire, PostgresJsonContext.Default.PostgresStreamInformation);
 
         await using var connection = await dataSource.OpenConnectionAsync().ConfigureAwait(false);
         await using (var insertCmd = new NpgsqlCommand(
-            "INSERT INTO faes_documents (object_name, object_id, active, terminated_streams) " +
-            "VALUES ($1, $2, $3::jsonb, '[]'::jsonb) " +
+            "INSERT INTO faes_documents (object_name, object_id, current_stream_version, active, schema_version, terminated_streams) " +
+            "VALUES ($1, $2, $3, $4::jsonb, $5, '[]'::jsonb) " +
             "ON CONFLICT (object_name, object_id) DO NOTHING", connection))
         {
             insertCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = objectName });
             insertCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = objectId });
+            insertCmd.Parameters.Add(new NpgsqlParameter<int>    { TypedValue = -1 });
             insertCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = activeJson });
+            insertCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = "2.0.0" });
             await insertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
 
@@ -127,12 +128,13 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
         if (!string.IsNullOrEmpty(document.PrevHash))
         {
             await using var cmd = new NpgsqlCommand(
-                "UPDATE faes_documents SET active = $3::jsonb, schema_version = $4, updated_at = now() " +
-                "WHERE object_name = $1 AND object_id = $2 AND xmin::text = $5 " +
+                "UPDATE faes_documents SET active = $3::jsonb, current_stream_version = $4, schema_version = $5, updated_at = now() " +
+                "WHERE object_name = $1 AND object_id = $2 AND xmin::text = $6 " +
                 "RETURNING xmin::text", connection);
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectName });
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectId });
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = activeJson });
+            cmd.Parameters.Add(new NpgsqlParameter<int>    { TypedValue = document.Active.CurrentStreamVersion });
             cmd.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)document.SchemaVersion ?? DBNull.Value });
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.PrevHash });
 
@@ -147,13 +149,14 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
         else
         {
             await using var cmd = new NpgsqlCommand(
-                "INSERT INTO faes_documents (object_name, object_id, active, schema_version, terminated_streams) " +
-                "VALUES ($1, $2, $3::jsonb, $4, '[]'::jsonb) " +
-                "ON CONFLICT (object_name, object_id) DO UPDATE SET active = EXCLUDED.active, schema_version = EXCLUDED.schema_version, updated_at = now() " +
+                "INSERT INTO faes_documents (object_name, object_id, active, current_stream_version, schema_version, terminated_streams) " +
+                "VALUES ($1, $2, $3::jsonb, $4, $5, '[]'::jsonb) " +
+                "ON CONFLICT (object_name, object_id) DO UPDATE SET active = EXCLUDED.active, current_stream_version = EXCLUDED.current_stream_version, schema_version = EXCLUDED.schema_version, updated_at = now() " +
                 "RETURNING xmin::text", connection);
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectName });
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectId });
             cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = activeJson });
+            cmd.Parameters.Add(new NpgsqlParameter<int>    { TypedValue = document.Active.CurrentStreamVersion });
             cmd.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)document.SchemaVersion ?? DBNull.Value });
 
             var newXmin = (string?)await cmd.ExecuteScalarAsync().ConfigureAwait(false);
@@ -164,7 +167,7 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
     private static async Task<IObjectDocument?> GetInternalAsync(NpgsqlConnection connection, string objectName, string objectId)
     {
         await using var cmd = new NpgsqlCommand(
-            "SELECT active::text, terminated_streams::text, schema_version, xmin::text " +
+            "SELECT active::text, terminated_streams::text, current_stream_version, schema_version, xmin::text " +
             "FROM faes_documents WHERE object_name = $1 AND object_id = $2", connection);
         cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = objectName });
         cmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = objectId });
@@ -175,10 +178,11 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
             return null;
         }
 
-        var activeJson         = reader.GetString(0);
-        var terminatedJson     = reader.GetString(1);
-        var schemaVersion      = reader.IsDBNull(2) ? null : reader.GetString(2);
-        var xmin               = reader.GetString(3);
+        var activeJson           = reader.GetString(0);
+        var terminatedJson       = reader.GetString(1);
+        var currentStreamVersion = reader.GetInt32(2);
+        var schemaVersion        = reader.IsDBNull(3) ? null : reader.GetString(3);
+        var xmin                 = reader.GetString(4);
 
         var activeWire = JsonSerializer.Deserialize(activeJson, PostgresJsonContext.Default.PostgresStreamInformation)
             ?? throw new PostgresProcessingException($"Unable to deserialize active stream info for {objectName}/{objectId}.");
@@ -189,7 +193,7 @@ internal sealed class PostgresDocumentStore : IPostgresDocumentStore
         var doc = new PostgresObjectDocument(
             objectId,
             objectName,
-            activeWire.ToStreamInformation(),
+            activeWire.ToStreamInformation(currentStreamVersion),
             terminated.Select(t => new TerminatedStream { StreamIdentifier = t.StreamIdentifier }),
             schemaVersion,
             xmin,

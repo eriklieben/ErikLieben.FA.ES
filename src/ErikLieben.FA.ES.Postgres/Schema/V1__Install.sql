@@ -15,10 +15,17 @@ CREATE TABLE IF NOT EXISTS faes_events (
     event_type          text        NOT NULL,
     schema_version      integer,
     payload             jsonb       NOT NULL DEFAULT '{}'::jsonb,
-    action_metadata     jsonb,
-    metadata            jsonb,
-    external_sequencer  text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
+    -- ActionMetadata, decomposed. Shape is locked by the public-API record
+    -- ErikLieben.FA.ES.ActionMetadata; columns let us index trace IDs and
+    -- enforce idempotency without jsonb path expressions.
+    correlation_id        text,
+    causation_id          text,
+    idempotent_key        text,
+    originated_from_user  text,        -- VersionToken canonical string ("vt[...]<schemaVersion>")
+    event_occured_at      timestamptz,
+    metadata              jsonb,       -- user-extensible Dictionary<string,string>
+    external_sequencer    text,
+    created_at            timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (object_name, stream_id, version)
 ) PARTITION BY LIST (object_name);
 
@@ -29,23 +36,41 @@ CREATE TABLE IF NOT EXISTS faes_events_default PARTITION OF faes_events DEFAULT;
 CREATE INDEX IF NOT EXISTS ix_faes_events_seq_id ON faes_events (seq_id);
 CREATE INDEX IF NOT EXISTS ix_faes_events_object ON faes_events (object_name, object_id);
 
+-- Trace lookups: distributed-trace queries hit correlation_id and causation_id.
+CREATE INDEX IF NOT EXISTS ix_faes_events_correlation_id
+    ON faes_events (correlation_id) WHERE correlation_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_faes_events_causation_id
+    ON faes_events (causation_id) WHERE causation_id IS NOT NULL;
+
+-- Idempotency: partial unique on (object_name, object_id, idempotent_key). object_name is
+-- the partition key, which Postgres requires to be in any unique index on a partitioned table.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_faes_events_idempotent_key
+    ON faes_events (object_name, object_id, idempotent_key)
+    WHERE idempotent_key IS NOT NULL;
+
 -- =====================================================================
 -- Object documents (one row per aggregate).
 -- xmin serves as a system ETag for optimistic concurrency.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS faes_documents (
-    object_name         text        NOT NULL,
-    object_id           text        NOT NULL,
-    active              jsonb       NOT NULL,
-    terminated_streams  jsonb       NOT NULL DEFAULT '[]'::jsonb,
-    document_tags       text[]      NOT NULL DEFAULT '{}',
-    stream_tags         jsonb       NOT NULL DEFAULT '{}'::jsonb,
-    schema_version      text,
-    hash                text,
-    created_at          timestamptz NOT NULL DEFAULT now(),
-    updated_at          timestamptz NOT NULL DEFAULT now(),
+    object_name            text        NOT NULL,
+    object_id              text        NOT NULL,
+    -- Hot OCC field. Hoisted out of `active` so faes_append can do a 4-byte UPDATE
+    -- (HOT-eligible) instead of rewriting the whole jsonb on every event append.
+    current_stream_version integer     NOT NULL DEFAULT -1,
+    active                 jsonb       NOT NULL,
+    terminated_streams     jsonb       NOT NULL DEFAULT '[]'::jsonb,
+    document_tags          text[]      NOT NULL DEFAULT '{}',
+    stream_tags            jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    schema_version         text,
+    created_at             timestamptz NOT NULL DEFAULT now(),
+    updated_at             timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (object_name, object_id)
 );
+
+-- Idempotent migrations for existing databases (no-op on fresh installs).
+ALTER TABLE faes_documents ADD COLUMN IF NOT EXISTS current_stream_version integer NOT NULL DEFAULT -1;
+ALTER TABLE faes_documents DROP COLUMN IF EXISTS hash;
 
 -- Tag indexes — GIN for array membership and jsonb path queries.
 CREATE INDEX IF NOT EXISTS ix_faes_documents_document_tags
@@ -143,7 +168,7 @@ DECLARE
     v_event_count integer;
     v_new_version integer;
 BEGIN
-    SELECT (active->>'currentStreamVersion')::integer
+    SELECT current_stream_version
       INTO v_current
       FROM faes_documents
      WHERE object_name = p_object_name
@@ -169,8 +194,10 @@ BEGIN
     RETURN QUERY
     INSERT INTO faes_events (
         object_name, object_id, stream_id, version,
-        event_type, schema_version, payload, action_metadata, metadata,
-        external_sequencer, created_at
+        event_type, schema_version, payload,
+        correlation_id, causation_id, idempotent_key,
+        originated_from_user, event_occured_at,
+        metadata, external_sequencer, created_at
     )
     SELECT
         p_object_name,
@@ -180,7 +207,11 @@ BEGIN
         e->>'eventType',
         NULLIF(e->>'schemaVersion', '')::integer,
         COALESCE(e->'payload', '{}'::jsonb),
-        e->'actionMetadata',
+        e->'actionMetadata'->>'correlationId',
+        e->'actionMetadata'->>'causationId',
+        e->'actionMetadata'->>'idempotentKey',
+        e->'actionMetadata'->>'originatedFromUser',
+        NULLIF(e->'actionMetadata'->>'eventOccuredAt', '')::timestamptz,
         e->'metadata',
         e->>'externalSequencer',
         COALESCE((e->>'createdAt')::timestamptz, now())
@@ -190,8 +221,8 @@ BEGIN
     v_new_version := p_expected_ver + v_event_count;
 
     UPDATE faes_documents
-       SET active     = jsonb_set(active, '{currentStreamVersion}', to_jsonb(v_new_version)),
-           updated_at = now()
+       SET current_stream_version = v_new_version,
+           updated_at             = now()
      WHERE object_name = p_object_name
        AND object_id   = p_object_id;
 END;

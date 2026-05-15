@@ -215,19 +215,19 @@ public class PostgresCoverageFillTests(PostgresContainerFixture fixture) : IAsyn
     public async Task DataStore_handles_empty_payload_and_reads_null_jsonb_columns()
     {
         // Empty payload → serializer writes "{}" (covers the IsNullOrEmpty(Payload) true branch).
-        // Then we DELETE the row and INSERT one with NULL action_metadata/metadata directly so
-        // the reader's IsDBNull(4)/IsDBNull(5) branches fire.
+        // Then we null the optional columns directly so the reader's IsDBNull branches fire.
         var dataStore = new PostgresDataStore(fixture.DataSource, fixture.Settings);
         var doc = await documentStore.CreateAsync("Order", "branch-2");
 
         await dataStore.AppendAsync(doc, CancellationToken.None,
             new JsonEvent { EventType = "Empty", EventVersion = 0, Payload = "" });
 
-        // Force-null the metadata jsonb columns directly to exercise the IsDBNull read branches.
         await using (var connection = await fixture.DataSource.OpenConnectionAsync())
         {
             await using var cmd = new Npgsql.NpgsqlCommand(
-                "UPDATE faes_events SET action_metadata = NULL, metadata = NULL, schema_version = NULL, external_sequencer = NULL " +
+                "UPDATE faes_events SET correlation_id = NULL, causation_id = NULL, idempotent_key = NULL, " +
+                "originated_from_user = NULL, event_occured_at = NULL, metadata = NULL, " +
+                "schema_version = NULL, external_sequencer = NULL " +
                 "WHERE object_name = 'Order' AND stream_id = $1 AND version = 0",
                 connection);
             cmd.Parameters.Add(new Npgsql.NpgsqlParameter<string> { TypedValue = doc.Active.StreamIdentifier });
