@@ -273,43 +273,10 @@ var s3Settings = new ErikLieben.FA.ES.S3.Configuration.EventStreamS3Settings("s3
 };
 builder.Services.ConfigureS3EventStore(s3Settings);
 
-// Override ReleaseFactory registration to use S3 keyed services
-builder.Services.AddSingleton<TaskFlow.Domain.Aggregates.IReleaseFactory>(sp =>
-{
-    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
-    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
-    return new TaskFlow.Domain.Aggregates.ReleaseFactory(sp, eventStreamFactory, objectDocumentFactory);
-});
+// Release aggregate registrations removed — the aggregate is incomplete in Domain
+// (events / value objects not defined), so its DI hooks and projection handler stay out.
 
-// Register ReleaseDashboard projection factory and singleton
-// The projection is stored in Blob, but reads release events from S3
-builder.Services.AddSingleton<ReleaseDashboardFactory>(sp =>
-{
-    var blobServiceClientFactory = sp.GetRequiredService<IAzureClientFactory<Azure.Storage.Blobs.BlobServiceClient>>();
-    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
-    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
-    return new ReleaseDashboardFactory(blobServiceClientFactory, objectDocumentFactory, eventStreamFactory);
-});
-
-builder.Services.AddSingleton<ReleaseDashboard>(sp =>
-{
-    var factory = sp.GetRequiredService<ReleaseDashboardFactory>();
-    var objectDocumentFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IObjectDocumentFactory>("s3");
-    var eventStreamFactory = sp.GetRequiredKeyedService<ErikLieben.FA.ES.IEventStreamFactory>("s3");
-    try
-    {
-        return factory.GetOrCreateAsync(objectDocumentFactory, eventStreamFactory).GetAwaiter().GetResult();
-    }
-    catch
-    {
-        return new ReleaseDashboard(objectDocumentFactory, eventStreamFactory);
-    }
-});
-
-// Register ReleaseDashboard projection handler
-builder.Services.AddSingleton<TaskFlow.Api.Projections.IProjectionHandler, TaskFlow.Api.Projections.ReleaseDashboardProjectionHandler>();
-
-Console.WriteLine("[STARTUP] S3/MinIO configured successfully for Release aggregates");
+Console.WriteLine("[STARTUP] S3/MinIO event store configured");
 
 // Configure Azure Append Blob Storage for TimeSheet aggregates
 // This demonstrates using Append Blobs for O(1) atomic appends (NDJSON format)
@@ -608,7 +575,6 @@ app.MapBackupRestoreEndpoints();
 app.MapStreamMigrationDemoEndpoints();
 app.MapEpicEndpoints();
 app.MapSprintEndpoints();
-app.MapReleaseEndpoints();
 app.MapTimeSheetEndpoints();
 app.MapIdempotencyDemoEndpoints();
 

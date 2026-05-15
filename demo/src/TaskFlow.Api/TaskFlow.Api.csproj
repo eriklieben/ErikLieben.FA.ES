@@ -25,6 +25,14 @@
     <ProjectReference Include="..\TaskFlow.ServiceDefaults\TaskFlow.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <!-- Release aggregate is incomplete (events / value objects not defined in Domain),
+       exclude orphaned Api code that references it so the project builds. -->
+  <ItemGroup>
+    <Compile Remove="Endpoints/ReleaseEndpoints.cs" />
+    <Compile Remove="DTOs/ReleaseDtos.cs" />
+    <Compile Remove="Projections/ReleaseDashboardProjectionHandler.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <_ContentIncludedByDefault Remove="projections\active-work-items.json" />
     <_ContentIncludedByDefault Remove="projections\project-dashboard.json" />
