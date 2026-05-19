@@ -1,3 +1,9 @@
+## [2.0.0-preview.17](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.16...v2.0.0-preview.17) (2026-05-19)
+
+### 🐛 Bug fixes
+
+* **postgres:** refresh document PrevHash after faes_append bumps xmin ([fccec7c](https://github.com/eriklieben/ErikLieben.FA.ES/commit/fccec7c367a303c6f037608a29fdeb1fb4e745ae))
+
 ## [2.0.0-preview.16](https://github.com/eriklieben/ErikLieben.FA.ES/compare/v2.0.0-preview.15...v2.0.0-preview.16) (2026-05-15)
 
 ### ⚠ BREAKING CHANGES
