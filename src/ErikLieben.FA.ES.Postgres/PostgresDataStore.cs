@@ -155,6 +155,26 @@ public sealed class PostgresDataStore : IDataStore, IDataStoreRecovery
                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) { }
             }
 
+            // faes_append's UPDATE on faes_documents bumps the row's xmin. Re-read it inside
+            // this transaction so the in-memory document carries the correct OCC token for
+            // the NEXT PostgresDocumentStore.SetAsync call. Without this, callers that
+            // commit twice to the same aggregate in one request (e.g. Append role → Append
+            // feature-flag on the same UserProfile) hit a spurious xmin-mismatch on the
+            // second commit because PrevHash still holds the pre-append xmin captured by
+            // SetAsync, while faes_append moved the row forward.
+            await using (var xminCmd = new NpgsqlCommand(
+                "SELECT xmin::text FROM faes_documents WHERE object_name = $1 AND object_id = $2",
+                connection, tx))
+            {
+                xminCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectName });
+                xminCmd.Parameters.Add(new NpgsqlParameter<string> { TypedValue = document.ObjectId });
+                var newXmin = (string?)await xminCmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(newXmin))
+                {
+                    document.SetHash(newXmin, newXmin);
+                }
+            }
+
             await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             // Reflect the new stream version on the in-memory document so subsequent appends
